@@ -157,7 +157,7 @@ table{width:100%;border-collapse:collapse;font-size:.88rem}td,th{border-bottom:1
 <div id="modal"><div class="box" id="mbox"></div></div>
 <div id="toast"></div>
 
-<script src="config.js"></script>
+<script>document.write('<script src="config.js?t='+Date.now()+'"><\/script>');</script>
 <script>
 /* 설정은 config.js에 있어요. 여기는 기본값이에요 (config.js가 없으면 데모 모드). */
 const CONFIG = (()=>{
