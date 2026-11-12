@@ -2,11 +2,14 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // KP admin emails: must match CONFIG.adminEmails in index.html (lowercase)
+    // KP admin emails live in the Firestore doc config/admins  (field: emails = array of lowercase emails)
+    // You never need to edit this file. Edit that doc in the Firebase console instead.
 
     function isAdmin() {
       return request.auth != null
-        && request.auth.token.email in ['hbfb1107@gmail.com', 'amilia0705@gmail.com','nyommyuk@gmail.com'];
+        && request.auth.token.email != null
+        && exists(/databases/$(database)/documents/config/admins)
+        && request.auth.token.email.lower() in get(/databases/$(database)/documents/config/admins).data.emails;
     }
     function signedIn() { return request.auth != null; }
     function isMe(uid) { return signedIn() && request.auth.uid == uid; }
@@ -183,6 +186,25 @@ service cloud.firestore {
       allow create: if signedIn() && request.resource.data.uid == request.auth.uid
         && (request.resource.data.kp == false || isAdmin());
       allow delete: if isAdmin() || (signedIn() && resource.data.uid == request.auth.uid);
+    }
+
+    match /config/{id} {
+      allow read: if signedIn();
+      allow write: if false;
+    }
+
+    match /roomLikes/{id} {
+      allow read: if signedIn();
+      allow create: if signedIn() && request.resource.data.uid == request.auth.uid
+        && id == request.resource.data.owner + '_' + request.auth.uid;
+      allow delete: if signedIn() && resource.data.uid == request.auth.uid;
+    }
+
+    match /guestbook/{id} {
+      allow read: if signedIn();
+      allow create: if signedIn() && request.resource.data.uid == request.auth.uid
+        && request.resource.data.text is string && request.resource.data.text.size() <= 300;
+      allow delete: if isAdmin() || (signedIn() && (resource.data.uid == request.auth.uid || resource.data.owner == request.auth.uid));
     }
   }
 }

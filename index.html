@@ -216,6 +216,11 @@ tr.mine .bc.free{background:rgba(201,169,106,.07)}
 .pc{display:inline-block;background:#f7f3ea;color:#222;border-radius:6px;padding:4px 7px;margin:3px 2px;font-weight:700;font-family:sans-serif;min-width:30px;text-align:center}
 .pc.red{color:#b0202a}.pc.back{background:var(--wine);color:#fff}
 .choice.on{border-color:var(--gold);color:var(--gold2)}
+.roomcv{display:block;width:100%;max-width:720px;margin:10px auto 0;image-rendering:pixelated;image-rendering:crisp-edges;border:2px solid var(--line);border-radius:6px;background:#000}
+.roomcv.editing{touch-action:none;border-color:var(--gold);cursor:pointer}
+.rcard .roomcv{margin-top:0}
+canvas.fprev{image-rendering:pixelated;vertical-align:middle;height:24px;width:auto}
+.roomedit{margin-top:8px;border-top:1px dashed var(--line);padding-top:6px}
 .chip.on{background:var(--wine);color:#fff}
 </style>
 </head>
@@ -427,7 +432,9 @@ const uname=u=>u?(u.name||u.email):'?';
   B.onAuth(onAuth);
 })();
 
-function onAuth(u){
+let AUTH_SEQ=0;
+async function onAuth(u){
+  const seq=++AUTH_SEQ;
   unsubs.forEach(f=>{try{f();}catch(e){}});unsubs=[];
   ME=u;PROF=null;P=null;IS_ADMIN=false;CALL=null;attChecked=false;
   document.body.classList.remove('kp');
@@ -435,10 +442,13 @@ function onAuth(u){
   if(typeof chatOnAuth==='function')chatOnAuth(null);
   if(typeof gamesOnAuth==='function')gamesOnAuth(null);
   if(typeof partyOnAuth==='function')partyOnAuth(null);
+  if(typeof roomOnAuth==='function')roomOnAuth(null);
   if(!u){THEME_GLOBAL=null;applyTheme(THEME_DEF);render();return;}
+  if(!DEMO){try{const ad=await B.get('config/admins');if(ad&&Array.isArray(ad.emails))ad.emails.forEach(e=>{e=String(e).trim().toLowerCase();if(e&&!ADMINS.includes(e))ADMINS.push(e);});}catch(e){console.warn('config/admins',e);}}
+  if(seq!==AUTH_SEQ)return;
   IS_ADMIN=isAdminEmail(u.email);
   if(IS_ADMIN)document.body.classList.add('kp');
-  tab=IS_ADMIN?'sched':'map';
+  tab=IS_ADMIN?'sched':'room';
   const sub=(f)=>unsubs.push(f);
   sub(B.onDoc('users/'+u.uid,d=>{
     if(!d){setTimeout(async()=>{if(ME&&ME.uid===u.uid&&!(await B.get('users/'+u.uid)))B.set('users/'+u.uid,{name:u.name||u.email.split('@')[0],email:u.email,ho:'',at:Date.now()});},1500);return;}
@@ -471,13 +481,14 @@ function onAuth(u){
   if(typeof chatOnAuth==='function')chatOnAuth(u);
   if(typeof gamesOnAuth==='function')gamesOnAuth(u);
   if(typeof partyOnAuth==='function')partyOnAuth(u);
+  if(typeof roomOnAuth==='function')roomOnAuth(u);
 }
 
 /* ================= 렌더 ================= */
-const PL_TABS=[['저택',[['map','🗺 저택 지도'],['book','조사 예약'],['items','소지품'],['memo','메모'],['lobby','내 정보']]]];
+const PL_TABS=[['저택',[['room','🏠 내 방'],['map','🗺 저택 지도'],['book','조사 예약'],['items','소지품'],['memo','메모'],['lobby','내 정보']]]];
 const KP_TABS=[['KP',[['sched','스케줄러'],['kqueue','호출·대기열'],['kitems','아이템'],['memo','메모'],['players','플레이어']]],
                ['여가',[['garden','온실'],['riddle','수수께끼'],['shop','상점'],['rank','랭킹']]]];
-const kpTabs=()=>PROF&&PROF.ho?[KP_TABS[0],['내 HO',[['map','🗺 저택 지도'],['book','조사 예약'],['items','소지품'],['lobby','내 정보']]]]:[KP_TABS[0],['저택',[['map','🗺 저택 지도']]]];
+const kpTabs=()=>PROF&&PROF.ho?[KP_TABS[0],['내 HO',[['room','🏠 내 방'],['map','🗺 저택 지도'],['book','조사 예약'],['items','소지품'],['lobby','내 정보']]]]:[KP_TABS[0],['저택',[['map','🗺 저택 지도']]]];
 function softRender(){
   if(window.GAME_LOCK){pendingRender=true;return;}
   const a=document.activeElement;
@@ -495,7 +506,7 @@ function render(){
   if(!IS_ADMIN&&!PROF.ho){app.innerHTML=headerHtml()+hoView();return;}
   const groups=IS_ADMIN?kpTabs():PL_TABS;
   const flat=groups.flatMap(g=>g[1]);
-  if(!flat.find(t=>t[0]===tab)&&!(typeof FEATS!=='undefined'&&FEATS[tab]))tab=flat[0][0];
+  if(!flat.find(t=>t[0]===tab)&&!(typeof FEATS!=='undefined'&&FEATS[tab])&&!(tab==='visit'&&(PROF.ho||IS_ADMIN)))tab=flat[0][0];
   const badge=k=>{
     if(k==='sched'){const n=BOOKINGS.filter(b=>b.status==='pending').length;return n?` <span class="dot"></span>${n}`:'';}
     if(k==='kitems'){const n=ITEMS.filter(i=>i.inspectReq).length;return n?` <span class="dot"></span>${n}`:'';}
@@ -508,6 +519,7 @@ function render(){
   $('#schedWrap').style.display=(IS_ADMIN&&tab==='sched')?'block':'none';
   document.body.classList.toggle('insched',IS_ADMIN&&tab==='sched');
   if(tab==='map')drawPlMap();
+  if(typeof roomAfter==='function')roomAfter();
   if(typeof layoutDock==='function')layoutDock();
 }
 let MENU=false;
@@ -763,7 +775,7 @@ const ATT=[10,12,14,16,18,20,30];let attChecked=false;
 function maybeAtt(){if(attChecked||!P||!PROF||(!IS_ADMIN&&!PROF.ho))return;attChecked=true;setTimeout(checkAtt,900);}
 function checkAtt(){
   if(!P||!ME)return;const t=kstDate(),a=P.att||{};if(a.last===t)return;
-  const y=new Date(Date.now()+9*36e5-864e5).toISOString().slice(0,10),streak=a.last===y?((a.streak||0)%7)+1:1,c=ATT[streak-1];
+  const y=new Date(Date.now()+9*36e5-864e5).toISOString().slice(0,10),streak=a.last===y?((a.streak||0)%7)+1:1,c=ATT[streak-1]+3*Math.min(2,RC('safe'));
   P.att={last:t,streak};earn(c);
   if(modalOpen())return toast(`📅 출석 ${streak}일째 +${c} 은화`);
   modal(`<div style="text-align:center"><div style="font-size:2.6rem">📅</div><h2 style="color:var(--gold2);margin:4px 0">출석 ${streak}일째</h2><p>오늘의 출석 보상 <b>+${c} 은화</b></p>
@@ -776,7 +788,9 @@ function freshP(){return {coins:CONFIG.startCoins,earned:0,plotCount:3,plots:Arr
 function saveP(){if(ME&&P)B.set('progress/'+ME.uid,clean(P));}
 function earn(n){P.coins+=n;P.earned+=n;saveP();if(n>0)sfx('coin');}
 function spend(n){if(P.coins<n){toast('은화가 부족해요');return false;}P.coins-=n;saveP();return true;}
-const growMul=()=>mySin()==='sloth'?0.75:1;
+const RC=k=>typeof roomCnt==='function'?roomCnt(k):0;
+const growMul=()=>(mySin()==='sloth'?0.75:1)*(1-0.05*Math.min(3,RC('plant')));
+const hintCost=i=>Math.round(HINT_COST[i]*(RC('shelf')?0.8:1));
 const sellMul=()=>mySin()==='greed'?1.15:1;
 const riddleMul=()=>mySin()==='pride'?1.2:1;
 const shopMul=()=>mySin()==='envy'?0.9:1;
@@ -957,7 +971,7 @@ async function eggTap(key,mx,my,cv,ev){
     }
     P.egg.found.push(best.id);P.egg.n++;earn(EGG.coins);sfx('spark');
     sparkle(cv,ev,'+'+EGG.coins);toast(`✨ 반짝! 은화 ${EGG.coins}개를 찾았다 (오늘 ${P.egg.n}/${EGG.perDay})`);
-  }else if(bd<0.13&&P.egg.n<EGG.perDay&&Date.now()-eggHintAt>5000){eggHintAt=Date.now();sparkle(cv,ev,'',true,true);toast('…근처에서 무언가 반짝인 것 같다');}
+  }else if(bd<(RC('cat')?0.2:0.13)&&P.egg.n<EGG.perDay&&Date.now()-eggHintAt>5000){eggHintAt=Date.now();sparkle(cv,ev,'',true,true);toast('…근처에서 무언가 반짝인 것 같다');}
 }
 function sparkle(cv,ev,txt,dim,tiny){
   const box=cv.parentElement,r=box.getBoundingClientRect(),el=document.createElement('div');
@@ -1155,11 +1169,11 @@ function openRiddle(id){
     if(r.type==='choice')b+=r.choices.map((c,i)=>`<button class="choice" onclick="answer('${id}',${i})">${esc(c)}</button>`).join('');
     else b+=`<div class="row" style="margin-top:8px"><input id="ans" style="flex:1" placeholder="${r.type==='time'?'예: 4:15':'숫자로 입력'+(r.unit?` (${r.unit})`:'')}" onkeydown="if(event.key==='Enter')answer('${id}')"><button class="primary" onclick="answer('${id}')">답하기</button></div>`;
     b+=`<p class="muted" style="margin-top:10px">현재 보상: ${curReward(r)} 은화 · 오답 ${st.wrong}회</p>`;
-    if(st.hints<3){const c=HINT_COST[st.hints];b+=`<button onclick="buyHint('${id}')" ${P.coins<c?'disabled':''}>힌트 ${st.hints+1} 보기 (${c} 은화)</button> `;}
+    if(st.hints<3){const c=hintCost(st.hints);b+=`<button onclick="buyHint('${id}')" ${P.coins<c?'disabled':''}>힌트 ${st.hints+1} 보기 (${c} 은화)</button> `;}
   }
   b+=`<button style="margin-top:8px" onclick="closeModal()">닫기</button>`;modal(b);
 }
-function buyHint(id){const st=rs(id);if(st.hints>=3||!spend(HINT_COST[st.hints]))return;st.hints++;saveP();openRiddle(id);render();}
+function buyHint(id){const st=rs(id);if(st.hints>=3||!spend(hintCost(st.hints)))return;st.hints++;saveP();openRiddle(id);render();}
 function answer(id,choice){
   const r=RIDDLES.find(x=>x.id===id),st=rs(id);let ok=false;
   if(r.type==='choice')ok=choice===r.ans;
@@ -1381,5 +1395,6 @@ setInterval(()=>{if(ME&&P&&(tab==='garden'||tab==='lobby')&&!modalOpen())softRen
 <script src="games.js"></script>
 <script src="party.js"></script>
 <script src="draw.js"></script>
+<script src="room.js"></script>
 </body>
 </html>

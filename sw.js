@@ -1,6 +1,6 @@
 /* 숲속 저택 서비스 워커 — 앱 설치 + 푸시 알림 */
-const CACHE = 'peccata-v8';
-const SHELL = ['./', './index.html', './scheduler.html', './chat.js', './games.js', './party.js', './draw.js', './config.js', './manifest.json', './icon-192.png', './icon-512.png', './apple-touch-icon.png'];
+const CACHE = 'peccata-v9';
+const SHELL = ['./', './index.html', './scheduler.html', './chat.js', './games.js', './party.js', './draw.js', './room.js', './config.js', './manifest.json', './icon-192.png', './icon-512.png', './apple-touch-icon.png'];
 
 self.addEventListener('install', e => {
   e.waitUntil(caches.open(CACHE).then(c => c.addAll(SHELL)).catch(() => {}).then(() => self.skipWaiting()));

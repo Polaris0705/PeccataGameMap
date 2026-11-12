@@ -14,17 +14,18 @@ const FEATS = {
   truth:    { n: '진실과 거짓',    ic: '🎭', d: '거짓 하나 맞히기' }
 };
 const FEAT_KEYS = Object.keys(FEATS);
-const DAILY_REWARD = 2;           // 게임별 하루 보상 횟수
+const DAILY_REWARD = 2;
+const dailyCap = () => DAILY_REWARD + (typeof roomCnt === 'function' && roomCnt('gclock') ? 1 : 0);           // 게임별 하루 보상 횟수
 let GAME = null; window.GAME_LOCK = false;
 let BJ = null, TRUTHS = [];
 
 function stopGame() { if (GAME) { try { GAME.stop && GAME.stop(); } catch (e) {} GAME = null; } window.GAME_LOCK = false; }
 function lockGame(stop) { stopGame(); GAME = { stop, alive: true }; window.GAME_LOCK = true; return GAME; }
 function gameDay() { const t = kstDate(); if (!P.gd || P.gd.date !== t) P.gd = { date: t, p: {} }; return P.gd; }
-function playsLeft(id) { return Math.max(0, DAILY_REWARD - (gameDay().p[id] || 0)); }
+function playsLeft(id) { return Math.max(0, dailyCap() - (gameDay().p[id] || 0)); }
 function reward(id, coins) {
   const g = gameDay(); g.p[id] = (g.p[id] || 0) + 1; coins = Math.max(0, Math.round(coins));
-  if (g.p[id] <= DAILY_REWARD && coins > 0) { earn(coins); return `+${coins} 은화`; }
+  if (g.p[id] <= dailyCap() && coins > 0) { earn(coins); return `+${coins} 은화`; }
   saveP(); return coins > 0 ? '오늘 보상 횟수를 다 써서 연습으로 기록됐어요' : '';
 }
 function finishGame(html) { stopGame(); render(); modal(html); sfx('win'); }
@@ -61,7 +62,7 @@ function teaStart() {
   window.teaPick = (k, i) => { st.tray[k] = (k === 'd' ? D : S)[i]; draw(); };
   window.teaServe = () => {
     const g = st.g;
-    if (st.tray.d === g.d && st.tray.s === g.s) { sfx('ok'); const tip = Math.round(3 + L.cup + g.pat / g.max * 3); st.earned += tip; st.served++; toast(`감사합니다! +${tip}`); newG(); }
+    if (st.tray.d === g.d && st.tray.s === g.s) { sfx('ok'); const tip = Math.round(3 + L.cup + g.pat / g.max * 3) + (typeof roomCnt === 'function' && roomCnt('teaset') ? 1 : 0); st.earned += tip; st.served++; toast(`감사합니다! +${tip}`); newG(); }
     else { g.pat = Math.max(0, g.pat - 3); toast('주문과 달라요…'); sfx('bad'); }
     draw();
   };
@@ -85,7 +86,7 @@ const SIN_GAMES = {
   envy:     { n: '보석 기억',     d: '빛나는 보석의 순서를 따라 해요' },
   lust:     { n: '가면무도회',    d: '하나만 다른 가면을 찾아요' }
 };
-VIEWS.sins = () => `<div class="panel"><h2>🎲 칠죄종의 방</h2><p class="muted">일곱 개의 문 뒤에 짧은 게임이 하나씩 있어요. 자기 HO의 죄에 해당하는 게임은 보상이 1.5배예요. 게임마다 하루 보상 ${DAILY_REWARD}회.</p>
+VIEWS.sins = () => `<div class="panel"><h2>🎲 칠죄종의 방</h2><p class="muted">일곱 개의 문 뒤에 짧은 게임이 하나씩 있어요. 자기 HO의 죄에 해당하는 게임은 보상이 1.5배예요. 게임마다 하루 보상 ${dailyCap()}회.</p>
   <div id="gbox"><div class="grid g3">${HOS.map(h => { const g = SIN_GAMES[h.id]; const mine = mySin() === h.id;
     return `<button class="room ${mine ? 'solved' : ''}" onclick="sinStart('${h.id}')"><div class="no">${h.name}${mine ? ' · 내 죄 ×1.5' : ''}</div><div class="rn">${g.n}</div><div class="muted" style="font-size:.8rem">${g.d}</div><div class="muted" style="font-size:.75rem">오늘 보상 ${playsLeft('sin_' + h.id)}회</div></button>`; }).join('')}</div></div></div>`;
 function sinEnd(id, coins, txt) {
