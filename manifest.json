@@ -1,0 +1,17 @@
+{
+  "name": "숲속 저택",
+  "short_name": "숲속 저택",
+  "description": "TRPG 세션용 조사 예약 · 소지품 · 미니게임",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#13100e",
+  "theme_color": "#13100e",
+  "lang": "ko",
+  "icons": [
+    { "src": "icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}

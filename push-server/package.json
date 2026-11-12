@@ -1,0 +1,13 @@
+{
+  "name": "peccata-push",
+  "version": "1.0.0",
+  "private": true,
+  "description": "숲속 저택 푸시 알림 서버 (Railway)",
+  "main": "index.js",
+  "scripts": { "start": "node index.js", "test": "node test.js" },
+  "engines": { "node": ">=18" },
+  "dependencies": {
+    "firebase-admin": "^12.7.0",
+    "web-push": "^3.6.7"
+  }
+}
