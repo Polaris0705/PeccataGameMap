@@ -71,6 +71,7 @@ function newMsgCheck(id, prev, l) {
   if (!prev) return;
   const viewing = chatVisible() && CH.cur === id;
   l.filter(m => m.uid !== ME.uid && !m.deleted && !prev.find(p => p.id === m.id)).forEach(m => {
+    if (typeof sfx === 'function') sfx('pop');
     if (viewing) return;
     const me = (m.mentions || []).includes(ME.uid), dm = id.startsWith('dm_');
     if (me || dm) toast(`💬 ${dm ? '귓속말' : chanTitle(id)} · ${speakerOf(m).name}: ${(m.text || (m.dice ? '🎲' : '🖼')).slice(0, 40)}`);

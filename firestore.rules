@@ -129,6 +129,27 @@ service cloud.firestore {
       allow create: if signedIn() && request.resource.data.from == request.auth.uid;
     }
 
+    match /rooms/{id} {
+      allow read: if signedIn();
+      allow create: if signedIn() && request.resource.data.host == request.auth.uid;
+      allow update: if signedIn();
+      allow delete: if isAdmin() || (signedIn() && resource.data.host == request.auth.uid);
+    }
+
+    match /roomSecrets/{id} {
+      allow read: if signedIn() && resource.data.uid == request.auth.uid;
+      allow write: if signedIn() && (request.resource.data.uid == request.auth.uid
+        || get(/databases/$(database)/documents/rooms/$(request.resource.data.room)).data.host == request.auth.uid);
+    }
+
+    match /draws/{id} {
+      allow read, write: if signedIn();
+    }
+
+    match /teleBooks/{id} {
+      allow read, write: if signedIn();
+    }
+
     match /games/{id} {
       allow read, write: if signedIn();
     }

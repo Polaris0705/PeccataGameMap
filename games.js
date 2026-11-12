@@ -14,7 +14,7 @@ const FEATS = {
   truth:    { n: '진실과 거짓',    ic: '🎭', d: '거짓 하나 맞히기' }
 };
 const FEAT_KEYS = Object.keys(FEATS);
-const DAILY_REWARD = 5;           // 게임별 하루 보상 횟수
+const DAILY_REWARD = 2;           // 게임별 하루 보상 횟수
 let GAME = null; window.GAME_LOCK = false;
 let BJ = null, TRUTHS = [];
 
@@ -27,7 +27,7 @@ function reward(id, coins) {
   if (g.p[id] <= DAILY_REWARD && coins > 0) { earn(coins); return `+${coins} 은화`; }
   saveP(); return coins > 0 ? '오늘 보상 횟수를 다 써서 연습으로 기록됐어요' : '';
 }
-function finishGame(html) { stopGame(); render(); modal(html); }
+function finishGame(html) { stopGame(); render(); modal(html); sfx('win'); }
 const rint = n => Math.floor(Math.random() * n);
 const shuffle = a => { a = a.slice(); for (let i = a.length - 1; i > 0; i--) { const j = rint(i + 1); [a[i], a[j]] = [a[j], a[i]]; } return a; };
 const gbox = () => $('#gbox');
@@ -40,7 +40,7 @@ function teaLv() { P.tea = Object.assign({ cup: 0, menu: 0, decor: 0, best: 0 },
 VIEWS.tycoon = () => {
   const L = teaLv();
   const up = [['cup', '고급 찻잔', '팁 +1', 50 * (L.cup + 1), 5], ['menu', '메뉴 늘리기', '새 음료·디저트', [100, 200][L.menu], 2], ['decor', '실내 장식', '인내심 +2초', 80 * (L.decor + 1), 5]];
-  return `<div class="panel"><h2>🍵 티룸 타이쿤</h2><p class="muted">60초 동안 손님 주문(음료+디저트)을 맞춰 내세요. 빨리 낼수록 팁이 커요. 오늘 보상 ${playsLeft('tycoon')}회 남음 · 최고 ${L.best}은화</p>
+  return `<div class="panel"><h2>🍵 티룸 타이쿤</h2><p class="muted">60초 동안 손님 주문(음료+디저트)을 맞춰 내세요. 빨리 낼수록 팁이 커요. 매출의 40%가 내 몫이에요. 오늘 보상 ${playsLeft('tycoon')}회 남음 · 최고 ${L.best}은화</p>
    <div id="gbox"><button class="primary" style="width:100%" onclick="teaStart()">영업 시작</button></div>
    <h3>업그레이드</h3>${up.map(([k, n, d, c, max]) => `<div class="item" style="margin:6px 0"><div><b>${n}</b> <span class="muted">Lv.${L[k]} · ${d}</span></div>${c && L[k] < max ? `<button onclick="teaUp('${k}',${c})" ${P.coins < c ? 'disabled' : ''}>${c} 은화</button>` : '<button disabled>최대</button>'}</div>`).join('')}</div>`;
 };
@@ -61,15 +61,15 @@ function teaStart() {
   window.teaPick = (k, i) => { st.tray[k] = (k === 'd' ? D : S)[i]; draw(); };
   window.teaServe = () => {
     const g = st.g;
-    if (st.tray.d === g.d && st.tray.s === g.s) { const tip = Math.round(3 + L.cup + g.pat / g.max * 3); st.earned += tip; st.served++; toast(`감사합니다! +${tip}`); newG(); }
-    else { g.pat = Math.max(0, g.pat - 3); toast('주문과 달라요…'); }
+    if (st.tray.d === g.d && st.tray.s === g.s) { sfx('ok'); const tip = Math.round(3 + L.cup + g.pat / g.max * 3); st.earned += tip; st.served++; toast(`감사합니다! +${tip}`); newG(); }
+    else { g.pat = Math.max(0, g.pat - 3); toast('주문과 달라요…'); sfx('bad'); }
     draw();
   };
   const iv = setInterval(() => {
     st.t--; st.g.pat--;
     if (st.g.pat <= 0) { toast('손님이 기다리다 떠났어요…'); newG(); }
-    if (st.t <= 0) { clearInterval(iv); L.best = Math.max(L.best, st.earned); const r = reward('tycoon', st.earned);
-      finishGame(`<h2 style="color:var(--gold2);margin-top:0">🍵 영업 종료</h2><p>손님 ${st.served}명 · 수익 ${st.earned}은화</p><p class="muted">${r}</p><div class="row"><button class="primary" onclick="closeModal();teaStart()">한 번 더</button><button onclick="closeModal()">닫기</button></div>`); return; }
+    if (st.t <= 0) { clearInterval(iv); L.best = Math.max(L.best, st.earned); const r = reward('tycoon', Math.round(st.earned * 0.4));
+      finishGame(`<h2 style="color:var(--gold2);margin-top:0">🍵 영업 종료</h2><p>손님 ${st.served}명 · 매출 ${st.earned} (내 몫 40%)</p><p class="muted">${r}</p><div class="row"><button class="primary" onclick="closeModal();teaStart()">한 번 더</button><button onclick="closeModal()">닫기</button></div>`); return; }
     draw();
   }, 1000);
   lockGame(() => clearInterval(iv)); newG(); draw();
@@ -89,7 +89,7 @@ VIEWS.sins = () => `<div class="panel"><h2>🎲 칠죄종의 방</h2><p class="m
   <div id="gbox"><div class="grid g3">${HOS.map(h => { const g = SIN_GAMES[h.id]; const mine = mySin() === h.id;
     return `<button class="room ${mine ? 'solved' : ''}" onclick="sinStart('${h.id}')"><div class="no">${h.name}${mine ? ' · 내 죄 ×1.5' : ''}</div><div class="rn">${g.n}</div><div class="muted" style="font-size:.8rem">${g.d}</div><div class="muted" style="font-size:.75rem">오늘 보상 ${playsLeft('sin_' + h.id)}회</div></button>`; }).join('')}</div></div></div>`;
 function sinEnd(id, coins, txt) {
-  const mult = mySin() === id ? 1.5 : 1, c = Math.min(40, Math.max(0, coins)) * mult, r = reward('sin_' + id, c);
+  const mult = mySin() === id ? 1.5 : 1, c = Math.min(20, Math.max(0, coins)) * mult, r = reward('sin_' + id, c);
   finishGame(`<h2 style="color:var(--gold2);margin-top:0">${(HOS.find(h => h.id === id) || {}).name} · ${SIN_GAMES[id].n}</h2><p>${txt}</p><p class="muted">${r || '보상 없음'}</p><div class="row"><button class="primary" onclick="closeModal();sinStart('${id}')">다시</button><button onclick="closeModal()">닫기</button></div>`);
 }
 function sinStart(id) {
@@ -101,7 +101,7 @@ const area = () => $('#sinArea');
 function sinWrath() {
   let t = 20, hits = 0, cur = -1;
   const draw = () => { const a = area(); if (!a) return; a.innerHTML = `<div class="row" style="justify-content:space-between"><b>⏱ ${t}</b><b>💥 ${hits}</b></div><div class="mgrid g3x">${Array.from({ length: 9 }, (_, i) => `<button class="mcell" onpointerdown="wrathHit(${i})">${i === cur ? '🍽️' : ''}</button>`).join('')}</div>`; };
-  window.wrathHit = i => { if (i === cur) { hits++; cur = -1; draw(); } };
+  window.wrathHit = i => { if (i === cur) { hits++; cur = -1; sfx('tap'); draw(); } };
   const sp = setInterval(() => { let n; do { n = rint(9); } while (n === cur); cur = n; draw(); }, 720);
   const tm = setInterval(() => { t--; if (t <= 0) { stopGame(); sinEnd('wrath', hits, `접시 ${hits}장을 깨뜨렸다!`); } else draw(); }, 1000);
   lockGame(() => { clearInterval(sp); clearInterval(tm); }); draw();
@@ -174,7 +174,7 @@ function memStart() {
     if (first < 0) { first = i; draw(); return; }
     moves++; const a = cards[first];
     if (a.v === c.v) { a.done = c.done = true; a.open = c.open = false; first = -1; pairs++; draw();
-      if (pairs === 8) { const coins = Math.max(6, 36 - (moves - 8) * 2), r = reward('memory', coins); finishGame(`<h2 style="color:var(--gold2);margin-top:0">🃏 다 찾았어요!</h2><p>${moves}번 뒤집어 완성</p><p class="muted">${r}</p><div class="row"><button class="primary" onclick="closeModal();memStart()">다시</button><button onclick="closeModal()">닫기</button></div>`); }
+      if (pairs === 8) { const coins = Math.max(3, 18 - (moves - 8)), r = reward('memory', coins); finishGame(`<h2 style="color:var(--gold2);margin-top:0">🃏 다 찾았어요!</h2><p>${moves}번 뒤집어 완성</p><p class="muted">${r}</p><div class="row"><button class="primary" onclick="closeModal();memStart()">다시</button><button onclick="closeModal()">닫기</button></div>`); }
     } else { lock = true; draw(); tos.push(setTimeout(() => { a.open = c.open = false; first = -1; lock = false; draw(); }, 750)); }
   };
   lockGame(() => tos.forEach(clearTimeout)); draw();
@@ -194,7 +194,7 @@ VIEWS.tarot = () => {
   if (t) { const c = TAROT[t.card]; return `<div class="panel"><h2>🔮 타로 운세</h2><div class="card" style="text-align:center;padding:20px"><div style="font-size:3rem">${t.rev ? '🙃' : '🃏'}</div><h2 style="margin:6px 0">${c[0]}${t.rev ? ' (역방향)' : ''}</h2><p class="story">${t.rev ? '조심스럽게… ' : ''}${c[1]}</p><p class="muted">오늘 받은 은화 +${t.coins}</p></div><p class="muted">내일 한국 시간 자정에 다시 뽑을 수 있어요.</p></div>`; }
   return `<div class="panel"><h2>🔮 타로 운세</h2><p class="muted">하루 한 장. 마음이 가는 카드를 고르세요.</p><div class="mgrid" style="grid-template-columns:repeat(3,1fr)">${[0, 1, 2].map(i => `<button class="mcell cardf" style="font-size:2.4rem" onclick="tarotPick()">🂠</button>`).join('')}</div></div>`;
 };
-function tarotPick() { const today = kstDate(); if (P.tarot && P.tarot.date === today) return; const card = rint(TAROT.length), rev = Math.random() < .3, coins = 3 + rint(13);
+function tarotPick() { const today = kstDate(); if (P.tarot && P.tarot.date === today) return; const card = rint(TAROT.length), rev = Math.random() < .3, coins = 2 + rint(7);
   P.tarot = { date: today, card, rev, coins }; earn(coins); render(); toast(`🔮 ${TAROT[card][0]} · +${coins} 은화`); }
 
 /* ================= 살롱 블랙잭 (여럿이) ================= */
@@ -278,7 +278,7 @@ VIEWS.blackjack = () => {
 let TF2 = { s: ['', '', ''], lie: 0 };
 VIEWS.truth = () => {
   const list = TRUTHS.slice(0, 15);
-  return `<div class="panel"><h2>🎭 진실과 거짓</h2><p class="muted">진술 셋 중 하나는 거짓말. 맞히면 +10 은화, 출제자는 속은 사람 한 명당 +3 은화(최대 15).</p>
+  return `<div class="panel"><h2>🎭 진실과 거짓</h2><p class="muted">진술 셋 중 하나는 거짓말. 맞히면 +5 은화, 출제자는 속은 사람 한 명당 +2 은화(최대 10).</p>
    <h3>내 진술 올리기</h3>${[0, 1, 2].map(i => `<div class="row" style="margin:4px 0;flex-wrap:nowrap"><label style="flex:0 0 auto"><input type="radio" name="tlie" style="width:auto" ${TF2.lie === i ? 'checked' : ''} onchange="TF2.lie=${i}"> 거짓</label><input maxlength="80" value="${esc(TF2.s[i])}" oninput="TF2.s[${i}]=this.value" placeholder="진술 ${i + 1}"></div>`).join('')}
    <button class="primary" onclick="truthPost()">올리기</button></div>
    ${list.map(t => { const mine = t.uid === ME.uid, my = (t.votes || {})[ME.uid], nv = Object.keys(t.votes || {}).length, rev = t.status === 'revealed';
@@ -300,8 +300,8 @@ function truthPayout() {
   if (!P || !ME) return; P.truthPaid = P.truthPaid || []; let ch = false;
   TRUTHS.filter(t => t.status === 'revealed' && !P.truthPaid.includes(t.id)).forEach(t => {
     const v = t.votes || {};
-    if (t.uid === ME.uid) { const fooled = Object.values(v).filter(x => x !== t.lie).length; if (fooled) { earn(Math.min(15, fooled * 3)); toast(`🎭 ${fooled}명을 속였어요! +${Math.min(15, fooled * 3)}`); } P.truthPaid.push(t.id); ch = true; }
-    else if (v[ME.uid] != null) { if (v[ME.uid] === t.lie) { earn(10); toast('🎭 거짓을 맞혔어요! +10'); } P.truthPaid.push(t.id); ch = true; }
+    if (t.uid === ME.uid) { const fooled = Object.values(v).filter(x => x !== t.lie).length; if (fooled) { earn(Math.min(10, fooled * 2)); toast(`🎭 ${fooled}명을 속였어요! +${Math.min(10, fooled * 2)}`); } P.truthPaid.push(t.id); ch = true; }
+    else if (v[ME.uid] != null) { if (v[ME.uid] === t.lie) { earn(5); toast('🎭 거짓을 맞혔어요! +5'); } P.truthPaid.push(t.id); ch = true; }
   });
   if (ch) { P.truthPaid = P.truthPaid.slice(-60); saveP(); }
 }

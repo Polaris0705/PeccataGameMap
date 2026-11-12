@@ -98,6 +98,13 @@ table{width:100%;border-collapse:collapse;font-size:.88rem}td,th{border-bottom:1
 .mapbox{position:relative}
 #plMap{width:100%;display:block;border-radius:8px;cursor:pointer}
 .chip{display:inline-block;padding:3px 10px;border-radius:12px;border:1px solid var(--line);margin:3px;font-size:.85rem;cursor:pointer}
+.dpad{border:1px solid var(--line);border-radius:10px;overflow:hidden;background:#fffdf7;touch-action:none}
+.dcanvas{display:block;width:100%;touch-action:none;cursor:crosshair}
+.dtools{display:flex;gap:5px;flex-wrap:wrap;align-items:center;margin-top:6px}
+.dcol{width:28px;height:28px;border-radius:50%;padding:0;border:2px solid var(--line)}
+.dcol.on{border-color:var(--gold2);box-shadow:0 0 0 2px var(--gold)}
+.dsz{display:inline-block;border-radius:50%;background:var(--text);vertical-align:middle}
+.glog{max-height:150px;overflow-y:auto;margin-top:6px}
 .qitem{display:flex;align-items:center;gap:8px;justify-content:space-between;flex-wrap:wrap}
 .chan{text-align:left;padding:5px 10px;font-size:.82rem;white-space:nowrap;flex:0 0 auto}
 .chan.add{color:var(--gold2);border-style:dashed}
@@ -244,11 +251,11 @@ const HOS = [
 ];
 
 const SEEDS = [
-  {id:'mint',  name:'박하',      icon:'🌿', cost:5,   min:3,  sell:12},
-  {id:'rose',  name:'장미',      icon:'🌹', cost:15,  min:10, sell:40},
-  {id:'lav',   name:'라벤더',    icon:'💜', cost:30,  min:20, sell:85},
-  {id:'lily',  name:'달빛 백합', icon:'🤍', cost:60,  min:45, sell:190},
-  {id:'mand',  name:'맨드레이크',icon:'🥀', cost:100, min:90, sell:360}
+  {id:'mint',  name:'박하',      icon:'🌿', cost:5,   min:3,  sell:8},
+  {id:'rose',  name:'장미',      icon:'🌹', cost:15,  min:10, sell:24},
+  {id:'lav',   name:'라벤더',    icon:'💜', cost:30,  min:20, sell:50},
+  {id:'lily',  name:'달빛 백합', icon:'🤍', cost:60,  min:45, sell:110},
+  {id:'mand',  name:'맨드레이크',icon:'🥀', cost:100, min:90, sell:210}
 ];
 const PLOT_COST = [50,120,250]; // 4,5,6번째 화단
 
@@ -368,16 +375,16 @@ function makeMock(){
     signOut:async()=>setCur(null),
     resetPw:async()=>{},
     get:async p=>clone(D[p]??null),
-    set:async(p,d,m)=>{D[p]=m?{...(D[p]||{}),...clone(d)}:clone(d);persist();},
-    update:async(p,d)=>{if(!D[p])throw new Error('문서 없음');const o={...D[p]};Object.entries(clone(d)).forEach(([k,v])=>{if(k.includes('.')){const ks=k.split('.');let t=o;ks.slice(0,-1).forEach(x=>{t[x]=Object.assign({},t[x]||{});t=t[x];});t[ks[ks.length-1]]=v;}else o[k]=v;});D[p]=o;persist();},
-    tx:async(p,fn)=>{const nd=fn(clone(D[p]??null));if(nd===undefined)return false;D[p]=clone(nd);persist();return true;},
-    del:async p=>{delete D[p];persist();},
-    add:async(c,d)=>{const id=Math.random().toString(36).slice(2,12);D[c+'/'+id]=clone(d);persist();return id;},
+    set:async(p,d,m)=>{D=load();D[p]=m?{...(D[p]||{}),...clone(d)}:clone(d);persist();},
+    update:async(p,d)=>{D=load();if(!D[p])throw new Error('문서 없음');const o={...D[p]};Object.entries(clone(d)).forEach(([k,v])=>{if(k.includes('.')){const ks=k.split('.');let t=o;ks.slice(0,-1).forEach(x=>{t[x]=Object.assign({},t[x]||{});t=t[x];});t[ks[ks.length-1]]=v;}else o[k]=v;});D[p]=o;persist();},
+    tx:async(p,fn)=>{D=load();const nd=fn(clone(D[p]??null));if(nd===undefined)return false;D[p]=clone(nd);persist();return true;},
+    del:async p=>{D=load();delete D[p];persist();},
+    add:async(c,d)=>{D=load();const id=Math.random().toString(36).slice(2,12);D[c+'/'+id]=clone(d);persist();return id;},
     onDoc:(p,cb)=>{const s={p,cb,last:undefined};subsD.push(s);setTimeout(()=>{s.last=JSON.stringify(D[p]??null);cb(clone(D[p]??null));},0);return()=>{const i=subsD.indexOf(s);if(i>=0)subsD.splice(i,1);};},
     onCol:(c,cb)=>{const s={c,cb,last:undefined};subsC.push(s);setTimeout(()=>{const l=list(c);s.last=JSON.stringify(l);cb(l);},0);return()=>{const i=subsC.indexOf(s);if(i>=0)subsC.splice(i,1);};},
     onQuery:(c,o,cb)=>{const s={c,o,cb,last:undefined};subsC.push(s);setTimeout(()=>{const l=qlist(c,o);s.last=JSON.stringify(l);cb(l);},0);return()=>{const i=subsC.indexOf(s);if(i>=0)subsC.splice(i,1);};},
     getCol:async c=>list(c),
-    batch:async ops=>{ops.forEach(o=>{if(o.op==='set')D[o.path]=clone(o.data);else if(o.op==='del')delete D[o.path];else D[o.path]={...(D[o.path]||{}),...clone(o.data)};});persist();}
+    batch:async ops=>{D=load();ops.forEach(o=>{if(o.op==='set')D[o.path]=clone(o.data);else if(o.op==='del')delete D[o.path];else D[o.path]={...(D[o.path]||{}),...clone(o.data)};});persist();}
   };
 }
 
@@ -422,11 +429,12 @@ const uname=u=>u?(u.name||u.email):'?';
 
 function onAuth(u){
   unsubs.forEach(f=>{try{f();}catch(e){}});unsubs=[];
-  ME=u;PROF=null;P=null;IS_ADMIN=false;CALL=null;
+  ME=u;PROF=null;P=null;IS_ADMIN=false;CALL=null;attChecked=false;
   document.body.classList.remove('kp');
   const sw=$('#schedWrap');sw.innerHTML='';sw.style.display='none';
   if(typeof chatOnAuth==='function')chatOnAuth(null);
   if(typeof gamesOnAuth==='function')gamesOnAuth(null);
+  if(typeof partyOnAuth==='function')partyOnAuth(null);
   if(!u){THEME_GLOBAL=null;applyTheme(THEME_DEF);render();return;}
   IS_ADMIN=isAdminEmail(u.email);
   if(IS_ADMIN)document.body.classList.add('kp');
@@ -434,17 +442,18 @@ function onAuth(u){
   const sub=(f)=>unsubs.push(f);
   sub(B.onDoc('users/'+u.uid,d=>{
     if(!d){setTimeout(async()=>{if(ME&&ME.uid===u.uid&&!(await B.get('users/'+u.uid)))B.set('users/'+u.uid,{name:u.name||u.email.split('@')[0],email:u.email,ho:'',at:Date.now()});},1500);return;}
-    PROF=d;if(typeof chatOnProf==='function')chatOnProf();softRender();
+    PROF=d;if(typeof chatOnProf==='function')chatOnProf();maybeAtt();softRender();
   }));
   sub(B.onDoc('progress/'+u.uid,d=>{
     if(!d){P=freshP();saveP();}else P=Object.assign(freshP(),d);
     if(!TF)applyTheme();
+    maybeAtt();
     softRender();
   }));
   sub(B.onDoc('public/main',d=>{PUB=d;if(typeof chatInputSoft==='function')chatInputSoft();softRender();}));
   sub(B.onDoc('settings/theme',d=>{THEME_GLOBAL=d;if(!TF)applyTheme();}));
   sub(B.onDoc('settings/rooms',d=>{ROOMS=Object.assign({rooms:{},gather:null},d||{});softRender();}));
-  sub(B.onDoc('settings/game',d=>{EGG=Object.assign({on:true,mode:'personal',perDay:3,coins:5,salt:''},(d&&d.egg)||{});softRender();}));
+  sub(B.onDoc('settings/game',d=>{EGG=Object.assign({on:true,mode:'personal',perDay:3,coins:3,salt:''},(d&&d.egg)||{});softRender();}));
   sub(B.onCol('users',l=>{USERS=l;if(tab==='map')setTimeout(drawPlMap,40);if(typeof chatOnUsers==='function')chatOnUsers();softRender();}));
   sub(B.onCol('bookings',l=>{BOOKINGS=l.sort((a,b)=>(b.at||0)-(a.at||0));if(IS_ADMIN){pushPending();refreshBookList();}softRender();}));
   sub(B.onCol('items',l=>{ITEMS=l.sort((a,b)=>(a.at||0)-(b.at||0));softRender();if(MODAL_ITEM)refreshItemModal();}));
@@ -461,6 +470,7 @@ function onAuth(u){
   }
   if(typeof chatOnAuth==='function')chatOnAuth(u);
   if(typeof gamesOnAuth==='function')gamesOnAuth(u);
+  if(typeof partyOnAuth==='function')partyOnAuth(u);
 }
 
 /* ================= 렌더 ================= */
@@ -511,6 +521,7 @@ function headerHtml(){
      <button onclick="MENU=false;render();openProfile()">👤 프로필 편집</button>
      <button onclick="MENU=false;render();openTheme()">🎨 테마 · 글꼴</button>
      <button onclick="MENU=false;render();openAppModal()">📱 앱 · 알림</button>
+     <button onclick="MENU=false;toggleSfx();render()">${SFX_ON?'🔇 효과음 끄기':'🔊 효과음 켜기'}</button>
      ${IS_ADMIN?'<button onclick="MENU=false;render();openGameSettings()">⚙ 저택 설정 (KP)</button>':''}
      <hr><button class="danger" onclick="MENU=false;logout()">로그아웃</button></div>`:''}</div></div></header>`;
 }
@@ -719,7 +730,7 @@ async function saveThemeGlobal(){const t=themeOf(TF);try{await B.set('settings/t
   THEME_GLOBAL=t;P.theme={on:false};saveP();TF=null;closeModal();applyTheme();toast('모두의 기본 테마로 저장했어요');}
 
 /* ================= KP: 저택 설정 ================= */
-let EGG={on:true,mode:'personal',perDay:3,coins:5,salt:''};
+let EGG={on:true,mode:'personal',perDay:3,coins:3,salt:''};
 function openGameSettings(){window._eg=Object.assign({},EGG);gsModal();}
 function gsModal(){const e=window._eg;
   modal(`<h2 style="color:var(--gold2);margin-top:0">⚙ 저택 설정</h2><h3>지도 이스터에그 은화</h3>
@@ -734,10 +745,36 @@ function gsModal(){const e=window._eg;
 async function saveGameSettings(){const e=window._eg;e.perDay=Math.max(1,Math.min(20,e.perDay|0||3));e.coins=Math.max(1,Math.min(500,e.coins|0||5));
   try{await B.set('settings/game',{egg:clean(e)},true);}catch(x){return toast('저장 실패: '+(x.code||x.message));}closeModal();toast('저장했어요');}
 
+/* ================= 효과음 ================= */
+let SFX_ON=(()=>{try{return localStorage.getItem('peccata_sfx')!=='0';}catch(e){return true;}})();
+const SFX={coin:[[988,.07],[1319,.15]],ok:[[523,.08],[659,.08],[784,.16]],bad:[[220,.16],[175,.24]],tap:[[700,.04]],spark:[[1568,.05],[2093,.05],[2637,.12]],pop:[[880,.05],[1175,.05]],win:[[523,.09],[659,.09],[784,.09],[1047,.25]]};
+function sfx(k){
+  if(!SFX_ON)return;const N=SFX[k];if(!N)return;
+  try{if(!audioCtx)audioCtx=new (window.AudioContext||window.webkitAudioContext)();if(audioCtx.state==='suspended')audioCtx.resume();
+    const t=audioCtx.currentTime;let o=0;
+    N.forEach(([f,d])=>{const os=audioCtx.createOscillator(),g=audioCtx.createGain();os.type=k==='bad'?'sawtooth':'triangle';os.frequency.value=f;
+      g.gain.setValueAtTime(.0001,t+o);g.gain.exponentialRampToValueAtTime(k==='bad'?.08:.16,t+o+.01);g.gain.exponentialRampToValueAtTime(.0001,t+o+d);
+      os.connect(g).connect(audioCtx.destination);os.start(t+o);os.stop(t+o+d+.03);o+=d*.8;});}catch(e){}
+}
+function toggleSfx(){SFX_ON=!SFX_ON;try{localStorage.setItem('peccata_sfx',SFX_ON?'1':'0');}catch(e){}toast(SFX_ON?'🔊 효과음을 켰어요':'🔇 효과음을 껐어요');if(SFX_ON)sfx('ok');}
+
+/* ================= 출석 보상 ================= */
+const ATT=[10,12,14,16,18,20,30];let attChecked=false;
+function maybeAtt(){if(attChecked||!P||!PROF||(!IS_ADMIN&&!PROF.ho))return;attChecked=true;setTimeout(checkAtt,900);}
+function checkAtt(){
+  if(!P||!ME)return;const t=kstDate(),a=P.att||{};if(a.last===t)return;
+  const y=new Date(Date.now()+9*36e5-864e5).toISOString().slice(0,10),streak=a.last===y?((a.streak||0)%7)+1:1,c=ATT[streak-1];
+  P.att={last:t,streak};earn(c);
+  if(modalOpen())return toast(`📅 출석 ${streak}일째 +${c} 은화`);
+  modal(`<div style="text-align:center"><div style="font-size:2.6rem">📅</div><h2 style="color:var(--gold2);margin:4px 0">출석 ${streak}일째</h2><p>오늘의 출석 보상 <b>+${c} 은화</b></p>
+   <div class="toggles" style="justify-content:center">${ATT.map((v,i)=>`<span class="chip ${i<streak?'on':''}">${i+1}일 · ${v}</span>`).join('')}</div>
+   <p class="muted">7일 연속이면 30 은화! 하루라도 빠지면 1일째부터 다시 시작해요.</p><button class="primary" onclick="closeModal()">받기</button></div>`);
+}
+
 /* ================= 진행도 ================= */
 function freshP(){return {coins:CONFIG.startCoins,earned:0,plotCount:3,plots:Array.from({length:6},()=>({seed:null,start:0,dur:0})),riddles:{},owned:['t0'],title:'t0',frame:'',secret:false,memo:''};}
 function saveP(){if(ME&&P)B.set('progress/'+ME.uid,clean(P));}
-function earn(n){P.coins+=n;P.earned+=n;saveP();}
+function earn(n){P.coins+=n;P.earned+=n;saveP();if(n>0)sfx('coin');}
 function spend(n){if(P.coins<n){toast('은화가 부족해요');return false;}P.coins-=n;saveP();return true;}
 const growMul=()=>mySin()==='sloth'?0.75:1;
 const sellMul=()=>mySin()==='greed'?1.15:1;
@@ -918,7 +955,7 @@ async function eggTap(key,mx,my,cv,ev){
       catch(x){P.egg.found.push(best.id);saveP();return toast('누군가 먼저 가져간 자리 같다…');}
       finally{eggBusy=false;}
     }
-    P.egg.found.push(best.id);P.egg.n++;earn(EGG.coins);
+    P.egg.found.push(best.id);P.egg.n++;earn(EGG.coins);sfx('spark');
     sparkle(cv,ev,'+'+EGG.coins);toast(`✨ 반짝! 은화 ${EGG.coins}개를 찾았다 (오늘 ${P.egg.n}/${EGG.perDay})`);
   }else if(bd<0.13&&P.egg.n<EGG.perDay&&Date.now()-eggHintAt>5000){eggHintAt=Date.now();sparkle(cv,ev,'',true,true);toast('…근처에서 무언가 반짝인 것 같다');}
 }
@@ -1130,7 +1167,7 @@ function answer(id,choice){
     if(r.type==='num'){const m=v.replace(/,/g,'').match(/-?\d+(\.\d+)?/);ok=!!m&&Math.abs(parseFloat(m[0])-r.ans)<1e-9;}
     else ok=v.replace(/\D/g,'').replace(/^0+/,'')===r.ans;}
   if(ok){const g=curReward(r);st.solved=true;st.got=g;earn(g);render();openRiddle(id);toast(`정답! +${g} 은화`);}
-  else{st.wrong++;saveP();render();openRiddle(id);toast('아쉽지만 틀렸어요…');}
+  else{st.wrong++;saveP();render();openRiddle(id);toast('아쉽지만 틀렸어요…');sfx('bad');}
 }
 function openSecret(){
   if(!RIDDLES.every(r=>rs(r.id).solved))return toast('아직 열리지 않는 문이에요');
@@ -1342,5 +1379,7 @@ setInterval(()=>{if(ME&&P&&(tab==='garden'||tab==='lobby')&&!modalOpen())softRen
 </script>
 <script src="chat.js"></script>
 <script src="games.js"></script>
+<script src="party.js"></script>
+<script src="draw.js"></script>
 </body>
 </html>
