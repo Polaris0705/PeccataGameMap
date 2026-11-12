@@ -129,6 +129,16 @@ service cloud.firestore {
       allow create: if signedIn() && request.resource.data.from == request.auth.uid;
     }
 
+    match /settings/{id} {
+      allow read: if signedIn();
+      allow write: if isAdmin();
+    }
+
+    match /eggs/{id} {
+      allow read: if signedIn();
+      allow create: if signedIn() && request.resource.data.uid == request.auth.uid;
+    }
+
     match /notes/{id} {
       allow read: if signedIn();
       allow create: if signedIn() && request.resource.data.uid == request.auth.uid

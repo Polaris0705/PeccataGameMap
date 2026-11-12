@@ -8,7 +8,8 @@ let PORTRAITS = { portraits: {}, tokens: {} };
 function chatReset() {
   Object.assign(CH, { cur: 'rp', msgs: {}, meta: {}, subs: {}, metaSubs: {}, draft: {}, kind: 'ic', speaker: 'narr',
     edit: null, sel: null, stick: true, atBottom: true, scroll: 0, idx: [], idxHo: null, idxUnsub: null,
-    pendingImg: '', diceOpen: false, lastLock: null, defaultsDone: false });
+    pendingImg: '', diceOpen: false, lastLock: null, defaultsDone: false, sheetOpen: false });
+  try { CH.dockOpen = localStorage.getItem('peccata_dock') !== '0'; } catch (e) { CH.dockOpen = true; }
 }
 chatReset();
 
@@ -23,7 +24,9 @@ function setRead(ch, t) { const m = readMap(); if ((m[ch] || 0) >= t) return; m[
 /* ---------- 구독 ---------- */
 function chatOnAuth(u) {
   chatReset();
+  unmountChatDock();
   if (!u) return;
+  mountChatDock();
   unsubs.push(B.onDoc('assets/portraits', d => { PORTRAITS = d || { portraits: {}, tokens: {} }; chatData(); }));
   ['rp', 'ooc'].forEach(id => { metaSub(id); chanSub(id); });
   if (IS_ADMIN) {
@@ -40,8 +43,10 @@ function chatOnAuth(u) {
   }
   chatOnUsers(); chatOnProf();
 }
-function chatOnUsers() { if (!ME) return; USERS.filter(u => u.id !== ME.uid).forEach(u => chanSub(dmId(ME.uid, u.id))); }
+function chatOnUsers() { if (!ME) return; USERS.filter(u => u.id !== ME.uid).forEach(u => chanSub(dmId(ME.uid, u.id))); renderChatParts(); }
+function chatInputSoft() { const a = document.activeElement; if (a && a.closest && a.closest('#chatIn')) return; refreshInput(); }
 function chatOnProf() {
+  if (ME && PROF) chatInputSoft();
   if (!ME || IS_ADMIN || !PROF) return;
   const ho = PROF.ho || '';
   if (ho === CH.idxHo) return;
@@ -64,17 +69,14 @@ function chanSub(id) {
 }
 function newMsgCheck(id, prev, l) {
   if (!prev) return;
-  const viewing = tab === 'chat' && CH.cur === id && !document.hidden;
+  const viewing = chatVisible() && CH.cur === id;
   l.filter(m => m.uid !== ME.uid && !m.deleted && !prev.find(p => p.id === m.id)).forEach(m => {
     if (viewing) return;
     const me = (m.mentions || []).includes(ME.uid), dm = id.startsWith('dm_');
     if (me || dm) toast(`💬 ${dm ? '귓속말' : chanTitle(id)} · ${speakerOf(m).name}: ${(m.text || (m.dice ? '🎲' : '🖼')).slice(0, 40)}`);
   });
 }
-function chatData() {
-  if (tab === 'chat' && $('#chatLog')) renderChatParts();
-  else softRender();
-}
+function chatData() { renderChatParts(); }
 
 /* ---------- 채널 목록 ---------- */
 function chanList() {
@@ -95,15 +97,16 @@ function unread(id) {
   for (let i = l.length - 1; i >= 0; i--) if (l[i].uid !== ME.uid && !l[i].deleted) { last = l[i]; break; }
   return !!last && last.at > (readMap()[id] || 0);
 }
-function chatBadge() { return ME && chanList().some(c => c.id !== CH.cur || tab !== 'chat' ? unread(c.id) : false) ? ' <span class="dot"></span>' : ''; }
+function anyUnread() { return !!ME && chanList().some(c => (c.id !== CH.cur || !chatVisible()) && unread(c.id)); }
+function chatBadge() { return anyUnread() ? ' <span class="dot"></span>' : ''; }
 function chanListHtml(L) {
   let h = '', sec = '';
   L.forEach(c => {
-    if (c.sec !== sec) { sec = c.sec; h += `<div class="chsec">${sec}</div>`; }
+    if (c.sec !== sec) { sec = c.sec; }
     const icon = c.sec === '비밀' ? '🕯 ' : c.sec === '귓속말' ? '✉ ' : '# ';
     h += `<button class="chan ${c.id === CH.cur ? 'on' : ''}" onclick="openChan('${c.id}')">${icon}${esc(chanTitle(c.id))}${isLocked(c.id) ? ' 🔒' : ''}${c.id !== CH.cur && unread(c.id) ? '<span class="dot"></span>' : ''}</button>`;
   });
-  if (IS_ADMIN) h += `<button class="chan add" onclick="chanEdit()">＋ 비밀 채널</button>`;
+  if (IS_ADMIN) h += `<button class="chan add" onclick="chanEdit()">＋ 비밀</button>`;
   return h;
 }
 function chatHeadHtml() {
@@ -118,26 +121,64 @@ function chatHeadHtml() {
    ${IS_ADMIN && m && m.type === 'secret' ? `<button class="sm" onclick="chanEdit('${id}')">⚙</button>` : ''}<button class="sm" onclick="exportLog()">로그</button></div>`;
 }
 
-/* ---------- 화면 ---------- */
-VIEWS.chat = () => {
-  const L = chanList();
-  if (!L.find(c => c.id === CH.cur)) CH.cur = 'rp';
-  return `<div class="chat"><div class="chanlist" id="chanList">${chanListHtml(L)}</div>
-   <div class="chatmain"><div class="chathead" id="chatHead">${chatHeadHtml()}</div><div id="chatLog"></div><div class="chatin" id="chatIn">${chatInputHtml()}</div></div></div>`;
-};
-function chatAfterRender() { renderChatLog(); CH.lastLock = isLocked(); }
+/* ---------- 도킹 패널 (PC: 오른쪽 상시 / 폰: 💬 버튼) ---------- */
+const DESK_MIN = 1000;
+const isDesk = () => window.innerWidth >= DESK_MIN;
+const chatReady = () => !!(ME && PROF && (IS_ADMIN || PROF.ho));
+function chatVisible() {
+  if (!chatReady() || document.hidden) return false;
+  return isDesk() ? CH.dockOpen : CH.sheetOpen;
+}
+function layoutDock() {
+  const b = document.body, ready = chatReady(), desk = isDesk();
+  b.classList.toggle('chat-on', ready);
+  b.classList.toggle('dock-desk', desk);
+  b.classList.toggle('dock-mob', !desk);
+  b.classList.toggle('dock-open', ready && desk && CH.dockOpen);
+  b.classList.toggle('sheet-open', ready && !desk && CH.sheetOpen);
+  const dot = ready && anyUnread() ? '<span class="dot"></span>' : '';
+  const f = $('#chatFab'); if (f) f.innerHTML = '💬' + dot;
+  const t = $('#dockTab'); if (t) t.innerHTML = '💬<br>채<br>팅' + dot;
+}
+window.addEventListener('resize', () => { if (ME) { layoutDock(); if (chatVisible()) renderChatLog(); } });
+function mountChatDock() {
+  if ($('#chatDock')) return;
+  const d = document.createElement('div'); d.id = 'chatDock';
+  d.innerHTML = `<div class="dockhead"><b>💬 채팅</b><button class="sm" onclick="closeDock()" title="접기">✕</button></div>
+    <div class="chanrow" id="chanList"></div><div class="chathead" id="chatHead"></div><div id="chatLog"></div><div class="chatin" id="chatIn"></div>`;
+  document.body.appendChild(d);
+  const f = document.createElement('button'); f.id = 'chatFab'; f.onclick = openDock; document.body.appendChild(f);
+  const t = document.createElement('button'); t.id = 'dockTab'; t.onclick = openDock; document.body.appendChild(t);
+  renderChatParts(); refreshInput();
+}
+function unmountChatDock() {
+  ['chatDock', 'chatFab', 'dockTab'].forEach(id => { const e = document.getElementById(id); if (e) e.remove(); });
+  document.body.classList.remove('chat-on', 'dock-open', 'sheet-open');
+}
+function openDock() {
+  if (isDesk()) { CH.dockOpen = true; try { localStorage.setItem('peccata_dock', '1'); } catch (e) {} }
+  else CH.sheetOpen = true;
+  CH.stick = true; layoutDock(); renderChatParts();
+}
+function closeDock() {
+  if (isDesk()) { CH.dockOpen = false; try { localStorage.setItem('peccata_dock', '0'); } catch (e) {} }
+  else CH.sheetOpen = false;
+  layoutDock();
+}
 function renderChatParts() {
+  if (!$('#chatDock')) return;
   const cl = $('#chanList'); if (cl) cl.innerHTML = chanListHtml(chanList());
   const hd = $('#chatHead'); if (hd) hd.innerHTML = chatHeadHtml();
   renderChatLog();
   const lk = isLocked(); if (CH.lastLock !== lk) { CH.lastLock = lk; refreshInput(); }
-  document.querySelectorAll('nav button').forEach(b => { if (b.getAttribute('onclick') === "go('chat')") b.innerHTML = '채팅' + chatBadge(); });
+  layoutDock();
 }
 function openChan(id) {
   const ta = $('#chatText'); if (ta) CH.draft[CH.cur] = ta.value;
   CH.cur = id; CH.sel = null; CH.edit = null; CH.stick = true; CH.atBottom = true; CH.diceOpen = false; CH.pendingImg = '';
   if (!IS_ADMIN) CH.kind = id === 'ooc' ? 'ooc' : 'ic';
-  render();
+  const el = $('#chatLog'); if (el) delete el.dataset.init;
+  renderChatParts(); refreshInput();
 }
 
 /* ---------- 메시지 표시 ---------- */
@@ -158,8 +199,13 @@ function speakerOf(m) {
   if (m.kind === 'ooc') return { name: m.pname || '?', sub: 'OOC' };
   return { name: cname(m.code), sub: m.pname || '' };
 }
-function avatarHtml(code, name) {
-  const src = code && ((PORTRAITS.tokens || {})[code] || (PORTRAITS.portraits || {})[code]);
+function charImgOf(code) {
+  if (!code) return '';
+  const u = USERS.find(x => x.ho === code && x.charImg);
+  return (u && u.charImg) || (PORTRAITS.tokens || {})[code] || (PORTRAITS.portraits || {})[code] || '';
+}
+function avatarHtml(code, name, uid) {
+  const src = code ? charImgOf(code) : (uid && (userOf(uid) || {}).avatar) || '';
   return src ? `<img src="${src}" alt="">` : esc((name || '?').slice(0, 1));
 }
 function diceHtml(d) {
@@ -178,7 +224,7 @@ function msgHtml(m, prev) {
   const grouped = prev && !prev.deleted && prev.kind !== 'narr' && prev.uid === m.uid && prev.code === m.code && prev.kind === m.kind && m.at - prev.at < 180000;
   const mname = m.kind === 'ic' ? cname(m.code) : (m.pname || '');
   return `<div class="msg ${m.kind}${mine ? ' mine' : ''}${grouped ? ' grp' : ''}${tome}" onclick="selMsg('${m.id}')">
-    <div class="av">${grouped ? '' : avatarHtml(m.kind === 'ic' ? m.code : '', sp.name)}</div>
+    <div class="av">${grouped ? '' : avatarHtml(m.kind === 'ic' ? m.code : '', sp.name, m.kind === 'ooc' ? m.uid : '')}</div>
     <div class="mb">${grouped ? '' : `<div class="nm"><span onclick="event.stopPropagation();mentionInsert(${JSON.stringify(mname).replace(/"/g, '&quot;')})">${esc(sp.name)}</span> <small>${esc(sp.sub)}</small> ${time}</div>`}${body}${grouped && (m.edited || sel) ? time : ''}${acts}</div></div>`;
 }
 function renderChatLog() {
@@ -193,9 +239,9 @@ function renderChatLog() {
   CH.stick = false;
   CH.atBottom = el.scrollHeight - el.scrollTop - el.clientHeight < 80;
   el.onscroll = () => { CH.scroll = el.scrollTop; CH.atBottom = el.scrollHeight - el.scrollTop - el.clientHeight < 80; };
-  const last = l[l.length - 1]; if (last && !document.hidden) setRead(CH.cur, last.at);
+  const last = l[l.length - 1]; if (last && chatVisible()) setRead(CH.cur, last.at);
 }
-document.addEventListener('visibilitychange', () => { if (!document.hidden && tab === 'chat' && ME) renderChatParts(); });
+document.addEventListener('visibilitychange', () => { if (!document.hidden && ME) renderChatParts(); });
 function selMsg(id) { CH.sel = CH.sel === id ? null : id; renderChatLog(); }
 function viewImg(id) { const m = (CH.msgs[CH.cur] || []).find(x => x.id === id); if (m && m.img) modal(`<img src="${m.img}" style="width:100%;border-radius:8px"><button style="margin-top:10px;width:100%" onclick="closeModal()">닫기</button>`); }
 

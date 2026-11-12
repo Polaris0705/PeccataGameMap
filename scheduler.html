@@ -234,6 +234,8 @@ canvas{display:none;}
 .color-swatch:hover,.color-swatch.active{border-color:#333;transform:scale(1.15);}
 .font-preview{font-size:13px;color:var(--text2);margin-left:4px;font-style:italic;}
 
+.slot.pend{border:1.5px dashed #c8954a!important;background:#fff6e6;cursor:pointer;color:#8b5e2a;}
+.slot.pend:hover{background:#ffeccc;}
 /* ═══ 모바일 ═══ */
 .mob-only{display:none;}
 .sb-back{display:none;}
@@ -803,6 +805,10 @@ function renderSchedule(){
             </div>
           </div>`;
         } else {
+          const pb=(window.PENDING||[]).filter(b=>b.day===d&&b.slots.includes(s)&&b.parts.includes(c));
+          if(pb.length){
+            h+=`<div class="slot pend" onclick="try{parent.KPBridge.review('${pb[0].id}')}catch(e){}" title="신청: ${_esc(pb[0].place)} (${_esc(pb[0].name)})${pb.length>1?' 외 '+(pb.length-1)+'건':''}"><div class="slot-in"><div class="slot-txt" style="font-size:8px;">신청${pb.length>1?'×'+pb.length:''}</div><div class="slot-txt">${_esc((pb[0].place||'').substring(0,5))}</div></div></div>`;
+          } else
           h+=`<div class="slot" onclick="openAssignFor('${c}',${d},${s})"><div class="slot-in" style="color:var(--text3);font-size:9px;">—</div></div>`;
         }
       }
@@ -1993,6 +1999,9 @@ renderPlaces();
 renderCevBanner();
 
 /* ═══════════════ 저택 앱 연동 (index.html 안에서 열렸을 때만 동작) ═══════════════ */
+window.PENDING=[];
+function _esc(s){return String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
+window.__setPending=l=>{window.PENDING=l||[];if(!document.querySelector('.overlay.open'))renderSchedule();};
 function mkKey(){return 'm'+Date.now().toString(36)+Math.random().toString(36).slice(2,6);}
 function normPlace(pl){const c=document.getElementById('mapCanvas');if(!c||!c.width||!c.height)return;pl.nx=pl.x/c.width;pl.ny=pl.y/c.height;pl.nw=pl.w/c.width;pl.nh=pl.h/c.height;}
 function togglePlaceReveal(ev,i){ev.stopPropagation();const p=S.places[i];p.revealed=!p.revealed;renderPlaces();}

@@ -1,5 +1,5 @@
 /* 숲속 저택 서비스 워커 — 앱 설치 + 푸시 알림 */
-const CACHE = 'peccata-v4';
+const CACHE = 'peccata-v5';
 const SHELL = ['./', './index.html', './scheduler.html', './chat.js', './config.js', './manifest.json', './icon-192.png', './icon-512.png', './apple-touch-icon.png'];
 
 self.addEventListener('install', e => {
