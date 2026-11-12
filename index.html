@@ -195,6 +195,21 @@ tr.mine .bc.free{background:rgba(201,169,106,.07)}
 .spark b{color:#ffe7a3;text-shadow:0 0 6px #000;font-size:1.1rem}
 .spark.tiny span{font-size:1.1rem;opacity:.55}
 @keyframes spk{0%{opacity:0;transform:translate(-50%,-30%) scale(.4)}20%{opacity:1;transform:translate(-50%,-50%) scale(1.25)}100%{opacity:0;transform:translate(-50%,-130%) scale(1)}}
+
+/* 게임 */
+.mgrid{display:grid;gap:8px;margin-top:8px}.g3x{grid-template-columns:repeat(3,1fr)}.g4x{grid-template-columns:repeat(4,1fr)}
+.mcell{aspect-ratio:1;font-size:2rem;display:grid;place-items:center;padding:0;touch-action:manipulation}
+.cardf.done{opacity:.45}
+.tapzone{height:220px;border-radius:12px;display:grid;place-items:center;text-align:center;background:var(--panel2);border:1px solid var(--line);user-select:none;cursor:pointer;touch-action:manipulation}
+.tapzone.go{background:var(--wine);color:#fff}
+.bar{position:relative;height:38px;background:var(--inbg);border-radius:19px;border:1px solid var(--line);overflow:hidden}
+.bar .mid{position:absolute;left:46%;width:8%;top:0;bottom:0;background:rgba(201,169,106,.4)}
+.bar .ndl{position:absolute;top:0;bottom:0;width:4px;background:var(--gold2)}
+.gem{height:74px;border-radius:12px;opacity:.4;border:none;touch-action:manipulation}.gem.lit{opacity:1;box-shadow:0 0 20px currentColor}
+.pc{display:inline-block;background:#f7f3ea;color:#222;border-radius:6px;padding:4px 7px;margin:3px 2px;font-weight:700;font-family:sans-serif;min-width:30px;text-align:center}
+.pc.red{color:#b0202a}.pc.back{background:var(--wine);color:#fff}
+.choice.on{border-color:var(--gold);color:var(--gold2)}
+.chip.on{background:var(--wine);color:#fff}
 </style>
 </head>
 <body>
@@ -322,6 +337,7 @@ async function makeFirebase(){
     onCol:(c,cb)=>F.onSnapshot(F.collection(db,c),s=>cb(list(s)),e=>console.warn(c,e)),
     onQuery:(c,o,cb)=>F.onSnapshot(F.query(F.collection(db,c),F.orderBy(o.orderBy),F.limitToLast(o.limit)),s=>cb(list(s)),e=>console.warn(c,e)),
     getCol:async c=>list(await F.getDocs(F.collection(db,c))),
+    tx:async(p,fn)=>{let applied=false;await F.runTransaction(db,async t=>{const s=await t.get(ref(p));const nd=fn(s.exists()?s.data():null);applied=nd!==undefined;if(applied)t.set(ref(p),JSON.parse(JSON.stringify(nd)));});return applied;},
     batch:async ops=>{const b=F.writeBatch(db);ops.forEach(o=>{if(o.op==='set')b.set(ref(o.path),o.data);else if(o.op==='del')b.delete(ref(o.path));else b.update(ref(o.path),o.data);});await b.commit();}
   };
 }
@@ -353,7 +369,8 @@ function makeMock(){
     resetPw:async()=>{},
     get:async p=>clone(D[p]??null),
     set:async(p,d,m)=>{D[p]=m?{...(D[p]||{}),...clone(d)}:clone(d);persist();},
-    update:async(p,d)=>{if(!D[p])throw new Error('문서 없음');D[p]={...D[p],...clone(d)};persist();},
+    update:async(p,d)=>{if(!D[p])throw new Error('문서 없음');const o={...D[p]};Object.entries(clone(d)).forEach(([k,v])=>{if(k.includes('.')){const ks=k.split('.');let t=o;ks.slice(0,-1).forEach(x=>{t[x]=Object.assign({},t[x]||{});t=t[x];});t[ks[ks.length-1]]=v;}else o[k]=v;});D[p]=o;persist();},
+    tx:async(p,fn)=>{const nd=fn(clone(D[p]??null));if(nd===undefined)return false;D[p]=clone(nd);persist();return true;},
     del:async p=>{delete D[p];persist();},
     add:async(c,d)=>{const id=Math.random().toString(36).slice(2,12);D[c+'/'+id]=clone(d);persist();return id;},
     onDoc:(p,cb)=>{const s={p,cb,last:undefined};subsD.push(s);setTimeout(()=>{s.last=JSON.stringify(D[p]??null);cb(clone(D[p]??null));},0);return()=>{const i=subsD.indexOf(s);if(i>=0)subsD.splice(i,1);};},
@@ -409,10 +426,11 @@ function onAuth(u){
   document.body.classList.remove('kp');
   const sw=$('#schedWrap');sw.innerHTML='';sw.style.display='none';
   if(typeof chatOnAuth==='function')chatOnAuth(null);
+  if(typeof gamesOnAuth==='function')gamesOnAuth(null);
   if(!u){THEME_GLOBAL=null;applyTheme(THEME_DEF);render();return;}
   IS_ADMIN=isAdminEmail(u.email);
   if(IS_ADMIN)document.body.classList.add('kp');
-  tab=IS_ADMIN?'sched':'lobby';
+  tab=IS_ADMIN?'sched':'map';
   const sub=(f)=>unsubs.push(f);
   sub(B.onDoc('users/'+u.uid,d=>{
     if(!d){setTimeout(async()=>{if(ME&&ME.uid===u.uid&&!(await B.get('users/'+u.uid)))B.set('users/'+u.uid,{name:u.name||u.email.split('@')[0],email:u.email,ho:'',at:Date.now()});},1500);return;}
@@ -425,8 +443,9 @@ function onAuth(u){
   }));
   sub(B.onDoc('public/main',d=>{PUB=d;if(typeof chatInputSoft==='function')chatInputSoft();softRender();}));
   sub(B.onDoc('settings/theme',d=>{THEME_GLOBAL=d;if(!TF)applyTheme();}));
+  sub(B.onDoc('settings/rooms',d=>{ROOMS=Object.assign({rooms:{},gather:null},d||{});softRender();}));
   sub(B.onDoc('settings/game',d=>{EGG=Object.assign({on:true,mode:'personal',perDay:3,coins:5,salt:''},(d&&d.egg)||{});softRender();}));
-  sub(B.onCol('users',l=>{USERS=l;if(typeof chatOnUsers==='function')chatOnUsers();softRender();}));
+  sub(B.onCol('users',l=>{USERS=l;if(tab==='map')setTimeout(drawPlMap,40);if(typeof chatOnUsers==='function')chatOnUsers();softRender();}));
   sub(B.onCol('bookings',l=>{BOOKINGS=l.sort((a,b)=>(b.at||0)-(a.at||0));if(IS_ADMIN){pushPending();refreshBookList();}softRender();}));
   sub(B.onCol('items',l=>{ITEMS=l.sort((a,b)=>(a.at||0)-(b.at||0));softRender();if(MODAL_ITEM)refreshItemModal();}));
   sub(B.onCol('queue',l=>{QUEUE=l.sort((a,b)=>(a.order||0)-(b.order||0));softRender();}));
@@ -441,21 +460,22 @@ function onAuth(u){
     sub(B.onDoc('calls/'+u.uid,d=>{onCall(d);}));
   }
   if(typeof chatOnAuth==='function')chatOnAuth(u);
+  if(typeof gamesOnAuth==='function')gamesOnAuth(u);
 }
 
 /* ================= 렌더 ================= */
-const PL_TABS=[['저택',[['lobby','로비'],['map','지도'],['book','조사 예약'],['items','소지품'],['memo','메모']]],
-               ['여가',[['garden','온실'],['riddle','수수께끼'],['shop','상점'],['rank','랭킹']]]];
+const PL_TABS=[['저택',[['map','🗺 저택 지도'],['book','조사 예약'],['items','소지품'],['memo','메모'],['lobby','내 정보']]]];
 const KP_TABS=[['KP',[['sched','스케줄러'],['kqueue','호출·대기열'],['kitems','아이템'],['memo','메모'],['players','플레이어']]],
                ['여가',[['garden','온실'],['riddle','수수께끼'],['shop','상점'],['rank','랭킹']]]];
-const kpTabs=()=>PROF&&PROF.ho?[KP_TABS[0],['내 HO',[['lobby','로비'],['book','조사 예약'],['items','소지품'],['map','지도']]],KP_TABS[1]]:KP_TABS;
+const kpTabs=()=>PROF&&PROF.ho?[KP_TABS[0],['내 HO',[['map','🗺 저택 지도'],['book','조사 예약'],['items','소지품'],['lobby','내 정보']]]]:[KP_TABS[0],['저택',[['map','🗺 저택 지도']]]];
 function softRender(){
+  if(window.GAME_LOCK){pendingRender=true;return;}
   const a=document.activeElement;
   if(a&&a.closest&&a.closest('#app')&&/^(INPUT|TEXTAREA|SELECT)$/.test(a.tagName)){pendingRender=true;return;}
   clearTimeout(softRender.t);softRender.t=setTimeout(render,30);
 }
 document.addEventListener('focusout',()=>{if(pendingRender)setTimeout(()=>{const a=document.activeElement;if(!(a&&/^(INPUT|TEXTAREA|SELECT)$/.test(a.tagName)))render();},50);});
-function go(t){tab=t;render();window.scrollTo(0,0);}
+function go(t){if(typeof stopGame==='function')stopGame();tab=t;render();window.scrollTo(0,0);}
 function render(){
   pendingRender=false;
   const app=$('#app');
@@ -465,7 +485,7 @@ function render(){
   if(!IS_ADMIN&&!PROF.ho){app.innerHTML=headerHtml()+hoView();return;}
   const groups=IS_ADMIN?kpTabs():PL_TABS;
   const flat=groups.flatMap(g=>g[1]);
-  if(!flat.find(t=>t[0]===tab))tab=flat[0][0];
+  if(!flat.find(t=>t[0]===tab)&&!(typeof FEATS!=='undefined'&&FEATS[tab]))tab=flat[0][0];
   const badge=k=>{
     if(k==='sched'){const n=BOOKINGS.filter(b=>b.status==='pending').length;return n?` <span class="dot"></span>${n}`:'';}
     if(k==='kitems'){const n=ITEMS.filter(i=>i.inspectReq).length;return n?` <span class="dot"></span>${n}`:'';}
@@ -474,7 +494,7 @@ function render(){
     return '';
   };
   app.innerHTML=headerHtml()+groups.map((g,gi)=>`${groups.length>1?`<div class="navlabel">${g[0]}</div>`:''}<nav class="${gi===groups.length-1?'sub':''}">${g[1].map(([k,v])=>`<button class="${tab===k?'on':''}" onclick="go('${k}')">${v}${badge(k)}</button>`).join('')}</nav>`).join('')+
-    `<div id="view">${(VIEWS[tab]||(()=>''))()}</div>`;
+    `${typeof FEATS!=='undefined'&&FEATS[tab]?`<div style="margin:-4px 0 10px"><button class="sm" onclick="go('map')">← 저택 지도로</button>${MAP_PLACE?` <span class="muted">📍 ${esc(MAP_PLACE)}</span>`:''}</div>`:''}<div id="view">${(VIEWS[tab]||(()=>''))()}</div>`;
   $('#schedWrap').style.display=(IS_ADMIN&&tab==='sched')?'block':'none';
   document.body.classList.toggle('insched',IS_ADMIN&&tab==='sched');
   if(tab==='map')drawPlMap();
@@ -628,7 +648,8 @@ function profileModal(){
   modal(`<h2 style="color:var(--gold2);margin-top:0">👤 프로필 편집</h2>
    <label class="f">이름 (닉네임)</label><input maxlength="20" value="${esc(PF.name)}" oninput="PF.name=this.value">
    <div class="grid g2" style="margin-top:12px">${box('avatar','PL 사진 (OOC · 메뉴)','🙂')}${PROF.ho?box('charImg','캐릭터 초상화 · '+esc(cname(PROF.ho)),'🎭'):''}</div>
-   <p class="muted">캐릭터 초상화는 채팅의 인캐 대사와 로비 이름표에 쓰여요. 비워 두면 KP가 스케줄러에 올린 그림이 쓰여요.</p>
+   <p class="muted">캐릭터 초상화는 채팅의 인캐 대사, 로비 이름표, 지도 토큰에 쓰여요. 비워 두면 KP가 스케줄러에 올린 그림이 쓰여요.</p>
+   <label class="muted" style="display:block;margin-top:8px"><input type="checkbox" style="width:auto" ${PROF.shareLoc?'checked':''} onchange="setShare(this.checked)"> 지도에서 내 위치를 다른 사람에게 보여주기</label>
    <div class="row" style="margin-top:8px"><button onclick="closeModal()">취소</button><button class="primary" onclick="saveProfile()">저장</button></div>`);
 }
 async function pfImg(inp,k){const f=inp.files[0];if(!f)return;PF[k]=await compressImage(await readFile(f),k==='charImg'?220:160,.82);profileModal();}
@@ -708,6 +729,7 @@ function gsModal(){const e=window._eg;
    <label class="f" style="flex:1">한 번에 받는 은화<input type="number" min="1" max="500" value="${e.coins}" oninput="_eg.coins=+this.value"></label></div>
    <button class="sm" style="margin-top:8px" onclick="_eg.salt=rid();toast('저장하면 오늘의 은화가 새 자리에 숨겨져요')">🔀 오늘 은화 다시 숨기기</button>
    <p class="muted">공개된 맵에서 장소가 아닌 배경을 누르면 찾을 수 있어요. 날짜는 한국 시간 자정에 바뀌어요.</p>
+   <h3>방</h3><button class="sm" onclick="openRoomSettings()">🗺 방 기능 · 세부 지도 설정</button>
    <div class="row"><button onclick="closeModal()">취소</button><button class="primary" onclick="saveGameSettings()">저장</button></div>`);}
 async function saveGameSettings(){const e=window._eg;e.perDay=Math.max(1,Math.min(20,e.perDay|0||3));e.coins=Math.max(1,Math.min(500,e.coins|0||5));
   try{await B.set('settings/game',{egg:clean(e)},true);}catch(x){return toast('저장 실패: '+(x.code||x.message));}closeModal();toast('저장했어요');}
@@ -762,17 +784,60 @@ async function loadMapData(key){
   if(parts.some(p=>!p))return null;
   return parts.map(p=>p.d).join('');
 }
+/* ---- 방 · 위치 · 소집 ---- */
+let ROOMS={rooms:{},gather:null},MAP_PLACE=null;
+let LOC=(()=>{try{return JSON.parse(localStorage.getItem('peccata_loc')||'null');}catch(e){return null;}})();
+const ROOM_HINTS=[[/정원|온실|마당|뜰|화원/,['garden']],[/서재|도서|서고|연구|서실/,['riddle']],[/응접|살롱|거실|홀|라운지/,['blackjack','truth']],
+  [/주방|부엌|식당|티룸|다이닝|찻집/,['tycoon']],[/놀이|오락|게임|유희|지하/,['sins','memory']],[/탑|다락|천문|별/,['tarot']],[/상점|매점|창고|가게/,['shop']],[/로비|현관|입구|대기/,['rank']]];
+function featsOf(name){const r=ROOMS.rooms&&ROOMS.rooms[name];if(r&&Array.isArray(r.feats))return r.feats.filter(k=>FEATS[k]);const h=ROOM_HINTS.find(([re])=>re.test(name||''));return h?h[1]:[];}
+const subOf=name=>(ROOMS.rooms&&ROOMS.rooms[name]&&ROOMS.rooms[name].sub)||'';
+const placeIdx=name=>((PUB&&PUB.places)||[]).findIndex(p=>p.name===name);
+function unassigned(){const pl=(PUB&&PUB.places)||[];return FEAT_KEYS.filter(k=>!pl.some(p=>featsOf(p.name).includes(k)));}
+function openFeat(k){go(k);}
+function setLoc(p){
+  LOC={map:p.mapKey||'',place:p.name,at:Date.now()};try{localStorage.setItem('peccata_loc',JSON.stringify(LOC));}catch(e){}
+  if(PROF&&PROF.shareLoc)B.update('users/'+ME.uid,{loc:LOC}).catch(()=>{});
+}
+function setShare(v){B.update('users/'+ME.uid,{shareLoc:!!v,loc:v&&LOC?LOC:null}).catch(()=>{});toast(v?'내 위치를 다른 사람에게 보여줘요':'내 위치를 숨겼어요');}
+function selectPlace(i){const p=PUB.places[i];if(!p)return;MAP_PLACE=p.name;if(p.mapKey)mapSel=p.mapKey;setLoc(p);render();
+  setTimeout(()=>{const el=$('#placePanel');if(el)el.scrollIntoView({behavior:'smooth',block:'nearest'});},60);}
+function enterSub(key){mapSel=key;MAP_PLACE=null;render();window.scrollTo(0,0);}
+function whoAt(name){return USERS.filter(u=>u.shareLoc&&u.loc&&u.loc.place===name&&(u.ho||isAdminEmail(u.email)));}
+function featCard(k){const f=FEATS[k];return `<button class="room" onclick="openFeat('${k}')"><div class="rn">${f.ic} ${f.n}</div><div class="muted" style="font-size:.8rem">${f.d}</div></button>`;}
 VIEWS.map=()=>{
-  const maps=(PUB&&PUB.maps)||[];
-  const places=(PUB&&PUB.places)||[];
-  const loose=places.filter(p=>!p.mapKey);
-  if(!maps.length&&!places.length)return `<div class="panel"><h2>저택 지도</h2><p class="muted">아직 공개된 지도나 장소가 없어요.</p></div>`;
-  if(maps.length&&!maps.find(m=>m.key===mapSel))mapSel=maps[0].key;
-  return `<div class="panel"><h2>저택 지도</h2>
-   ${maps.length>1?`<div class="toggles">${maps.map(m=>`<button class="${m.key===mapSel?'on':''}" onclick="mapSel='${m.key}';render()">${esc(m.name)}</button>`).join('')}</div>`:''}
-   ${maps.length?`<div class="mapbox" style="margin-top:10px"><canvas id="plMap"></canvas><p class="muted" id="mapLoading">지도를 불러오는 중…</p></div><p class="muted">표시된 장소를 누르면 그 장소로 조사를 예약할 수 있어요.${EGG.on?' 장소가 아닌 곳에도… 무언가 숨어 있을지 몰라요.':''}</p>`:''}
-   ${loose.length?`<h3>그 밖의 장소</h3>${loose.map(p=>`<span class="chip" style="border-color:${p.color}" onclick="bookAt(PUB.places[${places.indexOf(p)}].name)">${esc(p.name)}</span>`).join('')}`:''}</div>`;
+  const maps=(PUB&&PUB.maps)||[],places=(PUB&&PUB.places)||[];
+  const subKeys=new Set(places.map(p=>subOf(p.name)).filter(Boolean));
+  const tops=maps.filter(m=>!subKeys.has(m.key));const topList=tops.length?tops:maps;
+  if(maps.length&&!maps.find(m=>m.key===mapSel))mapSel=topList[0].key;
+  const parent=places.find(p=>subOf(p.name)===mapSel&&p.mapKey&&p.mapKey!==mapSel);
+  const g=ROOMS.gather&&Date.now()-(ROOMS.gather.at||0)<3*36e5?ROOMS.gather:null;
+  const cur=places.find(p=>p.name===MAP_PLACE);
+  let h='';
+  if(g)h+=`<div class="panel" style="border-color:var(--gold)">📣 <b>${esc(g.by||'KP')}</b>님이 <b>${esc(g.place)}</b>(으)로 모두를 불렀어요.${g.msg?` <span class="muted">"${esc(g.msg)}"</span>`:''}
+    <div class="row" style="margin-top:6px">${placeIdx(g.place)>=0?`<button class="sm primary" onclick="selectPlace(${placeIdx(g.place)})">그곳으로 이동</button>`:''}${IS_ADMIN?'<button class="sm" onclick="clearGather()">소집 해제</button>':''}</div></div>`;
+  if(PROF.shareLoc===undefined)h+=`<div class="panel"><b>내 위치를 다른 사람에게 보여줄까요?</b><p class="muted" style="margin:4px 0 8px">보여주면 내가 있는 방에 내 토큰이 표시돼요. 나중에 프로필 편집에서 바꿀 수 있어요.</p><div class="row"><button class="primary" onclick="setShare(true)">보여주기</button><button onclick="setShare(false)">숨기기</button></div></div>`;
+  if(!maps.length&&!places.length){
+    h+=`<div class="panel"><h2>저택 지도</h2><p class="muted">아직 공개된 지도나 장소가 없어요. KP가 공개하기 전까지는 아래에서 바로 즐길 수 있어요.</p><div class="grid g3">${FEAT_KEYS.map(featCard).join('')}</div></div>`;
+    return h;
+  }
+  h+=`<div class="panel"><div class="row" style="justify-content:space-between"><h2 style="margin:0">저택 지도</h2>${IS_ADMIN?'<button class="sm" onclick="openRoomSettings()">⚙ 방 기능 설정</button>':''}</div>
+   ${parent?`<button class="sm" style="margin:8px 0" onclick="enterSub('${parent.mapKey}')">← ${esc((maps.find(m=>m.key===parent.mapKey)||{}).name||'뒤로')} (으)로</button> <b>${esc(parent.name)}</b>`:
+     (topList.length>1?`<div class="toggles" style="margin-top:8px">${topList.map(m=>`<button class="${m.key===mapSel?'on':''}" onclick="mapSel='${m.key}';MAP_PLACE=null;render()">${esc(m.name)}</button>`).join('')}</div>`:'')}
+   ${maps.length?`<div class="mapbox" style="margin-top:10px"><canvas id="plMap"></canvas><p class="muted" id="mapLoading">지도를 불러오는 중…</p></div>
+   <p class="muted">방을 누르면 그곳으로 이동해요.${LOC&&LOC.place?` 지금 위치: <b>${esc(LOC.place)}</b>`:''}${EGG.on?' 방이 아닌 곳에도… 무언가 숨어 있을지 몰라요.':''}</p>`:''}
+   ${places.filter(p=>!p.mapKey).length?`<h3>그 밖의 장소</h3>${places.map((p,i)=>p.mapKey?'':`<span class="chip ${MAP_PLACE===p.name?'on':''}" style="border-color:${p.color}" onclick="selectPlace(${i})">${esc(p.name)}</span>`).join('')}`:''}</div>`;
+  if(cur){const fs=featsOf(cur.name),sub=subOf(cur.name),sm=maps.find(m=>m.key===sub),ppl=whoAt(cur.name);
+    h+=`<div class="panel" id="placePanel"><h2>📍 ${esc(cur.name)}</h2>${ppl.length?`<p class="muted">여기 있는 사람: ${ppl.map(u=>esc(u.ho?cname(u.ho):uname(u))).join(', ')}</p>`:''}
+     <div class="grid g3">${sm?`<button class="room solved" onclick="enterSub('${sub}')"><div class="rn">🚪 ${esc(sm.name)} 안으로</div><div class="muted" style="font-size:.8rem">세부 지도 보기</div></button>`:''}
+     ${fs.map(featCard).join('')}
+     ${myHo()?`<button class="room" onclick="bookAt(${JSON.stringify(cur.name).replace(/"/g,'&quot;')})"><div class="rn">🗝 이곳 조사 예약</div><div class="muted" style="font-size:.8rem">일정표에서 시간 고르기</div></button>`:''}</div>
+     ${!fs.length&&!sm?'<p class="muted">이 방에서 할 수 있는 건 조사뿐인 것 같아요.</p>':''}</div>`;}
+  const un=unassigned();
+  if(un.length)h+=`<div class="panel"><h2>그 밖의 즐길 거리</h2><p class="muted">아직 어느 방에도 배정되지 않은 것들이에요.</p><div class="grid g3">${un.map(featCard).join('')}</div></div>`;
+  return h;
 };
+const TOKIMG={};
+function tokImg(u){const src=u.charImg||u.avatar;if(!src)return null;let im=TOKIMG[u.id];if(!im||im._src!==src){im=new Image();im._src=src;im.onload=()=>{if(tab==='map')drawPlMap();};im.src=src;TOKIMG[u.id]=im;}return im.complete&&im.naturalWidth?im:null;}
 async function drawPlMap(){
   const cv=$('#plMap');if(!cv||!mapSel)return;
   const key=mapSel,img=MAPIMG[key];
@@ -783,14 +848,48 @@ async function drawPlMap(){
   const W=cv.parentElement.clientWidth,sc=W/img.width;cv.width=W;cv.height=Math.round(img.height*sc);
   const ctx=cv.getContext('2d');ctx.drawImage(img,0,0,cv.width,cv.height);
   const pls=((PUB&&PUB.places)||[]).filter(p=>p.mapKey===key&&p.nx!=null);
-  pls.forEach(p=>{const x=p.nx*cv.width,y=p.ny*cv.height,w=p.nw*cv.width,h=p.nh*cv.height;
-    ctx.fillStyle=p.color+'33';ctx.fillRect(x,y,w,h);ctx.strokeStyle=p.color;ctx.lineWidth=2;ctx.setLineDash([5,3]);ctx.strokeRect(x,y,w,h);ctx.setLineDash([]);
-    ctx.font='bold 13px "Noto Serif KR",serif';const tw=ctx.measureText(p.name).width;ctx.fillStyle='rgba(0,0,0,.65)';ctx.fillRect(x+3,y+3,tw+8,19);ctx.fillStyle='#fff';ctx.fillText(p.name,x+7,y+17);});
+  pls.forEach(p=>{const x=p.nx*cv.width,y=p.ny*cv.height,w=p.nw*cv.width,h=p.nh*cv.height,sel=p.name===MAP_PLACE,here=LOC&&LOC.place===p.name;
+    ctx.fillStyle=p.color+(sel?'55':'33');ctx.fillRect(x,y,w,h);ctx.strokeStyle=sel?'#ffe7a3':p.color;ctx.lineWidth=sel?3:2;ctx.setLineDash(sel?[]:[5,3]);ctx.strokeRect(x,y,w,h);ctx.setLineDash([]);
+    ctx.font='bold 13px sans-serif';const label=(here?'📍 ':'')+p.name+(subOf(p.name)?' 🚪':''),tw=ctx.measureText(label).width;ctx.fillStyle='rgba(0,0,0,.65)';ctx.fillRect(x+3,y+3,tw+8,19);ctx.fillStyle='#fff';ctx.fillText(label,x+7,y+17);
+    whoAt(p.name).slice(0,6).forEach((u,i)=>{const r=11,cx=x+6+r+i*(r*2+3),cy=y+h-6-r;ctx.save();ctx.beginPath();ctx.arc(cx,cy,r,0,Math.PI*2);ctx.closePath();
+      const im=tokImg(u);if(im){ctx.clip();ctx.drawImage(im,cx-r,cy-r,r*2,r*2);ctx.restore();}else{ctx.fillStyle='#1e1916';ctx.fill();ctx.fillStyle='#e6cf9a';ctx.font='bold 11px sans-serif';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText((u.ho?cname(u.ho):uname(u)).slice(0,1),cx,cy+1);ctx.restore();ctx.textAlign='start';ctx.textBaseline='alphabetic';}
+      ctx.beginPath();ctx.arc(cx,cy,r,0,Math.PI*2);ctx.strokeStyle=u.id===ME.uid?'#ffe7a3':'rgba(255,255,255,.7)';ctx.lineWidth=1.5;ctx.stroke();});
+  });
   const l=$('#mapLoading');if(l)l.style.display='none';
   cv.onclick=e=>{const r=cv.getBoundingClientRect(),mx=(e.clientX-r.left)/r.width,my=(e.clientY-r.top)/r.height;
-    const hit=pls.slice().reverse().find(p=>mx>=p.nx&&mx<=p.nx+p.nw&&my>=p.ny&&my<=p.ny+p.nh);if(hit)return bookAt(hit.name);
+    const hit=pls.slice().reverse().find(p=>mx>=p.nx&&mx<=p.nx+p.nw&&my>=p.ny&&my<=p.ny+p.nh);if(hit)return selectPlace(placeIdx(hit.name));
     eggTap(key,mx,my,cv,e);};
 }
+/* ---- KP: 방 기능 설정 / 소집 ---- */
+function openRoomSettings(){
+  const places=(PUB&&PUB.places)||[];window._rs={};
+  places.forEach(p=>{window._rs[p.name]={feats:featsOf(p.name).slice(),sub:subOf(p.name)};});
+  rsModal();
+}
+function rsModal(){
+  const places=(PUB&&PUB.places)||[],maps=(PUB&&PUB.maps)||[];
+  modal(`<h2 style="color:var(--gold2);margin-top:0">🗺 방 기능 설정</h2><p class="muted">PL에게 공개된 장소만 나와요. 방마다 할 수 있는 것과, 들어가면 보일 세부 지도를 정해요.</p>
+   ${places.length?places.map((p,i)=>{const r=window._rs[p.name];return `<div class="card"><b>${esc(p.name)}</b>
+     <div class="toggles" style="margin:6px 0">${FEAT_KEYS.map(k=>`<button class="sm ${r.feats.includes(k)?'on':''}" onclick="rsTog(${i},'${k}')">${FEATS[k].ic} ${FEATS[k].n}</button>`).join('')}</div>
+     <label class="muted" style="font-size:.8rem">세부 지도 <select style="width:auto" onchange="window._rs[PUB.places[${i}].name].sub=this.value"><option value="">없음</option>${maps.filter(m=>m.key!==p.mapKey).map(m=>`<option value="${m.key}" ${r.sub===m.key?'selected':''}>${esc(m.name)}</option>`).join('')}</select></label></div>`;}).join(''):'<p class="muted">공개된 장소가 없어요.</p>'}
+   <div class="row" style="margin-top:8px"><button onclick="closeModal()">취소</button><button class="primary" onclick="rsSave()">저장</button></div>`);
+}
+function rsTog(i,k){const r=window._rs[PUB.places[i].name];r.feats=r.feats.includes(k)?r.feats.filter(x=>x!==k):[...r.feats,k];rsModal();}
+async function rsSave(){const rooms=Object.assign({},ROOMS.rooms||{},window._rs);try{await B.set('settings/rooms',{rooms:clean(rooms)},true);}catch(e){return toast('저장 실패: '+(e.code||e.message));}closeModal();toast('방 기능을 저장했어요');}
+function gatherAsk(){
+  const places=(PUB&&PUB.places)||[];if(!places.length)return toast('먼저 장소를 PL에게 공개해 주세요');
+  modal(`<h2 style="color:var(--gold2);margin-top:0">📣 모두 소집</h2><label class="f">모일 장소</label><select id="gPlace">${places.map(p=>`<option ${/로비|현관|홀/.test(p.name)?'selected':''}>${esc(p.name)}</option>`).join('')}</select>
+   <label class="f">한마디 (선택)</label><input id="gMsg" maxlength="60" placeholder="예: 저녁 식사 시간입니다">
+   <p class="muted">HO가 있는 모든 사람에게 호출 알림이 가고, 지도 위에 소집 안내가 떠요.</p>
+   <div class="row"><button onclick="closeModal()">취소</button><button class="primary" onclick="gatherSend()">소집</button></div>`);
+}
+async function gatherSend(){
+  const place=$('#gPlace').value,msg=$('#gMsg').value.trim(),p=PUB.places.find(x=>x.name===place)||{};
+  await B.set('settings/rooms',{gather:{place,map:p.mapKey||'',msg,by:PROF.name,at:Date.now()}},true);
+  const uids=USERS.filter(u=>u.ho&&u.id!==ME.uid).map(u=>u.id);
+  await callUsers(uids,`📣 ${place}(으)로 모여 주세요${msg?' — '+msg:''}`);closeModal();toast('모두를 불렀어요');
+}
+function clearGather(){B.set('settings/rooms',{gather:null},true);}
 /* ---- 이스터에그 은화 ---- */
 const kstDate=()=>new Date(Date.now()+9*36e5).toISOString().slice(0,10);
 function seeded(str){let h=2166136261>>>0;for(let i=0;i<str.length;i++){h^=str.charCodeAt(i);h=Math.imul(h,16777619)>>>0;}
@@ -1155,7 +1254,9 @@ function callState(uid){const c=callOf(uid);if(!c)return '';return c.ack?`<span 
 VIEWS.kqueue=()=>{
   const ps=players();
   const cur=QUEUE.find(q=>q.status==='current');
-  return `<div class="panel"><h2>대기열</h2>
+  return `<div class="panel"><div class="row" style="justify-content:space-between"><h2 style="margin:0">📣 소집</h2><div class="row" style="flex:0 0 auto"><button class="primary" onclick="gatherAsk()">모두 소집</button>${ROOMS.gather?'<button onclick="clearGather()">소집 해제</button>':''}</div></div>
+   ${ROOMS.gather?`<p class="muted" style="margin:6px 0 0">지금 소집 중: <b>${esc(ROOMS.gather.place)}</b> · ${ago(ROOMS.gather.at)}</p>`:''}</div>
+   <div class="panel"><h2>대기열</h2>
    <button class="primary" style="width:100%" onclick="nextTurn()">▶ 다음 차례 호출${cur?' (현재 차례 완료 처리)':''}</button>
    ${QUEUE.map((q,i)=>{const us=(q.codes||[]).flatMap(usersWithHo);return `<div class="card"><div class="qitem"><div>${q.status==='current'?'<span class="badge live">진행 중</span>':`<span class="badge">${i+1}</span>`} <b>${esc(q.label)}</b><div class="muted">${(q.codes||[]).map(c=>esc(cname(c))).join(', ')} ${us.map(u=>callState(u.id)).join(' ')}</div></div>
      <div class="row" style="flex:0 0 auto"><button class="sm" onclick="callQueue('${q.id}')">호출</button><button class="sm" onclick="moveQ('${q.id}',-1)">↑</button><button class="sm" onclick="moveQ('${q.id}',1)">↓</button><button class="sm danger" onclick="B.del('queue/${q.id}')">완료</button></div></div></div>`;}).join('')||'<p class="muted">대기열이 비어 있어요. 예약을 "승인+대기열"로 처리하거나 아래에서 직접 추가하세요.</p>'}
@@ -1240,5 +1341,6 @@ VIEWS.players=()=>{
 setInterval(()=>{if(ME&&P&&(tab==='garden'||tab==='lobby')&&!modalOpen())softRender();},1000);
 </script>
 <script src="chat.js"></script>
+<script src="games.js"></script>
 </body>
 </html>

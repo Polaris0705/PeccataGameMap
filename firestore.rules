@@ -129,6 +129,24 @@ service cloud.firestore {
       allow create: if signedIn() && request.resource.data.from == request.auth.uid;
     }
 
+    match /games/{id} {
+      allow read, write: if signedIn();
+    }
+
+    match /truths/{id} {
+      allow read: if signedIn();
+      allow create: if signedIn() && request.resource.data.uid == request.auth.uid
+        && request.resource.data.status == 'open';
+      allow update: if signedIn() && (resource.data.uid == request.auth.uid
+        || (resource.data.status == 'open' && onlyChanges(['votes'])));
+      allow delete: if isAdmin() || (signedIn() && resource.data.uid == request.auth.uid);
+    }
+
+    match /truthKeys/{id} {
+      allow read: if signedIn() && resource.data.uid == request.auth.uid;
+      allow create: if signedIn() && request.resource.data.uid == request.auth.uid;
+    }
+
     match /settings/{id} {
       allow read: if signedIn();
       allow write: if isAdmin();
