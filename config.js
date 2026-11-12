@@ -10,16 +10,17 @@ window.APP_CONFIG = {
   // Firebase 콘솔 > ⚙ 프로젝트 설정 > 일반 > 내 앱 에 나오는 값
   // apiKey를 비워 두면 '데모 모드'로 실행돼요.
   firebase: {
-    apiKey: "",
-    authDomain: "",
-    projectId: "",
-    storageBucket: "",
-    messagingSenderId: "",
-    appId: ""
+  apiKey: "AIzaSyCuVtcfb_d1HivI_S2hvdmm8vJklGtVGC4",
+  authDomain: "peccatamap.firebaseapp.com",
+  databaseURL: "https://peccatamap-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId: "peccatamap",
+  storageBucket: "peccatamap.firebasestorage.app",
+  messagingSenderId: "737692222949",
+  appId: "1:737692222949:web:6b68690d00a69ae51e5b0c"
   },
 
   // KP(관리자) 이메일 — firestore.rules 안의 목록과 똑같이 (소문자)
-  adminEmails: ["kp1@example.com", "kp2@example.com"],
+  adminEmails: ["hbfb1107@gmail.com", "amilia0705@gmail.com","nyommyuk@gmail.com"],
 
   // 푸시 알림용 VAPID 공개키 (README 6단계). 비워 두면 푸시 버튼이 숨겨져요.
   vapidPublicKey: "",
