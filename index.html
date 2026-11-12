@@ -157,33 +157,15 @@ table{width:100%;border-collapse:collapse;font-size:.88rem}td,th{border-bottom:1
 <div id="modal"><div class="box" id="mbox"></div></div>
 <div id="toast"></div>
 
+<script src="config.js"></script>
 <script>
-/* =========================================================
-   ▼ 설정 — README를 보고 채워 주세요
-   ========================================================= */
-const CONFIG = {
-  title: "숲속 저택",
-  butler: "집사",
-  // Firebase 콘솔 > 프로젝트 설정 > 내 앱 > SDK 설정의 값을 붙여 넣으세요.
-  // apiKey를 비워 두면 '데모 모드'(이 브라우저 안에서만 동작)로 실행돼요.
-  firebase: {
-    apiKey: "",
-    authDomain: "",
-    projectId: "",
-    storageBucket: "",
-    messagingSenderId: "",
-    appId: ""
-  },
-  // KP(관리자) 이메일 — firestore.rules 안의 목록과 똑같이 맞춰 주세요.
-  adminEmails: ["kp1@example.com", "kp2@example.com"],
-  // 스케줄러 HO 코드 ↔ 칠죄종 (미니게임 특전용)
-  hoSins: { HO1:'wrath', HO2:'greed', HO3:'sloth', HO4:'gluttony', HO5:'pride', HO6:'envy', HO7:'lust' },
-  startCoins: 30,
-  // 채팅 CoC 판정 규칙: 6 = 6판(01~05 크리티컬, 96~100 펌블), 7 = 7판(극단적/어려운 성공)
-  cocEdition: 6,
-  // 푸시 알림용 VAPID 공개키 (README 6단계). 비워 두면 푸시 버튼이 숨겨져요.
-  vapidPublicKey: ""
-};
+/* 설정은 config.js에 있어요. 여기는 기본값이에요 (config.js가 없으면 데모 모드). */
+const CONFIG = (()=>{
+  const D={title:"숲속 저택",butler:"집사",firebase:{apiKey:""},adminEmails:["kp1@example.com","kp2@example.com"],
+    hoSins:{HO1:'wrath',HO2:'greed',HO3:'sloth',HO4:'gluttony',HO5:'pride',HO6:'envy',HO7:'lust'},startCoins:30,cocEdition:6,vapidPublicKey:""};
+  const U=window.APP_CONFIG||{};
+  return Object.assign({},D,U,{firebase:Object.assign({},D.firebase,U.firebase||{}),hoSins:Object.assign({},D.hoSins,U.hoSins||{})});
+})();
 /* ========================================================= */
 const DEMO = !CONFIG.firebase.apiKey;
 const ADMINS = CONFIG.adminEmails.map(e=>e.trim().toLowerCase());

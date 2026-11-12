@@ -4,13 +4,14 @@
 |---|---|
 | `index.html` | 메인 앱. 로그인 후 KP 화면과 PL 화면이 나뉘어요 |
 | `chat.js` | 채팅 기능 (index.html과 같은 폴더에 두세요) |
+| `config.js` | **HB님 설정 파일** (Firebase 값, KP 이메일, 푸시 키). 업데이트할 때 덮어쓰지 마세요 |
 | `scheduler.html` | 기존 Peccata Scheduler에 연동 기능을 더한 버전. KP 화면 안에 들어가요 |
 | `firestore.rules` | Firebase 보안 규칙 |
 | `manifest.json`, `sw.js`, `icon-*.png`, `apple-touch-icon.png` | 앱 설치(PWA)와 푸시 알림용 파일 |
 | `push-server/` | Railway에 올리는 푸시 알림 서버 |
 
 ## 0. 먼저 데모로 확인하기 (선택)
-`index.html`의 `CONFIG.firebase.apiKey`를 비워 두면 **데모 모드**로 열려요. 데이터는 그 브라우저 안에만 저장돼요.
+`config.js`의 `firebase.apiKey`를 비워 두면 **데모 모드**로 열려요. 데이터는 그 브라우저 안에만 저장돼요.
 - `kp1@example.com`으로 가입하면 KP, 다른 이메일로 가입하면 PL이에요.
 - 탭을 두 개 열면 KP와 PL을 동시에 테스트할 수 있어요.
 - 파일을 더블클릭해서 열면 스케줄러 연동이 막혀요. 아래 GitHub Pages에 올려서 열거나, 폴더에서 `python -m http.server`를 실행한 뒤 `http://localhost:8000`으로 열어 주세요.
@@ -24,8 +25,8 @@
    맨 위 `['kp1@example.com', 'kp2@example.com']`를 **KP 두 분의 실제 이메일(소문자)**로 바꾼 뒤 **게시**를 눌러요.
 5. **프로젝트 설정(⚙) › 내 앱 › 웹(</>)**으로 앱을 등록하면 `firebaseConfig` 값이 나와요.
 
-## 2. index.html 설정
-파일 위쪽 `CONFIG`를 채워요.
+## 2. config.js 설정
+`config.js`를 채워요. (설정은 이 파일에만 있어서, 나중에 다른 파일을 새 버전으로 바꿔도 그대로 남아요.)
 ```js
 firebase: { apiKey: "...", authDomain: "...", projectId: "...", storageBucket: "...", messagingSenderId: "...", appId: "..." },
 adminEmails: ["kp본인@gmail.com", "kp동료@gmail.com"],   // rules와 똑같이
@@ -73,7 +74,7 @@ hoSins: { HO1:'wrath', ... }   // HO 번호와 칠죄종 짝이 다르면 수정
 4. 배포가 끝나면 **Settings › Networking › Generate Domain**으로 주소를 만들어요. 그 주소를 열었을 때 `{"ok":true,...}`가 보이면 정상이에요.
 
 ### 6-3. 앱에서 켜기
-1. `index.html`의 `CONFIG.vapidPublicKey`에 Public Key를 넣고 다시 올려요.
+1. `config.js`의 `vapidPublicKey`에 Public Key를 넣고 다시 올려요.
 2. 각자 기기에서 **🔔 푸시 알림 켜기**를 눌러요. 아이패드는 홈 화면에 설치한 앱에서 눌러야 해요. 기기마다 한 번씩 켜야 해요.
 
 ### 비용
@@ -87,7 +88,7 @@ hoSins: { HO1:'wrath', ... }   // HO 번호와 칠죄종 짝이 다르면 수정
 - **채팅**: RP 채널, 잡담(OOC) 채널, KP가 만드는 비밀 채널(참여 HO 지정), 1:1 귓속말을 쓸 수 있어요.
   - PL은 캐릭터(인캐)와 OOC를 골라 말하고, KP는 나레이션, OOC, NPC로 말할 수 있어요.
   - `(괄호)`와 `*별표*`로 감싼 글은 똑같이 회색으로 보여요. `@이름`으로 언급하고, `@모두`로 채널 전체를 부를 수 있어요.
-  - 주사위는 `/r 2d6+1`, `/r 1d100<=65`, `/cc 65 도서관`처럼 쓰거나 🎲 버튼으로 굴려요. 판정 규칙은 `CONFIG.cocEdition`으로 6판/7판을 바꿀 수 있어요.
+  - 주사위는 `/r 2d6+1`, `/r 1d100<=65`, `/cc 65 도서관`처럼 쓰거나 🎲 버튼으로 굴려요. 판정 규칙은 `config.js`의 `cocEdition`으로 6판/7판을 바꿀 수 있어요.
   - 📷 이미지 첨부, 내 메시지 수정·삭제(메시지를 누르면 버튼이 나와요), **로그** 버튼으로 복사하거나 txt로 저장할 수 있어요.
   - KP는 채널을 **🔒 잠가서** 혼자만 발언하게 할 수 있어요. 인랑 이벤트의 밤 진행에 쓰면 돼요.
   - 귓속말은 당사자 둘만 볼 수 있어요. KP 화면에도 다른 사람들끼리의 귓속말은 나오지 않아요.
