@@ -204,7 +204,7 @@ function chatInputHtml() {
   if (isLocked() && !IS_ADMIN) return `<p class="muted" style="text-align:center;margin:8px 0">🔒 KP가 이 채널을 잠갔어요</p>`;
   const npcOpts = NPC_CODES.map(c => `<option value="${c}" ${CH.speaker === c ? 'selected' : ''}>${esc(cname(c))}</option>`).join('');
   const speaker = IS_ADMIN
-    ? `<select class="spk" onchange="CH.speaker=this.value"><option value="narr" ${CH.speaker === 'narr' ? 'selected' : ''}>KP 나레이션</option><option value="ooc" ${CH.speaker === 'ooc' ? 'selected' : ''}>KP (OOC)</option>${npcOpts}</select>`
+    ? `<select class="spk" onchange="CH.speaker=this.value"><option value="narr" ${CH.speaker === 'narr' ? 'selected' : ''}>KP 나레이션</option><option value="ooc" ${CH.speaker === 'ooc' ? 'selected' : ''}>KP (OOC)</option>${myHo() ? `<option value="${myHo()}" ${CH.speaker === myHo() ? 'selected' : ''}>${esc(cname(myHo()))} (내 HO)</option>` : ''}${npcOpts}</select>`
     : `<div class="toggles"><button class="sm ${CH.kind === 'ic' ? 'on' : ''}" onclick="setKind('ic')">${esc(cname(myHo()))}</button><button class="sm ${CH.kind === 'ooc' ? 'on' : ''}" onclick="setKind('ooc')">OOC</button></div>`;
   const dice = CH.diceOpen ? `<div class="dicebar">${['1d100', '1d6', '1d3', '1d4', '1d8', '1d10', '1d20', '2d6', '3d6'].map(e => `<button class="sm" onclick="quickRoll('${e}')">${e}</button>`).join('')}
      <span class="row" style="flex:1 1 180px;gap:4px;flex-wrap:nowrap"><input id="skillIn" inputmode="numeric" placeholder="기능치" style="width:80px;padding:5px 8px" onkeydown="if(event.key==='Enter'){event.preventDefault();skillRoll()}"><button class="sm primary" onclick="skillRoll()">판정</button></span></div>` : '';
