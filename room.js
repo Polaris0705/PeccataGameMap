@@ -189,7 +189,7 @@ function gbHtml(owner) {
   const mine = ME && owner === ME.uid;
   return `<div class="panel"><h3 style="margin-top:0">📖 방명록 <span class="muted">${list.length}</span></h3>
    ${mine ? '' : `<div class="row"><input id="gbText" maxlength="300" placeholder="한마디 남기기…" onkeydown="if(event.key==='Enter'&&!event.isComposing)gbPost('${owner}')" style="flex:1"><button class="primary" onclick="gbPost('${owner}')">남기기</button></div>`}
-   ${list.length ? list.map(g => `<div class="item" style="margin:6px 0"><div><b>${esc(g.code ? cname(g.code) : g.name)}</b> <span class="muted">${esc(g.name || '')} · ${ago(g.at)}</span><div style="white-space:pre-wrap">${esc(g.text)}</div></div>
+   ${list.length ? list.map(g => `<div class="item" style="margin:6px 0"><div><b>${esc(g.code ? cname(g.code) : g.name)}</b> <span class="muted">${esc(g.name || '')} · ${ago(g.at)}</span><div class="utext" style="white-space:pre-wrap">${esc(g.text)}</div></div>
      ${(g.uid === ME.uid || mine || IS_ADMIN) ? `<button class="sm" onclick="gbDel('${g.id}')">삭제</button>` : ''}</div>`).join('') : '<p class="muted">아직 아무도 다녀가지 않았어요.</p>'}</div>`;
 }
 function effectsHtml(room) {
