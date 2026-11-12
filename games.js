@@ -86,9 +86,10 @@ const SIN_GAMES = {
   envy:     { n: '보석 기억',     d: '빛나는 보석의 순서를 따라 해요' },
   lust:     { n: '가면무도회',    d: '하나만 다른 가면을 찾아요' }
 };
+const SIN_EMB = { wrath: '🔥', greed: '💰', sloth: '💤', gluttony: '🍗', pride: '👑', envy: '👁', lust: '🌹' };
 VIEWS.sins = () => `<div class="panel"><h2>🎲 칠죄종의 방</h2><p class="muted">일곱 개의 문 뒤에 짧은 게임이 하나씩 있어요. 자기 HO의 죄에 해당하는 게임은 보상이 1.5배예요. 게임마다 하루 보상 ${dailyCap()}회.</p>
   <div id="gbox"><div class="grid g3">${HOS.map(h => { const g = SIN_GAMES[h.id]; const mine = mySin() === h.id;
-    return `<button class="room ${mine ? 'solved' : ''}" onclick="sinStart('${h.id}')"><div class="no">${h.name}${mine ? ' · 내 죄 ×1.5' : ''}</div><div class="rn">${g.n}</div><div class="muted" style="font-size:.8rem">${g.d}</div><div class="muted" style="font-size:.75rem">오늘 보상 ${playsLeft('sin_' + h.id)}회</div></button>`; }).join('')}</div></div></div>`;
+    return `<button class="room sindoor ${mine ? 'solved' : ''}" onclick="sinStart('${h.id}')"><div class="semb">${SIN_EMB[h.id] || ''}</div><div class="no">${h.name}${mine ? ' · 내 죄 ×1.5' : ''}</div><div class="rn">${g.n}</div><div class="muted" style="font-size:.8rem">${g.d}</div><div class="muted" style="font-size:.75rem">오늘 보상 ${playsLeft('sin_' + h.id)}회</div></button>`; }).join('')}</div></div></div>`;
 function sinEnd(id, coins, txt) {
   const mult = mySin() === id ? 1.5 : 1, c = Math.min(20, Math.max(0, coins)) * mult, r = reward('sin_' + id, c);
   finishGame(`<h2 style="color:var(--gold2);margin-top:0">${(HOS.find(h => h.id === id) || {}).name} · ${SIN_GAMES[id].n}</h2><p>${txt}</p><p class="muted">${r || '보상 없음'}</p><div class="row"><button class="primary" onclick="closeModal();sinStart('${id}')">다시</button><button onclick="closeModal()">닫기</button></div>`);
@@ -100,9 +101,9 @@ function sinStart(id) {
 }
 const area = () => $('#sinArea');
 function sinWrath() {
-  let t = 20, hits = 0, cur = -1;
-  const draw = () => { const a = area(); if (!a) return; a.innerHTML = `<div class="row" style="justify-content:space-between"><b>⏱ ${t}</b><b>💥 ${hits}</b></div><div class="mgrid g3x">${Array.from({ length: 9 }, (_, i) => `<button class="mcell" onpointerdown="wrathHit(${i})">${i === cur ? '🍽️' : ''}</button>`).join('')}</div>`; };
-  window.wrathHit = i => { if (i === cur) { hits++; cur = -1; sfx('tap'); draw(); } };
+  let t = 20, hits = 0, cur = -1, boom = -1;
+  const draw = () => { const a = area(); if (!a) return; a.innerHTML = `<div class="row" style="justify-content:space-between"><b>⏱ ${t}</b><b>💥 ${hits}</b></div><div class="mgrid g3x">${Array.from({ length: 9 }, (_, i) => `<button class="mcell ${i === boom ? 'hit' : ''}" onpointerdown="wrathHit(${i})">${i === cur ? '🍽️' : i === boom ? '💥' : ''}</button>`).join('')}</div>`; };
+  window.wrathHit = i => { if (i === cur) { hits++; cur = -1; boom = i; setTimeout(() => { if (boom === i) { boom = -1; draw(); } }, 220); sfx('tap'); draw(); } else { sfx('bad'); } };
   const sp = setInterval(() => { let n; do { n = rint(9); } while (n === cur); cur = n; draw(); }, 720);
   const tm = setInterval(() => { t--; if (t <= 0) { stopGame(); sinEnd('wrath', hits, `접시 ${hits}장을 깨뜨렸다!`); } else draw(); }, 1000);
   lockGame(() => { clearInterval(sp); clearInterval(tm); }); draw();
@@ -153,7 +154,7 @@ function sinEnvy() {
   play();
 }
 function sinLust() {
-  const pairs = [['🌹', '🥀'], ['🎭', '👺'], ['💍', '💎'], ['🦋', '🐛'], ['🍷', '🍸'], ['🗝️', '🔑'], ['🌙', '🌛'], ['🕯️', '🔥'], ['👁️', '👀']];
+  const pairs = [['🌹', '🥀'], ['🎭', '👺'], ['💍', '💎'], ['🦋', '🐛'], ['🍷', '🍸'], ['🗝️', '🔒'], ['🌙', '☀️'], ['🕯️', '🔥'], ['👁️', '👀']];
   let t = 20, sc = 0, odd = 0, pr = pairs[0];
   const newRound = () => { pr = pairs[rint(pairs.length)]; odd = rint(16); };
   const draw = () => { const a = area(); if (!a) return; a.innerHTML = `<div class="row" style="justify-content:space-between"><b>⏱ ${t}</b><b>💘 ${sc}</b></div><div class="mgrid g4x">${Array.from({ length: 16 }, (_, i) => `<button class="mcell" style="font-size:1.6rem" onpointerdown="lustTap(${i})">${i === odd ? pr[1] : pr[0]}</button>`).join('')}</div>`; };

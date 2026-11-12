@@ -3,7 +3,8 @@
    ============================================================ */
 const PXPAL = { k: '#1a1410', w: '#f4f0e8', s: '#a8a8b0', S: '#60606a', g: '#e0b050', G: '#a07028', y: '#ffe27a',
   r: '#d8485a', R: '#8a2433', b: '#5a8ad8', B: '#2a4a8a', c: '#8ad8e8', n: '#68b858', N: '#2e6a30',
-  o: '#9a6234', O: '#5a3a20', p: '#9a68c8', P: '#5a3a8a', e: '#f0c8a0', m: '#f08ab0' };
+  o: '#9a6234', O: '#5a3a20', p: '#9a68c8', P: '#5a3a8a', e: '#f0c8a0', m: '#f08ab0',
+  f: '#f08a30', u: '#c8905a', v: '#fff4dc', z: '#d8d8e0', x: '#141418', q: '#ffc0d8', l: '#a8e070' };
 const PXI = {
   house: `.....kk.....|....krrk....|...krrrrk...|..krrrrrrk..|.krrrrrrrrk.|kkkkkkkkkkkk|.kwwwwwwwwk.|.kwbbwwoowk.|.kwbbwwoowk.|.kwwwwwoowk.|.kwwwwwoowk.|.kkkkkkkkkk.`,
   map: `............|.kkkk.kkkk..|kwwwwkwwwwkk|kwnnwkwwwwwk|kwnnwkwbbwwk|kwwwwkwbbwwk|kwwrwkwwwwwk|kwrwrkwwnnwk|kwwrwkwwnnwk|kkkwwkkkwwwk|...kkk..kkkk|............`,
@@ -57,6 +58,35 @@ const PXI = {
   invader: `............|..n......n..|...n....n...|..nnnnnnnn..|.nnknnnnknn.|nnnnnnnnnnnn|n.nnnnnnnn.n|n.n......n.n|...nn..nn...|............|............|............`,
   sun: `.....y......|..y..y..y...|...y.y.y....|....kkkk....|.yykyyyyky..|...kyywyyk..|y.kyyyyyyk.y|...kyyyyyk..|.yykyyyyky..|....kkkk....|...y.y.y....|..y..y..y...`,
   dusk: `............|............|.....yy.....|...yyyyyy...|..yyyyyyyy..|.yyyyyyyyyy.|rrrrrrrrrrrr|............|.rrrrrrrrrr.|............|...rrrrrr...|............`,
+  plate16: `................|................|.....kkkkkk.....|...kkwwwwwwkk...|..kwwzzzzzzwwk..|.kwzzwwwwwwzzwk.|.kwzwwwwwwwwzwk.|.kwzwwwwwwwwzwk.|.kwzzwwwwwwzzwk.|..kwwzzzzzzwwk..|...kkwwwwwwkk...|.....kkkkkk.....|................`,
+  boom16: `.......y........|..y....yy...y...|...yy.yffy.yy...|....yyffffyy....|.yyyffrrrffyyy..|..yfrrwwrrffy...|yyffrwwwwrrffyy.|..yfrrwwrrffy...|.yyyffrrrffyyy..|....yyffffyy....|...yy.yffy.yy...|..y....yy...y...|.......y........`,
+  chest16: `................|...kkkkkkkkkk...|..kuuuuuuuuuuk..|.kuoooggggooouk.|.kooooggggoooook|.kkkkkkkkkkkkkkk|.kooogkyykgoooOk|.kooogkyykgoooOk|.koooggkkggoooOk|.kooooggggooooOk|.kOOOOggggOOOOOk|.kkkkkkkkkkkkkkk|................`,
+  sleepy16: `................|.....kkkkkk.....|...kkyyyyyykk...|..kyyyyyyyyyyk..|.kyyyyyyyyyyyyk.|.kyykkkyykkkyyk.|kyyyyyyyyyyyyyyk|kyyyyyyyyyyyyyyk|kyyyyyykkyyyyyyk|.kyyyyykkyyyyyk.|.kyyyyyyyyyyyyk.|..kyyyyyyyyyyk..|...kkyyyyyykk...|.....kkkkkk.....`,
+  alarm16: `................|.kk..........kk.|kggk.kkkkkk.kggk|kgk.kwwwwwwk.kgk|.k.kwwwkwwwwk.k.|..kwwwwkwwwwwk..|..kwwwwkwwwwwk..|..kwwwwkkkkwwk..|..kwwwwwwwwwwk..|..kwwwwwwwwwwk..|...kwwwwwwwwk...|....kkkkkkkk....|...kk......kk...`,
+  zzz16: `................|.........kkkkkk.|.........kbbbbk.|...........kbk..|..........kbk...|.........kbbbbk.|.....kkkkkkkkkk.|.....kbbbk......|.......kk.......|......kbbk......|...kkkkkk.......|...kbbbbk.......|.....kbk........|....kbbbbk......|....kkkkkk......`,
+  yum16: `.....kkkkkk.....|...kkyyyyyykk...|..kyyyyyyyyyyk..|.kyyykyyyykyyyk.|.kyykykyykykyyk.|kyyyyyyyyyyyyyyk|kyyyyyyyyyyyyyyk|kyykkkkkkkkkkyyk|kyyykrrrrrrkyyyk|.kyyykrmmrkyyyk.|.kyyyykkkkyyyyk.|..kyyyyyyyyyyk..|...kkyyyyyykk...|.....kkkkkk.....`,
+  cake16: `.......kk.......|......krrk......|.......nk.......|....kkkkkkkk....|...kwwwwwwwwk...|..kwwqwwwqwwwk..|..kqqqqqqqqqqk..|..kvvvvvvvvvvk..|..kqqqqqqqqqqk..|..kvvvvvvvvvvk..|..kuuuuuuuuuuk..|..kkkkkkkkkkkk..|.kzzzzzzzzzzzzk.|..kkkkkkkkkkkk..`,
+  chicken16: `................|.........kkkk...|........kuuuuk..|.......kuoooouk.|......kuoooooouk|.....kuooooooook|....kuooooooook.|...kuoooooooOk..|...kuooooooOk...|..kuooOOOOOk....|.kwk.kkkkkk.....|kwwk............|kwk.............|.k..............`,
+  sushi16: `................|................|....kkkkkkkk....|...kffwfffwfk...|..kfffwfffwffk..|..kkkkkkkkkkkk..|..kwwwwwwwwwwk..|..kwwwwwwwwwwk..|..kxxxxxxxxxxk..|..kkkkkkkkkkkk..|................|................`,
+  ramen16: `................|...k.k..........|...k.k..........|....k.k.........|.kkkkkkkkkkkkkk.|kyyyyyyyyyyyyyyk|kyffyyrrryyyyyyk|kyyyywwwwyynnyyk|.kyyyyyyyyyyyyk.|.krrrrrrrrrrrrk.|..krrrwrrrwrrk..|...krrrrrrrrk...|....kkkkkkkk....`,
+  donut16: `................|.....kkkkkk.....|...kkmmmmmmkk...|..kmmwmmmmqmmk..|.kmqmmmkkmmmymk.|.kmmmmkuukmmmmk.|.kmmymkuukmwmmk.|.kummmmkkmmmmuk.|..kuummmmmmuuk..|...kkuuuuuukk...|.....kkkkkk.....|................`,
+  burger16: `................|....kkkkkkkk....|..kkuuuuuuuukk..|.kuuwuuuwuuuuuk.|.kuuuuuuuuuuuuk.|.knnnnnnnnnnnnk.|.kyyyyyyyyyyyyk.|.kOOOOOOOOOOOOk.|.kOOOOOOOOOOOOk.|.kuuuuuuuuuuuuk.|..kkkkkkkkkkkk..|................`,
+  dumpling16: `................|................|.......kk.......|.....kkwwkk.....|...kkwzwwzwkk...|..kwwzwwwwzwwk..|.kwwwwwwwwwwwwk.|.kwwwwwwwwwwwzk.|.kzwwwwwwwwwzzk.|..kkzzzzzzzzkk..|....kkkkkkkk....|................`,
+  pizza16: `................|.kkkkkkkkkkkkkk.|kuuuuuuuuuuuuuuk|.kyyyyyyyyyyyyk.|.kyrryyyyyrryyk.|..kyrryyyyrryk..|..kyyyyrryyyyk..|...kyyyrryyyk...|....kyyyyyyk....|....kyyrryyk....|.....kyrryk.....|......kyyk......|.......kk.......`,
+  tengu16: `................|....kkkkkkkk....|...krrrrrrrrk...|..krrRRrrRRrrk..|..krkkrrrrkkrk..|..krkykrrkykrk..|..krrrrrrrrrrrk.|..krrrrrrrrrrrrk|..krrrrrrrrrrrrr|..krrRRRRRRrrkkk|...krrrrrrrrk...|....kkkkkkkk....`,
+  ring16: `................|......kkkk......|.....kccwck.....|......kcck......|.....kkkkkk.....|....kgg..ggk....|...kgk....kgk...|...kgk....kgk...|...kgk....kgk...|....kgk..kgk....|.....kggggk.....|......kkkk......`,
+  diamond16: `................|................|...kkkkkkkkkk...|..kcwccbccwcck..|.kccccbbbbcccck.|kkkkkkkkkkkkkkkk|.kcbbccccccbbck.|..kcbbccccbbck..|...kcbbccbbck...|....kcbbbbck....|.....kcbbck.....|......kcck......|.......kk.......`,
+  butterfly16: `................|.kkk........kkk.|kmmmk..k.k.kmmmk|kmqmmk.kk.kmmqmk|kmqqmmkkkkmmqqmk|kmmmmmkxxkmmmmmk|.kmmmmkxxkmmmmk.|..kkkkkxxkkkkk..|..kpppkxxkpppk..|.kppqpkxxkpqppk.|.kpppk.kk.kpppk.|..kkk......kkk..`,
+  caterpillar16: `................|................|...........kk...|..........k..k..|.........knnnnk.|.kk.kk.kknnknnk.|knnknnknnnnnnnk.|knlnknlnknlnnk..|knnnknnnknnnk...|.kkk.kkk.kkk....|.k.k.k.k.k.k....|................`,
+  wine16: `................|...kkkkkkkkkk...|...kwzzzzzzzk...|...krrrrrrrrk...|...kRrrrrrrRk...|....kRrrrrRk....|.....kRRRRk.....|......kkkk......|.......kk.......|.......kk.......|.......kk.......|.....kkkkkk.....|....kzzzzzzk....|.....kkkkkk.....`,
+  cocktail16: `.............kk.|............kyk.|.kkkkkkkkkkkkkk.|.kzzzzzzzzzzzk..|..kccccccccck...|...kccmcccck....|....kcccccck....|.....kccck......|......kck.......|.......k........|.......k........|.......k........|.....kkkkk......`,
+  fire16: `.......k........|......kfk.......|......kfk...k...|.....kffk..kfk..|..k..kffyk.kfk..|.kfk.kffyykffk..|.kffkkfyyyffffk.|kffffffyyyffffk.|kffffyywwyyfffk.|kfffyywwwwyyffk.|.kffyywwwwyyfk..|..kffyyyyyyffk..|...kkffffffkk...|.....kkkkkk.....`,
+  heartarrow16: `................|..kk...kk......y|.krrk.krrk....y.|krwrrkrrrrk..y..|krwrrrrrrrk.y...|krrrrrrrrrkk....|.krrrrrrrkk.....|..krrrrrkk......|...krrrkk.......|....krkk........|...kkkk.........|..kuk...........|.kuk............|kuk.............`,
+  stopwatch16: `......kkkk......|.......kk.......|.....kkkkkk..k..|...kkwwwwwwkkk..|..kwwwwkwwwwwk..|.kwwwwwkwwwwwwk.|.kwwwwwkwwwwwwk.|.kwwwwwkkkkwwwk.|.kwwwwwwwwwwwwk.|.kwwwwwwwwwwwwk.|..kwwwwwwwwwwk..|...kkwwwwwwkk...|.....kkkkkk.....`,
+  owl16: `................|..k.........k...|..kok......kok..|..koookkkkoooo..|.kooooooooooook.|.kowwwkookwwwok.|.kowkwkookwkwok.|.kowwwkyykwwwok.|.koooooyyoooook.|.kouuoooooouuok.|.kouuuuooouuuok.|..kouuuuuuuuok..|...kooooooook...|....kykkkkyk....`,
+  hourglass16: `..kkkkkkkkkkkk..|..kuuuuuuuuuuk..|...kwwwwwwwwk...|...kwyyyyyywk...|....kwyyyywk....|.....kwyywk.....|......kyyk......|.....kwwywk.....|....kwwwywwk....|...kwwwyyywwk...|...kwyyyyyyyk...|..kuuuuuuuuuuk..|..kkkkkkkkkkkk..`,
+  hand16: `.......kk.......|....kk.kek.kk...|...kekkekkkek...|...kekkekkkek...|...kekkekkkek.k.|...keeeeeeeekek.|.kkkeeeeeeeeek..|.keekeeeeeeeek..|..keeeeeeeeeek..|...keeeeeeeek...|....keeeeeeek...|....kkkkkkkkk...`,
+  crown16: `................|................|.k.....k.....k..|kyk...kyk...kyk.|kyyk.kyyyk.kyyk.|kyyykyyyyykyyyk.|kyyyyyyyyyyyyyk.|kyrryyybyyyrryk.|kyyyyyyyyyyyyyk.|kkkkkkkkkkkkkkk.`,
   coin: `...kkkkkk...|..kggyyggk..|.kgyyyyyyGk.|.kgyyGGyyGk.|kgyyGggGyyGk|kgyGgyygGyGk|kgyGgyygGyGk|kgyyGggGyyGk|.kgyyGGyyGk.|.kgyyyyyyGk.|..kGGGGGGk..|...kkkkkk...`,
 };
 const PX_EMOJI = {
@@ -66,15 +96,15 @@ const PX_EMOJI = {
   '🌿': 'sprout', '🌱': 'sprout', '🍵': 'tea', '☕': 'tea', '🃏': 'card', '🂠': 'card', '🔮': 'ball', '🎭': 'mask', '🤥': 'mask',
   '🔒': 'lock', '🔓': 'unlock', '🔔': 'bell', '📣': 'mega', '📍': 'pin', '📌': 'pin', '🕯': 'candle', '🔍': 'search', '🗝': 'key',
   '🔑': 'key', '⚗': 'flask', '⚠': 'warn', '🖼': 'frame', '✉': 'mail', '🏆': 'trophy', '🎉': 'party', '👁': 'eye', '🧱': 'brick',
-  '🪵': 'plank', '🔨': 'hammer', '🌹': 'rose', '🥀': 'rose', '📋': 'clip', '📷': 'camera', '🌙': 'moon', '🌛': 'moon', '💰': 'coin', '☀': 'sun', '🌅': 'dusk', '🌇': 'dusk', '👾': 'invader',
+  '🪵': 'plank', '🔨': 'hammer', '🌹': 'rose', '🥀': 'rose', '📋': 'clip', '📷': 'camera', '🌙': 'moon', '🌛': 'moon', '💰': 'coin', '🍽': 'plate16', '💥': 'boom16', '🧰': 'chest16', '😴': 'sleepy16', '⏰': 'alarm16', '💤': 'zzz16', '😋': 'yum16', '🍰': 'cake16', '🧁': 'cake16', '🍗': 'chicken16', '🍣': 'sushi16', '🍜': 'ramen16', '🍩': 'donut16', '🍔': 'burger16', '🥟': 'dumpling16', '🍕': 'pizza16', '👺': 'tengu16', '💍': 'ring16', '💎': 'diamond16', '🦋': 'butterfly16', '🐛': 'caterpillar16', '🍷': 'wine16', '🍸': 'cocktail16', '🔥': 'fire16', '💘': 'heartarrow16', '⏱': 'stopwatch16', '⌛': 'hourglass16', '⏳': 'hourglass16', '🦉': 'owl16', '✋': 'hand16', '👑': 'crown16', '☀': 'sun', '🌅': 'dusk', '🌇': 'dusk', '👾': 'invader',
 };
 const PXI_URL = {};
 for (const [k, src] of Object.entries(PXI)) {
-  const rows = src.split('|').map(r => (r + '............').slice(0, 12));
-  while (rows.length < 12) rows.push('............');
+  const raw = src.split('|'), N = Math.max(12, raw.length, ...raw.map(r => r.length)) > 12 ? 16 : 12, pad = '.'.repeat(N);
+  const rows = raw.map(r => (r + pad).slice(0, N)); const top = Math.floor((N - rows.length) / 2); for (let i = 0; i < top; i++) rows.unshift(pad); while (rows.length < N) rows.push(pad);
   let rects = '';
-  rows.slice(0, 12).forEach((row, y) => { for (let x = 0; x < 12; x++) { const c = PXPAL[row[x]]; if (c) rects += `<rect x="${x}" y="${y}" width="1" height="1" fill="${c}"/>`; } });
-  PXI_URL[k] = 'url("data:image/svg+xml,' + encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 12 12" shape-rendering="crispEdges">${rects}</svg>`) + '")';
+  rows.slice(0, N).forEach((row, y) => { for (let x = 0; x < N; x++) { const c = PXPAL[row[x]]; if (c) rects += `<rect x="${x}" y="${y}" width="1" height="1" fill="${c}"/>`; } });
+  PXI_URL[k] = 'url("data:image/svg+xml,' + encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${N} ${N}" shape-rendering="crispEdges">${rects}</svg>`) + '")';
 }
 const PX_RE = new RegExp('(' + Object.keys(PX_EMOJI).map(e => e.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('|') + ')\\uFE0F?', 'g');
 const PX_SKIP = 'input,textarea,select,option,script,style,.tx,.note,.utext,.noico,[contenteditable]';

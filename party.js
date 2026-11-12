@@ -34,7 +34,7 @@ VIEWS.party = () => {
   if (r) return roomView(r);
   const open = PROOMS.filter(x => x.status !== 'closed' && Date.now() - (x.at || 0) < 6 * 36e5);
   return `<div class="panel"><h2>🎉 파티 게임</h2><p class="muted">누구나 방을 열 수 있어요. 방을 연 사람이 방장이 되어 시작 버튼을 눌러요.</p>
-    <div class="grid g3">${Object.entries(PARTY_TYPES).map(([k, t]) => `<button class="room" onclick="roomCreate('${k}')"><div class="rn">${t.ic} ${t.n} 방 열기</div><div class="muted" style="font-size:.8rem">${t.d} · ${t.min}명 이상</div></button>`).join('')}</div></div>
+    <div class="grid g3">${Object.entries(PARTY_TYPES).map(([k, t]) => `<button class="room sindoor" onclick="roomCreate('${k}')"><div class="semb">${t.ic}</div><div class="rn">${t.n} 방 열기</div><div class="muted" style="font-size:.8rem">${t.d} · ${t.min}명 이상</div></button>`).join('')}</div></div>
    <div class="panel"><h2>열려 있는 방</h2>${open.length ? open.map(x => { const t = PARTY_TYPES[x.type] || {}, n = Object.keys(x.players || {}).length, inRoom = !!(x.players || {})[ME.uid];
      return `<div class="card"><div class="h"><div><b>${t.ic || ''} ${esc(t.n || x.type)}</b> <span class="muted">· 방장 ${esc(x.hostName)} · ${n}명 · ${x.status === 'lobby' ? '모집 중' : x.status === 'play' ? '진행 중' : '끝남'}</span></div>
        <button class="sm ${inRoom ? '' : 'primary'}" onclick="roomJoin('${x.id}')">${inRoom ? '들어가기' : '참가'}</button></div>
@@ -70,8 +70,8 @@ function roomView(r) {
     : r.type === 'nunchi' ? nunchiView(r, host) : r.type === 'auction' ? auctionView(r, host) : liarView(r, host);
   return `<div class="panel"><div class="row" style="justify-content:space-between"><h2 style="margin:0">${t.ic} ${t.n}</h2>
     <div class="row" style="flex:0 0 auto">${host ? '<button class="sm danger" onclick="roomClose()">방 닫기</button>' : ''}<button class="sm" onclick="roomLeave()">나가기</button><button class="sm" onclick="PROOM=null;render()">목록</button></div></div>
-    <div class="toggles" style="margin:8px 0">${ps.map(([u, p]) => `<span class="chip ${u === ME.uid ? 'on' : ''}">${u === r.host ? '👑 ' : ''}${esc(p.name)}</span>`).join('')}</div>
-    ${body}</div>`;
+    <div class="toggles" style="margin:8px 0">${ps.map(([u, p]) => `<span class="chip ptchip ${u === ME.uid ? 'on' : ''}">${pxAva(u)}${u === r.host ? '👑 ' : ''}${esc(p.name)}</span>`).join('')}</div>
+    <div class="pxstage">${body}</div></div>`;
 }
 const needMore = (r, t) => Object.keys(r.players || {}).length < t.min ? `<p class="muted">${t.min}명 이상 모이면 시작할 수 있어요.</p>` : '';
 

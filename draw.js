@@ -201,7 +201,7 @@ function teleSettle(r) {
     setTimeout(() => { if (r.type === 'draw') drawAfter(); else teleAfter(); }, 0);
     return `<div class="panel"><div class="row" style="justify-content:space-between"><h2 style="margin:0">${t.ic} ${t.n}</h2>
       <div class="row" style="flex:0 0 auto">${host ? '<button class="sm danger" onclick="roomClose()">방 닫기</button>' : ''}<button class="sm" onclick="roomLeave()">나가기</button><button class="sm" onclick="PROOM=null;render()">목록</button></div></div>
-      <div class="toggles" style="margin:8px 0">${ps.map(([u, p]) => `<span class="chip ${u === ME.uid ? 'on' : ''}">${u === r.host ? '👑 ' : ''}${esc(p.name)}</span>`).join('')}</div>${body}</div>`;
+      <div class="toggles" style="margin:8px 0">${ps.map(([u, p]) => `<span class="chip ptchip ${u === ME.uid ? 'on' : ''}">${pxAva(u)}${u === r.host ? '👑 ' : ''}${esc(p.name)}</span>`).join('')}</div><div class="pxstage">${body}</div></div>`;
   };
   const baseOnAuth = partyOnAuth;
   partyOnAuth = function (u) {

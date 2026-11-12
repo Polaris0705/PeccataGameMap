@@ -220,7 +220,7 @@ tr.mine .bc.free{background:rgba(201,169,106,.07)}
 .pc{display:inline-block;background:#f7f3ea;color:#222;border-radius:6px;padding:4px 7px;margin:3px 2px;font-weight:700;font-family:sans-serif;min-width:30px;text-align:center}
 .pc.red{color:#b0202a}.pc.back{background:var(--wine);color:#fff}
 .choice.on{border-color:var(--gold);color:var(--gold2)}
-.roomcv{display:block;width:100%;max-width:720px;margin:10px auto 0;image-rendering:pixelated;image-rendering:crisp-edges;border:2px solid var(--line);border-radius:6px;background:#000}
+.roomcv{display:block;width:100%;max-width:540px;margin:10px auto 0;image-rendering:pixelated;image-rendering:crisp-edges;border:2px solid var(--line);border-radius:6px;background:#000}
 .roomcv.editing{touch-action:none;border-color:var(--gold);cursor:pointer}
 .rcard .roomcv{margin-top:0}
 canvas.fprev{image-rendering:pixelated;vertical-align:middle;height:24px;width:auto}
@@ -292,6 +292,29 @@ html.px button,html.px .chip,html.px [onclick]{cursor:url("data:image/svg+xml,%3
 #txbar{position:fixed;left:0;right:0;top:0;z-index:35;display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;padding:calc(8px + env(safe-area-inset-top)) 14px 8px;background:var(--gold);color:var(--ontext);font-weight:700;box-shadow:0 3px 0 0 #0a0806}
 body.txedit{padding-top:52px}
 body.txedit #app *:hover,body.txedit #chatDock *:hover,body.txedit #mbox *:hover{outline:1px dashed var(--gold2);outline-offset:1px;cursor:text!important}
+/* 도트 미니게임 무대 */
+html.px #sinArea,html.px .pxstage{background:#1a1416;background-image:linear-gradient(45deg,#221a1e 25%,transparent 25%,transparent 75%,#221a1e 75%),linear-gradient(45deg,#221a1e 25%,transparent 25%,transparent 75%,#221a1e 75%);background-size:16px 16px;background-position:0 0,8px 8px;padding:12px;box-shadow:inset 0 0 0 2px var(--frame),inset 0 0 0 4px #0a0806;color:#f4f0e8}
+html.px #sinArea .muted{color:#b8a898}
+html.px .mcell{background:#3a2a2e;border:2px solid #0a0806;box-shadow:inset -3px -3px 0 0 rgba(0,0,0,.4),inset 3px 3px 0 0 rgba(255,255,255,.1);font-size:2.4rem}
+html.px .mcell:active,html.px .mcell.hit{background:#5a2a30;box-shadow:inset 3px 3px 0 0 rgba(0,0,0,.45)}
+html.px .mcell i.pxi{width:58%;height:58%}
+html.px .tapzone i.pxi{width:1.6em;height:1.6em}
+.semb i.pxi{width:1.4em;height:1.4em}
+html.px .tapzone{background:#2a2226;border:none;box-shadow:inset 0 0 0 3px #0a0806,inset 0 0 0 5px var(--line),inset -6px -6px 0 4px rgba(0,0,0,.25)}
+html.px .tapzone.go{background:var(--wine);animation:pxblinkbar .3s steps(2) infinite}
+html.px .tapzone.wait{background:#1e2440}
+html.px .gem{height:74px;opacity:.35;clip-path:polygon(16% 0,84% 0,100% 30%,50% 100%,0 30%);box-shadow:inset -8px -8px 0 0 rgba(0,0,0,.3),inset 8px 8px 0 0 rgba(255,255,255,.3)}
+html.px .gem.lit{opacity:1;filter:brightness(1.35)}
+html.px .bar{height:30px;border:3px solid #0a0806;background:repeating-linear-gradient(90deg,#2a2226 0 8px,#342a2e 8px 16px)}
+html.px .bar .mid{box-shadow:inset 0 0 0 2px #a07028}
+html.px .bar .ndl{width:4px!important;background:#fff!important;box-shadow:0 0 0 2px #0a0806}
+html.px .sindoor{position:relative;padding-top:10px}
+.semb{font-size:2rem;line-height:1;margin-bottom:4px}
+html.px .sindoor{background:linear-gradient(#3a2418,#2a1a12);border:2px solid #0a0806;box-shadow:inset 0 0 0 2px #6a4428,inset 0 6px 0 2px #4a2e1a}
+html.px .sindoor:hover{box-shadow:inset 0 0 0 2px var(--gold),inset 0 6px 0 2px #4a2e1a}
+img.pxava{width:18px;height:18px;image-rendering:pixelated;vertical-align:-4px;margin-right:4px;border:1px solid #0a0806;box-shadow:0 0 0 1px var(--gold)}
+html.px .pxstage .card{background:rgba(0,0,0,.25)}
+html.px .pxstage{margin-top:6px}
 /* 도트 아이콘 */
 i.pxi{display:inline-block;width:1.15em;height:1.15em;vertical-align:-.2em;background:center/contain no-repeat;image-rendering:pixelated;font-style:normal}
 button i.pxi{margin-right:1px}
@@ -966,7 +989,23 @@ function setShare(v){B.update('users/'+ME.uid,{shareLoc:!!v,loc:v&&LOC?LOC:null}
 function selectPlace(i){const p=PUB.places[i];if(!p)return;MAP_PLACE=p.name;if(p.mapKey)mapSel=p.mapKey;setLoc(p);render();
   setTimeout(()=>{const el=$('#placePanel');if(el)el.scrollIntoView({behavior:'smooth',block:'nearest'});},60);}
 function enterSub(key){mapSel=key;MAP_PLACE=null;render();window.scrollTo(0,0);}
-function whoAt(name){return USERS.filter(u=>u.shareLoc&&u.loc&&u.loc.place===name&&(u.ho||isAdminEmail(u.email)));}
+const myPlace=()=>schedLoc(myHo())||(LOC&&LOC.place)||'';
+function schedLoc(code){const c=PUB&&PUB.clock;return (c&&c.locs&&code&&c.locs[code])||'';}
+function whoAt(name){return USERS.filter(u=>{if(!(u.ho||isAdminEmail(u.email)))return false;const sl=schedLoc(u.ho);if(sl)return sl===name;return u.shareLoc&&u.loc&&u.loc.place===name;});}
+const PXTOK={};
+function pxTok(u){const im=tokImg(u);if(!im)return null;const k=u.id+'|'+im._src;if(PXTOK[u.id]&&PXTOK[u.id]._k===k)return PXTOK[u.id];
+  const c=document.createElement('canvas');c.width=c.height=20;const g=c.getContext('2d');const s=Math.min(im.naturalWidth,im.naturalHeight);
+  g.drawImage(im,(im.naturalWidth-s)/2,(im.naturalHeight-s)/4,s,s,0,0,20,20);c._k=k;PXTOK[u.id]=c;return c;}
+const PXAVA={};
+function pxAva(uid){const u=USERS.find(x=>x.id===uid);if(!u)return '';const c=pxTok(u);if(!c)return '';if(!PXAVA[uid]||PXAVA[uid].k!==c._k)PXAVA[uid]={k:c._k,url:c.toDataURL()};return `<img class="pxava" src="${PXAVA[uid].url}" alt="">`;}
+function drawTok(ctx,u,cx,cy,sz){
+  const x=Math.round(cx-sz/2),y=Math.round(cy-sz/2),me=u.id===ME.uid,bob=me?Math.round(Math.sin(Date.now()/300)):0;
+  ctx.fillStyle='rgba(0,0,0,.45)';ctx.fillRect(x+3,y+sz+1,sz-4,3);
+  ctx.fillStyle='#140c06';ctx.fillRect(x-3,y-3+bob,sz+6,sz+6);ctx.fillStyle=me?'#ffe27a':'#e9e1d4';ctx.fillRect(x-2,y-2+bob,sz+4,sz+4);
+  const pt=pxTok(u);ctx.imageSmoothingEnabled=false;
+  if(pt)ctx.drawImage(pt,x,y+bob,sz,sz);else{ctx.fillStyle='#3a2a20';ctx.fillRect(x,y+bob,sz,sz);ctx.fillStyle='#ffe27a';ctx.font="bold "+Math.round(sz*.5)+"px 'Galmuri11',sans-serif";ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText((u.ho?cname(u.ho):uname(u)).slice(0,1),cx,cy+bob+1);}
+  const nm=(u.ho?cname(u.ho):uname(u)).slice(0,6);ctx.font="11px 'Galmuri11',sans-serif";ctx.textAlign='center';ctx.textBaseline='alphabetic';const tw=ctx.measureText(nm).width;
+  ctx.fillStyle='#140c06';ctx.fillRect(Math.round(cx-tw/2-4),y+sz+5,Math.round(tw+8),14);ctx.fillStyle=me?'#ffe27a':'#ffffff';ctx.fillText(nm,cx,y+sz+16);ctx.textAlign='left';}
 function featCard(k){const f=FEATS[k];return `<button class="room" onclick="openFeat('${k}')">${IS_ADMIN&&!FREE_FEATS.includes(k)&&featAt(k)<0?'<div class="muted" style="font-size:.72rem">KP만 · 아직 공개된 장소에 없음</div>':''}<div class="rn">${f.ic} ${f.n}</div><div class="muted" style="font-size:.8rem">${f.d}</div></button>`;}
 VIEWS.map=()=>{
   const maps=(PUB&&PUB.maps)||[],places=(PUB&&PUB.places)||[];
@@ -989,7 +1028,7 @@ VIEWS.map=()=>{
    ${parent?`<button class="sm" style="margin:8px 0" onclick="enterSub('${parent.mapKey}')">← ${esc((maps.find(m=>m.key===parent.mapKey)||{}).name||'뒤로')} (으)로</button> <b>${esc(parent.name)}</b>`:
      (topList.length>1?`<div class="toggles" style="margin-top:8px">${topList.map(m=>`<button class="${m.key===mapSel?'on':''}" onclick="mapSel='${m.key}';MAP_PLACE=null;render()">${esc(m.name)}</button>`).join('')}</div>`:'')}
    ${maps.length?`<div class="mapbox" style="margin-top:10px"><canvas id="plMap"></canvas><p class="muted" id="mapLoading">지도를 불러오는 중…</p></div>
-   <p class="muted">방을 누르면 그곳으로 이동해요.${LOC&&LOC.place?` 지금 위치: <b>${esc(LOC.place)}</b>`:''}${EGG.on?' 방이 아닌 곳에도… 무언가 숨어 있을지 몰라요.':''}</p>`:''}
+   <p class="muted">방을 누르면 그곳으로 이동해요.${myPlace()?` 지금 위치: <b>${esc(myPlace())}</b>${schedLoc(myHo())?' <span class="muted">(일정표)</span>':''}`:''}${EGG.on?' 방이 아닌 곳에도… 무언가 숨어 있을지 몰라요.':''}</p>`:''}
    ${places.filter(p=>!p.mapKey).length?`<h3>그 밖의 장소</h3>${places.map((p,i)=>p.mapKey?'':`<span class="chip ${MAP_PLACE===p.name?'on':''}" style="border-color:${p.color}" onclick="selectPlace(${i})">${esc(p.name)}</span>`).join('')}`:''}</div>`;
   if(cur){const fs=featsOf(cur.name),sub=subOf(cur.name),sm=maps.find(m=>m.key===sub),ppl=whoAt(cur.name);
     h+=`<div class="panel" id="placePanel"><h2>📍 ${esc(cur.name)}</h2>${ppl.length?`<p class="muted">여기 있는 사람: ${ppl.map(u=>esc(u.ho?cname(u.ho):uname(u))).join(', ')}</p>`:''}
@@ -1017,10 +1056,12 @@ async function drawPlMap(){
   const W=cv.parentElement.clientWidth,sc=W/img.width;cv.width=W;cv.height=Math.round(img.height*sc);
   const ctx=cv.getContext('2d');ctx.drawImage(img,0,0,cv.width,cv.height);
   const pls=((PUB&&PUB.places)||[]).filter(p=>p.mapKey===key&&p.nx!=null);
-  pls.forEach(p=>{const x=p.nx*cv.width,y=p.ny*cv.height,w=p.nw*cv.width,h=p.nh*cv.height,sel=p.name===MAP_PLACE,here=LOC&&LOC.place===p.name;
+  pls.forEach(p=>{const x=p.nx*cv.width,y=p.ny*cv.height,w=p.nw*cv.width,h=p.nh*cv.height,sel=p.name===MAP_PLACE,here=myPlace()===p.name;
     ctx.fillStyle=p.color+(sel?'55':'33');ctx.fillRect(x,y,w,h);ctx.strokeStyle=sel?'#ffe7a3':p.color;ctx.lineWidth=sel?3:2;ctx.setLineDash(sel?[]:[5,3]);ctx.strokeRect(x,y,w,h);ctx.setLineDash([]);
     ctx.font='bold 13px sans-serif';const label=(here?'📍 ':'')+p.name+(subOf(p.name)?' 🚪':''),tw=ctx.measureText(label).width;ctx.fillStyle='rgba(0,0,0,.65)';ctx.fillRect(x+3,y+3,tw+8,19);ctx.fillStyle='#fff';ctx.fillText(label,x+7,y+17);
-    whoAt(p.name).slice(0,6).forEach((u,i)=>{const r=11,cx=x+6+r+i*(r*2+3),cy=y+h-6-r;ctx.save();ctx.beginPath();ctx.arc(cx,cy,r,0,Math.PI*2);ctx.closePath();
+    const who=whoAt(p.name).slice(0,7),sz=Math.max(18,Math.min(30,Math.round(w/Math.max(2,who.length)-10)));
+    who.forEach((u,i)=>{const per=Math.max(sz+10,Math.min(sz+16,(w-8)/who.length)),cx=x+6+sz/2+i*per,cy=y+h-sz/2-24;drawTok(ctx,u,Math.min(cx,x+w-sz/2-4),Math.max(y+26+sz/2,cy),sz);});
+    if(false)whoAt(p.name).slice(0,6).forEach((u,i)=>{const r=11,cx=x+6+r+i*(r*2+3),cy=y+h-6-r;ctx.save();ctx.beginPath();ctx.arc(cx,cy,r,0,Math.PI*2);ctx.closePath();
       const im=tokImg(u);if(im){ctx.clip();ctx.drawImage(im,cx-r,cy-r,r*2,r*2);ctx.restore();}else{ctx.fillStyle='#1e1916';ctx.fill();ctx.fillStyle='#e6cf9a';ctx.font='bold 11px sans-serif';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText((u.ho?cname(u.ho):uname(u)).slice(0,1),cx,cy+1);ctx.restore();ctx.textAlign='start';ctx.textBaseline='alphabetic';}
       ctx.beginPath();ctx.arc(cx,cy,r,0,Math.PI*2);ctx.strokeStyle=u.id===ME.uid?'#ffe7a3':'rgba(255,255,255,.7)';ctx.lineWidth=1.5;ctx.stroke();});
   });
@@ -1372,7 +1413,7 @@ function derivePublic(st){
     maps:maps.filter(m=>m.revealed).map(m=>({key:m.key,name:m.name})),
     places:(st.places||[]).filter(p=>p.revealed).map(p=>{const m=p.mapIdx!=null?maps[p.mapIdx]:null;const on=m&&m.revealed;
       return {name:p.name,color:color(p.name),mapKey:on?m.key:null,nx:on?p.nx??null:null,ny:on?p.ny??null:null,nw:on?p.nw??null:null,nh:on?p.nh??null:null};}),
-    occ,dep,clock:(()=>{const n=st.now;if(!n||!n.d)return null;return {day:n.d,slot:n.s,dayName:(st.dayNames||[])[n.d-1]||('Day '+(n.d-1)),tod:(st.tod||{})[n.d+'_'+n.s]||''};})(),at:Date.now()
+    occ,dep,clock:(()=>{const n=st.now;if(!n||!n.d)return null;return {day:n.d,slot:n.s,dayName:(st.dayNames||[])[n.d-1]||('Day '+(n.d-1)),tod:(st.tod||{})[n.d+'_'+n.s]||'',locs:(()=>{const open=new Set((st.places||[]).filter(p=>p.revealed).map(p=>p.name)),o={};Object.entries(st.schedule||{}).forEach(([c,m])=>{const a=m&&m['d'+n.d+'s'+n.s];if(a&&a.place&&open.has(a.place))o[c]=a.place;});return o;})()};})(),at:Date.now()
   });
 }
 function mountScheduler(){
@@ -1511,6 +1552,7 @@ setInterval(()=>{if(ME&&P&&(tab==='garden'||tab==='lobby')&&!modalOpen())softRen
 </script>
 <script src="chat.js"></script>
 <script src="games.js"></script>
+<script src="tycoon.js"></script>
 <script src="party.js"></script>
 <script src="draw.js"></script>
 <script src="room.js"></script>
