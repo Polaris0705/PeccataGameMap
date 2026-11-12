@@ -176,7 +176,7 @@ function txEditor(a, b) {
    <div class="row"><button onclick="closeModal()">취소</button>${TXRULES.some(r => r.a === a) ? `<button class="danger" onclick="txDel(document.getElementById('txA').value)">원래대로</button>` : ''}<button class="primary" onclick="txSave()">저장</button></div></div>`);
   setTimeout(() => { const t = document.getElementById('txB'); if (t) { t.focus(); t.select(); } }, 50);
 }
-async function txPut(list) { try { await B.set('settings/texts', { rules: list, at: Date.now() }); } catch (e) { toast('저장 실패: ' + (e.code || e.message)); return false; } txSetRules(list); return true; }
+async function txPut(list) { try { await B.set('settings/texts', { rules: list, at: Date.now() }); } catch (e) { toast(e.code === 'permission-denied' ? '저장 권한이 없어요 — ⚙ 저택 설정 › KP 권한 진단을 눌러 보세요' : '저장 실패: ' + (e.code || e.message)); return false; } txSetRules(list); return true; }
 async function txSave() {
   const a = document.getElementById('txA').value.trim(), b = document.getElementById('txB').value.replace(/\n+$/, '');
   if (!a) return toast('원래 글자를 적어 주세요');

@@ -826,9 +826,28 @@ async function saveThemeGlobal(){const t=themeOf(TF);try{await B.set('settings/t
 
 /* ================= KP: 저택 설정 ================= */
 let EGG={on:true,mode:'personal',perDay:3,coins:3,salt:''};
+/* ---- KP 권한 진단: 앱은 KP로 보는데 Firebase 규칙은 KP로 안 볼 때 원인 찾기 ---- */
+async function adminDiag(){
+  const L=[],ok=(b,t)=>L.push(`<p style="margin:6px 0">${b?'✅':'❌'} ${t}</p>`);
+  const me=String(ME.email||'').toLowerCase();ok(!!me,`로그인 이메일: <b>${esc(me||'(없음)')}</b>`);
+  let doc=null,err=null;try{doc=await B.get('config/admins');}catch(e){err=e;}
+  if(err)ok(false,`config/admins 문서를 읽지 못했어요 (${esc(err.code||err.message)}). <b>규칙을 다시 게시</b>했는지 확인해 주세요.`);
+  else if(!doc)ok(false,'Firestore에 <b>config / admins</b> 문서가 없어요. Firestore › 데이터에서 컬렉션 <b>config</b>, 문서 <b>admins</b>를 만들어 주세요. (Realtime Database가 아니라 Firestore예요)');
+  else{const em=doc.emails;
+    if(!Array.isArray(em))ok(false,`emails 필드가 <b>배열(array)</b>이 아니에요 (지금: ${esc(typeof em)}${typeof em==='string'?` "${esc(em)}"`:''}). 필드 유형을 array로 바꾸고 이메일을 한 칸에 하나씩 넣어 주세요.`);
+    else{ok(true,`config/admins.emails: ${em.map(x=>`<code>${esc(JSON.stringify(x))}</code>`).join(', ')||'(비어 있음)'}`);
+      const exact=em.includes(me),loose=em.some(x=>String(x).trim().toLowerCase()===me);
+      if(exact)ok(true,'내 이메일이 명단과 정확히 같아요');
+      else if(loose)ok(false,'명단에 내 이메일이 있지만 <b>대문자나 앞뒤 공백</b>이 섞여 있어요. 소문자로, 공백 없이 다시 적어 주세요.');
+      else ok(false,'명단에 내 이메일이 없어요. 위 로그인 이메일을 그대로 추가해 주세요.');}}
+  let w=null;try{await B.set('settings/_diag',{at:Date.now(),by:me});w=true;}catch(e){w=e.code||e.message;}
+  ok(w===true,w===true?'KP 전용 저장 테스트 성공 — 규칙이 나를 KP로 인정해요':`KP 전용 저장 테스트 실패 (${esc(w)}). 위의 ❌를 고친 뒤 <b>Firestore › 규칙</b>에 새 firestore.rules를 붙여넣고 <b>게시</b>했는지도 확인해 주세요.`);
+  modal(`<h2 style="color:var(--gold2);margin-top:0">🔧 KP 권한 진단</h2>${L.join('')}<p class="muted">고친 뒤 이 창을 다시 열어 확인해 보세요. 반영까지 1분쯤 걸릴 수 있어요.</p><div class="row"><button onclick="adminDiag()">다시 진단</button><button class="primary" onclick="closeModal()">닫기</button></div>`);
+}
+window.addEventListener('unhandledrejection',e=>{const c=e.reason&&e.reason.code;if(c==='permission-denied'){toast(IS_ADMIN?'저장 권한이 없어요 — ⚙ 저택 설정 › KP 권한 진단을 눌러 보세요':'저장 권한이 없어요');}});
 function openGameSettings(){window._eg=Object.assign({},EGG);gsModal();}
 function gsModal(){const e=window._eg;
-  modal(`<h2 style="color:var(--gold2);margin-top:0">⚙ 저택 설정</h2><h3>지도 이스터에그 은화</h3>
+  modal(`<h2 style="color:var(--gold2);margin-top:0">⚙ 저택 설정</h2>${DEMO?'':'<button class="sm" style="float:right;margin-top:-6px" onclick="adminDiag()">🔧 KP 권한 진단</button>'}<h3>지도 이스터에그 은화</h3>
    <label class="muted" style="display:block"><input type="checkbox" style="width:auto" ${e.on?'checked':''} onchange="_eg.on=this.checked"> 켜기</label>
    <label class="f">숨기는 방식</label><div class="toggles"><button class="${e.mode==='personal'?'on':''}" onclick="_eg.mode='personal';gsModal()">사람마다 따로</button><button class="${e.mode==='shared'?'on':''}" onclick="_eg.mode='shared';gsModal()">모두 같은 자리 (먼저 찾은 사람)</button></div>
    <div class="row" style="margin-top:4px"><label class="f" style="flex:1">하루에 찾을 수 있는 횟수<input type="number" min="1" max="20" value="${e.perDay}" oninput="_eg.perDay=+this.value"></label>
