@@ -26,7 +26,7 @@ window.APP_CONFIG = {
   vapidPublicKey: "",
 
   // 채팅 CoC 판정 규칙: 6 = 6판, 7 = 7판
-  cocEdition: 6,
+  cocEdition: 7,
 
   // 스케줄러 HO 코드 ↔ 칠죄종 (미니게임 특전)
   hoSins: { HO1: 'wrath', HO2: 'greed', HO3: 'sloth', HO4: 'gluttony', HO5: 'pride', HO6: 'envy', HO7: 'lust' },
