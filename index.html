@@ -27,6 +27,8 @@ body.insched .wrap{padding-bottom:4px}
 header.top{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;padding:6px 0 10px;border-bottom:1px solid var(--line);margin-bottom:12px}
 header.top h1{margin:0;font-size:1.3rem;letter-spacing:.1em;color:var(--gold2);font-weight:800}
 .who{display:flex;align-items:center;gap:10px;flex-wrap:wrap;font-size:.9rem}
+.clockb{font-size:.85rem;color:var(--text2);border:1px solid var(--line);padding:2px 8px;margin-right:8px;white-space:nowrap}
+@media(max-width:560px){.clockb{font-size:.75rem;padding:1px 5px;margin-right:4px}}
 .coin{font-weight:800;color:var(--gold2)}.coin::before{content:"◈ ";color:var(--gold)}
 .demo{background:var(--wine);color:#fff;font-size:.72rem;padding:1px 8px;border-radius:10px}
 nav{display:flex;gap:5px;flex-wrap:wrap;margin-bottom:6px}
@@ -286,6 +288,10 @@ html.px ::-webkit-scrollbar-thumb{background:var(--line);border:2px solid var(--
 html.px ::selection{background:var(--gold);color:var(--ontext)}
 html.px{cursor:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='22' height='22' viewBox='0 0 11 11' shape-rendering='crispEdges'%3E%3Cpath d='M0 0h1v1H0zM0 1h2v1H0zM0 2h3v1H0zM0 3h4v1H0zM0 4h5v1H0zM0 5h6v1H0zM0 6h4v1H0zM0 7h2v1H0zM3 7h2v1H3zM4 8h2v1H4z' fill='%231a1410'/%3E%3Cpath d='M1 2h1v1H1zM1 3h2v1H1zM1 4h3v1H1zM1 5h2v1H1z' fill='%23f4f0e8'/%3E%3C/svg%3E") 0 0,auto}
 html.px button,html.px .chip,html.px [onclick]{cursor:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='22' height='22' viewBox='0 0 11 11' shape-rendering='crispEdges'%3E%3Cpath d='M0 0h1v1H0zM0 1h2v1H0zM0 2h3v1H0zM0 3h4v1H0zM0 4h5v1H0zM0 5h6v1H0zM0 6h4v1H0zM0 7h2v1H0zM3 7h2v1H3zM4 8h2v1H4z' fill='%231a1410'/%3E%3Cpath d='M1 2h1v1H1zM1 3h2v1H1zM1 4h3v1H1zM1 5h2v1H1z' fill='%23e0b050'/%3E%3C/svg%3E") 0 0,pointer}
+/* 글자 고치기 모드 */
+#txbar{position:fixed;left:0;right:0;top:0;z-index:35;display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;padding:calc(8px + env(safe-area-inset-top)) 14px 8px;background:var(--gold);color:var(--ontext);font-weight:700;box-shadow:0 3px 0 0 #0a0806}
+body.txedit{padding-top:52px}
+body.txedit #app *:hover,body.txedit #chatDock *:hover,body.txedit #mbox *:hover{outline:1px dashed var(--gold2);outline-offset:1px;cursor:text!important}
 /* 도트 아이콘 */
 i.pxi{display:inline-block;width:1.15em;height:1.15em;vertical-align:-.2em;background:center/contain no-repeat;image-rendering:pixelated;font-style:normal}
 button i.pxi{margin-right:1px}
@@ -529,6 +535,7 @@ async function onAuth(u){
     softRender();
   }));
   sub(B.onDoc('public/main',d=>{PUB=d;if(typeof chatInputSoft==='function')chatInputSoft();softRender();}));
+  sub(B.onDoc('settings/texts',d=>{if(typeof txSetRules==='function')txSetRules((d&&d.rules)||[]);}));
   sub(B.onDoc('settings/theme',d=>{THEME_GLOBAL=d;if(!TF)applyTheme();}));
   sub(B.onDoc('settings/rooms',d=>{ROOMS=Object.assign({rooms:{},gather:null},d||{});softRender();}));
   sub(B.onDoc('settings/game',d=>{EGG=Object.assign({on:true,mode:'personal',perDay:3,coins:3,salt:''},(d&&d.egg)||{});softRender();}));
@@ -574,7 +581,7 @@ function render(){
   if(!IS_ADMIN&&!PROF.ho){app.innerHTML=headerHtml()+hoView();return;}
   const groups=IS_ADMIN?kpTabs():PL_TABS;
   const flat=groups.flatMap(g=>g[1]);
-  if(!flat.find(t=>t[0]===tab)&&!(typeof FEATS!=='undefined'&&FEATS[tab])&&!(tab==='visit'&&(PROF.ho||IS_ADMIN)))tab=flat[0][0];
+  if(!flat.find(t=>t[0]===tab)&&!(typeof FEATS!=='undefined'&&FEATS[tab]&&featOpen(tab))&&!(tab==='visit'&&(PROF.ho||IS_ADMIN)))tab=flat[0][0];
   const badge=k=>{
     if(k==='sched'){const n=BOOKINGS.filter(b=>b.status==='pending').length;return n?` <span class="dot"></span>${n}`:'';}
     if(k==='kitems'){const n=ITEMS.filter(i=>i.inspectReq).length;return n?` <span class="dot"></span>${n}`:'';}
@@ -595,14 +602,14 @@ function headerHtml(){
   const av=PROF.avatar?`<img src="${PROF.avatar}" alt="">`:esc((PROF.name||'?').slice(0,1));
   const role=IS_ADMIN?('KP'+(PROF.ho?' / '+cname(PROF.ho):'')):(PROF.ho?cname(PROF.ho):'HO 미선택');
   return `<header class="top"><h1>${esc(CONFIG.title)}</h1><div class="who">${DEMO?'<span class="demo">데모 모드</span>':''}
-   <span class="coin">${P.coins} 은화</span>
+   ${clockBadge()}<span class="coin">${P.coins} 은화</span>
    <div class="pmenu"><button class="pbtn" onclick="event.stopPropagation();MENU=!MENU;render()"><span class="pav">${av}</span><span><b>${esc(PROF.name)}</b> <small class="muted">· ${esc(role)}</small></span> ▾</button>
    ${MENU?`<div class="pdrop" onclick="event.stopPropagation()">
      <button onclick="MENU=false;render();openProfile()">👤 프로필 편집</button>
      <button onclick="MENU=false;render();openTheme()">🎨 테마 · 글꼴</button>
      <button onclick="MENU=false;render();openAppModal()">📱 앱 · 알림</button>
      <button onclick="MENU=false;toggleSfx();render()">${SFX_ON?'🔇 효과음 끄기':'🔊 효과음 켜기'}</button>
-     ${IS_ADMIN?'<button onclick="MENU=false;render();openGameSettings()">⚙ 저택 설정 (KP)</button>':''}
+     ${IS_ADMIN?'<button onclick="MENU=false;render();openGameSettings()">⚙ 저택 설정 (KP)</button><button onclick="MENU=false;render();txToggle(true)">✏ 글자 고치기 (KP)</button>':''}
      <hr><button class="danger" onclick="MENU=false;logout()">로그아웃</button></div>`:''}</div></div></header>`;
 }
 document.addEventListener('click',()=>{if(MENU){MENU=false;render();}});
@@ -896,12 +903,18 @@ VIEWS.lobby=()=>{
    <div class="grid g2" style="margin-top:14px">
     <div class="panel" style="margin:0"><h2>🗝 조사</h2><p>${qi||'<span class="muted">대기열에 없어요</span>'}</p><p class="muted">승인 대기 ${pend} · 승인됨 ${appr}</p><button onclick="go('book')">조사 예약</button></div>
     <div class="panel" style="margin:0"><h2>🎒 소지품</h2><p>${ITEMS.filter(i=>i.owner===ME.uid).length}개 ${newItems?`<span class="badge pending">새 물건 ${newItems}</span>`:''}</p><button onclick="go('items')">소지품 열기</button></div>
-    <div class="panel" style="margin:0"><h2>🌿 온실</h2><p>수확 가능 <b>${ready}</b></p><button onclick="go('garden')">온실로</button></div>
-    <div class="panel" style="margin:0"><h2>🕯 수수께끼</h2><p>${solved} / ${RIDDLES.length} 해결</p><button onclick="go('riddle')">수수께끼로</button></div>
+    <div class="panel" style="margin:0"><h2>🌿 온실</h2><p>수확 가능 <b>${ready}</b></p>${featOpen('garden')?`<button onclick="goFeat('garden')">온실로</button>`:'<p class="muted">🔒 아직 온실을 찾지 못했어요</p>'}</div>
+    <div class="panel" style="margin:0"><h2>🕯 수수께끼</h2><p>${solved} / ${RIDDLES.length} 해결</p>${featOpen('riddle')?`<button onclick="goFeat('riddle')">수수께끼로</button>`:'<p class="muted">🔒 저택 어딘가에…</p>'}</div>
    </div>
    ${appPanel()}
    <div class="panel"><h2>안내</h2><p class="muted">• KP가 차례를 부르면 화면 위에 알림 막대가 뜨고 소리가 나요. 소리가 나려면 페이지를 한 번 눌러 두세요.<br>• 다른 창을 보고 있을 때도 알림을 받으려면 → <a href="#" style="color:var(--gold2)" onclick="event.preventDefault();askNotify()">브라우저 알림 켜기</a></p></div>`;
 };
+
+/* ---- 진행 시간대 ---- */
+const TOD_NAME={morning:'아침',day:'낮',evening:'저녁',night:'밤'},TOD_EMO={morning:'🌅',day:'☀️',evening:'🌇',night:'🌙'};
+const curTod=()=>(PUB&&PUB.clock&&PUB.clock.tod)||'';
+function clockBadge(){const c=PUB&&PUB.clock;if(!c)return '';const SY='①②③④⑤⑥⑦⑧⑨⑩';
+  return `<span class="clockb" title="지금 진행 중인 시간">${esc(c.dayName||'')} ${SY[c.slot-1]||c.slot}${c.tod?` · ${TOD_EMO[c.tod]} ${TOD_NAME[c.tod]}`:''}</span>`;}
 
 /* ================= PL: 지도 ================= */
 let mapSel=null;const MAPIMG={};
@@ -920,7 +933,12 @@ function featsOf(name){const r=ROOMS.rooms&&ROOMS.rooms[name];if(r&&Array.isArra
 const subOf=name=>(ROOMS.rooms&&ROOMS.rooms[name]&&ROOMS.rooms[name].sub)||'';
 const placeIdx=name=>((PUB&&PUB.places)||[]).findIndex(p=>p.name===name);
 function unassigned(){const pl=(PUB&&PUB.places)||[];return FEAT_KEYS.filter(k=>!pl.some(p=>featsOf(p.name).includes(k)));}
-function openFeat(k){go(k);}
+const FREE_FEATS=['shop','rank'];            // 지도와 상관없이 늘 열려 있는 것
+const featAt=k=>((PUB&&PUB.places)||[]).findIndex(p=>featsOf(p.name).includes(k));
+const featOpen=k=>IS_ADMIN||FREE_FEATS.includes(k)||featAt(k)>=0;
+function openFeat(k){if(!featOpen(k)){sfx('bad');return toast('저택 어딘가에서 찾을 수 있을 것 같아요');}go(k);}
+function goFeat(k){const i=featAt(k);if(i<0&&!IS_ADMIN){sfx('bad');return toast('아직 찾지 못한 곳이에요');}if(i<0)return go(k);go('map');selectPlace(i);}
+function lockCard(){return `<button class="room" disabled style="opacity:.55;cursor:default"><div class="rn">🔒 ？？？</div><div class="muted" style="font-size:.8rem">저택 어딘가에…</div></button>`;}
 function setLoc(p){
   LOC={map:p.mapKey||'',place:p.name,at:Date.now()};try{localStorage.setItem('peccata_loc',JSON.stringify(LOC));}catch(e){}
   if(PROF&&PROF.shareLoc)B.update('users/'+ME.uid,{loc:LOC}).catch(()=>{});
@@ -930,7 +948,7 @@ function selectPlace(i){const p=PUB.places[i];if(!p)return;MAP_PLACE=p.name;if(p
   setTimeout(()=>{const el=$('#placePanel');if(el)el.scrollIntoView({behavior:'smooth',block:'nearest'});},60);}
 function enterSub(key){mapSel=key;MAP_PLACE=null;render();window.scrollTo(0,0);}
 function whoAt(name){return USERS.filter(u=>u.shareLoc&&u.loc&&u.loc.place===name&&(u.ho||isAdminEmail(u.email)));}
-function featCard(k){const f=FEATS[k];return `<button class="room" onclick="openFeat('${k}')"><div class="rn">${f.ic} ${f.n}</div><div class="muted" style="font-size:.8rem">${f.d}</div></button>`;}
+function featCard(k){const f=FEATS[k];return `<button class="room" onclick="openFeat('${k}')">${IS_ADMIN&&!FREE_FEATS.includes(k)&&featAt(k)<0?'<div class="muted" style="font-size:.72rem">KP만 · 아직 공개된 장소에 없음</div>':''}<div class="rn">${f.ic} ${f.n}</div><div class="muted" style="font-size:.8rem">${f.d}</div></button>`;}
 VIEWS.map=()=>{
   const maps=(PUB&&PUB.maps)||[],places=(PUB&&PUB.places)||[];
   const subKeys=new Set(places.map(p=>subOf(p.name)).filter(Boolean));
@@ -944,7 +962,8 @@ VIEWS.map=()=>{
     <div class="row" style="margin-top:6px">${placeIdx(g.place)>=0?`<button class="sm primary" onclick="selectPlace(${placeIdx(g.place)})">그곳으로 이동</button>`:''}${IS_ADMIN?'<button class="sm" onclick="clearGather()">소집 해제</button>':''}</div></div>`;
   if(PROF.shareLoc===undefined)h+=`<div class="panel"><b>내 위치를 다른 사람에게 보여줄까요?</b><p class="muted" style="margin:4px 0 8px">보여주면 내가 있는 방에 내 토큰이 표시돼요. 나중에 프로필 편집에서 바꿀 수 있어요.</p><div class="row"><button class="primary" onclick="setShare(true)">보여주기</button><button onclick="setShare(false)">숨기기</button></div></div>`;
   if(!maps.length&&!places.length){
-    h+=`<div class="panel"><h2>저택 지도</h2><p class="muted">아직 공개된 지도나 장소가 없어요. KP가 공개하기 전까지는 아래에서 바로 즐길 수 있어요.</p><div class="grid g3">${FEAT_KEYS.map(featCard).join('')}</div></div>`;
+    h+=`<div class="panel"><h2>저택 지도</h2><p class="muted">아직 공개된 지도나 장소가 없어요. 장소가 공개되면 그곳에서 놀거리를 찾을 수 있어요.</p>${IS_ADMIN?'<button class="sm" onclick="openRoomSettings()">⚙ 방 기능 설정</button>':''}</div>`;
+    h+=extraPanel();
     return h;
   }
   h+=`<div class="panel"><div class="row" style="justify-content:space-between"><h2 style="margin:0">저택 지도</h2>${IS_ADMIN?'<button class="sm" onclick="openRoomSettings()">⚙ 방 기능 설정</button>':''}</div>
@@ -959,10 +978,14 @@ VIEWS.map=()=>{
      ${fs.map(featCard).join('')}
      ${myHo()?`<button class="room" onclick="bookAt(${JSON.stringify(cur.name).replace(/"/g,'&quot;')})"><div class="rn">🗝 이곳 조사 예약</div><div class="muted" style="font-size:.8rem">일정표에서 시간 고르기</div></button>`:''}</div>
      ${!fs.length&&!sm?'<p class="muted">이 방에서 할 수 있는 건 조사뿐인 것 같아요.</p>':''}</div>`;}
-  const un=unassigned();
-  if(un.length)h+=`<div class="panel"><h2>그 밖의 즐길 거리</h2><p class="muted">아직 어느 방에도 배정되지 않은 것들이에요.</p><div class="grid g3">${un.map(featCard).join('')}</div></div>`;
+  h+=extraPanel();
   return h;
 };
+function extraPanel(){
+  const free=FEAT_KEYS.filter(k=>FREE_FEATS.includes(k)),hidden=FEAT_KEYS.filter(k=>!FREE_FEATS.includes(k)&&featAt(k)<0);
+  return `<div class="panel"><h2>그 밖의 즐길 거리</h2><p class="muted">놀거리는 저택의 방 안에 있어요. 방이 공개되면 그곳으로 가서 즐길 수 있어요.</p>
+   <div class="grid g3">${free.map(featCard).join('')}${IS_ADMIN?hidden.map(featCard).join(''):hidden.map(lockCard).join('')}</div></div>`;
+}
 const TOKIMG={};
 function tokImg(u){const src=u.charImg||u.avatar;if(!src)return null;let im=TOKIMG[u.id];if(!im||im._src!==src){im=new Image();im._src=src;im.onload=()=>{if(tab==='map')drawPlMap();};im.src=src;TOKIMG[u.id]=im;}return im.complete&&im.naturalWidth?im:null;}
 async function drawPlMap(){
@@ -1330,7 +1353,7 @@ function derivePublic(st){
     maps:maps.filter(m=>m.revealed).map(m=>({key:m.key,name:m.name})),
     places:(st.places||[]).filter(p=>p.revealed).map(p=>{const m=p.mapIdx!=null?maps[p.mapIdx]:null;const on=m&&m.revealed;
       return {name:p.name,color:color(p.name),mapKey:on?m.key:null,nx:on?p.nx??null:null,ny:on?p.ny??null:null,nw:on?p.nw??null:null,nh:on?p.nh??null:null};}),
-    occ,dep,at:Date.now()
+    occ,dep,clock:(()=>{const n=st.now;if(!n||!n.d)return null;return {day:n.d,slot:n.s,dayName:(st.dayNames||[])[n.d-1]||('Day '+(n.d-1)),tod:(st.tod||{})[n.d+'_'+n.s]||''};})(),at:Date.now()
   });
 }
 function mountScheduler(){
