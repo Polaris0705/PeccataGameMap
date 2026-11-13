@@ -453,6 +453,17 @@ const WARDHI = {
   },
 };
 /* 창문 (벽 장식 · 128 × 152) */
+/* 묶은 커튼 한 쪽 (기본 창문과 같은 모양): 바깥선 ox에서 안쪽으로 폭 E(y).
+   위는 넓게(wTop) → 안쪽 가장자리가 부드럽게 휘며 끈(tie)에서 wTie까지 모임 → 아래로 다시 wBot까지 퍼짐.
+   o.rings: 봉에 끼운 고리 · 윗단 물결, o.lace: 반투명 레이스 */
+function hcurtain(p, ox, mir, y0, y1, tie, wTop, wTie, wBot, A, o) { const { c } = p; o = o || {};
+  const E = y => y <= tie ? wTie + (wTop - wTie) * Math.cos(Math.PI / 2 * (y - y0) / (tie - y0)) : wTie + (wBot - wTie) * Math.sqrt((y - tie) / (y1 - tie)), X = i => mir ? ox - i : ox + i, W0 = Math.round(E(y0));
+  for (let y = y0; y < y1; y++) { const w = Math.round(E(y)); for (let i = 0; i < w; i++) { const wave = o.rings ? Math.round(Math.abs(Math.sin(i / Math.max(1, W0 - 1) * Math.PI * 5)) * 2) : 0; if (y < y0 + 3 + wave) continue;
+      const k = Math.floor(i / w * 13 + (y < y0 + 8 ? (i % 2) : 0)) % 4, edge = i === w - 1 || y === y1 - 1 || y < y0 + 4 + wave;
+      if (o.lace) { c(X(i), y, 1, 1, edge ? 'rgba(255,255,255,.75)' : k === 2 ? 'rgba(255,255,255,.6)' : 'rgba(255,255,255,.4)'); if ((i * 3 + y) % 7 === 0 && y % 3 === 0 && !edge) c(X(i), y, 1, 1, A.t); }
+      else c(X(i), y, 1, 1, edge ? (y === y1 - 1 ? A.d : A.o) : y < y0 + 8 ? (i % 3 ? A.t : A.f) : k === 0 ? A.f : k === 1 ? A.t : k === 2 ? A.l : A.t); } }
+  if (o.rings) for (let k = 0; k < 6; k++) { const x = X(2 + Math.round(k * (W0 - 5) / 5)); c(x - 2, y0 - 5, 5, 1, GOLDD); c(x - 2, y0 - 4, 1, 6, GOLDD); c(x + 2, y0 - 4, 1, 6, GOLDD); c(x - 1, y0 - 5, 3, 1, GOLD2); c(x - 1, y0 + 2, 3, 1, GOLDD); c(x, y0 + 2, 1, 2, o.lace ? 'rgba(255,255,255,.8)' : A.o); }
+  const tx = mir ? ox - 15 : ox; if (!o.noTie) { c(tx, tie - 2, 16, 5, GOLDD); c(tx + 1, tie - 1, 14, 3, GOLD); c(tx + 1, tie - 1, 14, 1, GOLD2); } }
 function WINDOWHI(p, t, C) { const { c } = p, A = C.a, F = C.b;
   // 창틀
   c(14, 8, 100, 124, F.o); c(16, 10, 96, 120, F.t); c(16, 10, 96, 3, F.L); c(16, 126, 96, 2, F.d);
@@ -461,14 +472,11 @@ function WINDOWHI(p, t, C) { const { c } = p, A = C.a, F = C.b;
   c(26, 20, 3, 18, 'rgba(255,255,255,.35)'); c(30, 20, 2, 10, 'rgba(255,255,255,.25)'); c(70, 76, 3, 16, 'rgba(255,255,255,.3)');
   // 창턱
   c(8, 130, 112, 10, F.o); c(9, 131, 110, 7, F.t); c(9, 131, 110, 2, F.L); c(10, 138, 108, 3, 'rgba(0,0,0,.25)');
-  // 커튼 (주름 + 묶은 끈)
-  const drape = (x0, mir) => { for (let i = 0; i < 30; i++) { const xx = mir ? x0 + 29 - i : x0 + i, tie = 92, waist = Math.round(Math.max(0, 1 - Math.abs(i - 4) / 30) * 10);
-      for (let y = 6; y < 148; y++) { const pinch = y > tie - 30 && y < tie + 10 ? Math.round((1 - Math.abs(y - tie) / 30) * 14) : 0, edge = 30 - pinch; if (i >= edge) continue;
-        const f = (i + Math.round(y / 40)) % 8, col = i === edge - 1 ? A.o : f < 2 ? A.f : f < 5 ? A.t : f < 7 ? A.l : A.d; c(xx, y, 1, 1, col); } } };
-  drape(0, false); drape(98, true);
-  [[0, false], [98, true]].forEach(([x0, mir]) => { const x = mir ? x0 + 12 : x0 + 4; c(x, 90, 14, 5, GOLDD); c(x + 1, 91, 12, 3, GOLD); c(x + 1, 91, 12, 1, GOLD2); });
-  // 커튼 봉
+  // 커튼 (공통 모양 · 봉 고리에 매달림)
+  hcurtain(p, 0, false, 6, 148, 92, 42, 18, 33, A, { rings: true, noRingDraw: true }); hcurtain(p, 127, true, 6, 148, 92, 42, 18, 33, A, { rings: true });
+  // 커튼 봉 (고리 위로)
   c(0, 2, 128, 6, '#3a2418'); c(1, 3, 126, 3, GOLD); c(1, 3, 126, 1, GOLD2); [[0, 2], [122, 2]].forEach(([x, y]) => { c(x, y - 2, 6, 10, GOLDD); c(x + 1, y - 1, 4, 8, GOLD); });
+  [[0, false], [127, true]].forEach(([ox, mir]) => { for (let k = 0; k < 6; k++) { const x = mir ? ox - (2 + Math.round(k * 37 / 5)) : ox + 2 + Math.round(k * 37 / 5); c(x - 2, 1, 5, 1, GOLDD); c(x - 2, 2, 1, 6, GOLDD); c(x + 2, 2, 1, 6, GOLDD); c(x - 1, 1, 3, 1, GOLD2); } });
 }
 
 /* 끝이 뾰족한 잎 (가운데 잎맥) */
@@ -1049,14 +1057,8 @@ const ARCHWINHI = (p, t, C) => { const { c } = p, A = C.a, F = C.b;   // 벽 · 
   for (let yy = 6; yy < 60; yy++) { const r = ar(yy), r2 = ir(yy); if (!r) continue; if (r2) { c(r[0], yy, r2[0] - r[0], 1, F.t); c(r2[1], yy, r[1] - r2[1], 1, F.t); c(r2[0] - 1, yy, 1, 1, F.d); } else c(r[0], yy, r[1] - r[0], 1, F.t); }
   c(14, 60, 6, 106, F.t); c(108, 60, 6, 106, F.t); c(15, 60, 2, 106, F.L); c(112, 60, 1, 106, F.d);
   c(8, 160, 112, 10, F.o); c(9, 161, 110, 7, F.t); c(9, 161, 110, 2, F.L); c(10, 168, 108, 3, 'rgba(0,0,0,.25)');
-  // 봉에 고리로 달려 곧게 내려오다가 양옆에서 묶인 커튼 (위쪽은 주름 잡힌 머리)
-  const tie = 118;
-  [[0, false], [94, true]].forEach(([x0, mir]) => { const W = 34;
-    for (let i = 0; i < W; i++) { const xx = mir ? x0 + W - 1 - i : x0 + i;
-      for (let y = 6; y < 176; y++) { const pinch = y > tie - 44 && y < tie + 14 ? Math.round((1 - Math.abs(y - tie) / (y < tie ? 44 : 14)) * 18) : 0, edge = W - pinch; if (i >= edge) continue;
-        const f = (i + Math.round(y / 50)) % 7, col = i === edge - 1 ? A.o : f < 2 ? A.f : f < 4 ? A.t : f < 6 ? A.l : A.d; c(xx, y, 1, 1, y > 172 ? A.f : col); } }
-    for (let k = 0; k < 6; k++) { const x = (mir ? x0 + W - 1 - k * 6 : x0 + k * 6) - 2; c(x, 6, 5, 6, A.o); c(x + 1, 7, 3, 4, k % 2 ? A.l : A.t); c(x + 1, 2, 3, 5, GOLDD); c(x + 2, 3, 1, 3, GOLD2); }
-    const x = mir ? x0 + 10 : x0 + 2; c(x, tie - 2, 22, 5, GOLDD); c(x + 1, tie - 1, 20, 3, GOLD); c(x + 1, tie - 1, 20, 1, GOLD2); });
+  // 커튼 (기본 창문과 같은 모양 · 봉 고리에 매달림)
+  hcurtain(p, 0, false, 8, 178, 118, 46, 18, 34, A, { rings: true }); hcurtain(p, 127, true, 8, 178, 118, 46, 18, 34, A, { rings: true });
   c(0, 2, 128, 4, '#3a2418'); c(1, 2, 126, 3, GOLD); c(1, 2, 126, 1, GOLD2); [[0, 1], [122, 1]].forEach(([x, y]) => { c(x - 1, y - 2, 7, 8, GOLDD); c(x, y - 1, 5, 6, GOLD); c(x + 1, y, 2, 2, GOLD2); }); };
 const ROUNDWINHI = (p, t, C) => { const { c, el } = p, F = C.b;   // 벽 · 64 × 72
   el(32, 36, 31, 31, F.o); el(32, 36, 30, 30, F.t); el(30, 34, 27, 27, F.L); el(32, 36, 27, 27, F.t); el(32, 36, 24, 24, F.o);
@@ -1078,11 +1080,9 @@ const TALLWINHI = (p, t, C) => { const { c } = p, A = C.a, F = C.b;   // 벽 · 
   c(14, 6, 100, 150, F.o); c(16, 8, 96, 146, F.t); c(16, 8, 96, 3, F.L); todSky(p, t, 22, 14, 84, 136); c(22, 14, 84, 3, 'rgba(0,0,0,.25)');
   c(62, 14, 4, 136, F.t); c(62, 14, 1, 136, F.L); [58, 104].forEach(y => { c(22, y, 84, 4, F.t); c(22, y, 84, 1, F.L); }); c(28, 20, 3, 22, 'rgba(255,255,255,.3)');
   c(8, 152, 112, 10, F.o); c(9, 153, 110, 7, F.t); c(9, 153, 110, 2, F.L); c(10, 160, 108, 3, 'rgba(0,0,0,.25)');
-  // 레이스 커튼: 반투명 천 + 구멍 무늬 + 물결 밑단
-  [[0, 1], [128 - 34, -1]].forEach(([x0, d]) => { for (let i = 0; i < 34; i++) { const x = x0 + i, f = (i % 6); for (let y = 4; y < 148 + Math.round(Math.sin(i / 3) * 2); y++) { c(x, y, 1, 1, f < 2 ? 'rgba(255,255,255,.55)' : 'rgba(255,255,255,.38)'); if ((x + y) % 6 === 0 && y % 3 === 0) c(x, y, 1, 1, A.t); } c(x, 148 + Math.round(Math.sin(i / 3) * 2), 1, 2, A.l); } });
-  for (let y = 10; y < 146; y += 12) for (const x0 of [8, 112]) { c(x0, y, 6, 1, A.t); c(x0 + 2, y - 2, 2, 5, A.t); }
-  c(0, 0, 128, 14, A.o); for (let x = 0; x < 128; x++) { c(x, 1, 1, 12, x % 6 < 3 ? A.t : A.l); c(x, 12 + Math.round(Math.abs(Math.sin(x / 8)) * 3), 1, 2, A.f); }
-  c(0, -2, 128, 4, F.d); c(0, -2, 128, 1, F.L); };
+  // 레이스 커튼 (기본 창문과 같은 모양 · 반투명 · 봉 고리에 매달림)
+  hcurtain(p, 0, false, 6, 150, 100, 46, 18, 34, A, { rings: true, lace: true }); hcurtain(p, 127, true, 6, 150, 100, 46, 18, 34, A, { rings: true, lace: true });
+  c(0, 0, 128, 5, '#3a2418'); c(1, 1, 126, 3, GOLD); c(1, 1, 126, 1, GOLD2); [[0, 0], [122, 0]].forEach(([x, y]) => { c(x, y - 2, 6, 9, GOLDD); c(x + 1, y - 1, 4, 7, GOLD); }); };
 const GARLANDHI = (p, t, C) => { const { c } = p, M = C.c;   // 벽 · 128 × 48
   for (let x = 0; x < 128; x++) { const y = 4 + Math.round(12 * Math.sin(Math.PI * x / 127)); c(x, y, 1, 2, '#8a7a5a'); c(x, y, 1, 1, '#b0a080'); }
   const star = (x, y, col, R) => { for (let k = 0; k < 5; k++) { const a = -Math.PI / 2 + k / 5 * Math.PI * 2; p.ln(x, y, x + Math.round(Math.cos(a) * 7), y + Math.round(Math.sin(a) * 7), R.o, 3); } for (let k = 0; k < 5; k++) { const a = -Math.PI / 2 + k / 5 * Math.PI * 2; p.ln(x, y, x + Math.round(Math.cos(a) * 6), y + Math.round(Math.sin(a) * 6), col, 2); } p.el(x, y, 3, 3, col); p.c(x - 1, y - 2, 2, 2, R.L); };
@@ -1175,11 +1175,9 @@ const CANOPYHI = (p, t, C) => { const { c, orr, el } = p, A = C.a, B = C.b, S = 
   c(4, 10, 184, 4, 'rgba(0,0,0,.2)'); el(96, 100, 7, 5, M.o); el(96, 100, 6, 4, M.t); el(94, 99, 2, 1, M.L);
   // 옆면 커튼 (옆 틀에서 바닥까지, 시선과 나란해서 얇은 띠 + 주름 볼록)
   [[8, 1], [176, -1]].forEach(([x0, d]) => { for (let y = 10; y < 298; y++) { const w = 6 + Math.round((Math.sin(y / 9) + 1) * 2); for (let i = 0; i < w; i++) { const xx = d > 0 ? x0 + i : x0 + 7 - i + 1; c(xx, y, 1, 1, i === w - 1 ? A.o : i < 2 ? A.f : (i + (y >> 3)) % 3 ? A.t : A.l); } } });
-  // 앞 커튼: 앞 가로대(192)에서 바닥(298)까지, 가운데가 열리고 앞 기둥에 묶임
-  const tie = 252; [[10, false], [126, true]].forEach(([x0, mir]) => { const W0 = 56;
-    for (let y = 194; y < 298; y++) { const W = y < tie ? Math.round(W0 - Math.pow((y - 194) / (tie - 194), .75) * (W0 - 12)) : Math.round(12 + (y - tie) * .3);
-      for (let i = 0; i < W; i++) { const xx = mir ? x0 + W0 - 1 - i : x0 + i, f = (i + Math.round(y / 60)) % 8; c(xx, y, 1, 1, i === W - 1 ? A.o : f < 2 ? A.f : f < 5 ? A.t : f < 7 ? A.l : A.d); } }
-    const x = mir ? x0 + W0 - 14 : x0 + 2; c(x, tie - 3, 12, 6, M.o); c(x + 1, tie - 2, 10, 4, M.t); c(x + 1, tie - 2, 10, 1, M.L); c(x + 4, tie + 3, 4, 9, M.t); c(x + 3, tie + 11, 6, 3, M.f); });
+  // 앞 커튼 (기본 창문과 같은 모양): 앞 가로대에서 바닥까지, 앞 기둥 쪽으로 묶임
+  hcurtain(p, 10, false, 194, 298, 252, 56, 14, 26, A, { noTie: true }); hcurtain(p, 181, true, 194, 298, 252, 56, 14, 26, A, { noTie: true });
+  [[10, false], [181, true]].forEach(([ox, mir]) => { const x = mir ? ox - 13 : ox + 1; c(x, 249, 12, 6, M.o); c(x + 1, 250, 10, 4, M.t); c(x + 1, 250, 10, 1, M.L); c(x + 4, 255, 4, 9, M.t); c(x + 3, 263, 6, 3, M.f); });
   // 기둥 (가늘게) · 뒤 가로대 · 앞 가로대 + 주름 장식
   [4, 182].forEach(x => { orr(x, 4, 6, 296, B.t, B.o, 1); c(x + 1, 6, 1, 292, B.L); c(x + 4, 6, 1, 292, B.d); el(x + 3, 3, 4, 4, B.o); el(x + 3, 3, 3, 3, B.t); c(x + 2, -3, 2, 4, M.t); });
   orr(0, 4, 192, 7, B.t, B.o, 2); c(3, 5, 186, 1, B.L); hscallop(p, 6, 10, 180, A, M);
@@ -1657,12 +1655,15 @@ function roomCnt(k) { if (!P || !P.room) return 0; const items = (P.room.items |
 const wallCol = r => (r.cols.wall || {})[r.wall] || (WALLS[r.wall] || WALLS.plain).col, floorCol = r => (r.cols.floor || {})[r.floor] || (FLOORS[r.floor] || FLOORS.plank).col;
 
 const layerOf = f => f.wall ? 0 : f.flat ? 1 : f.top ? 3 : 2;
+/* 의자류는 책상·테이블 칸에 겹쳐 놓을 수 있어요 (끼워 넣은 모양) */
+const SEATS = { chair: 1, stool: 1, armchair: 1 }, TABLES = { desk: 1, ctable: 1, rtable: 1, dtable: 1, teaset: 1, dresser: 1 };
+const canOverlap = (a, b) => (SEATS[a] && TABLES[b]) || (SEATS[b] && TABLES[a]);
 function fits(room, k, c, r, skipId, dir) {
   const f = FURN[k]; if (!f) return false; const w = fw(k, dir);
   if (c < 0 || c + w > COLS) return false;
   if (f.wall) return r === -1 && !room.items.some(i => { if (i.id === skipId || i.r !== -1 || !FURN[i.k]) return false; return c < i.c + fw(i.k, i.dir) && i.c < c + w; });
   const d = fd(k, dir); if (r < 0 || r + d > ROWS) return false;
-  return !room.items.some(i => { if (i.id === skipId || i.r < 0) return false; const g = FURN[i.k]; if (!g || g.wall || layerOf(g) !== layerOf(f)) return false;
+  return !room.items.some(i => { if (i.id === skipId || i.r < 0) return false; const g = FURN[i.k]; if (!g || g.wall || layerOf(g) !== layerOf(f) || canOverlap(k, i.k)) return false;
     return c < i.c + fw(i.k, i.dir) && i.c < c + w && r < i.r + fd(i.k, i.dir) && i.r < r + d; });
 }
 function spotAt(k, x, y, dir) {
@@ -1681,7 +1682,13 @@ function itemBox(i, room) {
 function itemAt(room, x, y) { return drawOrder(room).reverse().find(i => { const b = itemBox(i, room); return b && x >= b.x && x < b.x + b.w && y >= b.y && y < b.y + b.h; }) || null; }
 function drawOrder(room) {
   const L = i => { const f = FURN[i.k] || {}; return f.wall ? 0 : f.flat ? 1 : 2; };   // 위에 얹는 소품(top)은 같은 줄 가구 바로 뒤에 그려요
-  return room.items.filter(i => FURN[i.k]).slice().sort((a, b) => L(a) - L(b) || (a.r + fd(a.k, a.dir) + (FURN[a.k].top ? .5 : 0)) - (b.r + fd(b.k, b.dir) + (FURN[b.k].top ? .5 : 0)) || (a.r + fd(a.k, a.dir)) - (b.r + fd(b.k, b.dir)) || a.c - b.c);
+  // 앞뒤 순서: 아래쪽(앞) 줄일수록 나중에 · 같은 줄이면 의자가 책상 앞 · 직접 고른 앞뒤(z)는 한 줄씩 당기거나 미룸
+  const key = i => i.r + fd(i.k, i.dir) + (FURN[i.k].top ? .5 : 0) + (i.z || 0) * 1.01;
+  // 책상에 겹쳐 놓은 의자: 앞(정면)을 보면 책상 뒤에 앉은 모습(뒤에 그림), 그 밖의 방향은 책상 앞에 끼워 넣은 모습(앞에 그림)
+  const ov = (a, b) => a.c < b.c + fw(b.k, b.dir) && b.c < a.c + fw(a.k, a.dir) && a.r < b.r + fd(b.k, b.dir) && b.r < a.r + fd(a.k, a.dir);
+  const behind = i => (i.dir || 0) === 0 && i.k !== 'stool';   // 등받이 없는 스툴은 늘 앞에 끼워 넣음
+  const pair = (a, b) => { if (L(a) !== L(b) || a.z || b.z) return 0; if (SEATS[a.k] && TABLES[b.k] && ov(a, b)) return behind(a) ? -1 : 1; if (SEATS[b.k] && TABLES[a.k] && ov(a, b)) return behind(b) ? 1 : -1; return 0; };
+  return room.items.filter(i => FURN[i.k]).slice().sort((a, b) => L(a) - L(b) || pair(a, b) || key(a) - key(b) || (a.r + fd(a.k, a.dir)) - (b.r + fd(b.k, b.dir)) || a.c - b.c);
 }
 function drawSprite(g, k, x, y, t, alpha, col, dir, img) {
   const f = FURN[k]; if (!f) return; dir = dir || 0; HI_IMG = (f.pic && img) || null;
@@ -1753,7 +1760,7 @@ VIEWS.room = () => {
      <button onclick="go('map')">🚪 저택으로 나가기</button></div>
    ${RM.edit ? `<div class="roomedit">
      ${selItem ? `<p style="margin:6px 0"><b>${FURN[selItem.k].name}</b> 선택됨 — 옮길 칸을 누르거나 끌어서 옮겨요.</p>
-        <div class="row" style="flex-wrap:wrap;gap:6px">${FURN[selItem.k].dirs ? `<button class="sm" onclick="rotateItem('${selItem.id}')">↻ 돌리기 (${DIRN[selItem.dir || 0]})</button>` : ''}<button class="sm" onclick="recolorItem('${selItem.id}')">${recolorLabel(selItem.rc || 0, room.dye)}</button>${FURN[selItem.k].pic ? `<button class="sm" onclick="picPick('${selItem.id}')">🖼 그림 넣기</button>${selItem.img ? `<button class="sm" onclick="picClear('${selItem.id}')">↺ 기본 그림</button>` : ''}` : ''}<button class="sm" onclick="roomStore()">📦 보관함으로</button><button class="sm" onclick="RM.sel=null;render()">선택 해제</button></div>`
+        <div class="row" style="flex-wrap:wrap;gap:6px">${FURN[selItem.k].dirs ? `<button class="sm" onclick="rotateItem('${selItem.id}')">↻ 돌리기 (${DIRN[selItem.dir || 0]})</button>` : ''}<button class="sm" onclick="recolorItem('${selItem.id}')">${recolorLabel(selItem.rc || 0, room.dye)}</button>${FURN[selItem.k].pic ? `<button class="sm" onclick="picPick('${selItem.id}')">🖼 그림 넣기</button>${selItem.img ? `<button class="sm" onclick="picClear('${selItem.id}')">↺ 기본 그림</button>` : ''}` : ''}<button class="sm" onclick="zItem('${selItem.id}',1)">⬆ 앞으로</button><button class="sm" onclick="zItem('${selItem.id}',-1)">⬇ 뒤로</button><button class="sm" onclick="roomStore()">📦 보관함으로</button><button class="sm" onclick="RM.sel=null;render()">선택 해제</button></div>`
       : selInv ? `<p style="margin:6px 0"><b>${FURN[selInv.k].name}</b> — 놓을 칸을 눌러요. ${FURN[selInv.k].wall ? '(벽 장식은 위쪽 벽에)' : ''}</p><div class="row" style="flex-wrap:wrap;gap:6px">${FURN[selInv.k].dirs ? `<button class="sm" onclick="rotateItem('${selInv.id}',true)">↻ 돌리기 (${DIRN[selInv.dir || 0]})</button>` : ''}<button class="sm" onclick="recolorItem('${selInv.id}',true)">${recolorLabel(selInv.rc || 0, room.dye)}</button><button class="sm" onclick="RM.sel=null;RM.hover=null;render()">취소</button></div>`
       : '<p class="muted" style="margin:6px 0">가구를 눌러 고르고, 원하는 칸을 누르거나 끌어서 옮겨요.</p>'}
      <h4 style="margin:10px 0 4px">📦 보관함 <span class="muted">${room.invc.length}</span></h4>
@@ -1859,6 +1866,7 @@ function roomStore() {
   room.items = room.items.filter(i => i !== it); const sv = { id: rmId(), k: it.k, col: it.col || null, rc: it.rc || 0, dir: it.dir || 0 }; if (it.img) sv.img = it.img; room.invc.push(sv); RM.sel = null; sfx('tap'); saveP(); render();
 }
 const DIRN = ['앞', '왼쪽', '뒤', '오른쪽'];
+function zItem(id, d) { const it = myRoom().items.find(i => i.id === id); if (!it) return; const z = Math.max(-3, Math.min(3, (it.z || 0) + d)); if (z === (it.z || 0)) { toast(d > 0 ? '더 앞으로는 못 가요' : '더 뒤로는 못 가요'); return; } it.z = z; if (!it.z) delete it.z; sfx('tap'); saveP(); render(); }
 /* 그림 넣기: 고른 사진을 액자 비율로 잘라 작은 도트 그림으로 바꿔 저장 (방 구경하는 모두에게 보여요) */
 function picPick(id) {
   const it = myRoom().items.find(i => i.id === id); if (!it || !FURN[it.k].pic) return;
