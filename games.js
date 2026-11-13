@@ -91,14 +91,16 @@ VIEWS.sins = () => `<div class="panel"><h2>🎲 칠죄종의 방</h2><p class="m
   <div id="gbox"><div class="grid g3">${HOS.map(h => { const g = SIN_GAMES[h.id]; const mine = mySin() === h.id;
     return `<button class="room sindoor ${mine ? 'solved' : ''}" onclick="sinStart('${h.id}')"><div class="semb">${SIN_EMB[h.id] || ''}</div><div class="no">${h.name}${mine ? ' · 내 죄 ×1.5' : ''}</div><div class="rn">${g.n}</div><div class="muted" style="font-size:.8rem">${g.d}</div><div class="muted" style="font-size:.75rem">오늘 보상 ${playsLeft('sin_' + h.id)}회</div></button>`; }).join('')}</div></div></div>`;
 function sinEnd(id, coins, txt) {
+  if (window.SIN_BONUS) { const cb = window.SIN_BONUS; window.SIN_BONUS = null; stopGame(); cb(Math.min(20, Math.max(0, coins)), txt); return; }
   const mult = mySin() === id ? 1.5 : 1, c = Math.min(20, Math.max(0, coins)) * mult, r = reward('sin_' + id, c);
   finishGame(`<h2 style="color:var(--gold2);margin-top:0">${(HOS.find(h => h.id === id) || {}).name} · ${SIN_GAMES[id].n}</h2><p>${txt}</p><p class="muted">${r || '보상 없음'}</p><div class="row"><button class="primary" onclick="closeModal();sinStart('${id}')">다시</button><button onclick="closeModal()">닫기</button></div>`);
 }
 function sinStart(id) {
   const b = gbox(); if (!b) return;
-  b.innerHTML = `<div class="row" style="justify-content:space-between;margin-bottom:8px"><b>${SIN_GAMES[id].n}</b><button class="sm" onclick="stopGame();render()">그만두기</button></div><div id="sinArea"></div>`;
+  b.innerHTML = `<div class="row" style="justify-content:space-between;margin-bottom:8px"><b>${SIN_GAMES[id].n}</b><button class="sm" onclick="sinSkip()">${window.SIN_BONUS ? '건너뛰기' : '그만두기'}</button></div><div id="sinArea"></div>`;
   ({ wrath: sinWrath, greed: sinGreed, sloth: sinSloth, gluttony: sinGlut, pride: sinPride, envy: sinEnvy, lust: sinLust })[id]();
 }
+function sinSkip() { if (window.SIN_BONUS) { const cb = window.SIN_BONUS; window.SIN_BONUS = null; stopGame(); cb(0, '건너뜀'); return; } stopGame(); render(); }
 const area = () => $('#sinArea');
 function sinWrath() {
   let t = 20, hits = 0, cur = -1, boom = -1;
@@ -164,7 +166,7 @@ function sinLust() {
 }
 
 /* ================= 카드 짝맞추기 ================= */
-VIEWS.memory = () => `<div class="panel"><h2>🃏 카드 짝맞추기</h2><p class="muted">같은 그림 두 장을 찾아요. 적게 뒤집을수록 은화가 많아요. 오늘 보상 ${playsLeft('memory')}회 남음</p>
+VIEWS.memory = () => `<div class="panel"><h2>🃏 카드 짝맞추기</h2><p class="muted">같은 그림 두 장을 찾아요. 적게 뒤집을수록 은화가 많아요. ${capTxt('memory')}</p>
   <div id="gbox"><button class="primary" style="width:100%" onclick="memStart()">시작</button></div></div>`;
 function memStart() {
   const icons = ['🗝️', '🕯️', '🌹', '🍷', '📜', '🦉', '🔮', '⌛'];

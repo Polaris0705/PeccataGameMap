@@ -10,8 +10,8 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="숲속 저택">
-<title>숲속 저택</title>
+<meta name="apple-mobile-web-app-title" content="햄카타">
+<title>햄카타</title>
 <link rel="preload" href="fonts/Galmuri11.woff2" as="font" type="font/woff2" crossorigin>
 <script src="icons.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -337,7 +337,7 @@ button i.pxi{margin-right:1px}
 <script>
 /* 설정은 config.js에 있어요. 여기는 기본값이에요 (config.js가 없으면 데모 모드). */
 const CONFIG = (()=>{
-  const D={title:"숲속 저택",butler:"집사",firebase:{apiKey:""},adminEmails:["kp1@example.com","kp2@example.com"],
+  const D={title:"햄카타",butler:"집사",firebase:{apiKey:""},adminEmails:["kp1@example.com","kp2@example.com"],
     hoSins:{HO1:'wrath',HO2:'greed',HO3:'sloth',HO4:'gluttony',HO5:'pride',HO6:'envy',HO7:'lust'},startCoins:30,cocEdition:6,vapidPublicKey:""};
   const U=window.APP_CONFIG||{};
   return Object.assign({},D,U,{firebase:Object.assign({},D.firebase,U.firebase||{}),hoSins:Object.assign({},D.hoSins,U.hoSins||{})});
@@ -750,7 +750,7 @@ async function disablePush(){
       await B.set('pushSubs/'+ME.uid,{subs:(cur.subs||[]).filter(x=>x.endpoint!==ep)});}
     PUSH_ON=false;render();toast('이 기기의 푸시 알림을 껐어요');}catch(e){toast('해제 실패: '+(e.message||e));}
 }
-async function testPush(){if(!SWREG)return;SWREG.showNotification('숲속 저택',{body:'알림이 이렇게 보여요',icon:'icon-192.png',tag:'test'});}
+async function testPush(){if(!SWREG)return;SWREG.showNotification(CONFIG.title||'햄카타',{body:'알림이 이렇게 보여요',icon:'icon-192.png',tag:'test'});}
 function doInstall(){if(INSTALL_EVT){INSTALL_EVT.prompt();INSTALL_EVT.userChoice.finally(()=>{INSTALL_EVT=null;render();});}}
 function appPanel(){
   let inst='';
@@ -953,6 +953,7 @@ VIEWS.lobby=()=>{
     <div class="panel" style="margin:0"><h2>🌿 온실</h2><p>수확 가능 <b>${ready}</b></p>${featOpen('garden')?`<button onclick="goFeat('garden')">온실로</button>`:'<p class="muted">🔒 아직 온실을 찾지 못했어요</p>'}</div>
     <div class="panel" style="margin:0"><h2>📜 쪽지</h2><p>가진 쪽지 <b>${(P.notes||[]).length}</b>장 · 해결 ${solved} / ${RIDDLES.length}</p><button onclick="go('items')">쪽지 보기</button></div>
    </div>
+   ${typeof msPanel==='function'?msPanel():''}
    ${appPanel()}
    <div class="panel"><h2>안내</h2><p class="muted">• KP가 차례를 부르면 화면 위에 알림 막대가 뜨고 소리가 나요. 소리가 나려면 페이지를 한 번 눌러 두세요.<br>• 다른 창을 보고 있을 때도 알림을 받으려면 → <a href="#" style="color:var(--gold2)" onclick="event.preventDefault();askNotify()">브라우저 알림 켜기</a></p></div>`;
 };
@@ -1563,5 +1564,6 @@ setInterval(()=>{if(ME&&P&&(tab==='garden'||tab==='lobby')&&!modalOpen())softRen
 <script src="party.js"></script>
 <script src="draw.js"></script>
 <script src="room.js"></script>
+<script src="games3.js"></script>
 </body>
 </html>

@@ -29,7 +29,7 @@ function pxEnd(id, title, line, coins, again) {
 }
 
 /* ================= 은식기 닦기 (리듬) ================= */
-VIEWS.silver = () => `<div class="panel"><h2>🍴 은식기 닦기</h2><p class="muted">세 줄로 내려오는 얼룩이 금색 선에 닿는 순간 그 줄을 눌러 닦아요. 박자를 맞출수록 콤보가 쌓이고, 은식기가 반짝반짝해져요. 40초. 오늘 보상 ${playsLeft('silver')}회 남음</p>
+VIEWS.silver = () => `<div class="panel"><h2>🍴 은식기 닦기</h2><p class="muted">세 줄로 내려오는 얼룩이 금색 선에 닿는 순간 그 줄을 눌러 닦아요. 박자를 맞출수록 콤보가 쌓이고, 은식기가 반짝반짝해져요. 40초. ${capTxt('silver')}</p>
   <div id="gbox"><button class="primary" style="width:100%" onclick="silverStart()">시작</button></div></div>`;
 function silverStart() {
   const C = pxCanvas(120, 180, '준비…'); if (!C) return; const { px, txt } = C;
@@ -66,7 +66,7 @@ function silverStart() {
 }
 
 /* ================= 서재 책 정리 (3개 맞추기) ================= */
-VIEWS.books = () => `<div class="panel"><h2>📚 서재 책 정리</h2><p class="muted">책 하나를 누른 뒤 옆 책을 누르면 자리를 바꿔요. 같은 색 책이 가로나 세로로 셋 이상 나란히 꽂히면 정리돼요. 연달아 정리될수록 점수가 커져요. 25번 움직일 수 있어요. 오늘 보상 ${playsLeft('books')}회 남음</p>
+VIEWS.books = () => `<div class="panel"><h2>📚 서재 책 정리</h2><p class="muted">책 하나를 누른 뒤 옆 책을 누르면 자리를 바꿔요. 같은 색 책이 가로나 세로로 셋 이상 나란히 꽂히면 정리돼요. 연달아 정리될수록 점수가 커져요. 25번 움직일 수 있어요. ${capTxt('books')}</p>
   <div id="gbox"><button class="primary" style="width:100%" onclick="booksStart()">시작</button></div></div>`;
 function booksStart() {
   const COLS = 6, ROWS = 7, CW = 18, CH = 21, OXB = 6, OYB = 8, W = COLS * CW + 12, H = ROWS * CH + 14;
@@ -139,7 +139,7 @@ function theftWatch() {
       saveP(); if (typeof softRender === 'function') softRender(); };
     apply(); });
 }
-VIEWS.lockpick = () => !LP_T ? `<div class="panel"><h2>🔐 자물쇠 따기</h2><p class="muted">자물쇠 따기는 다른 손님 방에 놓인 금고를 눌러야 시작돼요. 금고 하나당 하루 한 번이에요.</p><button class="primary" onclick="RV=null;go('visit')">👀 놀러 가기</button></div>` : `<div class="panel"><h2>🔐 ${esc(roomTitle(LP_T.owner))} 금고</h2><p class="muted">핀이 오르내려요. 반짝이는 핀의 위아래 이음매(빛나는 틈)가 금색 선에 딱 맞는 순간 화면을 눌러 고정해요. 빗나가면 꼬챙이가 하나 부러져요(3개). 자물쇠 셋을 차례로 열수록 상자가 좋아져요. 오늘 보상 ${playsLeft('lockpick')}회 남음</p>
+VIEWS.lockpick = () => !LP_T ? `<div class="panel"><h2>🔐 자물쇠 따기</h2><p class="muted">자물쇠 따기는 다른 손님 방에 놓인 금고를 눌러야 시작돼요. 금고 하나당 하루 한 번이에요.</p><button class="primary" onclick="RV=null;go('visit')">👀 놀러 가기</button></div>` : `<div class="panel"><h2>🔐 ${esc(roomTitle(LP_T.owner))} 금고</h2><p class="muted">핀이 오르내려요. 반짝이는 핀의 위아래 이음매(빛나는 틈)가 금색 선에 딱 맞는 순간 화면을 눌러 고정해요. 빗나가면 꼬챙이가 하나 부러져요(3개). 자물쇠 셋을 차례로 열수록 상자가 좋아져요. ${capTxt('lockpick')}</p>
   <div id="gbox"></div></div>`;
 function lockStart() {
   const C = pxCanvas(120, 150); if (!C) return; const { px, txt } = C;
