@@ -315,6 +315,11 @@ html.px .sindoor:hover{box-shadow:inset 0 0 0 2px var(--gold),inset 0 6px 0 2px 
 img.pxava{width:18px;height:18px;image-rendering:pixelated;vertical-align:-4px;margin-right:4px;border:1px solid #0a0806;box-shadow:0 0 0 1px var(--gold)}
 html.px .pxstage .card{background:rgba(0,0,0,.25)}
 html.px .pxstage{margin-top:6px}
+.swrow{display:flex;flex-wrap:wrap;gap:4px;margin-top:4px}
+.sw{width:26px;height:26px;padding:0!important;border:2px solid #0a0806!important;cursor:pointer;box-shadow:inset -2px -2px 0 0 rgba(0,0,0,.25)!important}
+.sw.on{outline:3px solid var(--gold2);outline-offset:1px}
+.swc{display:grid;place-items:center;background:var(--panel2);color:var(--text);position:relative;overflow:hidden;font-size:14px;line-height:1}
+.swc input{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%}
 /* 도트 아이콘 */
 i.pxi{display:inline-block;width:1.15em;height:1.15em;vertical-align:-.2em;background:center/contain no-repeat;image-rendering:pixelated;font-style:normal}
 button i.pxi{margin-right:1px}
@@ -561,7 +566,7 @@ async function onAuth(u){
   sub(B.onDoc('settings/texts',d=>{if(typeof txSetRules==='function')txSetRules((d&&d.rules)||[]);}));
   sub(B.onDoc('settings/theme',d=>{THEME_GLOBAL=d;if(!TF)applyTheme();}));
   sub(B.onDoc('settings/rooms',d=>{ROOMS=Object.assign({rooms:{},gather:null},d||{});softRender();}));
-  sub(B.onDoc('settings/game',d=>{EGG=Object.assign({on:true,mode:'personal',perDay:3,coins:3,salt:''},(d&&d.egg)||{});softRender();}));
+  sub(B.onDoc('settings/game',d=>{EGG=Object.assign({on:true,mode:'personal',perDay:3,coins:3,salt:''},(d&&d.egg)||{});if(typeof NOTECFG!=='undefined')NOTECFG=Object.assign({on:true,pct:10,perDay:3,hold:3},(d&&d.notes)||{});softRender();}));
   sub(B.onCol('users',l=>{USERS=l;if(tab==='map')setTimeout(drawPlMap,40);if(typeof chatOnUsers==='function')chatOnUsers();softRender();}));
   sub(B.onCol('bookings',l=>{BOOKINGS=l.sort((a,b)=>(b.at||0)-(a.at||0));if(IS_ADMIN){pushPending();refreshBookList();}softRender();}));
   sub(B.onCol('items',l=>{ITEMS=l.sort((a,b)=>(a.at||0)-(b.at||0));softRender();if(MODAL_ITEM)refreshItemModal();}));
@@ -584,7 +589,7 @@ async function onAuth(u){
 
 /* ================= 렌더 ================= */
 const PL_TABS=[['저택',[['room','🏠 내 방'],['map','🗺 저택 지도'],['book','조사 예약'],['items','소지품'],['memo','메모'],['lobby','내 정보']]]];
-const KP_TABS=[['KP',[['sched','스케줄러'],['kqueue','호출·대기열'],['kitems','아이템'],['memo','메모'],['players','플레이어']]],
+const KP_TABS=[['KP',[['sched','스케줄러'],['kqueue','호출·대기열'],['kitems','아이템'],['memo','메모'],['players','플레이어'],['kdata','데이터']]],
                ['여가',[['garden','온실'],['riddle','수수께끼'],['shop','상점'],['rank','랭킹']]]];
 const kpTabs=()=>PROF&&PROF.ho?[KP_TABS[0],['내 HO',[['room','🏠 내 방'],['map','🗺 저택 지도'],['book','조사 예약'],['items','소지품'],['lobby','내 정보']]]]:[KP_TABS[0],['저택',[['map','🗺 저택 지도']]]];
 function softRender(){
@@ -911,8 +916,8 @@ function checkAtt(){
 /* ================= 진행도 ================= */
 function freshP(){return {coins:CONFIG.startCoins,earned:0,plotCount:3,plots:Array.from({length:6},()=>({seed:null,start:0,dur:0})),riddles:{},owned:['t0'],title:'t0',frame:'',secret:false,memo:''};}
 function saveP(){if(ME&&P)B.set('progress/'+ME.uid,clean(P));}
-function earn(n){P.coins+=n;P.earned+=n;saveP();if(n>0)sfx('coin');}
-function spend(n){if(P.coins<n){toast('은화가 부족해요');return false;}P.coins-=n;saveP();return true;}
+function earn(n){P.coins+=n;P.earned+=n;if(typeof logAct==='function')logAct(n);if(n>0&&typeof noteTry==='function')noteTry();saveP();if(n>0)sfx('coin');}
+function spend(n){if(P.coins<n){toast('은화가 부족해요');return false;}P.coins-=n;if(typeof logAct==='function')logAct(-n);saveP();return true;}
 const RC=k=>typeof roomCnt==='function'?roomCnt(k):0;
 const growMul=()=>(mySin()==='sloth'?0.75:1)*(1-0.05*Math.min(3,RC('plant')));
 const hintCost=i=>Math.round(HINT_COST[i]*(RC('shelf')?0.8:1));
@@ -946,7 +951,7 @@ VIEWS.lobby=()=>{
     <div class="panel" style="margin:0"><h2>🗝 조사</h2><p>${qi||'<span class="muted">대기열에 없어요</span>'}</p><p class="muted">승인 대기 ${pend} · 승인됨 ${appr}</p><button onclick="go('book')">조사 예약</button></div>
     <div class="panel" style="margin:0"><h2>🎒 소지품</h2><p>${ITEMS.filter(i=>i.owner===ME.uid).length}개 ${newItems?`<span class="badge pending">새 물건 ${newItems}</span>`:''}</p><button onclick="go('items')">소지품 열기</button></div>
     <div class="panel" style="margin:0"><h2>🌿 온실</h2><p>수확 가능 <b>${ready}</b></p>${featOpen('garden')?`<button onclick="goFeat('garden')">온실로</button>`:'<p class="muted">🔒 아직 온실을 찾지 못했어요</p>'}</div>
-    <div class="panel" style="margin:0"><h2>🕯 수수께끼</h2><p>${solved} / ${RIDDLES.length} 해결</p>${featOpen('riddle')?`<button onclick="goFeat('riddle')">수수께끼로</button>`:'<p class="muted">🔒 저택 어딘가에…</p>'}</div>
+    <div class="panel" style="margin:0"><h2>📜 쪽지</h2><p>가진 쪽지 <b>${(P.notes||[]).length}</b>장 · 해결 ${solved} / ${RIDDLES.length}</p><button onclick="go('items')">쪽지 보기</button></div>
    </div>
    ${appPanel()}
    <div class="panel"><h2>안내</h2><p class="muted">• KP가 차례를 부르면 화면 위에 알림 막대가 뜨고 소리가 나요. 소리가 나려면 페이지를 한 번 눌러 두세요.<br>• 다른 창을 보고 있을 때도 알림을 받으려면 → <a href="#" style="color:var(--gold2)" onclick="event.preventDefault();askNotify()">브라우저 알림 켜기</a></p></div>`;
@@ -969,8 +974,8 @@ async function loadMapData(key){
 /* ---- 방 · 위치 · 소집 ---- */
 let ROOMS={rooms:{},gather:null},MAP_PLACE=null;
 let LOC=(()=>{try{return JSON.parse(localStorage.getItem('peccata_loc')||'null');}catch(e){return null;}})();
-const ROOM_HINTS=[[/정원|온실|마당|뜰|화원/,['garden']],[/서재|도서|서고|연구|서실/,['riddle']],[/응접|살롱|거실|홀|라운지/,['blackjack','truth']],
-  [/주방|부엌|식당|티룸|다이닝|찻집/,['tycoon']],[/놀이|오락|게임|유희|지하/,['sins','memory']],[/탑|다락|천문|별/,['tarot']],[/상점|매점|창고|가게/,['shop']],[/로비|현관|입구|대기/,['rank']]];
+const ROOM_HINTS=[[/정원|온실|마당|뜰|화원/,['garden']],[/서재|도서|서고|연구|서실/,['books']],[/응접|살롱|거실|홀|라운지/,['blackjack','truth']],
+  [/주방|부엌|식당|티룸|다이닝|찻집|찬방/,['tycoon','silver']],[/놀이|오락|게임|유희|지하/,['sins','memory']],[/탑|다락|천문|별/,['tarot']],[/상점|매점|창고|가게/,['shop','lockpick']],[/금고|보물|복도|계단/,['lockpick']],[/로비|현관|입구|대기/,['rank']]];
 function featsOf(name){const r=ROOMS.rooms&&ROOMS.rooms[name];if(r&&Array.isArray(r.feats))return r.feats.filter(k=>FEATS[k]);const h=ROOM_HINTS.find(([re])=>re.test(name||''));return h?h[1]:[];}
 const subOf=name=>(ROOMS.rooms&&ROOMS.rooms[name]&&ROOMS.rooms[name].sub)||'';
 const placeIdx=name=>((PUB&&PUB.places)||[]).findIndex(p=>p.name===name);
@@ -1237,7 +1242,7 @@ function cancelBooking(id){B.update('bookings/'+id,{status:'cancelled'});}
 let COMBINE=null;
 VIEWS.items=()=>{
   const mine=ITEMS.filter(i=>i.owner===ME.uid);
-  return `<div class="panel"><h2>소지품</h2>
+  return `${typeof notesPanel==='function'?notesPanel():''}<div class="panel"><h2>소지품</h2>
    ${COMBINE?`<p style="color:var(--gold2)">조합할 물건을 하나 더 고르세요. <button class="sm" onclick="COMBINE=null;render()">그만두기</button></p>`:'<p class="muted">물건을 눌러 살펴보거나, 건네주거나, 다른 물건과 조합할 수 있어요.</p>'}
    ${mine.length?`<div class="inv">${mine.map(i=>`<div class="slotx ${COMBINE===i.id?'sel':''}" onclick="${COMBINE?`doCombine('${i.id}')`:`openItem('${i.id}')`}">
      ${i.img?`<img src="${i.img}" alt="">`:'<div class="noimg">📦</div>'}<div style="font-size:.88rem">${esc(i.name)}${!i.seen?'<span class="dot"></span>':''}${i.revealed?' ✦':''}</div></div>`).join('')}</div>`:'<p class="muted">아직 가진 물건이 없어요.</p>'}</div>`;
@@ -1339,7 +1344,7 @@ function answer(id,choice){
   else{const v=($('#ans')||{}).value||'';if(!v.trim())return toast('답을 입력해 주세요');
     if(r.type==='num'){const m=v.replace(/,/g,'').match(/-?\d+(\.\d+)?/);ok=!!m&&Math.abs(parseFloat(m[0])-r.ans)<1e-9;}
     else ok=v.replace(/\D/g,'').replace(/^0+/,'')===r.ans;}
-  if(ok){const g=curReward(r);st.solved=true;st.got=g;earn(g);render();openRiddle(id);toast(`정답! +${g} 은화`);}
+  if(ok){const g=curReward(r);st.solved=true;st.got=g;if(typeof noteRemove==='function')noteRemove(id);NOTE_SKIP=true;earn(g);NOTE_SKIP=false;render();openRiddle(id);toast(`정답! +${g} 은화 · 쪽지는 사라졌어요`);}
   else{st.wrong++;saveP();render();openRiddle(id);toast('아쉽지만 틀렸어요…');sfx('bad');}
 }
 function openSecret(){
@@ -1552,6 +1557,8 @@ setInterval(()=>{if(ME&&P&&(tab==='garden'||tab==='lobby')&&!modalOpen())softRen
 </script>
 <script src="chat.js"></script>
 <script src="games.js"></script>
+<script src="games2.js"></script>
+<script src="kpdata.js"></script>
 <script src="tycoon.js"></script>
 <script src="party.js"></script>
 <script src="draw.js"></script>
