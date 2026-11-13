@@ -44,8 +44,9 @@ function notesPanel() {
 }
 
 /* ---------- 활동 기록 ---------- */
-const LOG_NAME = k => (typeof FEATS !== 'undefined' && FEATS[k] && FEATS[k].n) || ({ room: '내 방', visit: '방 구경', items: '소지품', lobby: '내 정보', map: '저택 지도', book: '조사 예약', party: '파티 게임', draw: '그림 게임', kp: 'KP 지급', riddle: '수수께끼' })[k] || k || '기타';
-function logAct(n) { if (!P || !n) return; P.log = P.log || []; P.log.push({ t: Date.now(), n, w: NOTE_SKIP ? 'riddle' : tab }); if (P.log.length > 80) P.log = P.log.slice(-80); }
+const LOG_NAME = k => (typeof FEATS !== 'undefined' && FEATS[k] && FEATS[k].n) || ({ room: '내 방', visit: '방 구경', items: '소지품', lobby: '내 정보', map: '저택 지도', book: '조사 예약', party: '파티 게임', draw: '그림 게임', kp: 'KP 지급', riddle: '수수께끼', theft: '금고 털림' })[k] || k || '기타';
+let LOG_W = null;
+function logAct(n) { if (!P || !n) return; P.log = P.log || []; P.log.push({ t: Date.now(), n, w: LOG_W || (NOTE_SKIP ? 'riddle' : tab) }); if (P.log.length > 80) P.log = P.log.slice(-80); }
 const fmtT = t => { const d = new Date(t + 9 * 36e5); return `${d.getUTCMonth() + 1}/${d.getUTCDate()} ${String(d.getUTCHours()).padStart(2, '0')}:${String(d.getUTCMinutes()).padStart(2, '0')}`; };
 const isToday = t => new Date(t + 9 * 36e5).toISOString().slice(0, 10) === kstDate();
 

@@ -188,6 +188,18 @@ service cloud.firestore {
       allow delete: if isAdmin() || (signedIn() && resource.data.uid == request.auth.uid);
     }
 
+    match /thefts/{owner}/log/{id} {
+      allow read: if isMe(owner) || isAdmin();
+      allow create: if signedIn() && owner != request.auth.uid
+        && request.resource.data.thief == request.auth.uid
+        && request.resource.data.owner == owner
+        && request.resource.data.amt is int && request.resource.data.amt >= 0 && request.resource.data.amt <= 12
+        && request.resource.data.done == false
+        && id.matches('.*_' + request.auth.uid);
+      allow update: if isAdmin() || (isMe(owner) && onlyChanges(['done']));
+      allow delete: if isAdmin();
+    }
+
     match /config/{id} {
       allow read: if signedIn();
       allow write: if false;

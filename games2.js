@@ -8,7 +8,7 @@ Object.assign(FEATS, {
   books:    { n: '서재 책 정리',  ic: '📚', d: '같은 색 책 셋을 나란히' },
   lockpick: { n: '자물쇠 따기',   ic: '🔐', d: '핀이 맞는 순간 누르기' }
 });
-['silver', 'books', 'lockpick'].forEach(k => { if (!FEAT_KEYS.includes(k)) FEAT_KEYS.push(k); });
+['silver', 'books'].forEach(k => { if (!FEAT_KEYS.includes(k)) FEAT_KEYS.push(k); });
 
 /* 도트 캔버스: 논리 좌표(w×h)를 기기 픽셀에 맞게 정수배로 */
 function pxCanvas(w, h, hud) {
@@ -101,8 +101,46 @@ function booksStart() {
 }
 
 /* ================= 자물쇠 따기 (타이밍) ================= */
-VIEWS.lockpick = () => `<div class="panel"><h2>🔐 자물쇠 따기</h2><p class="muted">핀이 오르내려요. 반짝이는 핀의 위아래 이음매(빛나는 틈)가 금색 선에 딱 맞는 순간 화면을 눌러 고정해요. 빗나가면 꼬챙이가 하나 부러져요(3개). 자물쇠 셋을 차례로 열수록 상자가 좋아져요. 오늘 보상 ${playsLeft('lockpick')}회 남음</p>
-  <div id="gbox"><button class="primary" style="width:100%" onclick="lockStart()">시작</button></div></div>`;
+/* 남의 방 금고에서만 시작 · 금고 하나당 하루 1번 · 성공하면 주인 은화가 연 만큼의 절반 줄어듦 */
+let LP_T = null;
+const lpDay = () => { if (!P.lp || P.lp.date !== kstDate()) P.lp = { date: kstDate(), done: [] }; return P.lp; };
+function safeTry(owner, it) {
+  if (!ME || owner === ME.uid) return roomPoke(it);
+  const key = `${kstDate()}_${it.id}_${ME.uid}`;
+  if (lpDay().done.includes(key)) { sfx('bad'); return toast('🔐 오늘은 이미 손댄 금고예요. 내일 다시 와 보세요'); }
+  modal(`<h2 style="color:var(--gold2);margin-top:0">🔐 ${esc(roomTitle(owner))} 금고</h2>
+   <p>단단히 잠겨 있다… 몰래 따 볼까?</p>
+   <p class="muted">성공하면 연 만큼 은화를 얻고, 금고 주인은 그 절반을 잃어요. 이 금고는 오늘 한 번만 시도할 수 있어요 (그만둬도 한 번으로 쳐요).</p>
+   <div class="row"><button class="primary" onclick="safeGo('${owner}','${it.id}')">따 보기</button><button onclick="closeModal()">그만두기</button></div>`);
+}
+function safeGo(owner, id) {
+  closeModal(); const key = `${kstDate()}_${id}_${ME.uid}`, d = lpDay(); if (d.done.includes(key)) return;
+  d.done.push(key); saveP(); LP_T = { owner, key, back: RV };
+  go('lockpick'); lockStart();
+}
+function lockEnd(title, line, total) {
+  const T = LP_T, before = P.coins, r = reward('lockpick', Math.min(25, total)), got = Math.max(0, P.coins - before), amt = Math.floor(got / 2);
+  if (T && amt > 0) B.set(`thefts/${T.owner}/log/${T.key}`, { owner: T.owner, thief: ME.uid, amt, at: Date.now(), done: false }).catch(e => console.warn('theft', e));
+  LP_T = null;
+  finishGame(`<h2 style="color:var(--gold2);margin-top:0">${title}</h2><p>${line}</p><p class="muted">${r || '보상 없음'}${amt > 0 ? ` · 금고 주인의 은화 ${amt}닢이 사라졌어요` : ''}</p>
+   <div class="row"><button class="primary" onclick="closeModal();RV=${T && T.back ? `'${T.back}'` : 'null'};go('visit')">방으로 돌아가기</button><button onclick="closeModal()">닫기</button></div>`);
+}
+/* 금고 주인: 털린 기록을 받아 은화 차감 */
+let THEFT_UNSUB = null;
+function theftWatch() {
+  if (THEFT_UNSUB) { try { THEFT_UNSUB(); } catch (e) {} THEFT_UNSUB = null; }
+  if (!ME) return;
+  const uid = ME.uid;
+  THEFT_UNSUB = B.onCol(`thefts/${uid}/log`, l => { const todo = l.filter(x => !x.done); if (!todo.length) return;
+    const apply = () => { if (!P || !ME || ME.uid !== uid) return setTimeout(apply, 800);
+      todo.forEach(x => { B.update(`thefts/${uid}/log/${x.id}`, { done: true }).catch(() => {});
+        const n = Math.min(x.amt || 0, P.coins || 0); if (n > 0) { P.coins -= n; LOG_W = 'theft'; logAct(-n); LOG_W = null; }
+        toast(`🔐 누군가 내 방 금고를 땄어요… 은화 ${n}닢이 사라졌다`); });
+      saveP(); if (typeof softRender === 'function') softRender(); };
+    apply(); });
+}
+VIEWS.lockpick = () => !LP_T ? `<div class="panel"><h2>🔐 자물쇠 따기</h2><p class="muted">자물쇠 따기는 다른 손님 방에 놓인 금고를 눌러야 시작돼요. 금고 하나당 하루 한 번이에요.</p><button class="primary" onclick="RV=null;go('visit')">👀 놀러 가기</button></div>` : `<div class="panel"><h2>🔐 ${esc(roomTitle(LP_T.owner))} 금고</h2><p class="muted">핀이 오르내려요. 반짝이는 핀의 위아래 이음매(빛나는 틈)가 금색 선에 딱 맞는 순간 화면을 눌러 고정해요. 빗나가면 꼬챙이가 하나 부러져요(3개). 자물쇠 셋을 차례로 열수록 상자가 좋아져요. 오늘 보상 ${playsLeft('lockpick')}회 남음</p>
+  <div id="gbox"></div></div>`;
 function lockStart() {
   const C = pxCanvas(120, 150); if (!C) return; const { px, txt } = C;
   const LOCKS = [{ n: '구리 자물쇠', pins: 3, sp: 1.6, prize: 6, col: ['#b8693d', '#e8a070', '#6a3418'] }, { n: '은 자물쇠', pins: 4, sp: 2.2, prize: 8, col: ['#a8b0bc', '#e8ecf4', '#5a6270'] }, { n: '금 자물쇠', pins: 5, sp: 2.9, prize: 11, col: ['#c9a036', '#ffe08a', '#7a5a18'] }];
@@ -112,8 +150,8 @@ function lockStart() {
   const pinY = (i, now) => { const L = LOCKS[li]; return SHEAR + Math.sin(now / 1000 * L.sp * (1 + i * .13) + ph[i]) * 16; };
   C.cv.onpointerdown = () => { if (over || open) return; const now = performance.now(), y = pinY(cur, now), d = Math.abs(y - SHEAR);
     if (d < 3.2) { set[cur] = true; cur++; sfx('tap'); msg = d < 1.2 ? '딸깍!' : '찰칵'; msgT = now;
-      if (cur >= LOCKS[li].pins) { open = now; total += LOCKS[li].prize + picks; sfx('win'); setTimeout(() => { if (over || !GAME) return; if (li >= LOCKS.length - 1) { over = true; stopGame(); pxEnd('lockpick', '🔐 자물쇠를 모두 열었어요!', `세 상자를 모두 열었다 · 남은 꼬챙이 ${picks}개`, total, 'lockStart'); return; } li++; newLock(); }, 1100); } }
-    else { picks--; sfx('bad'); msg = '뚝! 꼬챙이가 부러졌다'; msgT = now; if (picks <= 0) { over = true; stopGame(); pxEnd('lockpick', '🔐 꼬챙이가 다 부러졌어요', `자물쇠 ${li}개를 열었다`, total, 'lockStart'); } } };
+      if (cur >= LOCKS[li].pins) { open = now; total += LOCKS[li].prize + picks; sfx('win'); setTimeout(() => { if (over || !GAME) return; if (li >= LOCKS.length - 1) { over = true; stopGame(); lockEnd('🔐 금고를 열었어요!', `자물쇠 셋을 모두 열었다 · 남은 꼬챙이 ${picks}개`, total); return; } li++; newLock(); }, 1100); } }
+    else { picks--; sfx('bad'); msg = '뚝! 꼬챙이가 부러졌다'; msgT = now; if (picks <= 0) { over = true; stopGame(); lockEnd('🔐 꼬챙이가 다 부러졌어요', `자물쇠 ${li}개를 열었다`, total); } } };
   const loop = now => { const L = LOCKS[li], [t, l, d] = L.col, n = L.pins;
     px(0, 0, 120, 150, '#20141a'); px(10, 10, 100, 84, d); px(12, 12, 96, 80, t); px(12, 12, 96, 3, l); px(12, 12, 3, 80, l);
     const pw = 12, gx = 60 - (n * pw + (n - 1) * 4) / 2;

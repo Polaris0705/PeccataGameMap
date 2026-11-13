@@ -1823,7 +1823,7 @@ const ROOM_TALK = { sofa: ['푹신한 벨벳 소파.'], loveseat: ['둘이 앉�
   mannequin: ['누가 입던 드레스일까.'], apron: ['어디선가 시계 소리가 들리는 것 같다.'], lectern: ['읽다 만 페이지에 책갈피가 끼워져 있다.'], rosedome: ['꽃잎이 하나 떨어졌다.'], raven: ['까악!'],
   wrath: ['불길이 거세다!'], greed: ['반짝반짝… 전부 내 거야.'], sloth: ['조금만 더 잘래…'], gluttony: ['한 입만…'], pride: ['역시 나야.'], lust: ['장미 향기가 난다.'], teddy: ['폭신폭신.'], birdcage: ['짹짹!'], globe: ['빙글빙글.'], telescope: ['별이 가까이 보인다.'] };
 function roomPoke(i) { const f = FURN[i.k]; const l = ROOM_TALK[i.k]; sfx(i.k === 'cat' || i.k === 'raven' ? 'pop' : 'tap'); toast(`${f.name} — ${l ? l[Math.floor(Math.random() * l.length)] : ''}${f.eff ? ' (' + f.eff + ')' : ''}`); }
-function bindViewCv(cv, uid) { cv.onclick = ev => { const p = cvPos(cv, ev), i = itemAt(hoRoom(uid), p.x, p.y); if (i) roomPoke(i); }; }
+function bindViewCv(cv, uid) { cv.onclick = ev => { const p = cvPos(cv, ev), i = itemAt(hoRoom(uid), p.x, p.y); if (!i) return; if (i.k === 'safe' && typeof safeTry === 'function') safeTry(uid, i); else roomPoke(i); }; }
 const selInvOf = room => RM.sel && RM.sel.startsWith('inv:') ? room.invc.find(x => 'inv:' + x.id === RM.sel) : null;
 function bindRoomCv(cv) {
   cv.onpointerdown = ev => {
@@ -2001,5 +2001,6 @@ function roomOnAuth(u) {
   roomUnsubs.forEach(f => { try { f(); } catch (e) {} }); roomUnsubs = []; ROOMLIKES = []; GUESTBOOK = []; RM = { edit: false, sel: null, drag: null, hover: null, t: RM.t }; RV = null;
   if (!u) return;
   roomUnsubs.push(B.onCol('roomLikes', l => { ROOMLIKES = l; if (tab === 'room' || tab === 'visit') softRender(); }));
+  if (typeof theftWatch === 'function') theftWatch();
   roomUnsubs.push(B.onCol('guestbook', l => { GUESTBOOK = l; if (tab === 'room' || tab === 'visit') softRender(); }));
 }

@@ -618,7 +618,7 @@ function render(){
     return '';
   };
   app.innerHTML=headerHtml()+groups.map((g,gi)=>`${groups.length>1?`<div class="navlabel">${g[0]}</div>`:''}<nav class="${gi===groups.length-1?'sub':''}">${g[1].map(([k,v])=>`<button class="${tab===k?'on':''}" onclick="go('${k}')">${v}${badge(k)}</button>`).join('')}</nav>`).join('')+
-    `${typeof FEATS!=='undefined'&&FEATS[tab]?`<div style="margin:-4px 0 10px"><button class="sm" onclick="go('map')">← 저택 지도로</button>${MAP_PLACE?` <span class="muted">📍 ${esc(MAP_PLACE)}</span>`:''}</div>`:''}<div id="view">${(VIEWS[tab]||(()=>''))()}</div>`;
+    `${typeof FEATS!=='undefined'&&FEATS[tab]?`<div style="margin:-4px 0 10px">${tab==='lockpick'?`<button class="sm" onclick="${typeof LP_T!=='undefined'&&LP_T?`RV='${LP_T.owner}';`:''}go('visit')">← 방으로</button>`:`<button class="sm" onclick="go('map')">← 저택 지도로</button>`}${MAP_PLACE?` <span class="muted">📍 ${esc(MAP_PLACE)}</span>`:''}</div>`:''}<div id="view">${(VIEWS[tab]||(()=>''))()}</div>`;
   $('#schedWrap').style.display=(IS_ADMIN&&tab==='sched')?'block':'none';
   document.body.classList.toggle('insched',IS_ADMIN&&tab==='sched');
   if(tab==='map')drawPlMap();
@@ -975,14 +975,14 @@ async function loadMapData(key){
 let ROOMS={rooms:{},gather:null},MAP_PLACE=null;
 let LOC=(()=>{try{return JSON.parse(localStorage.getItem('peccata_loc')||'null');}catch(e){return null;}})();
 const ROOM_HINTS=[[/정원|온실|마당|뜰|화원/,['garden']],[/서재|도서|서고|연구|서실/,['books']],[/응접|살롱|거실|홀|라운지/,['blackjack','truth']],
-  [/주방|부엌|식당|티룸|다이닝|찻집|찬방/,['tycoon','silver']],[/놀이|오락|게임|유희|지하/,['sins','memory']],[/탑|다락|천문|별/,['tarot']],[/상점|매점|창고|가게/,['shop','lockpick']],[/금고|보물|복도|계단/,['lockpick']],[/로비|현관|입구|대기/,['rank']]];
+  [/주방|부엌|식당|티룸|다이닝|찻집|찬방/,['tycoon','silver']],[/놀이|오락|게임|유희|지하/,['sins','memory']],[/탑|다락|천문|별/,['tarot']],[/상점|매점|창고|가게/,['shop']],[/로비|현관|입구|대기/,['rank']]];
 function featsOf(name){const r=ROOMS.rooms&&ROOMS.rooms[name];if(r&&Array.isArray(r.feats))return r.feats.filter(k=>FEATS[k]);const h=ROOM_HINTS.find(([re])=>re.test(name||''));return h?h[1]:[];}
 const subOf=name=>(ROOMS.rooms&&ROOMS.rooms[name]&&ROOMS.rooms[name].sub)||'';
 const placeIdx=name=>((PUB&&PUB.places)||[]).findIndex(p=>p.name===name);
 function unassigned(){const pl=(PUB&&PUB.places)||[];return FEAT_KEYS.filter(k=>!pl.some(p=>featsOf(p.name).includes(k)));}
 const FREE_FEATS=['shop','rank'];            // 지도와 상관없이 늘 열려 있는 것
 const featAt=k=>((PUB&&PUB.places)||[]).findIndex(p=>featsOf(p.name).includes(k));
-const featOpen=k=>IS_ADMIN||FREE_FEATS.includes(k)||featAt(k)>=0;
+const featOpen=k=>IS_ADMIN||FREE_FEATS.includes(k)||featAt(k)>=0||(k==='lockpick'&&typeof LP_T!=='undefined'&&!!LP_T);
 function openFeat(k){if(!featOpen(k)){sfx('bad');return toast('저택 어딘가에서 찾을 수 있을 것 같아요');}go(k);}
 function goFeat(k){const i=featAt(k);if(i<0&&!IS_ADMIN){sfx('bad');return toast('아직 찾지 못한 곳이에요');}if(i<0)return go(k);go('map');selectPlace(i);}
 function lockCard(){return `<button class="room" disabled style="opacity:.55;cursor:default"><div class="rn">🔒 ？？？</div><div class="muted" style="font-size:.8rem">저택 어딘가에…</div></button>`;}
