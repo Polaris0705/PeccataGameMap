@@ -100,7 +100,13 @@ table{width:100%;border-collapse:collapse;font-size:.88rem}td,th{border-bottom:1
 .story{white-space:pre-line}
 .auth{max-width:420px;margin:30px auto}
 .mapbox{position:relative}
-#plMap{width:100%;display:block;border-radius:8px;cursor:pointer}
+#plMap{width:100%;display:block;border-radius:8px;cursor:pointer;touch-action:none}
+.mztools{display:flex;gap:4px;flex-wrap:wrap;justify-content:flex-end;align-items:center;margin-top:6px}
+.mapbox.mzfull .mztools{position:absolute;right:8px;top:calc(8px + env(safe-area-inset-top));margin:0;z-index:2}
+.mztools button{min-width:34px;height:34px;padding:0 8px;font-size:1rem;background:rgba(20,12,6,.78);color:#fff;border:1px solid rgba(255,255,255,.35);border-radius:6px}
+.mzhint{background:rgba(20,12,6,.78);color:#ffe7a3;font-size:.8rem;padding:6px 8px;border-radius:6px;margin-right:auto}
+.mapbox.mzfull{position:fixed;inset:0;z-index:28;margin:0!important;background:#0c0806;display:flex;align-items:center;justify-content:center;padding:env(safe-area-inset-top) 0 env(safe-area-inset-bottom)}
+.mapbox.mzfull #plMap{border-radius:0}
 .chip{display:inline-block;padding:3px 10px;border-radius:12px;border:1px solid var(--line);margin:3px;font-size:.85rem;cursor:pointer}
 .dpad{border:1px solid var(--line);border-radius:10px;overflow:hidden;background:#fffdf7;touch-action:none}
 .dcanvas{display:block;width:100%;touch-action:none;cursor:crosshair}
@@ -518,6 +524,7 @@ const authErr=e=>({'auth/email-already-in-use':'이미 가입된 이메일이에
 let ME=null,PROF=null,IS_ADMIN=false,P=null,PUB=null;
 let USERS=[],BOOKINGS=[],ITEMS=[],QUEUE=[],NOTES=[],PROGS=[],CALL=null,CALLS=[],DEFS=[],RECIPES=[];
 let unsubs=[],tab='',pendingRender=false,MODAL_ITEM=null;
+let MZ={},MZ_FULL=false,MZ_CROP=null;
 const cname=c=>(PUB&&PUB.names&&PUB.names[c])||c;
 const dayName=d=>(PUB&&PUB.dayNames&&PUB.dayNames[d-1])||('Day '+(d-1));
 const slotsOf=d=>(PUB&&PUB.slotsPerDay&&PUB.slotsPerDay[d-1])||3;
@@ -602,7 +609,7 @@ function softRender(){
   clearTimeout(softRender.t);softRender.t=setTimeout(render,30);
 }
 document.addEventListener('focusout',()=>{if(pendingRender)setTimeout(()=>{const a=document.activeElement;if(!(a&&/^(INPUT|TEXTAREA|SELECT)$/.test(a.tagName)))render();},50);});
-function go(t){if(typeof stopGame==='function')stopGame();tab=t;render();window.scrollTo(0,0);}
+function go(t){if(typeof stopGame==='function')stopGame();if(MZ_FULL){MZ_FULL=false;document.body.style.overflow='';}MZ_CROP=null;tab=t;render();window.scrollTo(0,0);}
 function render(){
   pendingRender=false;
   const app=$('#app');
@@ -1036,7 +1043,9 @@ VIEWS.map=()=>{
   h+=`<div class="panel"><div class="row" style="justify-content:space-between"><h2 style="margin:0">저택 지도</h2>${IS_ADMIN?'<button class="sm" onclick="openRoomSettings()">⚙ 방 기능 설정</button>':''}</div>
    ${parent?`<button class="sm" style="margin:8px 0" onclick="enterSub('${parent.mapKey}')">← ${esc((maps.find(m=>m.key===parent.mapKey)||{}).name||'뒤로')} (으)로</button> <b>${esc(parent.name)}</b>`:
      (topList.length>1?`<div class="toggles" style="margin-top:8px">${topList.map(m=>`<button class="${m.key===mapSel?'on':''}" onclick="mapSel='${m.key}';MAP_PLACE=null;render()">${esc(m.name)}</button>`).join('')}</div>`:'')}
-   ${maps.length?`<div class="mapbox" style="margin-top:10px"><canvas id="plMap"></canvas><p class="muted" id="mapLoading">지도를 불러오는 중…</p></div>
+   ${maps.length?`<div class="mapbox${MZ_FULL?' mzfull':''}" id="mapVP" style="margin-top:10px"><canvas id="plMap"></canvas><p class="muted" id="mapLoading">지도를 불러오는 중…</p>
+   <div class="mztools">${MZ_CROP?`<span class="mzhint">✂ 보일 범위를 끌어서 그려요</span><button onclick="mzCropSave()">저장</button><button onclick="mzCropAuto()">자동</button><button onclick="MZ_CROP=null;render()">취소</button>`
+     :`<button onclick="mzZoom(1.4)" title="확대">➕</button><button onclick="mzZoom(1/1.4)" title="축소">➖</button><button onclick="mzFit()" title="맞춤">⟲</button><button onclick="mzFull()" title="전체 화면">${MZ_FULL?'✕':'⛶'}</button>${IS_ADMIN?'<button onclick="mzCropStart()" title="보일 범위 (KP)">✂</button>':''}`}</div></div>
    <p class="muted">방을 눌러 이동해요.${myPlace()?` 지금 위치: <b>${esc(myPlace())}</b>${schedLoc(myHo())?' <span class="muted">(일정표)</span>':''}`:''}${EGG.on?' 방 밖에도… 무언가 있을지 몰라요.':''}</p>`:''}
    ${places.filter(p=>!p.mapKey).length?`<h3>그 밖의 장소</h3>${places.map((p,i)=>p.mapKey?'':`<span class="chip ${MAP_PLACE===p.name?'on':''}" style="border-color:${p.color}" onclick="selectPlace(${i})">${esc(p.name)}</span>`).join('')}`:''}</div>`;
   if(cur){const fs=featsOf(cur.name),sub=subOf(cur.name),sm=maps.find(m=>m.key===sub),ppl=whoAt(cur.name);
@@ -1055,6 +1064,25 @@ function extraPanel(){
 }
 const TOKIMG={};
 function tokImg(u){const src=u.charImg||u.avatar;if(!src)return null;let im=TOKIMG[u.id];if(!im||im._src!==src){im=new Image();im._src=src;im.onload=()=>{if(tab==='map')drawPlMap();};im.src=src;TOKIMG[u.id]=im;}return im.complete&&im.naturalWidth?im:null;}
+/* ---- 저택 지도: 여백 자르기 · 확대/이동 · 전체 화면 · KP 보일 범위 ---- */
+function mzBase(key,img){
+  if(MZ_CROP&&MZ_CROP.key===key)return {x:0,y:0,w:1,h:1};
+  const c=(ROOMS.crop||{})[key];if(c&&c.w>0.02&&c.h>0.02)return c;
+  const pls=((PUB&&PUB.places)||[]).filter(p=>p.mapKey===key&&p.nx!=null);if(!pls.length)return {x:0,y:0,w:1,h:1};
+  let x0=Math.min(...pls.map(p=>p.nx)),y0=Math.min(...pls.map(p=>p.ny)),x1=Math.max(...pls.map(p=>p.nx+p.nw)),y1=Math.max(...pls.map(p=>p.ny+p.nh));
+  const pd=.03;x0=Math.max(0,x0-pd);y0=Math.max(0,y0-pd);x1=Math.min(1,x1+pd);y1=Math.min(1,y1+pd);return {x:x0,y:y0,w:x1-x0,h:y1-y0};
+}
+function mzState(key){return MZ[key]||(MZ[key]={z:1,cx:.5,cy:.5});}
+function mzView(key,img){const B0=mzBase(key,img),S=mzState(key),w=B0.w/S.z,h=B0.h/S.z;
+  S.cx=Math.min(1-.5/S.z,Math.max(.5/S.z,S.cx));S.cy=Math.min(1-.5/S.z,Math.max(.5/S.z,S.cy));
+  return {x:B0.x+(S.cx-.5/S.z)*B0.w,y:B0.y+(S.cy-.5/S.z)*B0.h,w,h,B0};}
+function mzZoom(f,px,py){const S=mzState(mapSel),z=Math.min(6,Math.max(1,S.z*f));if(px!=null){const k=1/S.z-1/z;S.cx+=(px-.5)*k;S.cy+=(py-.5)*k;}S.z=z;drawPlMap();}
+function mzFit(){MZ[mapSel]={z:1,cx:.5,cy:.5};drawPlMap();}
+function mzFull(){MZ_FULL=!MZ_FULL;document.body.style.overflow=MZ_FULL?'hidden':'';render();}
+function mzCropStart(){MZ_CROP={key:mapSel,r:(ROOMS.crop||{})[mapSel]||null};MZ[mapSel]={z:1,cx:.5,cy:.5};render();}
+async function mzCropSave(){const c=MZ_CROP;if(!c)return;const crop=Object.assign({},ROOMS.crop||{});if(c.r&&c.r.w>.02&&c.r.h>.02)crop[c.key]=c.r;else delete crop[c.key];
+  try{await B.set('settings/rooms',{crop},true);}catch(e){return toast('저장 실패: '+(e.code||e.message));}ROOMS.crop=crop;MZ_CROP=null;MZ[c.key]={z:1,cx:.5,cy:.5};toast('보일 범위를 저장했어요');render();}
+function mzCropAuto(){if(MZ_CROP)MZ_CROP.r=null;mzCropSave();}
 async function drawPlMap(){
   const cv=$('#plMap');if(!cv||!mapSel)return;
   const key=mapSel,img=MAPIMG[key];
@@ -1062,23 +1090,53 @@ async function drawPlMap(){
     if(!data){delete MAPIMG[key];const l=$('#mapLoading');if(l)l.textContent='지도를 불러오지 못했어요. 잠시 후 다시 열어 주세요.';return;}
     const im=new Image();im.onload=()=>{MAPIMG[key]=im;if(tab==='map')drawPlMap();};im.src=data;return;}
   if(img==='loading')return;
-  const W=cv.parentElement.clientWidth,sc=W/img.width;cv.width=W;cv.height=Math.round(img.height*sc);
-  const ctx=cv.getContext('2d');ctx.drawImage(img,0,0,cv.width,cv.height);
+  const V=mzView(key,img),box=cv.parentElement,dpr=Math.min(3,window.devicePixelRatio||1),ar=(V.h*img.height)/(V.w*img.width);
+  let W=box.clientWidth,H=Math.round(W*ar);
+  if(MZ_FULL){W=window.innerWidth;H=Math.round(W*ar);const mh=window.innerHeight-8;if(H>mh){H=mh;W=Math.round(H/ar);}}
+  const vh=Math.min(V.h,V.w*H/W*img.width/img.height),vy=V.y+(V.h-vh)/2;   // 높이를 줄였으면 가운데 기준으로 잘라 보여요
+  cv.style.width=W+'px';cv.style.height=H+'px';cv.width=Math.round(W*dpr);cv.height=Math.round(H*dpr);cv._ar=img.height/img.width;
+  const ctx=cv.getContext('2d');ctx.imageSmoothingEnabled=!document.documentElement.classList.contains('px')||V.w*img.width<W;
+  ctx.fillStyle='#0c0806';ctx.fillRect(0,0,cv.width,cv.height);
+  ctx.drawImage(img,V.x*img.width,vy*img.height,V.w*img.width,vh*img.height,0,0,cv.width,cv.height);
+  const toX=nx=>(nx-V.x)/V.w*cv.width,toY=ny=>(ny-vy)/vh*cv.height,u=dpr;
+  cv._v={x:V.x,y:vy,w:V.w,h:vh};
   const pls=((PUB&&PUB.places)||[]).filter(p=>p.mapKey===key&&p.nx!=null);
-  pls.forEach(p=>{const x=p.nx*cv.width,y=p.ny*cv.height,w=p.nw*cv.width,h=p.nh*cv.height,sel=p.name===MAP_PLACE,here=myPlace()===p.name;
-    ctx.fillStyle=p.color+(sel?'55':'33');ctx.fillRect(x,y,w,h);ctx.strokeStyle=sel?'#ffe7a3':p.color;ctx.lineWidth=sel?3:2;ctx.setLineDash(sel?[]:[5,3]);ctx.strokeRect(x,y,w,h);ctx.setLineDash([]);
-    ctx.font='bold 13px sans-serif';const label=(here?'📍 ':'')+p.name+(subOf(p.name)?' 🚪':''),tw=ctx.measureText(label).width;ctx.fillStyle='rgba(0,0,0,.65)';ctx.fillRect(x+3,y+3,tw+8,19);ctx.fillStyle='#fff';ctx.fillText(label,x+7,y+17);
-    const who=whoAt(p.name).slice(0,7),sz=Math.max(18,Math.min(30,Math.round(w/Math.max(2,who.length)-10)));
-    who.forEach((u,i)=>{const per=Math.max(sz+10,Math.min(sz+16,(w-8)/who.length)),cx=x+6+sz/2+i*per,cy=y+h-sz/2-24;drawTok(ctx,u,Math.min(cx,x+w-sz/2-4),Math.max(y+26+sz/2,cy),sz);});
-    if(false)whoAt(p.name).slice(0,6).forEach((u,i)=>{const r=11,cx=x+6+r+i*(r*2+3),cy=y+h-6-r;ctx.save();ctx.beginPath();ctx.arc(cx,cy,r,0,Math.PI*2);ctx.closePath();
-      const im=tokImg(u);if(im){ctx.clip();ctx.drawImage(im,cx-r,cy-r,r*2,r*2);ctx.restore();}else{ctx.fillStyle='#1e1916';ctx.fill();ctx.fillStyle='#e6cf9a';ctx.font='bold 11px sans-serif';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText((u.ho?cname(u.ho):uname(u)).slice(0,1),cx,cy+1);ctx.restore();ctx.textAlign='start';ctx.textBaseline='alphabetic';}
-      ctx.beginPath();ctx.arc(cx,cy,r,0,Math.PI*2);ctx.strokeStyle=u.id===ME.uid?'#ffe7a3':'rgba(255,255,255,.7)';ctx.lineWidth=1.5;ctx.stroke();});
+  if(!MZ_CROP)pls.forEach(p=>{const x=toX(p.nx),y=toY(p.ny),w=p.nw/V.w*cv.width,h=p.nh/vh*cv.height,sel=p.name===MAP_PLACE,here=myPlace()===p.name;
+    if(x+w<0||y+h<0||x>cv.width||y>cv.height)return;
+    ctx.fillStyle=p.color+(sel?'55':'33');ctx.fillRect(x,y,w,h);ctx.strokeStyle=sel?'#ffe7a3':p.color;ctx.lineWidth=(sel?3:2)*u;ctx.setLineDash(sel?[]:[5*u,3*u]);ctx.strokeRect(x,y,w,h);ctx.setLineDash([]);
+    const fs=Math.round(14*u);ctx.font=`bold ${fs}px 'Galmuri11',sans-serif`;const label=(here?'📍 ':'')+p.name+(subOf(p.name)?' 🚪':''),tw=ctx.measureText(label).width;
+    const lx=Math.max(2*u,Math.min(x+3*u,cv.width-tw-12*u)),ly=Math.max(2*u,y+3*u);
+    ctx.fillStyle='rgba(0,0,0,.72)';ctx.fillRect(lx,ly,tw+10*u,fs+8*u);ctx.fillStyle='#fff';ctx.textBaseline='top';ctx.fillText(label,lx+5*u,ly+4*u);ctx.textBaseline='alphabetic';
+    const who=whoAt(p.name).slice(0,7);if(!who.length)return;
+    ctx.save();ctx.scale(u,u);const xw=x/u,yw=y/u,ww=w/u,hw=h/u,sz=Math.max(18,Math.min(30,Math.round(ww/Math.max(2,who.length)-10)));
+    who.forEach((us,i)=>{const per=Math.max(sz+10,Math.min(sz+16,(ww-8)/who.length)),cx=xw+6+sz/2+i*per,cy=yw+hw-sz/2-24;drawTok(ctx,us,Math.min(cx,xw+ww-sz/2-4),Math.max(yw+30+sz/2,cy),sz);});ctx.restore();
   });
+  if(MZ_CROP){const r=MZ_CROP.r||mzBase(key,img)&&(((ROOMS.crop||{})[key])||null);ctx.fillStyle='rgba(0,0,0,.55)';
+    if(r){const x=toX(r.x),y=toY(r.y),w=r.w/V.w*cv.width,h=r.h/vh*cv.height;ctx.fillRect(0,0,cv.width,y);ctx.fillRect(0,y+h,cv.width,cv.height-y-h);ctx.fillRect(0,y,x,h);ctx.fillRect(x+w,y,cv.width-x-w,h);ctx.strokeStyle='#ffe7a3';ctx.lineWidth=2*u;ctx.setLineDash([6*u,4*u]);ctx.strokeRect(x,y,w,h);ctx.setLineDash([]);}}
   const l=$('#mapLoading');if(l)l.style.display='none';
-  cv.onclick=e=>{const r=cv.getBoundingClientRect(),mx=(e.clientX-r.left)/r.width,my=(e.clientY-r.top)/r.height;
-    const hit=pls.slice().reverse().find(p=>mx>=p.nx&&mx<=p.nx+p.nw&&my>=p.ny&&my<=p.ny+p.nh);if(hit)return selectPlace(placeIdx(hit.name));
-    eggTap(key,mx,my,cv,e);};
+  mzBind(cv,key,pls);
 }
+function mzBind(cv,key,pls){
+  if(cv._mzb)return;cv._mzb=1;const pts=new Map();let moved=false,pinch=null,crop0=null;
+  const norm=e=>{const r=cv.getBoundingClientRect(),v=cv._v;return {fx:(e.clientX-r.left)/r.width,fy:(e.clientY-r.top)/r.height,nx:v.x+(e.clientX-r.left)/r.width*v.w,ny:v.y+(e.clientY-r.top)/r.height*v.h};};
+  cv.onpointerdown=e=>{try{cv.setPointerCapture(e.pointerId);}catch(x){}pts.set(e.pointerId,{x:e.clientX,y:e.clientY,x0:e.clientX,y0:e.clientY});moved=false;
+    if(MZ_CROP){const n=norm(e);crop0={x:n.nx,y:n.ny};return;}
+    if(pts.size===2){const [a,b]=[...pts.values()];pinch={d:Math.hypot(a.x-b.x,a.y-b.y)};}};
+  cv.onpointermove=e=>{const p=pts.get(e.pointerId);if(!p)return;const dx=e.clientX-p.x,dy=e.clientY-p.y;p.x=e.clientX;p.y=e.clientY;
+    if(Math.hypot(e.clientX-p.x0,e.clientY-p.y0)>6)moved=true;
+    if(MZ_CROP&&crop0){const n=norm(e),cl=v=>Math.max(0,Math.min(1,v));MZ_CROP.r={x:cl(Math.min(crop0.x,n.nx)),y:cl(Math.min(crop0.y,n.ny)),w:Math.abs(n.nx-crop0.x),h:Math.abs(n.ny-crop0.y)};drawPlMap();return;}
+    const S=mzState(mapSel);
+    if(pts.size===2&&pinch){const [a,b]=[...pts.values()],d=Math.hypot(a.x-b.x,a.y-b.y),r=cv.getBoundingClientRect();if(pinch.d>0)mzZoom(d/pinch.d,((a.x+b.x)/2-r.left)/r.width,((a.y+b.y)/2-r.top)/r.height);pinch.d=d;return;}
+    if(S.z>1&&moved){const r=cv.getBoundingClientRect();S.cx-=dx/r.width/S.z;S.cy-=dy/r.height/S.z;drawPlMap();}};
+  const up=e=>{const had=pts.has(e.pointerId);pts.delete(e.pointerId);if(pts.size<2)pinch=null;if(!had)return;
+    if(MZ_CROP){crop0=null;return;}
+    if(moved||pts.size)return;const n=norm(e);const P2=((PUB&&PUB.places)||[]).filter(p=>p.mapKey===key&&p.nx!=null);
+    const hit=P2.slice().reverse().find(p=>n.nx>=p.nx&&n.nx<=p.nx+p.nw&&n.ny>=p.ny&&n.ny<=p.ny+p.nh);if(hit)return selectPlace(placeIdx(hit.name));
+    eggTap(key,n.nx,n.ny,cv,e);};
+  cv.onpointerup=up;cv.onpointercancel=e=>{pts.delete(e.pointerId);pinch=null;};
+  cv.onwheel=e=>{if(MZ_CROP)return;e.preventDefault();const f=norm(e);mzZoom(e.deltaY<0?1.15:1/1.15,f.fx,f.fy);};
+}
+window.addEventListener('resize',()=>{if(tab==='map')drawPlMap();});
 /* ---- KP: 방 기능 설정 / 소집 ---- */
 function openRoomSettings(){
   const places=(PUB&&PUB.places)||[];window._rs={};
@@ -1125,7 +1183,7 @@ let eggHintAt=0,eggBusy=false;
 async function eggTap(key,mx,my,cv,ev){
   if(!EGG.on||eggBusy)return;
   const today=kstDate();if(!P.egg||P.egg.date!==today)P.egg={date:today,n:0,found:[]};
-  const ar=cv.height/cv.width;let best=null,bd=9;
+  const ar=cv._ar||cv.height/cv.width;let best=null,bd=9;
   eggSpots(key).forEach(sp=>{const d=Math.hypot(mx-sp.x,(my-sp.y)*ar);if(d<bd){bd=d;best=sp;}});
   if(!best||P.egg.found.includes(best.id))return;
   if(bd<0.05){
