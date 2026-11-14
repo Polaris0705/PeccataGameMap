@@ -1104,9 +1104,11 @@ async function drawPlMap(){
   if(!MZ_CROP)pls.forEach(p=>{const x=toX(p.nx),y=toY(p.ny),w=p.nw/V.w*cv.width,h=p.nh/vh*cv.height,sel=p.name===MAP_PLACE,here=myPlace()===p.name;
     if(x+w<0||y+h<0||x>cv.width||y>cv.height)return;
     ctx.fillStyle=p.color+(sel?'55':'33');ctx.fillRect(x,y,w,h);ctx.strokeStyle=sel?'#ffe7a3':p.color;ctx.lineWidth=(sel?3:2)*u;ctx.setLineDash(sel?[]:[5*u,3*u]);ctx.strokeRect(x,y,w,h);ctx.setLineDash([]);
-    const fs=Math.round(14*u);ctx.font=`bold ${fs}px 'Galmuri11',sans-serif`;const label=(here?'📍 ':'')+p.name+(subOf(p.name)?' 🚪':''),tw=ctx.measureText(label).width;
-    const lx=Math.max(2*u,Math.min(x+3*u,cv.width-tw-12*u)),ly=Math.max(2*u,y+3*u);
-    ctx.fillStyle='rgba(0,0,0,.72)';ctx.fillRect(lx,ly,tw+10*u,fs+8*u);ctx.fillStyle='#fff';ctx.textBaseline='top';ctx.fillText(label,lx+5*u,ly+4*u);ctx.textBaseline='alphabetic';
+    const fs=Math.round(14*u),lh=fs+4*u;ctx.font=`bold ${fs}px 'Galmuri11',sans-serif`;const lines=String(p.lbl||p.name).split('\n');lines[0]=(here?'📍 ':'')+lines[0];lines[lines.length-1]+=subOf(p.name)?' 🚪':'';
+    const tw=Math.max(...lines.map(t=>ctx.measureText(t).width)),bw=tw+10*u,bh=lines.length*lh+4*u;
+    const lx=Math.max(2*u,Math.min((p.lox!=null?toX(p.nx+p.lox):x+3*u),cv.width-bw-2*u)),ly=Math.max(2*u,Math.min((p.loy!=null?toY(p.ny+p.loy):y+3*u),cv.height-bh-2*u));
+    if(p.lb!=='none'){ctx.fillStyle=p.lb?p.lb+'dd':'rgba(0,0,0,.72)';ctx.fillRect(lx,ly,bw,bh);}
+    ctx.fillStyle=p.lc||'#fff';ctx.textBaseline='top';lines.forEach((t,k)=>ctx.fillText(t,lx+5*u,ly+4*u+k*lh));ctx.textBaseline='alphabetic';
     const who=whoAt(p.name).slice(0,7);if(!who.length)return;
     ctx.save();ctx.scale(u,u);const xw=x/u,yw=y/u,ww=w/u,hw=h/u,sz=Math.max(18,Math.min(30,Math.round(ww/Math.max(2,who.length)-10)));
     who.forEach((us,i)=>{const per=Math.max(sz+10,Math.min(sz+16,(ww-8)/who.length)),cx=xw+6+sz/2+i*per,cy=yw+hw-sz/2-24;drawTok(ctx,us,Math.min(cx,xw+ww-sz/2-4),Math.max(yw+30+sz/2,cy),sz);});ctx.restore();
@@ -1479,7 +1481,7 @@ function derivePublic(st){
     days:st.days,slotsPerDay:st.slotsPerDay,dayNames:st.dayNames,names:st.names,
     maps:maps.filter(m=>m.revealed).map(m=>({key:m.key,name:m.name})),
     places:(st.places||[]).filter(p=>p.revealed).map(p=>{const m=p.mapIdx!=null?maps[p.mapIdx]:null;const on=m&&m.revealed;
-      return {name:p.name,color:color(p.name),mapKey:on?m.key:null,nx:on?p.nx??null:null,ny:on?p.ny??null:null,nw:on?p.nw??null:null,nh:on?p.nh??null:null};}),
+      return {name:p.name,color:color(p.name),mapKey:on?m.key:null,nx:on?p.nx??null:null,ny:on?p.ny??null:null,nw:on?p.nw??null:null,nh:on?p.nh??null:null,lbl:p.lbl||null,lox:p.lox??null,loy:p.loy??null,lc:p.lc||null,lb:p.lb||null};}),
     occ,dep,clock:(()=>{const n=st.now;if(!n||!n.d)return null;return {day:n.d,slot:n.s,dayName:(st.dayNames||[])[n.d-1]||('Day '+(n.d-1)),tod:(st.tod||{})[n.d+'_'+n.s]||'',locs:(()=>{const open=new Set((st.places||[]).filter(p=>p.revealed).map(p=>p.name)),o={};Object.entries(st.schedule||{}).forEach(([c,m])=>{const a=m&&m['d'+n.d+'s'+n.s];if(a&&a.place&&open.has(a.place))o[c]=a.place;});return o;})()};})(),at:Date.now()
   });
 }

@@ -133,6 +133,10 @@ body{background:var(--bg);color:var(--text);font-family:var(--font);font-size:va
 .map-tab.active{background:var(--accent3);border-color:var(--accent2);color:var(--accent);}
 .map-body{display:flex;flex:1;overflow:hidden;}
 .map-canvas-wrap{flex:1;background:#e8e4de;display:flex;align-items:center;justify-content:center;overflow:hidden;position:relative;}
+.map-canvas-wrap.zoomed{display:block;overflow:auto;}
+.map-canvas-wrap.zoomed canvas{margin:5px;}
+#mapCanvas{touch-action:none;}
+.mzs{display:inline-flex;gap:2px;align-items:center}.mzs b{font-size:11px;min-width:36px;text-align:center;font-family:var(--font);color:var(--text2)}
 .no-map-hint{color:var(--text3);font-size:13px;text-align:center;font-style:italic;}
 canvas{display:none;}
 .places-sidebar{width:185px;background:var(--bg2);border-left:1px solid var(--border);display:flex;flex-direction:column;flex-shrink:0;overflow:hidden;}
@@ -369,6 +373,7 @@ html.px .slot-hcol.now{outline:2px solid var(--accent2)}
             <button class="btn sm" id="drawBtn" onclick="toggleDraw()">영역 그리기</button>
             <button class="btn sm" id="editBtn" onclick="toggleEditMode()">✏ 편집 모드</button>
             <button class="btn sm" onclick="showTokens()" id="tokenBtn">토큰 표시</button>
+            <span class="mzs"><button class="btn sm" onclick="mzsZoom(1/1.25)" title="축소">➖</button><b id="mzsPct">100%</b><button class="btn sm" onclick="mzsZoom(1.25)" title="확대">➕</button><button class="btn sm" onclick="mzsZoom(0)" title="맞춤">⟲</button></span>
             <select id="mapDaySelect" onchange="setMapDay(this.value)"
               style="font-size:11px;padding:3px 6px;border:1px solid var(--border);border-radius:3px;background:var(--bg3);color:var(--text);font-family:var(--font);">
               <option value="0">전체 Day</option>
@@ -538,6 +543,12 @@ html.px .slot-hcol.now{outline:2px solid var(--accent2)}
         <div class="modal" style="max-width:340px;">
           <h3>장소 편집</h3>
           <div class="frow"><label>장소 이름</label><input type="text" id="plNameInput"></div>
+          <div class="frow"><label>지도에 보일 글자 <span style="color:var(--text3);font-size:10px;">(엔터로 줄바꿈 · 비우면 장소 이름)</span></label><textarea id="plLblInput" rows="2" style="width:100%;resize:vertical;font-family:var(--font);"></textarea></div>
+          <div class="frow"><label>글자색 · 배경</label><div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;">
+            <label style="font-size:11px;display:flex;gap:3px;align-items:center;"><input type="checkbox" id="plLcDef"> 기본</label><input type="color" id="plLcInput" style="width:38px;height:26px;padding:0;" oninput="document.getElementById('plLcDef').checked=false">
+            <select id="plLbMode" style="font-size:11px;"><option value="">배경 기본</option><option value="none">배경 없음</option><option value="c">배경 색</option></select><input type="color" id="plLbInput" style="width:38px;height:26px;padding:0;" oninput="document.getElementById('plLbMode').value='c'">
+            <button class="btn sm" onclick="resetLabelPos()">글씨 위치 처음대로</button></div>
+            <div style="font-size:10px;color:var(--text3);margin-top:3px;">위치는 ✏ 편집 모드에서 이름표를 끌어서 옮겨요.</div></div>
           <div class="frow">
             <label>색상</label>
             <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;" id="plColorPicker"></div>
@@ -1065,8 +1076,9 @@ function fitCanvas(){
   const canvas=document.getElementById('mapCanvas');
   const wrap=document.getElementById('mapWrap');
   const mw=wrap.clientWidth-10,mh=wrap.clientHeight-10;
-  const sc=Math.min(mw/m.img.width,mh/m.img.height,1);
+  const sc=Math.min(mw/m.img.width,mh/m.img.height,1)*MZS;
   canvas.width=Math.floor(m.img.width*sc);canvas.height=Math.floor(m.img.height*sc);
+  wrap.classList.toggle('zoomed',MZS>1);const pc=document.getElementById('mzsPct');if(pc)pc.textContent=Math.round(MZS*100)+'%';
 }
 function deleteMap(){
   if(!S.maps.length)return;
@@ -1094,8 +1106,8 @@ function redrawMap(){
     ctx.save();ctx.strokeStyle=col;ctx.lineWidth=2;ctx.setLineDash([4,2]);
     ctx.strokeRect(pl.x,pl.y,pl.w,pl.h);
     ctx.fillStyle=col+'2a';ctx.fillRect(pl.x,pl.y,pl.w,pl.h);
-    ctx.setLineDash([]);ctx.fillStyle=col;
-    ctx.font='bold 11px Courier New';ctx.fillText(pl.name,pl.x+4,pl.y+13);
+    ctx.setLineDash([]);
+    plLabel(ctx,pl,canvas,col);
     // 8방향 리사이즈 핸들 (편집 모드일 때만)
     if(S.editMode){
       const hw=pl.w/2,hh=pl.h/2;
@@ -1147,6 +1159,27 @@ function redrawMap(){
   }
 }
 let isDrag=false,dragP={x:0,y:0},dRect=null;
+/* ── 맵 확대/축소 · 이동 ── */
+let MZS=1,mzsPts=new Map(),mzsPinch=null,mzsPan=null,isLabelMode=false,labelPlace=null,lblOffX=0,lblOffY=0;
+function mzsZoom(f,fx,fy){
+  const wrap=document.getElementById('mapWrap'),c=document.getElementById('mapCanvas');if(!c||!S.maps[S.curMapIdx])return;
+  const r=c.getBoundingClientRect(),wr=wrap.getBoundingClientRect();
+  const ax=fx!=null?fx:wr.left+wr.width/2,ay=fy!=null?fy:wr.top+wr.height/2;   // 화면에서 고정할 점
+  const nx=(ax-r.left)/r.width,ny=(ay-r.top)/r.height;
+  MZS=f===0?1:Math.max(1,Math.min(6,MZS*f));fitCanvas();redrawMap();
+  if(MZS>1){const r2=c.getBoundingClientRect();wrap.scrollLeft+=(r2.left+nx*r2.width)-ax;wrap.scrollTop+=(r2.top+ny*r2.height)-ay;}
+}
+/* 장소 이름표: 보일 글자(줄바꿈) · 위치 · 글자색 · 배경 */
+function plLabel(ctx,pl,cv,col){
+  const lines=String(pl.lbl||pl.name).split('\n'),fs=12,lh=fs+3;ctx.font=`bold ${fs}px "Courier New",sans-serif`;
+  const tw=Math.max(...lines.map(t=>ctx.measureText(t).width)),bw=tw+8,bh=lines.length*lh+4;
+  let x=pl.x+(pl.lox!=null?pl.lox*cv.width:2),y=pl.y+(pl.loy!=null?pl.loy*cv.height:2);
+  x=Math.max(0,Math.min(cv.width-bw,x));y=Math.max(0,Math.min(cv.height-bh,y));
+  if(pl.lb&&pl.lb!=='none'){ctx.fillStyle=pl.lb+'dd';ctx.fillRect(x,y,bw,bh);}
+  ctx.fillStyle=pl.lc||col;ctx.textBaseline='top';lines.forEach((t,i)=>ctx.fillText(t,x+4,y+3+i*lh));ctx.textBaseline='alphabetic';
+  if(S.editMode){ctx.strokeStyle='rgba(0,0,0,.35)';ctx.lineWidth=1;ctx.setLineDash([2,2]);ctx.strokeRect(x+.5,y+.5,bw-1,bh-1);ctx.setLineDash([]);}
+  pl._lb={x,y,w:bw,h:bh};
+}
 // 이동 드래그 상태
 let isMoveMode=false,movingPlace=null,moveOffX=0,moveOffY=0;
 // 리사이즈 상태
@@ -1211,6 +1244,8 @@ mc.addEventListener('pointerdown',e=>{
   try{mc.setPointerCapture(e.pointerId);}catch(_){}
   const r=mc.getBoundingClientRect();
   const cx=e.clientX-r.left,cy=e.clientY-r.top;
+  mzsPts.set(e.pointerId,{x:e.clientX,y:e.clientY});
+  if(mzsPts.size===2){const [a,b]=[...mzsPts.values()];mzsPinch={d:Math.hypot(a.x-b.x,a.y-b.y)};isDrag=false;dRect=null;isMoveMode=false;isResizeMode=false;isLabelMode=false;mzsPan=null;redrawMap();return;}
 
   if(S.drawMode){
     // 그리기 모드: 새 영역 그리기
@@ -1221,6 +1256,8 @@ mc.addEventListener('pointerdown',e=>{
   // 편집 모드일 때만 이동/리사이즈
   if(S.editMode){
     const curPlaces=S.places.filter(p=>p.mapIdx===S.curMapIdx);
+    for(let i=curPlaces.length-1;i>=0;i--){const pl=curPlaces[i],b=pl._lb;   // 이름표 끌기
+      if(b&&cx>=b.x&&cx<=b.x+b.w&&cy>=b.y&&cy<=b.y+b.h){isLabelMode=true;labelPlace=pl;lblOffX=cx-b.x;lblOffY=cy-b.y;document.getElementById('mapTooltip').style.display='none';return;}}
     for(let i=curPlaces.length-1;i>=0;i--){
       const pl=curPlaces[i];
       const handle=getResizeHandle(pl,cx,cy);
@@ -1241,11 +1278,17 @@ mc.addEventListener('pointerdown',e=>{
       }
     }
   }
+  if(MZS>1){const w=document.getElementById('mapWrap');mzsPan={x:e.clientX,y:e.clientY,sl:w.scrollLeft,st:w.scrollTop,moved:false};}
   if(lastPT!=='mouse')onMapMove(e);
 });
+mc.addEventListener('wheel',e=>{if(!(e.ctrlKey||e.metaKey))return;e.preventDefault();mzsZoom(e.deltaY<0?1.15:1/1.15,e.clientX,e.clientY);},{passive:false});
 
 function onMapMove(e){
   const r=mc.getBoundingClientRect();const cx=e.clientX-r.left,cy=e.clientY-r.top;
+  if(mzsPts.has(e.pointerId))mzsPts.set(e.pointerId,{x:e.clientX,y:e.clientY});
+  if(mzsPinch&&mzsPts.size===2){const [a,b]=[...mzsPts.values()],d=Math.hypot(a.x-b.x,a.y-b.y);if(mzsPinch.d>0&&Math.abs(d/mzsPinch.d-1)>.03){mzsZoom(d/mzsPinch.d,(a.x+b.x)/2,(a.y+b.y)/2);mzsPinch.d=d;}return;}
+  if(isLabelMode&&labelPlace){const canvas=document.getElementById('mapCanvas');labelPlace.lox=(cx-lblOffX-labelPlace.x)/canvas.width;labelPlace.loy=(cy-lblOffY-labelPlace.y)/canvas.height;redrawMap();return;}
+  if(mzsPan&&!isDrag&&!isMoveMode&&!isResizeMode){const w=document.getElementById('mapWrap'),dx=e.clientX-mzsPan.x,dy=e.clientY-mzsPan.y;if(Math.hypot(dx,dy)>4)mzsPan.moved=true;if(mzsPan.moved){w.scrollLeft=mzsPan.sl-dx;w.scrollTop=mzsPan.st-dy;document.getElementById('mapTooltip').style.display='none';return;}}
 
   // 새 영역 그리기
   if(isDrag){
@@ -1309,8 +1352,10 @@ mc.addEventListener('pointerleave',e=>{
   if(isResizeMode){isResizeMode=false;resizingPlace=null;renderPlaces();}
 });
 
-mc.addEventListener('pointercancel',()=>{isDrag=false;dRect=null;isMoveMode=false;movingPlace=null;isResizeMode=false;resizingPlace=null;redrawMap();});
-mc.addEventListener('pointerup',()=>{
+mc.addEventListener('pointercancel',e=>{mzsPts.delete(e.pointerId);mzsPinch=null;mzsPan=null;isLabelMode=false;labelPlace=null;isDrag=false;dRect=null;isMoveMode=false;movingPlace=null;isResizeMode=false;resizingPlace=null;redrawMap();});
+mc.addEventListener('pointerup',e=>{
+  mzsPts.delete(e.pointerId);if(mzsPts.size<2)mzsPinch=null;mzsPan=null;
+  if(isLabelMode){isLabelMode=false;labelPlace=null;renderPlaces();return;}
   if(isDrag){
     isDrag=false;
     if(dRect&&dRect.w>8&&dRect.h>8){
@@ -1437,6 +1482,9 @@ function openPlaceEdit(ev,i){
   _placeEditIdx=i;
   const p=S.places[i];
   document.getElementById('plNameInput').value=p.name;
+  document.getElementById('plLblInput').value=p.lbl||'';
+  document.getElementById('plLcDef').checked=!p.lc;document.getElementById('plLcInput').value=p.lc||'#ffffff';
+  document.getElementById('plLbMode').value=p.lb==='none'?'none':p.lb?'c':'';document.getElementById('plLbInput').value=p.lb&&p.lb!=='none'?p.lb:'#000000';
   const curCol=pCol(p.name);
   S._editColor=curCol;
   const picker=document.getElementById('plColorPicker');
@@ -1482,6 +1530,7 @@ function selectPlaceColor(col){
   document.getElementById('thprev_place').style.background=col;
   updateHslSliderBg('place',hsl.h,hsl.s,hsl.l);
 }
+function resetLabelPos(){const p=S.places[_placeEditIdx];if(!p)return;delete p.lox;delete p.loy;redrawMap();}
 function confirmPlaceEdit(){
   if(_placeEditIdx<0)return;
   const p=S.places[_placeEditIdx];
@@ -1498,6 +1547,9 @@ function confirmPlaceEdit(){
     p.name=newName;
   }
   if(newCol)S.customColors[p.name]=newCol;
+  const lbl=document.getElementById('plLblInput').value.replace(/\r/g,'').replace(/\s+$/,'');if(lbl&&lbl!==p.name)p.lbl=lbl;else delete p.lbl;
+  if(document.getElementById('plLcDef').checked)delete p.lc;else p.lc=document.getElementById('plLcInput').value;
+  const lbm=document.getElementById('plLbMode').value;if(lbm==='none')p.lb='none';else if(lbm==='c')p.lb=document.getElementById('plLbInput').value;else delete p.lb;
   closeOverlay('placeModal');renderPlaces();redrawMap();renderSchedule();
 }
 // (5) 폴더 기능: 장소를 폴더(그룹)에 배정
@@ -2109,7 +2161,7 @@ function applyBooking(b){
   let last=null,started=false,pending=null,assetSig=null;
   function textState(){const o={};KEYS.forEach(k=>o[k]=S[k]);o.maps=S.maps.map(m=>({key:m.key,name:m.name,revealed:!!m.revealed}));o.appTitle=document.getElementById('appTitle').textContent.trim();return JSON.stringify(o);}
   function sig(){return Object.entries(S.portraits).map(([k,v])=>'p'+k+v.length).join()+'|'+Object.entries(S.tokens).map(([k,v])=>'t'+k+v.length).join();}
-  function busy(){return !!document.querySelector('.overlay.open')||isDrag||isMoveMode||isResizeMode;}
+  function busy(){return !!document.querySelector('.overlay.open')||isDrag||isMoveMode||isResizeMode||isLabelMode;}
   async function apply(st){
     if(busy()){pending=st;return;}
     pending=null;
