@@ -576,7 +576,7 @@ async function onAuth(u){
   sub(B.onDoc('settings/texts',d=>{if(typeof txSetRules==='function')txSetRules((d&&d.rules)||[]);}));
   sub(B.onDoc('settings/theme',d=>{THEME_GLOBAL=d;if(!TF)applyTheme();}));
   sub(B.onDoc('settings/rooms',d=>{ROOMS=Object.assign({rooms:{},gather:null},d||{});softRender();}));
-  sub(B.onDoc('settings/game',d=>{EGG=Object.assign({on:true,mode:'personal',perDay:3,coins:3,salt:''},(d&&d.egg)||{});if(typeof NOTECFG!=='undefined')NOTECFG=Object.assign({on:true,pct:10,perDay:3,hold:3},(d&&d.notes)||{});softRender();}));
+  sub(B.onDoc('settings/game',d=>{EGG=Object.assign({on:true,mode:'personal',perDay:3,coins:3,salt:''},(d&&d.egg)||{});if(typeof NOTECFG!=='undefined')NOTECFG=Object.assign({on:true,pct:10,perDay:3,hold:3},(d&&d.notes)||{});if(typeof SONGS!=='undefined')SONGS=(d&&d.songs)||[];softRender();}));
   sub(B.onCol('users',l=>{USERS=l;if(tab==='map')setTimeout(drawPlMap,40);if(typeof chatOnUsers==='function')chatOnUsers();softRender();}));
   sub(B.onCol('bookings',l=>{BOOKINGS=l.sort((a,b)=>(b.at||0)-(a.at||0));if(IS_ADMIN){pushPending();refreshBookList();}softRender();}));
   sub(B.onCol('items',l=>{ITEMS=l.sort((a,b)=>(a.at||0)-(b.at||0));softRender();if(MODAL_ITEM)refreshItemModal();}));
@@ -1633,5 +1633,6 @@ setInterval(()=>{if(ME&&P&&(tab==='garden'||tab==='lobby')&&!modalOpen())softRen
 <script src="draw.js"></script>
 <script src="room.js"></script>
 <script src="games3.js"></script>
+<script src="rhythm.js"></script>
 </body>
 </html>
