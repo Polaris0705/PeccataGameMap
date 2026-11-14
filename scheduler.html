@@ -1398,6 +1398,8 @@ function placeItemHtml(p,i){
     </div>
     <div class="place-item-actions">
       <button class="place-action-btn" onclick="openPlaceEdit(event,${i})">✏ 편집</button>
+      <button class="place-action-btn" onclick="movePlace(event,${i},-1)" title="위로">▲</button>
+      <button class="place-action-btn" onclick="movePlace(event,${i},1)" title="아래로">▼</button>
       <button class="place-action-btn" onclick="movePlaceToFolder(${i})">📁 폴더</button>
       <button class="place-action-btn" onclick="togglePlaceReveal(event,${i})">${p.revealed?'🚫 숨기기':'👁 PL 공개'}</button>
       <button class="place-action-btn del" onclick="removePlace(event,${i})">× 삭제</button>
@@ -1499,6 +1501,14 @@ function confirmPlaceEdit(){
   closeOverlay('placeModal');renderPlaces();redrawMap();renderSchedule();
 }
 // (5) 폴더 기능: 장소를 폴더(그룹)에 배정
+/* 장소 순서 바꾸기: 같은 폴더 안에서 한 칸씩 */
+function movePlace(ev,i,d){
+  ev.stopPropagation();const f=S.places[i].folder||'';let j=i+d;
+  while(j>=0&&j<S.places.length&&(S.places[j].folder||'')!==f)j+=d;
+  if(j<0||j>=S.places.length)return;
+  const t=S.places[i];S.places[i]=S.places[j];S.places[j]=t;
+  _selectedPlaceIdx=j;renderPlaces();if(typeof redrawMap==='function')redrawMap();if(typeof renderSummary==='function')try{renderSummary();}catch(e){}
+}
 function movePlaceToFolder(i){
   const p=S.places[i];
   const folder=prompt(`"${p.name}"의 폴더명 (비워두면 제거):`, p.folder||'');

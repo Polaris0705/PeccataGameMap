@@ -38,7 +38,7 @@ setInterval(() => {
 function notesPanel() {
   const notes = (P.notes || []).filter(n => RIDDLES.some(r => r.id === n.id)), all = RIDDLES.every(r => rs(r.id).solved);
   const solved = RIDDLES.filter(r => rs(r.id).solved).length;
-  return `<div class="panel"><h2>📜 쪽지</h2><p class="muted">활동을 하다 보면 가끔 수수께끼 쪽지를 줍게 돼요. 풀면 쪽지는 사라져요. (해결 ${solved} / ${RIDDLES.length})</p>
+  return `<div class="panel"><h2>📜 쪽지</h2><p class="muted">활동 중에 가끔 줍는 수수께끼. 풀면 사라져요. (해결 ${solved} / ${RIDDLES.length})</p>
    ${notes.length ? `<div class="inv">${notes.map(n => { const r = RIDDLES.find(x => x.id === n.id); return `<div class="slotx" onclick="openRiddle('${n.id}')"><div class="noimg">📜</div><div style="font-size:.88rem">${esc(r.room)}의 쪽지</div></div>`; }).join('')}</div>` : '<p class="muted">지금 가진 쪽지가 없어요.</p>'}
    ${all ? `<button class="primary" style="margin-top:8px" onclick="openSecret()">🗝 ${P.secret ? '숨겨진 방' : '모든 쪽지를 풀자 어딘가의 문이 열렸다…'}</button>` : ''}</div>`;
 }
@@ -57,7 +57,7 @@ VIEWS.kdata = () => {
   const cf = NOTECFG, rows = dataPlayers();
   const today = rows.map(({ u, p }) => ({ u, n: (p.log || []).filter(l => isToday(l.t) && l.n > 0).reduce((s, l) => s + l.n, 0), last: Math.max(0, ...(p.log || []).map(l => l.t)) }));
   const recent = rows.flatMap(({ u, p }) => (p.log || []).map(l => ({ ...l, u }))).sort((a, b) => b.t - a.t).slice(0, 30);
-  return `<div class="panel"><h2>📜 쪽지 설정</h2><p class="muted">PL이 은화를 버는 활동(미니게임 · 타이쿤 · 온실 등)을 끝낼 때마다 확률로 수수께끼 쪽지가 떠요.</p>
+  return `<div class="panel"><h2>📜 쪽지 설정</h2><p class="muted">은화를 버는 활동 뒤에 확률로 쪽지가 떠요.</p>
    <div class="grid g2" style="gap:8px">
     <label class="row"><input type="checkbox" id="ncOn" ${cf.on ? 'checked' : ''} style="width:auto"> 쪽지 켜기</label>
     <label>나올 확률 (%) <input id="ncPct" type="number" min="0" max="100" value="${cf.pct}"></label>
@@ -65,7 +65,7 @@ VIEWS.kdata = () => {
     <label>동시에 가질 수 있는 쪽지 <input id="ncHold" type="number" min="1" max="12" value="${cf.hold}"></label></div>
    <button class="primary" style="margin-top:8px" onclick="saveNoteCfg()">설정 저장</button></div>
 
-  <div class="panel"><h2>👥 플레이어 데이터</h2><p class="muted">은화를 주거나 빼고, 쪽지를 주거나 거둬들이고, 진행을 초기화할 수 있어요. 바꾸면 PL 화면에 바로 반영돼요.</p>
+  <div class="panel"><h2>👥 플레이어 데이터</h2><p class="muted">은화 조정 · 쪽지 주기/거두기 · 초기화</p>
    <div style="overflow-x:auto"><table><tr><th>이름</th><th>보유</th><th>누적</th><th>오늘</th><th>쪽지</th><th>해결</th><th>마지막 활동</th><th></th></tr>
    ${rows.map(({ u, p }, i) => { const td = today[i]; return `<tr><td>${esc(uname(u))}<div class="muted" style="font-size:.75rem">${esc(u.ho ? cname(u.ho) : 'HO 없음')}</div></td>
     <td>${p.coins || 0}</td><td>${p.earned || 0}</td><td>${td.n ? '+' + td.n : '-'}</td><td>${(p.notes || []).length}</td><td>${Object.values(p.riddles || {}).filter(r => r.solved).length}/${RIDDLES.length}</td>
@@ -76,11 +76,11 @@ VIEWS.kdata = () => {
   <div class="panel"><h2>📈 사용량 · 기록</h2><p class="muted">오늘 번 은화 합계 <b>${today.reduce((s, x) => s + x.n, 0)}</b> · 오늘 가장 많이 번 사람 ${(() => { const b = today.slice().sort((a, b) => b.n - a.n)[0]; return b && b.n ? `<b>${esc(uname(b.u))}</b> (+${b.n})` : '-'; })()}</p>
    ${recent.length ? `<div style="max-height:260px;overflow:auto"><table>${recent.map(l => `<tr><td class="muted" style="font-size:.8rem">${fmtT(l.t)}</td><td>${esc(uname(l.u))}</td><td>${esc(LOG_NAME(l.w))}</td><td style="color:${l.n > 0 ? 'var(--gold2)' : '#e88'}">${l.n > 0 ? '+' : ''}${l.n}</td></tr>`).join('')}</table></div>` : '<p class="muted">아직 기록이 없어요. (이번 업데이트부터 쌓여요)</p>'}</div>
 
-  <div class="panel"><h2>💾 백업 · 복원</h2><p class="muted">플레이어 · 진행 · 아이템 · 예약 · 대기열 · 메모 · 스케줄 · 설정 · 채팅방 목록 · 방명록을 JSON 하나로 내려받아요. 복원하면 파일 속 내용으로 덮어써요.</p>
+  <div class="panel"><h2>💾 백업 · 복원</h2><p class="muted">모든 데이터를 JSON 하나로 받아요. 복원하면 덮어써요.</p>
    <label class="row" style="margin:6px 0"><input type="checkbox" id="bkMap" style="width:auto"> 지도 이미지도 포함 (파일이 커져요)</label>
    <div class="row"><button class="primary" onclick="kdBackup()">⬇ 백업 내려받기</button><button onclick="kdRestorePick()">⬆ 백업에서 복원</button></div></div>
 
-  <div class="panel"><h2>⚠ 전체 초기화</h2><p class="muted">모든 플레이어의 은화 · 방 · 쪽지 · 수수께끼 · 게임 기록을 처음 상태로 되돌려요. 계정 · HO · 아이템 · 스케줄은 그대로예요. 되돌릴 수 없으니 먼저 백업하세요.</p>
+  <div class="panel"><h2>⚠ 전체 초기화</h2><p class="muted">모든 PL의 은화·방·쪽지·게임 기록을 처음으로 (계정·HO·아이템·스케줄은 유지). 먼저 백업하세요.</p>
    <button onclick="kdResetAll()" style="border-color:#a44;color:#f99">전체 진행 초기화</button></div>`;
 };
 async function saveNoteCfg() {

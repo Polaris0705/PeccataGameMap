@@ -87,7 +87,7 @@ function msPanel() {
   if (!P || !ME) return ''; const d = msDay(); if (!d.list.length) return '';
   const done = d.list.filter(m => m.ok).length;
   return `<div class="panel"><div class="row" style="justify-content:space-between;align-items:baseline"><h2 style="margin:0">📋 오늘의 미션</h2><span class="muted">${done}/${d.list.length}${d.streak ? ` · 연속 완주 ${d.streak}일` : ''}</span></div>
-   <p class="muted" style="margin:4px 0 8px">미션마다 +5 은화, 셋 다 받으면 +10. 3일·7일 연속으로 완주하면 비밀 칭호가 열려요. 미션 은화는 게임 상한과 따로예요.</p>
+   <p class="muted" style="margin:4px 0 8px">하나당 +5, 모두 +10 · 연속 완주하면 비밀 칭호</p>
    ${d.list.map((m, i) => `<div class="item" style="margin:5px 0;gap:8px"><div style="flex:1"><div>${msText(m)}</div><div style="height:6px;background:#2a1c14;border-radius:3px;margin-top:4px;overflow:hidden"><div style="height:100%;width:${Math.round(m.p / m.n * 100)}%;background:${m.done ? 'var(--gold2)' : '#8a6a40'}"></div></div><div class="muted" style="font-size:.78rem">${m.p}/${m.n}</div></div>
      ${m.ok ? '<button disabled>받음</button>' : m.done ? `<button class="primary" onclick="msClaim(${i})">+5 받기</button>` : '<button disabled>진행 중</button>'}</div>`).join('')}</div>`;
 }
@@ -111,7 +111,7 @@ VIEWS.rank = () => {
   const med = i => ['👑', '🥈', '🥉'][i] || i + 1, lw = weekId(1), champ = players().map(u => ({ u, e: wkOf(PROGS.find(x => x.id === u.id) || {}, lw) })).sort((a, b) => b.e - a.e)[0];
   return `<div class="panel"><h2>🏆 손님 랭킹</h2>
    <div class="toggles" style="margin-bottom:8px"><button class="${RANK_TAB === 'week' ? 'on' : ''}" onclick="RANK_TAB='week';render()">이번 주</button><button class="${RANK_TAB === 'all' ? 'on' : ''}" onclick="RANK_TAB='all';render()">누적</button></div>
-   <p class="muted">${RANK_TAB === 'week' ? `이번 주(월요일 시작)에 번 은화 기준이에요. 주가 끝났을 때 1위는 비밀 칭호 「지난주의 귀빈」을 받아요.${champ && champ.e ? ` 지난주 1위: <b>${esc(uname(champ.u))}</b>` : ''}` : '누적 획득 은화 기준이에요.'}</p>
+   <p class="muted">${RANK_TAB === 'week' ? `이번 주 번 은화 순 · 1위는 칭호 「지난주의 귀빈」${champ && champ.e ? ` 지난주 1위: <b>${esc(uname(champ.u))}</b>` : ''}` : '누적 은화 순'}</p>
    <table><tr><th>#</th><th>손님</th><th>HO</th><th>${RANK_TAB === 'week' ? '이번 주' : '누적'}</th></tr>
    ${rows.map((r, i) => `<tr${r.u.id === ME.uid ? ' style="color:var(--gold2)"' : ''}><td>${med(i)}</td><td>${r.title ? `<span class="muted">「${esc(r.title)}」</span> ` : ''}${esc(uname(r.u))}</td><td>${esc(r.u.ho ? cname(r.u.ho) : '-')}</td><td>${RANK_TAB === 'week' ? r.wk : r.earned}</td></tr>`).join('')}</table></div>`;
 };
@@ -124,8 +124,8 @@ setInterval(() => {      // 지난주 1위 칭호
 /* ================= 찻잔 떨어뜨리기 (합치기 + 오늘의 죄 + 죄의 문) ================= */
 const DROP_T = [[7, '🍬', '별사탕', '#f2a8c8', 1], [10, '🍡', '경단', '#efd2dc', 3], [13, '🍪', '쿠키', '#cf9a5c', 6], [16, '🍵', '찻잔', '#8fbf86', 10], [20, '🧁', '컵케이크', '#e898b2', 16], [24, '🥧', '파이', '#cf9048', 25], [28, '🍮', '푸딩', '#e8c058', 40], [33, '🍰', '조각 케이크', '#f4e4d2', 60], [38, '🎂', '홀케이크', '#f0cce0', 100]];
 const SIN_RULE = {
-  wrath: '상자가 가끔 들썩여요', greed: '황금 다과가 섞여 나와요 (합치면 점수 2배 + 은화)', sloth: '다과가 천천히 떨어져요', gluttony: '먹보가 가끔 작은 다과를 먹어 치워요',
-  pride: '점수 ×1.3, 대신 선을 넘으면 금방 끝나요', envy: '「보관」으로 다과 하나를 맡아 둘 수 있어요', lust: '다과가 통통 튀고, 다음 다과가 셋까지 보여요'
+  wrath: '상자가 가끔 들썩여요', greed: '황금 다과가 나와요 (2배 + 은화)', sloth: '다과가 천천히 떨어져요', gluttony: '가끔 작은 다과가 먹혀요',
+  pride: '점수 ×1.3, 대신 금방 끝나요', envy: '「보관」으로 하나를 맡아 둬요', lust: '통통 튀고, 다음 셋이 보여요'
 };
 const todaySin = () => { const n = Math.floor((Date.now() + 9 * 36e5) / 864e5); return HOS[n % HOS.length].id; };
 let DROP = null;
@@ -133,7 +133,7 @@ VIEWS.sins = () => {
   const s = todaySin(), mine = mySin() === s;
   return `<div class="panel"><h2>🍵 찻잔 떨어뜨리기</h2>
    <div class="item" style="margin:6px 0 10px;border-color:var(--gold)"><div><b>오늘의 죄 · ${SIN_EMB[s]} ${sinName(s)}</b><div class="muted" style="font-size:.85rem">${SIN_RULE[s]}${mine ? ' · <b style="color:var(--gold2)">내 죄의 날! 은화 ×1.5</b>' : ''}</div></div></div>
-   <p class="muted">위에서 다과를 떨어뜨려 같은 것끼리 닿으면 합쳐져요. 빨리 연달아 합치면 <b>콤보</b>, 6콤보면 <b>피버</b>(점수 2배). 홀케이크 둘을 합치면 <b>펑!</b> 하고 사라지며 큰 점수(+500)를 얻어요. 다과가 빨간 선 위에 오래 머물면 끝나요.</p>
+   <p class="muted">같은 다과끼리 합쳐요. 연달아 합치면 <b>콤보</b>, 6콤보는 <b>피버</b>(2배). 🎂 둘은 +500! 빨간 선을 넘으면 끝.</p>
    <div style="display:flex;flex-wrap:wrap;gap:2px;align-items:center;font-size:1.25rem;margin:6px 0">${DROP_T.map(t => t[1]).join('<span class="muted" style="font-size:.7rem">›</span>')}<span class="muted" style="font-size:.7rem">›</span>💥</div>
    <div class="row" style="flex-wrap:wrap;gap:10px;margin:6px 0"><span>최고 점수 <b style="color:var(--gold2)">${(P.best || {}).sins || 0}</b></span><span class="muted">${capTxt('sins')}</span></div>
    <div id="gbox"><button class="primary" style="width:100%;font-size:1.15rem;padding:14px" onclick="dropStart()">▶ 시작</button></div>
@@ -323,7 +323,7 @@ function kmInner(pop) {
    <div class="grid g3" style="gap:6px;margin-bottom:8px">${orders}</div>
    <div id="kmGrid" class="kmgrid">${cells}</div>
    <div class="row" style="gap:6px;margin-top:8px"><button class="primary" style="flex:1;padding:12px;font-size:1.1rem" onclick="kmSpawn()">🧺 장바구니에서 꺼내기</button><div data-trash="1" class="kmc kmtrash">🗑</div></div>
-   <p class="muted" style="font-size:.82rem;margin:6px 0">같은 재료끼리 끌어다 겹치면 한 단계 위로 합쳐져요 (눌러서 고른 뒤 다른 칸을 눌러도 돼요). 주문을 채우면 £(티룸 업그레이드용)와 은화를 받아요.</p>
+   <p class="muted" style="font-size:.82rem;margin:6px 0">같은 재료를 겹쳐 합치고, 주문을 채워 £와 은화를 받아요.</p>
    <details><summary><b>📖 부엌 도감</b> <span class="muted">${K.dex.length}/15</span></summary>${dex}</details>`;
 }
 function kmRefresh(pop) { const el = $('#kmBox'); if (el) el.innerHTML = kmInner(pop); }

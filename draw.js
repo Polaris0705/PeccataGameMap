@@ -65,7 +65,7 @@ function drawPush(force) {
 }
 function drawView(r, host) {
   const S = r.state || {}, ps = r.players || {};
-  if (r.status === 'lobby') return `<p class="muted">차례대로 한 명씩 그림을 그리고, 나머지는 아래 칸에 정답을 적어요. 빨리 맞힐수록 점수가 높아요. 모두 한 번씩 그리면 끝!</p>
+  if (r.status === 'lobby') return `<p class="muted">차례로 그리고, 나머지는 맞혀요. 빨리 맞힐수록 높은 점수!</p>
     ${needMore(r, PARTY_TYPES.draw)}${host ? `<button class="primary" ${Object.keys(ps).length < 2 ? 'disabled' : ''} onclick="drawStart()">시작</button>` : '<p class="muted">방장이 시작하기를 기다려요…</p>'}`;
   const scores = Object.entries(S.scores || {}).sort((a, b) => b[1] - a[1]);
   const board = `<div class="toggles" style="margin-bottom:6px">${(S.order || []).map(u => `<span class="chip ${u === S.drawer ? 'on' : ''}">${u === S.drawer ? '🎨 ' : ''}${esc((ps[u] || {}).name || '?')} ${(S.scores || {})[u] || 0}</span>`).join('')}</div>`;
@@ -140,7 +140,7 @@ function teleWatch() {
 }
 function teleView(r, host) {
   const S = r.state || {}, ps = r.players || {}, n = Object.keys(ps).length;
-  if (r.status === 'lobby') return `<p class="muted">각자 단어를 하나 적으면 책이 옆 사람에게 넘어가요. 받은 단어를 그림으로, 받은 그림을 글로… 마지막에 책을 펼쳐 보며 웃어요! 참가하면 +3 은화.</p>
+  if (r.status === 'lobby') return `<p class="muted">단어 → 그림 → 글로 옆 사람에게 넘겨요. 마지막에 펼쳐 보기! 참가 +3 은화.</p>
     ${needMore(r, PARTY_TYPES.tele)}${host ? `<button class="primary" ${n < 3 ? 'disabled' : ''} onclick="teleStart()">시작</button>` : '<p class="muted">방장이 시작하기를 기다려요…</p>'}`;
   if (S.phase === 'reveal' || r.status === 'done') {
     const c = S.order[Math.min(TELE.revealIdx, S.order.length - 1)], bk = TELE.books[c];

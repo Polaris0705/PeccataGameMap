@@ -331,11 +331,11 @@ VIEWS.tycoon = () => {
    <div id="gbox"><canvas id="tyPrev" width="${TY_W * TY_S}" height="${114 * TY_S}" style="width:100%;max-width:480px;display:block;margin:0 auto;image-rendering:pixelated;border:2px solid var(--frame,#5a3a24)"></canvas>
    <div class="row" style="justify-content:space-between;margin:8px 0;flex-wrap:wrap"><b>DAY ${L.day}</b><span>보유 <b style="color:var(--gold2)">£${L.cash}</b></span><span class="muted">오늘 목표 £${g1} · ${capTxt('tycoon')}</span></div>
    <button class="primary" style="width:100%;font-size:1.1rem;padding:12px" onclick="tyStart()">▶ Day ${L.day} 영업 시작 (2분)</button></div>
-   <details style="margin-top:10px"><summary><b>만드는 법</b></summary><p class="muted" style="line-height:1.8">① <b>찻잔</b> → ② <b>찻잎</b>(홍차·녹차·허브) → ③ <b>뜨거운 물</b>(주전자) → ④ 게이지가 <b style="color:#5fc060">초록 칸</b>에 왔을 때 찻잔을 <b>탭!</b> → ⑤ 주문대로 우유·꿀·레몬·휘핑 → ⑥ 손님을 누르거나 <b>내놓기</b>.<br>
-     디저트는 아래 진열장을 눌러 오븐에 굽고, 다 구워지면 오븐을 눌러 꺼내요. 너무 오래 두면 타요.<br>완벽한 차를 연달아 내면 <b>콤보</b>로 값이 올라가고, 가끔 오는 <b>VIP</b> 손님은 두 배를 내요.</p></details>
+   <details style="margin-top:10px"><summary><b>만드는 법</b></summary><p class="muted" style="line-height:1.8">① <b>찻잔</b> → ② <b>찻잎</b>(홍차·녹차·허브) → ③ <b>뜨거운 물</b>(주전자) → ④ <b style="color:#5fc060">초록 칸</b>에서 <b>탭!</b> → ⑤ 주문대로 우유·꿀·레몬·휘핑 → ⑥ 손님에게 <b>내놓기</b>.<br>
+     디저트: 진열장 → 오븐 → 꺼내기 (오래 두면 타요).<br>연속 완벽은 <b>콤보</b>, <b>VIP</b>는 두 배!</p></details>
    <h3>메뉴</h3><div class="toggles">${recs}</div>
    <h3>티룸 업그레이드 <span class="muted" style="font-size:.85rem">(영업으로 번 £ 사용)</span></h3>${ups}
-   <p class="muted" style="font-size:.85rem">별을 받으면 다음 날로 넘어가요. 별 1개당 은화 5 + 손님 4명당 1 (한 번에 최대 20). 최고 매출 £${L.best || 0}</p></div>`;
+   <p class="muted" style="font-size:.85rem">별을 받으면 다음 날로. 별당 은화 5 + 손님 4명당 1 · 최고 매출 £${L.best || 0}</p></div>`;
 };
 function tyBuy(k) { const L = tyLv(), cost = TY_UP[k].cost[L[k]]; if (cost == null || L.cash < cost) return; L.cash -= cost; L[k]++; saveP(); sfx('ok'); toast(`${TY_UP[k].n} Lv.${L[k]}!`); render(); }
 function tyPreview() {

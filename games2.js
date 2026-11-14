@@ -29,7 +29,7 @@ function pxEnd(id, title, line, coins, again) {
 }
 
 /* ================= 은식기 닦기 (리듬) ================= */
-VIEWS.silver = () => `<div class="panel"><h2>🍴 은식기 닦기</h2><p class="muted">세 줄로 내려오는 얼룩이 금색 선에 닿는 순간 그 줄을 눌러 닦아요. 박자를 맞출수록 콤보가 쌓이고, 은식기가 반짝반짝해져요. 40초. ${capTxt('silver')}</p>
+VIEWS.silver = () => `<div class="panel"><h2>🍴 은식기 닦기</h2><p class="muted">얼룩이 금색 선에 닿을 때 그 줄을 눌러요. 40초 · ${capTxt('silver')}</p>
   <div id="gbox"><button class="primary" style="width:100%" onclick="silverStart()">시작</button></div></div>`;
 function silverStart() {
   const C = pxCanvas(120, 180, '준비…'); if (!C) return; const { px, txt } = C;
@@ -66,7 +66,7 @@ function silverStart() {
 }
 
 /* ================= 서재 책 정리 (3개 맞추기) ================= */
-VIEWS.books = () => `<div class="panel"><h2>📚 서재 책 정리</h2><p class="muted">책 하나를 누른 뒤 옆 책을 누르면 자리를 바꿔요. 같은 색 책이 가로나 세로로 셋 이상 나란히 꽂히면 정리돼요. 연달아 정리될수록 점수가 커져요. 25번 움직일 수 있어요. ${capTxt('books')}</p>
+VIEWS.books = () => `<div class="panel"><h2>📚 서재 책 정리</h2><p class="muted">옆 책과 자리를 바꿔 같은 색 셋을 맞춰요. 25번 · ${capTxt('books')}</p>
   <div id="gbox"><button class="primary" style="width:100%" onclick="booksStart()">시작</button></div></div>`;
 function booksStart() {
   const COLS = 6, ROWS = 7, CW = 18, CH = 21, OXB = 6, OYB = 8, W = COLS * CW + 12, H = ROWS * CH + 14;
@@ -110,7 +110,7 @@ function safeTry(owner, it) {
   if (lpDay().done.includes(key)) { sfx('bad'); return toast('🔐 오늘은 이미 손댄 금고예요. 내일 다시 와 보세요'); }
   modal(`<h2 style="color:var(--gold2);margin-top:0">🔐 ${esc(roomTitle(owner))} 금고</h2>
    <p>단단히 잠겨 있다… 몰래 따 볼까?</p>
-   <p class="muted">성공하면 연 만큼 은화를 얻고, 금고 주인은 그 절반을 잃어요. 이 금고는 오늘 한 번만 시도할 수 있어요 (그만둬도 한 번으로 쳐요).</p>
+   <p class="muted">성공하면 은화를 얻고, 주인은 그 절반을 잃어요. 금고마다 하루 한 번.</p>
    <div class="row"><button class="primary" onclick="safeGo('${owner}','${it.id}')">따 보기</button><button onclick="closeModal()">그만두기</button></div>`);
 }
 function safeGo(owner, id) {
@@ -139,7 +139,7 @@ function theftWatch() {
       saveP(); if (typeof softRender === 'function') softRender(); };
     apply(); });
 }
-VIEWS.lockpick = () => !LP_T ? `<div class="panel"><h2>🔐 자물쇠 따기</h2><p class="muted">자물쇠 따기는 다른 손님 방에 놓인 금고를 눌러야 시작돼요. 금고 하나당 하루 한 번이에요.</p><button class="primary" onclick="RV=null;go('visit')">👀 놀러 가기</button></div>` : `<div class="panel"><h2>🔐 ${esc(roomTitle(LP_T.owner))} 금고</h2><p class="muted">핀이 오르내려요. 반짝이는 핀의 위아래 이음매(빛나는 틈)가 금색 선에 딱 맞는 순간 화면을 눌러 고정해요. 빗나가면 꼬챙이가 하나 부러져요(3개). 자물쇠 셋을 차례로 열수록 상자가 좋아져요. ${capTxt('lockpick')}</p>
+VIEWS.lockpick = () => !LP_T ? `<div class="panel"><h2>🔐 자물쇠 따기</h2><p class="muted">다른 손님 방의 금고를 눌러 시작해요.</p><button class="primary" onclick="RV=null;go('visit')">👀 놀러 가기</button></div>` : `<div class="panel"><h2>🔐 ${esc(roomTitle(LP_T.owner))} 금고</h2><p class="muted">빛나는 틈이 금색 선에 맞을 때 눌러요. 빗나가면 꼬챙이가 부러져요(3개) · ${capTxt('lockpick')}</p>
   <div id="gbox"></div></div>`;
 function lockStart() {
   const C = pxCanvas(120, 150); if (!C) return; const { px, txt } = C;

@@ -1647,10 +1647,16 @@ function refundRemoved(r) { let back = 0, n = 0; const keep = i => { if (REMOVED
 function myRoom() {
   if (!P.room) P.room = defaultRoom(); const r = P.room; r.inv = r.inv || {}; r.items = r.items || []; r.ow = r.ow || ['plain', 'plank'];
   if (refundRemoved(r)) { ROOM_SAVE_T = 0; setTimeout(() => saveP(), 0); }
+  if (sinGift(r, typeof mySin === 'function' ? mySin() : '')) setTimeout(() => saveP(), 0);
   if (migrateRoom(r) && Date.now() - ROOM_SAVE_T > 3000) { ROOM_SAVE_T = Date.now(); setTimeout(() => saveP(), 0); }
   return r;
 }
-function hoRoom(uid) { if (ME && uid === ME.uid) return myRoom(); const p = PROGS.find(x => x.id === uid); const r = p && p.room ? JSON.parse(JSON.stringify(p.room)) : defaultRoom(); r.inv = r.inv || {}; r.items = r.items || []; migrateRoom(r); return r; }
+/* 내 HO의 칠죄종 가구는 처음 한 번 무료로 방에 놓아 줘요 (자리가 없으면 보관함) */
+function sinGift(r, s) {
+  if (!s || !FURN[s]) return false; r.gift = r.gift || []; if (r.gift.includes(s)) return false; r.gift.push(s);
+  const p = nearFree(r, s, 5, 1); if (p) r.items.push({ id: rmId(), k: s, c: p.c, r: p.r }); else r.inv[s] = (r.inv[s] || 0) + 1; return true;
+}
+function hoRoom(uid) { if (ME && uid === ME.uid) return myRoom(); const p = PROGS.find(x => x.id === uid); const r = p && p.room ? JSON.parse(JSON.stringify(p.room)) : defaultRoom(); r.inv = r.inv || {}; r.items = r.items || []; migrateRoom(r); { const u = typeof USERS !== 'undefined' && USERS.find(x => x.id === uid); if (u && u.ho) sinGift(r, sinOf(u.ho)); } return r; }
 function roomCnt(k) { if (!P || !P.room) return 0; const items = (P.room.items || []); if (k === 'plant') return items.filter(i => FURN[i.k] && FURN[i.k].plant).length; if (k === 'shelf') return items.filter(i => i.k === 'shelf' || i.k === 'tallshelf').length; return items.filter(i => i.k === k).length; }
 const wallCol = r => (r.cols.wall || {})[r.wall] || (WALLS[r.wall] || WALLS.plain).col, floorCol = r => (r.cols.floor || {})[r.floor] || (FLOORS[r.floor] || FLOORS.plank).col;
 
@@ -1952,7 +1958,7 @@ function openFurnShop() {
   const owned = k => room.invc.filter(x => x.k === k).length + room.items.filter(i => i.k === k).length;
   let list = '';
   if (SHOPTAB === 'dye') {
-    list = `<div class="item" style="margin:6px 0"><div style="flex:1"><b>🎨 염료</b><div class="muted" style="font-size:.85rem">가구·벽·바닥·테두리의 색을 다시 바꿀 때 1개씩 써요. (살 때 고르고, 그 뒤 한 번은 무료)</div><div>보유 <b>${room.dye}</b>개</div></div>
+    list = `<div class="item" style="margin:6px 0"><div style="flex:1"><b>🎨 염료</b><div class="muted" style="font-size:.85rem">색을 다시 바꿀 때 1개씩 써요 (첫 한 번은 무료).</div><div>보유 <b>${room.dye}</b>개</div></div>
       <div style="display:flex;flex-direction:column;gap:4px"><button onclick="buyDye(1)" ${P.coins < price(DYE_COST) ? 'disabled' : ''}>1개 · ${price(DYE_COST)} 은화</button><button onclick="buyDye(5)" ${P.coins < price(DYE5_COST) ? 'disabled' : ''}>5개 · ${price(DYE5_COST)} 은화</button></div></div>`;
   } else if (SHOPTAB === 'wp' || SHOPTAB === 'fl') {
     const TT = SHOPTAB === 'wp' ? WALLS : FLOORS, slot = SHOPTAB === 'wp' ? 'wall' : 'floor';

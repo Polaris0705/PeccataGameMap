@@ -124,7 +124,7 @@ function pxUnscan() { document.querySelectorAll('i.pxi').forEach(i => i.replaceW
 /* ============================================================
    글자 고치기 (KP가 화면의 아무 글자나 눌러 바꾸면 모두에게 적용) — settings/texts.rules = [{a:원래, b:새 글자}]
    ============================================================ */
-let TXRULES = [], TXRE = null, TXMAP = {}, TXEDIT = false;
+let TXRULES = [], TXRE = null, TXMAP = {}, TXEDIT = false, TXPASS = false;
 const TXORIG = new WeakMap(), TXOUT = new WeakMap();
 const TX_SKIP = 'input,textarea,script,style,.tx,.note,.utext,.notx,[contenteditable]';
 function txBuild() {
@@ -171,13 +171,25 @@ pxObs.observe(document.documentElement, { childList: true, subtree: true, charac
 
 /* ---- KP 편집 모드 ---- */
 function txToggle(on) {
-  TXEDIT = on; document.body.classList.toggle('txedit', on);
+  TXEDIT = on; TXPASS = false; document.body.classList.toggle('txedit', on); document.body.classList.remove('txpass');
   let bar = document.getElementById('txbar');
-  if (on && !bar) { bar = document.createElement('div'); bar.id = 'txbar'; bar.className = 'notx noico';
-    bar.innerHTML = '<span>✏ 글자 고치기 — 바꿀 글자를 눌러 주세요</span><span><button class="sm" onclick="txList()">고친 목록</button> <button class="sm primary" onclick="txToggle(false)">끝내기</button></span>';
-    document.body.appendChild(bar); }
-  if (!on && bar) bar.remove();
+  if (on && !bar) { bar = document.createElement('div'); bar.id = 'txbar'; bar.className = 'notx noico'; document.body.appendChild(bar); }
+  if (on) txBar();
+  if (!on) { if (bar) bar.remove(); txClose(); }
 }
+/* 평소처럼 누르기: 팝업을 연 다음 다시 '글자 고치기'로 바꿔서 팝업 글자를 고쳐요 */
+function txBar() {
+  const bar = document.getElementById('txbar'); if (!bar) return;
+  bar.innerHTML = `<span>${TXPASS ? '👆 평소처럼 누르는 중 — 팝업을 연 뒤 다시 바꿔요' : '✏ 바꿀 글자를 눌러요'}</span><span><button class="sm" onclick="txPass()">${TXPASS ? '✏ 글자 고치기' : '👆 평소처럼 누르기'}</button> <button class="sm" onclick="txList()">고친 목록</button> <button class="sm primary" onclick="txToggle(false)">끝내기</button></span>`;
+}
+function txPass() { TXPASS = !TXPASS; document.body.classList.toggle('txpass', TXPASS); txBar(); }
+/* 고치기 창은 팝업 위에 따로 떠서, 아래 팝업이 사라지지 않아요 */
+function txOpen(html) {
+  let w = document.getElementById('txmodal');
+  if (!w) { w = document.createElement('div'); w.id = 'txmodal'; w.className = 'notx noico'; w.onclick = e => { if (e.target === w) txClose(); }; document.body.appendChild(w); }
+  w.innerHTML = `<div class="box">${html}</div>`; w.style.display = 'flex';
+}
+function txClose() { const w = document.getElementById('txmodal'); if (w) w.remove(); }
 function txPick(ev) {
   let n = null;
   if (document.caretRangeFromPoint) { const r = document.caretRangeFromPoint(ev.clientX, ev.clientY); n = r && r.startContainer; }
@@ -191,7 +203,7 @@ function txPick(ev) {
 document.addEventListener('click', ev => {
   if (!TXEDIT) return;
   const t = ev.target;
-  if (t.closest('#txbar') || (t.closest('#modal') && document.querySelector('#mbox .txeditor'))) return;
+  if (TXPASS || t.closest('#txbar') || t.closest('#txmodal')) return;
   ev.preventDefault(); ev.stopPropagation();
   if (t.closest('.tx,.note,.utext')) return toast('플레이어가 쓴 글은 고칠 수 없어요');
   const pk = txPick(ev); if (!pk || !pk.text) return toast('여기엔 고칠 글자가 없어요');
@@ -199,11 +211,11 @@ document.addEventListener('click', ev => {
 }, true);
 function txEditor(a, b) {
   const e = s => String(s == null ? '' : s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
-  modal(`<div class="txeditor notx noico"><h2 style="color:var(--gold2);margin-top:0">✏ 글자 고치기</h2>
+  txOpen(`<div class="txeditor notx noico"><h2 style="color:var(--gold2);margin-top:0">✏ 글자 고치기</h2>
    <label class="f">바꿀 원래 글자 (일부만 남겨도 돼요)</label><input id="txA" value="${e(a)}">
    <label class="f">새 글자 (비우면 그 글자가 사라져요)</label><textarea id="txB" style="min-height:60px">${e(b != null ? b : a)}</textarea>
-   <p class="muted">같은 글자가 들어간 곳은 앱 전체에서 함께 바뀌어요. 저장하면 모든 사람 화면에 바로 적용돼요.</p>
-   <div class="row"><button onclick="closeModal()">취소</button>${TXRULES.some(r => r.a === a) ? `<button class="danger" onclick="txDel(document.getElementById('txA').value)">원래대로</button>` : ''}<button class="primary" onclick="txSave()">저장</button></div></div>`);
+   <p class="muted">같은 글자는 앱 전체에서 함께 바뀌어요.</p>
+   <div class="row"><button onclick="txClose()">취소</button>${TXRULES.some(r => r.a === a) ? `<button class="danger" onclick="txDel(document.getElementById('txA').value)">원래대로</button>` : ''}<button class="primary" onclick="txSave()">저장</button></div></div>`);
   setTimeout(() => { const t = document.getElementById('txB'); if (t) { t.focus(); t.select(); } }, 50);
 }
 async function txPut(list) { try { await B.set('settings/texts', { rules: list, at: Date.now() }); } catch (e) { toast(e.code === 'permission-denied' ? '저장 권한이 없어요 — ⚙ 저택 설정 › KP 권한 진단을 눌러 보세요' : '저장 실패: ' + (e.code || e.message)); return false; } txSetRules(list); return true; }
@@ -211,15 +223,15 @@ async function txSave() {
   const a = document.getElementById('txA').value.trim(), b = document.getElementById('txB').value.replace(/\n+$/, '');
   if (!a) return toast('원래 글자를 적어 주세요');
   const list = TXRULES.filter(r => r.a !== a); if (b !== a) list.push({ a, b });
-  if (await txPut(list)) { closeModal(); toast('글자를 바꿨어요'); }
+  if (await txPut(list)) { txClose(); toast('글자를 바꿨어요'); }
 }
-async function txDel(a) { a = String(a || '').trim(); if (await txPut(TXRULES.filter(r => r.a !== a))) { closeModal(); toast('원래 글자로 돌려놨어요'); if (document.getElementById('txlist')) txList(); } }
+async function txDel(a) { a = String(a || '').trim(); if (await txPut(TXRULES.filter(r => r.a !== a))) { txClose(); toast('원래 글자로 돌려놨어요'); } }
 function txList() {
   const e = s => String(s == null ? '' : s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
-  modal(`<div class="txeditor notx noico" id="txlist"><h2 style="color:var(--gold2);margin-top:0">✏ 고친 글자 목록 <span class="muted">${TXRULES.length}</span></h2>
+  txOpen(`<div class="txeditor notx noico" id="txlist"><h2 style="color:var(--gold2);margin-top:0">✏ 고친 글자 목록 <span class="muted">${TXRULES.length}</span></h2>
    <div style="max-height:50vh;overflow:auto">${TXRULES.length ? TXRULES.map((r, i) => `<div class="item" style="margin:6px 0"><div style="min-width:0;word-break:break-all"><span class="muted">${e(r.a)}</span><br>→ <b>${e(r.b) || '<span class="muted">(지움)</span>'}</b></div>
      <div style="white-space:nowrap"><button class="sm" onclick="txEditor(TXRULES[${i}].a,TXRULES[${i}].b)">고치기</button> <button class="sm danger" onclick="txDel(TXRULES[${i}].a)">원래대로</button></div></div>`).join('') : '<p class="muted">아직 고친 글자가 없어요.</p>'}</div>
    <h3>직접 추가</h3><p class="muted" style="margin-top:0">잠깐 떴다 사라지는 안내문처럼 누르기 어려운 글자는 여기서 적어 주세요.</p>
-   <div class="row"><button onclick="txEditor('', '')">새 글자 바꾸기</button><button onclick="closeModal()">닫기</button></div></div>`);
+   <div class="row"><button onclick="txEditor('', '')">새 글자 바꾸기</button><button onclick="txClose()">닫기</button></div></div>`);
 }
 function pxRefresh() { if (document.documentElement.classList.contains('px')) pxScan(document.body); else pxUnscan(); }

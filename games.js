@@ -78,7 +78,7 @@ function teaStart() {
 const SIN_EMB = { wrath: '🔥', greed: '💰', sloth: '💤', gluttony: '🍗', pride: '👑', envy: '👁', lust: '🌹' };
 
 /* ================= 카드 짝맞추기 ================= */
-VIEWS.memory = () => `<div class="panel"><h2>🃏 카드 짝맞추기</h2><p class="muted">같은 그림 두 장을 찾아요. 적게 뒤집을수록 은화가 많아요. ${capTxt('memory')}</p>
+VIEWS.memory = () => `<div class="panel"><h2>🃏 카드 짝맞추기</h2><p class="muted">같은 그림 짝 찾기. 적게 뒤집을수록 은화 ↑ · ${capTxt('memory')}</p>
   <div id="gbox"><button class="primary" style="width:100%" onclick="memStart()">시작</button></div></div>`;
 function memStart() {
   const icons = ['🗝️', '🕯️', '🌹', '🍷', '📜', '🦉', '🔮', '⌛'];
@@ -178,7 +178,7 @@ const BJ_RES = { win: '승리', bj: '블랙잭!', push: '무승부', lose: '패�
 VIEWS.blackjack = () => {
   const s = BJ || bjFresh(), me = s.seats[ME.uid], seats = Object.entries(s.seats), playing = s.phase === 'play', turnU = playing ? s.order[s.turn] : null;
   const dealerHtml = (s.dealer || []).map((c, i) => cardHtml(c, playing && i === 1)).join('') || '<span class="muted">-</span>';
-  return `<div class="panel"><h2>♠️ 살롱 블랙잭</h2><p class="muted">같은 판에 여럿이 함께 앉아요. 딜러보다 21에 가까우면 이겨요. 블랙잭은 2.5배, 승리는 2배로 돌려받아요.</p>
+  return `<div class="panel"><h2>♠️ 살롱 블랙잭</h2><p class="muted">딜러보다 21에 가까우면 승리(2배), 블랙잭은 2.5배.</p>
    <div class="card"><b>딜러</b> ${playing ? '' : s.dealer.length ? `<span class="muted">(${bjVal(s.dealer)})</span>` : ''}<div style="margin-top:4px">${dealerHtml}</div></div>
    ${seats.map(([u, p]) => `<div class="card" style="${u === turnU ? 'border-color:var(--gold)' : ''}"><div class="h"><b>${esc(p.name)}${u === ME.uid ? ' (나)' : ''}</b><span class="muted">걸음 ${p.bet}${p.hand.length ? ' · ' + bjVal(p.hand) : ''}${p.st === 'bust' ? ' · 버스트' : p.st === 'bj' ? ' · 블랙잭' : ''}${s.phase === 'done' && p.res ? ' · <b>' + BJ_RES[p.res] + '</b>' : u === turnU ? ' · 차례' : ''}</span></div><div>${p.hand.map(c => cardHtml(c)).join('')}</div></div>`).join('') || '<p class="muted">아직 아무도 앉지 않았어요.</p>'}
    <div style="margin-top:10px">

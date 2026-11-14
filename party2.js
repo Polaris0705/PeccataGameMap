@@ -6,12 +6,12 @@
    ========================================================= */
 PARTY_TYPES.werewolf = { n: '인랑', ic: '🐺', min: 4, d: '밤엔 인랑이 습격, 낮엔 토론과 투표로 인랑 찾기' };
 const WW_ROLES = {
-  wolf: { n: '인랑', ic: '🐺', team: 'wolf', d: '밤마다 동료와 함께 한 명을 습격해요. 살아 있는 사람 수를 인랑 수 이하로 줄이면 승리.' },
-  vill: { n: '마을 사람', ic: '🧑', team: 'vill', d: '능력은 없지만 토론과 투표로 인랑을 찾아 처형하면 승리.' },
-  seer: { n: '점쟁이', ic: '🔮', team: 'vill', d: '밤마다 한 명을 골라 인랑인지 아닌지 알아봐요.' },
-  knight: { n: '기사', ic: '🛡', team: 'vill', d: '밤마다 자기 말고 한 명을 골라 습격에서 지켜요.' },
-  medium: { n: '영매', ic: '👻', team: 'vill', d: '낮에 처형된 사람이 인랑이었는지 알 수 있어요.' },
-  mad: { n: '광인', ic: '🤡', team: 'wolf', d: '인랑 편 사람이에요. 누가 인랑인지는 몰라요. 점을 쳐도 사람으로 나와요. 인랑이 이기면 함께 승리.' }
+  wolf: { n: '인랑', ic: '🐺', team: 'wolf', d: '밤마다 한 명을 습격해요. 사람 수를 인랑 이하로 줄이면 승리.' },
+  vill: { n: '마을 사람', ic: '🧑', team: 'vill', d: '토론과 투표로 인랑을 찾아요.' },
+  seer: { n: '점쟁이', ic: '🔮', team: 'vill', d: '밤마다 한 명이 인랑인지 알아봐요.' },
+  knight: { n: '기사', ic: '🛡', team: 'vill', d: '밤마다 한 명을 습격에서 지켜요 (자신 제외).' },
+  medium: { n: '영매', ic: '👻', team: 'vill', d: '처형된 사람이 인랑이었는지 알아요.' },
+  mad: { n: '광인', ic: '🤡', team: 'wolf', d: '인랑 편 사람. 점쳐도 사람으로 나와요.' }
 };
 const WW_ORDER = ['wolf', 'seer', 'knight', 'medium', 'mad', 'vill'];
 const WW_NIGHT = 45, WW_VOTE = 60, WW_PAUSE = 7;
@@ -30,16 +30,16 @@ function wwView(r, host) {
   const S = r.state || {}, ps = Object.keys(r.players || {});
   if (r.status === 'lobby') {
     const n = ps.length, c = WF.mode === 'auto' || !WF.c ? wwAuto(n) : WF.c, ok = wwSum(c) === n && c.wolf >= 1 && c.wolf * 2 < n;
-    if (!host) return `<p class="muted">${PARTY_TYPES.werewolf.d}. 방장이 역할과 토론 시간을 정하고 시작해요. 이긴 편 +10 은화, 진 편 +2.</p><p class="muted">방장이 시작하기를 기다려요…</p>`;
+    if (!host) return `<p class="muted">${PARTY_TYPES.werewolf.d}. 이긴 편 +10, 진 편 +2 은화.</p><p class="muted">방장이 시작하기를 기다려요…</p>`;
     const row = k => `<div class="item" style="margin:4px 0"><div>${WW_ROLES[k].ic} <b>${WW_ROLES[k].n}</b> <span class="muted" style="font-size:.8rem">${WW_ROLES[k].team === 'wolf' ? '인랑 편' : '마을 편'}</span></div>
       ${WF.mode === 'auto' ? `<b>${c[k]}</b>` : `<div class="row" style="flex:0 0 auto;gap:4px"><button class="sm" onclick="wwCnt('${k}',-1)">−</button><b style="min-width:1.4em;text-align:center">${c[k]}</b><button class="sm" onclick="wwCnt('${k}',1)">+</button></div>`}</div>`;
-    return `<p class="muted">밤에는 인랑이 한 명을 습격하고, 낮에는 다 함께 토론한 뒤 투표로 한 명을 처형해요. 인랑을 모두 처형하면 마을 승리, 살아 있는 사람이 인랑 수 이하가 되면 인랑 승리. 진행은 앱이 자동으로 해요. 첫날 밤에는 습격이 없어요.</p>
+    return `<p class="muted">밤엔 인랑이 습격, 낮엔 토론 후 투표로 처형. 인랑을 다 잡으면 마을 승리, 사람 수가 인랑 이하면 인랑 승리. 첫날 밤은 습격 없음.</p>
      <h3>역할 (${n}명)</h3><div class="toggles"><button class="sm ${WF.mode === 'auto' ? 'on' : ''}" onclick="WF.mode='auto';render()">인원수에 맞춰 자동</button><button class="sm ${WF.mode === 'manual' ? 'on' : ''}" onclick="WF.mode='manual';WF.c=Object.assign({},wwAuto(${n}));render()">직접 고르기</button></div>
      ${WW_ORDER.map(row).join('')}
      ${WF.mode === 'manual' && wwSum(c) !== n ? `<p style="color:#e88">역할 합계 ${wwSum(c)}명 · 참가자 ${n}명과 같아야 해요</p>` : ''}${c.wolf * 2 >= n && n ? '<p style="color:#e88">인랑이 너무 많아요 (절반 미만)</p>' : ''}
      <h3>낮 토론 시간</h3><div class="toggles">${[60, 120, 180, 300].map(s => `<button class="sm ${WF.day === s ? 'on' : ''}" onclick="WF.day=${s};render()">${s / 60}분</button>`).join('')}</div>
      ${needMore(r, PARTY_TYPES.werewolf)}<button class="primary" style="margin-top:10px;width:100%" ${n < 4 || !ok ? 'disabled' : ''} onclick="wwStart()">🐺 시작</button>
-     <p class="muted" style="font-size:.8rem">진행 계산은 방장 기기에서 돼요. 게임 중에 방장이 나가면 그 판은 끝나요.</p>`;
+     <p class="muted" style="font-size:.8rem">방장이 나가면 그 판은 끝나요.</p>`;
   }
   const sec = wwSec(r), alive = S.alive || [], me = alive.includes(ME.uid), left = Math.max(0, Math.ceil(((S.endAt || 0) - Date.now()) / 1000));
   const ph = { night: `🌙 ${S.n}일째 밤`, dawn: `🌅 ${S.n}일째 아침`, day: `☀ ${S.n}일째 낮 · 토론`, vote: `🗳 ${S.n}일째 투표`, exec: `⚖ ${S.n}일째 처형`, end: '🏁 게임 끝' }[S.phase] || '';
@@ -48,7 +48,7 @@ function wwView(r, host) {
   const card = r.status === 'done' ? '' : role ? `<details class="card" ${S.phase === 'night' ? 'open' : ''}><summary><b>내 역할: ${role.ic} ${role.n}</b> <span class="muted" style="font-size:.8rem">(눌러서 숨기기/보기)</span></summary><p class="muted" style="margin:4px 0">${role.d}</p>
      ${sec.role === 'wolf' && (sec.mates || []).length ? `<p>🐺 동료: ${sec.mates.map(u => `<b>${wwName(r, u)}</b>`).join(', ')}</p>` : ''}
      ${(sec.res || []).length ? `<div>${sec.res.map(x => `<div>${x.k === 'seer' ? '🔮' : '👻'} ${x.n}일째 · <b>${wwName(r, x.t)}</b> → ${x.wolf ? '<b style="color:#e88">인랑</b>' : '사람'}</div>`).join('')}</div>` : ''}
-     ${!me ? '<p style="color:#e88">☠ 당신은 죽었어요. 말할 수도, 투표할 수도 없지만 지켜볼 수 있어요.</p>' : ''}</details>` : '<p class="muted">역할을 받는 중…</p>';
+     ${!me ? '<p style="color:#e88">☠ 죽었어요. 지켜볼 수만 있어요.</p>' : ''}</details>` : '<p class="muted">역할을 받는 중…</p>';
   const plist = `<div class="toggles" style="margin:6px 0">${ps.map(u => { const d = !alive.includes(u), v = S.phase === 'vote' ? Object.values(S.votes || {}).filter(x => x === u).length : 0, rr = S.result && S.result.roles[u];
      return `<span class="chip" style="${d ? 'opacity:.45;text-decoration:line-through' : ''}">${d ? '☠ ' : ''}${rr ? WW_ROLES[rr].ic + ' ' : ''}${wwName(r, u)}${v ? ` <b style="color:var(--gold2)">${v}</b>` : ''}${S.phase === 'vote' && (S.votes || {})[u] ? ' ✓' : ''}${(S.phase === 'night' && (S.done || {})[u]) || (S.phase === 'day' && (S.ready || {})[u]) ? ' ✓' : ''}</span>`; }).join('')}</div>`;
   let act = '';
@@ -60,7 +60,7 @@ function wwView(r, host) {
       : can ? `<h3>${verb[sec.role]}을 골라요</h3><div class="toggles">${cands.map(u => `<button onclick="wwAct('${u}')">${wwName(r, u)}</button>`).join('')}</div>`
       : `<p class="muted" style="text-align:center">${sec && sec.role === 'wolf' ? '첫날 밤은 동료와 얼굴만 확인해요.' : '밤이 깊었어요. 조용히 잠들어요.'}</p><button class="primary" style="width:100%" onclick="wwAct('')">💤 잠들기</button>`;
   } else if (r.status === 'play' && S.phase === 'day') {
-    act = me ? `<button class="${(S.ready || {})[ME.uid] ? 'on' : ''}" style="width:100%" onclick="wwReady()">${(S.ready || {})[ME.uid] ? '✓ 투표 준비 (취소)' : '🗳 이제 투표하자'}</button><p class="muted" style="font-size:.8rem;text-align:center">살아 있는 모두가 누르면 바로 투표로 넘어가요</p>` : '';
+    act = me ? `<button class="${(S.ready || {})[ME.uid] ? 'on' : ''}" style="width:100%" onclick="wwReady()">${(S.ready || {})[ME.uid] ? '✓ 투표 준비 (취소)' : '🗳 이제 투표하자'}</button><p class="muted" style="font-size:.8rem;text-align:center">모두 누르면 바로 투표</p>` : '';
     if (host) act += `<button class="sm" style="margin-top:4px" onclick="wwSkipDay()">방장: 토론 끝내기</button>`;
   } else if (r.status === 'play' && S.phase === 'vote' && me) {
     const my = (S.votes || {})[ME.uid];

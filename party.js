@@ -33,7 +33,7 @@ VIEWS.party = () => {
   if (PROOM && !r) { if (Date.now() - PROOM_AT < 5000) return '<div class="panel"><p class="muted">방에 들어가는 중…</p></div>'; PROOM = null; }
   if (r) return roomView(r);
   const open = PROOMS.filter(x => x.status !== 'closed' && Date.now() - (x.at || 0) < 6 * 36e5);
-  return `<div class="panel"><h2>🎉 파티 게임</h2><p class="muted">누구나 방을 열 수 있어요. 방을 연 사람이 방장이 되어 시작 버튼을 눌러요.</p>
+  return `<div class="panel"><h2>🎉 파티 게임</h2><p class="muted">누구나 방을 열 수 있어요. 연 사람이 방장이에요.</p>
     <div class="grid g3">${Object.entries(PARTY_TYPES).map(([k, t]) => `<button class="room sindoor" onclick="roomCreate('${k}')"><div class="semb">${t.ic}</div><div class="rn">${t.n} 방 열기</div><div class="muted" style="font-size:.8rem">${t.d} · ${t.min}명 이상</div></button>`).join('')}</div></div>
    <div class="panel"><h2>열려 있는 방</h2>${open.length ? open.map(x => { const t = PARTY_TYPES[x.type] || {}, n = Object.keys(x.players || {}).length, inRoom = !!(x.players || {})[ME.uid];
      return `<div class="card"><div class="h"><div><b>${t.ic || ''} ${esc(t.n || x.type)}</b> <span class="muted">· 방장 ${esc(x.hostName)} · ${n}명 · ${x.status === 'lobby' ? '모집 중' : x.status === 'play' ? '진행 중' : '끝남'}</span></div>
@@ -78,7 +78,7 @@ const needMore = (r, t) => Object.keys(r.players || {}).length < t.min ? `<p cla
 /* ---------- 눈치게임 ---------- */
 function nunchiView(r, host) {
   const S = r.state || {}, ps = Object.keys(r.players || {});
-  if (r.status === 'lobby') return `<p class="muted">시작하면 3초 뒤부터 1, 2, 3… 차례로 숫자 버튼을 눌러요. 1초 안에 두 사람이 같은 숫자를 누르면 둘 다 탈락, 끝까지 못 누른 사람도 탈락! 살아남으면 +3 은화.</p>
+  if (r.status === 'lobby') return `<p class="muted">3초 뒤 1부터 차례로 눌러요. 1초 안에 겹치거나 끝까지 못 누르면 탈락! 생존 +3 은화.</p>
     ${needMore(r, PARTY_TYPES.nunchi)}${host ? `<button class="primary" ${ps.length < 3 ? 'disabled' : ''} onclick="nunchiStart()">시작</button>` : '<p class="muted">방장이 시작하기를 기다려요…</p>'}`;
   const called = (S.calls || []).some(c => c.uid === ME.uid), wait = Date.now() < (S.startAt || 0);
   const log = (S.calls || []).map(c => `<span class="chip">${c.num} · ${esc(c.name)}</span>`).join('');
@@ -113,7 +113,7 @@ function auctionView(r, host) {
   if (r.status === 'lobby') {
     if (!host) return '<p class="muted">방장이 물건을 올리기를 기다려요…</p>';
     const mine = ITEMS.filter(i => i.owner === ME.uid);
-    return `<p class="muted">물건을 하나 걸고 경매를 열어요. 마지막 입찰 후 10초 동안 아무도 더 부르지 않으면 낙찰! 낙찰 은화는 방장에게 가요${IS_ADMIN ? ' (KP가 연 경매는 은화가 사라져요)' : ''}.</p>
+    return `<p class="muted">물건을 걸고 경매해요. 마지막 입찰 뒤 10초면 낙찰, 은화는 방장에게${IS_ADMIN ? ' (KP가 연 경매는 은화가 사라져요)' : ''}.</p>
      <label class="f">내 소지품에서 고르기 (선택)</label><select onchange="AF.item=this.value;const it=ITEMS.find(i=>i.id===this.value);if(it){AF.title=it.name;AF.desc=it.desc||'';render()}"><option value="">직접 적기</option>${mine.map(i => `<option value="${i.id}" ${AF.item === i.id ? 'selected' : ''}>${esc(i.name)}</option>`).join('')}</select>
      <label class="f">물건 이름</label><input maxlength="40" value="${esc(AF.title)}" oninput="AF.title=this.value" placeholder="예: 집사의 비밀 레시피">
      <label class="f">설명 (선택)</label><input maxlength="80" value="${esc(AF.desc)}" oninput="AF.desc=this.value">
@@ -167,7 +167,7 @@ function auctionSettle(r) {
 let LF = { cat: '저택' };
 function liarView(r, host) {
   const S = r.state || {}, ps = r.players || {}, order = S.order || [];
-  if (r.status === 'lobby') return `<p class="muted">라이어 한 명만 제시어를 몰라요. 차례대로 제시어를 한 줄로 설명하고, 투표로 라이어를 찾아요. 라이어가 지목돼도 제시어를 맞히면 라이어 승리!</p>
+  if (r.status === 'lobby') return `<p class="muted">한 명만 제시어를 몰라요. 한 줄씩 설명하고 투표로 라이어 찾기! 라이어는 제시어를 맞히면 역전승.</p>
     ${host ? `<label class="f">주제</label><div class="toggles">${Object.keys(LIAR_WORDS).map(c => `<button class="sm ${LF.cat === c ? 'on' : ''}" onclick="LF.cat='${c}';render()">${c}</button>`).join('')}</div>${needMore(r, PARTY_TYPES.liar)}<button class="primary" style="margin-top:10px" ${Object.keys(ps).length < 3 ? 'disabled' : ''} onclick="liarStart()">시작</button>` : '<p class="muted">방장이 시작하기를 기다려요…</p>'}`;
   const sec = PSECRET && PSECRET.round === S.round ? PSECRET : null;
   const card = `<div class="card" style="text-align:center"><div class="muted">주제: ${esc(S.cat)}</div>${sec ? (sec.word ? `<div style="font-size:1.6rem;font-weight:800;color:var(--gold2)">${esc(sec.word)}</div>` : '<div style="font-size:1.4rem;font-weight:800;color:var(--wine2)">🤥 당신은 라이어!</div><div class="muted">들키지 않게 설명해요</div>') : '<div class="muted">제시어를 받는 중…</div>'}</div>`;
