@@ -2164,8 +2164,13 @@ function applyBooking(b){
   const e=checkBooking(b);if(e)return e;
   const gid=Date.now()+Math.random();
   b.slots.forEach(s=>b.parts.forEach(p=>setA(p,b.day,s,{place:b.place,action:b.note||('PL 예약 · '+(b.name||'')),participants:[...b.parts],gid,stype:'investigate'})));
-  renderSchedule();if(S.showTok)redrawMap();
+  window.__lastGid=gid;renderSchedule();if(S.showTok)redrawMap();
   return '';
+}
+/* 승인된 예약을 일정표에서 지우기 (같은 gid 칸, 없으면 같은 장소의 조사 칸) */
+function removeBooking(b){
+  let n=0;(b.slots||[]).forEach(s=>(b.parts||[]).forEach(p=>{const a=getA(p,b.day,s);if(a&&(b.schedGid?a.gid===b.schedGid:a.place===b.place)){setA(p,b.day,s,null);n++;}}));
+  renderSchedule();if(S.showTok)redrawMap();return n;
 }
 (function(){
   let BR=null;try{BR=(window.parent&&window.parent!==window)?window.parent.KPBridge:null;}catch(e){}

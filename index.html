@@ -595,7 +595,7 @@ async function onAuth(u){
   sub(B.onDoc('settings/rooms',d=>{ROOMS=Object.assign({rooms:{},gather:null},d||{});softRender();}));
   sub(B.onDoc('settings/game',d=>{EGG=Object.assign({on:true,mode:'personal',perDay:3,coins:3,salt:''},(d&&d.egg)||{});if(typeof NOTECFG!=='undefined')NOTECFG=Object.assign({on:true,pct:10,perDay:3,hold:3},(d&&d.notes)||{});if(typeof SONGS!=='undefined')SONGS=(d&&d.songs)||[];softRender();}));
   sub(B.onCol('users',l=>{USERS=l;if(tab==='map')setTimeout(drawPlMap,40);if(typeof chatOnUsers==='function')chatOnUsers();softRender();}));
-  sub(B.onCol('bookings',l=>{BOOKINGS=l.sort((a,b)=>(b.at||0)-(a.at||0));if(IS_ADMIN){pushPending();refreshBookList();}softRender();}));
+  sub(B.onCol('bookings',l=>{const prev=BK_PREV;BK_PREV={};l.forEach(b=>BK_PREV[b.id]=b);if(prev)bookingNotify(prev,l);BOOKINGS=l.sort((a,b)=>(b.at||0)-(a.at||0));if(IS_ADMIN){pushPending();refreshBookList();}softRender();}));
   sub(B.onCol('items',l=>{ITEMS=l.sort((a,b)=>(a.at||0)-(b.at||0));softRender();if(MODAL_ITEM)refreshItemModal();}));
   sub(B.onCol('queue',l=>{QUEUE=l.sort((a,b)=>(a.order||0)-(b.order||0));softRender();}));
   sub(B.onCol('notes',l=>{NOTES=l.sort((a,b)=>(b.at||0)-(a.at||0));softRender();}));
@@ -1235,20 +1235,33 @@ function sparkle(cv,ev,txt,dim,tiny){
 function bookAt(name){BK.place=name;go('book');toast(`"${name}" 조사 예약`);}
 
 /* ================= PL: 조사 예약 ================= */
-let BK={day:1,slots:[],place:'',parts:[],note:''};
+let BK={day:1,slots:[],place:'',parts:[],note:'',edit:null};
+/* 예약이 바뀌면 화면 알림 (+ 다른 창을 보고 있으면 브라우저 알림) */
+let BK_PREV=null;
+function bookingNotify(prev,l){
+  const say=(t,b)=>{toast(t+' · '+bkWhen(b)+' '+b.place);try{beep();}catch(e){}try{if(document.hidden&&window.Notification&&Notification.permission==='granted')new Notification(CONFIG.title||'햄카타',{body:t+' · '+b.place});}catch(e){}};
+  const me=myHo&&myHo();
+  l.forEach(b=>{const p=prev[b.id];if(!p)return;const mine=b.uid===ME.uid,inv=mine||(me&&(b.parts||[]).includes(me));
+    if(IS_ADMIN&&!mine){if(!p.cancelReq&&b.cancelReq)say('🗝 예약 취소 요청: '+(b.name||''),b);if(b.status==='pending'&&b.editedAt&&b.editedAt!==p.editedAt)say('✏ 예약 수정: '+(b.name||''),b);}
+    if(!inv)return;
+    if(p.status!==b.status){if(b.status==='approved')say('✅ 조사 예약 승인',b);else if(b.status==='rejected')say('조사 예약 거절',b);else if(b.status==='cancelled'&&p.status==='approved')say('조사 예약이 취소됐어요',b);}
+    else if(b.status==='approved'&&b.changedAt&&b.changedAt!==p.changedAt)say('📝 조사 예약이 바뀌었어요',b);
+    else if(mine&&b.status==='approved'&&b.reqNo&&b.reqNo!==p.reqNo)say('취소 요청이 거절됐어요',b);});
+}
 function busyOf(code,d,s){
   const o=PUB&&PUB.occ&&PUB.occ[code];if(o&&o['d'+d+'s'+s])return '일정 있음';
   const dp=PUB&&PUB.dep&&PUB.dep[code];if(dp&&(d>dp.day||(d===dp.day&&s>=dp.slot)))return '이탈';
   return '';
 }
 const STATUS={pending:'승인 대기',approved:'승인됨',rejected:'거절됨',cancelled:'취소됨'};
+const bkWhen=b=>`${dayName(b.day)} ${(b.slots||[]).map(s=>SYMS[s-1]||s).join('')}`;
 function bookingCard(b,opts={}){
   const parts=(b.parts||[]).map(cname).join(', ');
   const sl=(b.slots||[]).map(s=>SYMS[s-1]||s).join('');
-  return `<div class="card"><div class="h"><div><b>${esc(dayName(b.day))} ${sl}</b> · ${esc(b.place)} <span class="badge ${b.status}">${STATUS[b.status]||b.status}</span></div>
+  return `<div class="card"><div class="h"><div><b>${esc(dayName(b.day))} ${sl}</b> · ${esc(b.place)} <span class="badge ${b.status}">${STATUS[b.status]||b.status}</span>${b.cancelReq&&b.status==='approved'?' <span class="badge pending">취소 요청 중</span>':''}${b.changedAt&&b.status==='approved'?' <span class="badge">KP가 변경</span>':''}${b.editedAt&&b.status==='pending'?' <span class="badge">수정됨</span>':''}</div>
     <div class="row" style="flex:0 0 auto">${opts.actions||''}</div></div>
     <div class="muted">신청: ${esc(b.name||'')} · 참가: ${esc(parts)}${b.note?` · "${esc(b.note)}"`:''}</div>
-    ${b.kpNote?`<div class="muted" style="color:var(--gold2)">KP: ${esc(b.kpNote)}</div>`:''}${opts.extra||''}</div>`;
+    ${b.cancelReq&&b.cancelNote?`<div class="muted">취소 이유: ${esc(b.cancelNote)}</div>`:''}${b.kpNote?`<div class="muted" style="color:var(--gold2)">KP: ${esc(b.kpNote)}</div>`:''}${opts.extra||''}</div>`;
 }
 function cellState(c,d,s){
   const dp=PUB.dep&&PUB.dep[c];if(dp&&(d>dp.day||(d===dp.day&&s>=dp.slot)))return {k:'dep',t:'이탈'};
@@ -1308,25 +1321,35 @@ VIEWS.book=()=>{
    ${bookGrid()}
    <div class="legend"><span><i style="background:var(--wine)"></i>선택</span><span><i style="outline:1.5px dashed var(--gold);outline-offset:-2px"></i>신청 중</span><span><i style="background:repeating-linear-gradient(45deg,var(--panel2),var(--panel2) 3px,var(--inbg) 3px,var(--inbg) 6px)"></i>일정 있음</span><span><i style="background:var(--inbg);opacity:.6"></i>이탈</span></div>
    ${!places.length?'<p class="muted" style="margin-top:10px">아직 공개된 장소가 없어요. KP가 장소를 공개하면 신청할 수 있어요.</p>':`
-   <div class="card" style="margin-top:12px"><b>${when||'<span class="muted">시간을 골라 주세요</span>'}</b>
+   <div class="card" style="margin-top:12px;${BK.edit?'border-color:var(--gold2)':''}">${BK.edit?'<div style="color:var(--gold2);margin-bottom:4px">✏ 예약을 고치는 중이에요</div>':''}<b>${when||'<span class="muted">시간을 골라 주세요</span>'}</b>
    <label class="f">장소</label><select onchange="BK.place=this.value">${places.map(p=>`<option ${p.name===BK.place?'selected':''}>${esc(p.name)}</option>`).join('')}</select>
    <label class="f">함께 갈 사람 (나 포함 2인 이상)</label><div class="toggles"><button class="on" disabled>${esc(cname(me))} (나)</button>${partBtns}</div>
    <label class="f">하고 싶은 행동 (선택)</label><input maxlength="80" value="${esc(BK.note)}" oninput="BK.note=this.value" placeholder="예: 책장 뒤를 살펴본다">
-   <button class="primary" style="width:100%;margin-top:12px" onclick="submitBooking()">예약 신청</button></div>`}</div>
+   ${BK.edit?`<div class="row" style="margin-top:12px"><button class="primary" style="flex:1" onclick="submitBooking()">수정 저장</button><button onclick="bookEditStop()">그만두기</button></div>`:'<button class="primary" style="width:100%;margin-top:12px" onclick="submitBooking()">예약 신청</button>'}</div>`}</div>
    <div class="panel"><h2>내 조사 일정</h2>${qi?`<p>${qi}</p>`:''}
-   ${mine.length?mine.map(b=>bookingCard(b,{actions:(b.uid===ME.uid&&b.status==='pending')?`<button class="sm danger" onclick="cancelBooking('${b.id}')">취소</button>`:''})).join(''):'<p class="muted">아직 예약이 없어요.</p>'}</div>`;
+   ${mine.length?mine.map(b=>bookingCard(b,{actions:b.uid!==ME.uid?'':b.status==='pending'?`<button class="sm" onclick="bookEdit('${b.id}')">✏ 고치기</button><button class="sm danger" onclick="cancelBooking('${b.id}')">취소</button>`:b.status==='approved'?(b.cancelReq?`<button class="sm" onclick="cancelReqUndo('${b.id}')">요청 철회</button>`:`<button class="sm danger" onclick="cancelReqAsk('${b.id}')">취소 요청</button>`):''})).join(''):'<p class="muted">아직 예약이 없어요.</p>'}</div>`;
 };
 function togBK(k,v){BK[k]=BK[k].includes(v)?BK[k].filter(x=>x!==v):[...BK[k],v];if(k==='slots')BK.parts=BK.parts.filter(c=>c===myHo()||!BK.slots.some(s=>busyOf(c,BK.day,s)));render();}
 async function submitBooking(){
   if(!BK.place)return toast('장소를 골라 주세요');
   if(!BK.slots.length)return toast('슬롯을 골라 주세요');
   if(BK.parts.length<2)return toast('조사는 2인 이상이어야 해요');
+  if(BK.edit){const id=BK.edit,o=BOOKINGS.find(b=>b.id===id);if(!o||o.status!=='pending'){BK.edit=null;render();return toast('이미 처리된 예약이라 고칠 수 없어요');}
+    try{await B.update('bookings/'+id,clean({day:BK.day,slots:BK.slots.slice().sort(),place:BK.place,parts:BK.parts,note:BK.note.trim(),editedAt:Date.now()}));}catch(e){return toast('수정 실패: '+(e.code||e.message));}
+    BK={day:BK.day,slots:[],place:BK.place,parts:[myHo()],note:'',edit:null};toast('예약을 고쳤어요');return render();}
   const dup=BOOKINGS.find(b=>b.status==='pending'&&b.day===BK.day&&(b.parts||[]).some(c=>BK.parts.includes(c))&&(b.slots||[]).some(s=>BK.slots.includes(s)));
   await B.add('bookings',clean({uid:ME.uid,name:PROF.name,ho:myHo(),day:BK.day,slots:BK.slots.slice().sort(),place:BK.place,parts:BK.parts,note:BK.note.trim(),status:'pending',at:Date.now()}));
   BK.slots=[];BK.note='';BK.parts=[myHo()];
   toast(dup?'신청했어요 (같은 슬롯에 다른 신청이 있어 KP가 조율할 수 있어요)':'예약을 신청했어요');render();
 }
-function cancelBooking(id){B.update('bookings/'+id,{status:'cancelled'});}
+function cancelBooking(id){if(!confirm('이 예약 신청을 취소할까요?'))return;if(BK.edit===id)BK.edit=null;B.update('bookings/'+id,{status:'cancelled'});}
+/* PL: 대기 중 예약 고치기 · 승인된 예약 취소 요청 */
+function bookEdit(id){const b=BOOKINGS.find(x=>x.id===id);if(!b)return;BK={day:b.day,slots:(b.slots||[]).slice(),place:b.place,parts:(b.parts||[]).slice(),note:b.note||'',edit:id};render();window.scrollTo({top:0,behavior:'smooth'});toast('위에서 바꾼 뒤 "수정 저장"을 눌러요');}
+function bookEditStop(){BK={day:BK.day,slots:[],place:BK.place,parts:[myHo()],note:'',edit:null};render();}
+function cancelReqAsk(id){const b=BOOKINGS.find(x=>x.id===id);if(!b)return;modal(`<h2 style="color:var(--gold2);margin-top:0">예약 취소 요청</h2>${bookingCard(b)}<label class="f">이유 (선택)</label><input id="crNote" maxlength="80" placeholder="예: 그 시간에 다른 곳을 가고 싶어요"><p class="muted">KP가 수락하면 일정표에서도 지워져요.</p>
+  <div class="row"><button onclick="closeModal()">그만두기</button><button class="primary" onclick="cancelReqSend('${id}')">요청 보내기</button></div>`);}
+async function cancelReqSend(id){try{await B.update('bookings/'+id,{cancelReq:true,cancelNote:$('#crNote').value.trim(),cancelAt:Date.now()});}catch(e){return toast('실패: '+(e.code||e.message));}closeModal();toast('KP에게 취소를 요청했어요');}
+function cancelReqUndo(id){B.update('bookings/'+id,{cancelReq:false,cancelNote:'',cancelAt:Date.now()}).then(()=>toast('취소 요청을 거뒀어요')).catch(e=>toast('실패: '+(e.code||e.message)));}
 
 /* ================= PL: 소지품 ================= */
 let COMBINE=null;
@@ -1537,16 +1560,48 @@ function pushPending(){
 VIEWS.kbook=()=>{
   const pend=BOOKINGS.filter(b=>b.status==='pending'),done=BOOKINGS.filter(b=>b.status!=='pending').slice(0,25);
   const chk=b=>{if(!schedWin||!schedWin.checkBooking)return '';const e=schedWin.checkBooking(b);return e?`<div class="muted" style="color:var(--wine2)">⚠ ${esc(e)}</div>`:'<div class="muted" style="color:var(--green2)">✓ 충돌 없음</div>';};
-  return `<div class="panel"><h2>승인 대기 (${pend.length})</h2>
+  const reqs=BOOKINGS.filter(b=>b.status==='approved'&&b.cancelReq),appr=BOOKINGS.filter(b=>b.status==='approved').sort((a,b)=>a.day-b.day||Math.min(...(a.slots||[9]))-Math.min(...(b.slots||[9])));
+  return `${reqs.length?`<div class="panel" style="border-color:var(--gold)"><h2>취소 요청 (${reqs.length})</h2>${reqs.map(b=>bookingCard(b,{actions:`<button class="sm primary" onclick="kbCancel('${b.id}',true)">수락</button><button class="sm" onclick="kbReqReject('${b.id}')">거절</button>`})).join('')}</div>`:''}
+   <div class="panel"><h2>승인 대기 (${pend.length})</h2>
    ${pend.length?pend.map(b=>bookingCard(b,{extra:chk(b),actions:`<button class="sm primary" onclick="approve('${b.id}',true)">승인+대기열</button><button class="sm" onclick="approve('${b.id}',false)">승인</button><button class="sm danger" onclick="rejectAsk('${b.id}')">거절</button>`})).join(''):'<p class="muted">대기 중인 예약이 없어요.</p>'}</div>
-   <div class="panel"><h2>최근 처리</h2>${done.map(b=>bookingCard(b)).join('')||'<p class="muted">없음</p>'}</div>`;
+   <div class="panel"><h2>승인된 예약 (${appr.length})</h2>${appr.map(b=>bookingCard(b,{actions:`<button class="sm" onclick="kbEdit('${b.id}')">✏ 변경</button><button class="sm danger" onclick="kbCancel('${b.id}')">취소</button>`})).join('')||'<p class="muted">없음</p>'}</div>
+   <div class="panel"><h2>최근 처리</h2>${done.filter(b=>b.status!=='approved').map(b=>bookingCard(b)).join('')||'<p class="muted">없음</p>'}</div>`;
 };
+/* KP: 승인된 예약 취소 · 변경 (일정표도 함께) */
+function kbCancel(id,fromReq){const b=BOOKINGS.find(x=>x.id===id);if(!b)return;const back=!!window._bookList;window._bookList=false;
+  modal(`<h2 style="color:var(--gold2);margin-top:0">${fromReq?'취소 요청 수락':'예약 취소'}</h2>${bookingCard(b)}<label class="f">PL에게 전할 말 (선택)</label><input id="kbNote" maxlength="80"><p class="muted">일정표의 그 칸도 함께 지워요.</p>
+   <div class="row"><button onclick="closeModal();${back?'openBookList()':''}">그만두기</button><button class="danger" onclick="kbCancelGo('${id}',${back})">취소하기</button></div>`);}
+async function kbCancelGo(id,back){const b=BOOKINGS.find(x=>x.id===id);if(!b)return;if(!schedWin||!schedWin.removeBooking)return toast('스케줄러를 불러오는 중이에요. 잠시 후 다시 눌러 주세요');
+  schedWin.removeBooking(b);
+  try{await B.update('bookings/'+id,{status:'cancelled',cancelReq:false,kpNote:$('#kbNote').value.trim(),by:PROF.name,cancelledAt:Date.now()});}catch(e){return toast('실패: '+(e.code||e.message));}
+  QUEUE.filter(q=>q.bookingId===id).forEach(q=>B.del('queue/'+q.id).catch(()=>{}));closeModal();toast('예약을 취소하고 일정표에서 지웠어요');if(back)setTimeout(openBookList,50);}
+function kbReqReject(id){const back=!!window._bookList;window._bookList=false;modal(`<h2 style="color:var(--gold2);margin-top:0">취소 요청 거절</h2><label class="f">PL에게 전할 말 (선택)</label><input id="kbNote" maxlength="80" placeholder="예: 이미 진행 중이라 바꿀 수 없어요">
+  <div class="row"><button onclick="closeModal()">그만두기</button><button class="primary" onclick="kbReqRejectGo('${id}',${back})">거절</button></div>`);}
+async function kbReqRejectGo(id,back){try{await B.update('bookings/'+id,{cancelReq:false,kpNote:$('#kbNote').value.trim(),by:PROF.name,reqNo:Date.now()});}catch(e){return toast('실패: '+(e.code||e.message));}closeModal();toast('취소 요청을 거절했어요');if(back)setTimeout(openBookList,50);}
+let KBE=null;
+function kbEdit(id){const b=BOOKINGS.find(x=>x.id===id);if(!b)return;KBE={id,back:!!window._bookList,day:b.day,slots:(b.slots||[]).slice(),place:b.place,parts:(b.parts||[]).slice(),note:b.note||'',kp:''};window._bookList=false;kbEditModal();}
+function kbEditModal(){const E=KBE,places=(PUB&&PUB.places)||[],days=(PUB&&PUB.days)||1;
+  modal(`<h2 style="color:var(--gold2);margin-top:0">✏ 예약 변경</h2>
+   <label class="f">날</label><select onchange="KBE.day=+this.value;KBE.slots=KBE.slots.filter(s=>s<=slotsOf(KBE.day));kbEditModal()">${Array.from({length:days},(_,i)=>`<option value="${i+1}" ${E.day===i+1?'selected':''}>${esc(dayName(i+1))}</option>`).join('')}</select>
+   <label class="f">시간</label><div class="toggles">${Array.from({length:slotsOf(E.day)},(_,i)=>`<button class="${E.slots.includes(i+1)?'on':''}" onclick="KBE.slots=KBE.slots.includes(${i+1})?KBE.slots.filter(x=>x!==${i+1}):[...KBE.slots,${i+1}];kbEditModal()">${SYMS[i]||i+1}</button>`).join('')}</div>
+   <label class="f">장소</label><select onchange="KBE.place=this.value">${places.map(p=>`<option ${p.name===E.place?'selected':''}>${esc(p.name)}</option>`).join('')}${places.some(p=>p.name===E.place)?'':`<option selected>${esc(E.place)}</option>`}</select>
+   <label class="f">참가</label><div class="toggles">${ALLC.map(c=>`<button class="${E.parts.includes(c)?'on':''}" onclick="KBE.parts=KBE.parts.includes('${c}')?KBE.parts.filter(x=>x!=='${c}'):[...KBE.parts,'${c}'];kbEditModal()">${esc(cname(c))}</button>`).join('')}</div>
+   <label class="f">행동</label><input value="${esc(E.note)}" oninput="KBE.note=this.value">
+   <label class="f">PL에게 전할 말 (선택)</label><input value="${esc(E.kp)}" oninput="KBE.kp=this.value">
+   <div class="row" style="margin-top:8px"><button onclick="closeModal();${E.back?'openBookList()':''}">그만두기</button><button class="primary" onclick="kbEditGo()">변경 저장</button></div>`);}
+async function kbEditGo(){const E=KBE,b=BOOKINGS.find(x=>x.id===E.id);if(!b)return;if(!E.slots.length)return toast('시간을 골라 주세요');if(!E.parts.length)return toast('참가자를 골라 주세요');
+  if(!schedWin||!schedWin.removeBooking)return toast('스케줄러를 불러오는 중이에요. 잠시 후 다시 눌러 주세요');
+  schedWin.removeBooking(b);const nb=Object.assign({},b,{day:E.day,slots:E.slots.slice().sort(),place:E.place,parts:E.parts,note:E.note.trim()});
+  const err=schedWin.applyBooking(nb);if(err){schedWin.applyBooking(b);return toast('바꿀 수 없어요: '+err);}
+  try{await B.update('bookings/'+E.id,clean({day:nb.day,slots:nb.slots,place:nb.place,parts:nb.parts,note:nb.note,schedGid:schedWin.__lastGid||null,changedAt:Date.now(),kpNote:E.kp.trim(),by:PROF.name}));}catch(e){return toast('저장 실패: '+(e.code||e.message));}
+  QUEUE.filter(q=>q.bookingId===E.id).forEach(q=>B.update('queue/'+q.id,{label:bookingLabel(nb),codes:nb.parts}).catch(()=>{}));
+  closeModal();toast('예약을 바꾸고 일정표에도 반영했어요');if(E.back)setTimeout(openBookList,50);KBE=null;}
 function bookingLabel(b){return `${dayName(b.day)} ${(b.slots||[]).map(s=>SYMS[s-1]||s).join('')} · ${b.place}`;}
 async function approve(id,toQueue){
   const b=BOOKINGS.find(x=>x.id===id);if(!b)return;
   if(!schedWin||!schedWin.applyBooking)return toast('스케줄러를 불러오는 중이에요. 잠시 후 다시 눌러 주세요');
   const e=schedWin.applyBooking(b);if(e)return toast('반영 실패: '+e);
-  await B.update('bookings/'+id,{status:'approved',by:PROF.name});
+  await B.update('bookings/'+id,clean({status:'approved',by:PROF.name,schedGid:schedWin.__lastGid||null}));
   if(toQueue)await B.add('queue',{label:bookingLabel(b),codes:b.parts,bookingId:id,status:'waiting',order:Date.now(),at:Date.now()});
   toast('승인하고 일정표에 반영했어요');refreshBookList();
 }
