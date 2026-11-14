@@ -104,18 +104,19 @@ function booksStart() {
 /* 남의 방 금고에서만 시작 · 금고 하나당 하루 1번 · 성공하면 주인 은화가 연 만큼의 절반 줄어듦 */
 let LP_T = null;
 const lpDay = () => { if (!P.lp || P.lp.date !== kstDate()) P.lp = { date: kstDate(), done: [] }; return P.lp; };
+const lockLv = owner => { try { return Math.min(3, hoRoom(owner).items.filter(i => i.k === 'padlock').length); } catch (e) { return 0; } };
 function safeTry(owner, it) {
   if (!ME || owner === ME.uid) return roomPoke(it);
   const key = `${kstDate()}_${it.id}_${ME.uid}`;
   if (lpDay().done.includes(key)) { sfx('bad'); return toast('🔐 오늘은 이미 손댄 금고예요. 내일 다시 와 보세요'); }
   modal(`<h2 style="color:var(--gold2);margin-top:0">🔐 ${esc(roomTitle(owner))} 금고</h2>
-   <p>단단히 잠겨 있다… 몰래 따 볼까?</p>
+   <p>단단히 잠겨 있다… 몰래 따 볼까?</p>${lockLv(owner) ? `<p style="color:var(--gold2)">${'🔒'.repeat(lockLv(owner))} 자물쇠 ${lockLv(owner)}개로 더 단단해요 (핀이 늘고 빨라져요 · 은화도 더)</p>` : ''}
    <p class="muted">성공하면 은화를 얻고, 주인은 그 절반을 잃어요. 금고마다 하루 한 번.</p>
    <div class="row"><button class="primary" onclick="safeGo('${owner}','${it.id}')">따 보기</button><button onclick="closeModal()">그만두기</button></div>`);
 }
 function safeGo(owner, id) {
   closeModal(); const key = `${kstDate()}_${id}_${ME.uid}`, d = lpDay(); if (d.done.includes(key)) return;
-  d.done.push(key); saveP(); LP_T = { owner, key, back: RV };
+  d.done.push(key); saveP(); LP_T = { owner, key, back: RV, lv: lockLv(owner) };
   go('lockpick'); lockStart();
 }
 function lockEnd(title, line, total) {
@@ -142,20 +143,21 @@ function theftWatch() {
 VIEWS.lockpick = () => !LP_T ? `<div class="panel"><h2>🔐 자물쇠 따기</h2><p class="muted">다른 손님 방의 금고를 눌러 시작해요.</p><button class="primary" onclick="RV=null;go('visit')">👀 놀러 가기</button></div>` : `<div class="panel"><h2>🔐 ${esc(roomTitle(LP_T.owner))} 금고</h2><p class="muted">빛나는 틈이 금색 선에 맞을 때 눌러요. 빗나가면 꼬챙이가 부러져요(3개) · ${capTxt('lockpick')}</p>
   <div id="gbox"></div></div>`;
 function lockStart() {
-  const C = pxCanvas(120, 150); if (!C) return; const { px, txt } = C;
-  const LOCKS = [{ n: '구리 자물쇠', pins: 3, sp: 1.6, prize: 6, col: ['#b8693d', '#e8a070', '#6a3418'] }, { n: '은 자물쇠', pins: 4, sp: 2.2, prize: 8, col: ['#a8b0bc', '#e8ecf4', '#5a6270'] }, { n: '금 자물쇠', pins: 5, sp: 2.9, prize: 11, col: ['#c9a036', '#ffe08a', '#7a5a18'] }];
+  const C = pxCanvas(120, 150); if (!C) return; const { px, txt } = C, LV = (typeof LP_T !== 'undefined' && LP_T && LP_T.lv) || 0;
+  const LOCKS0 = [{ n: '구리 자물쇠', pins: 3, sp: 1.6, prize: 6, col: ['#b8693d', '#e8a070', '#6a3418'] }, { n: '은 자물쇠', pins: 4, sp: 2.2, prize: 8, col: ['#a8b0bc', '#e8ecf4', '#5a6270'] }, { n: '금 자물쇠', pins: 5, sp: 2.9, prize: 11, col: ['#c9a036', '#ffe08a', '#7a5a18'] }];
+  const LOCKS = LOCKS0.map(L => Object.assign({}, L, { pins: Math.min(7, L.pins + LV), sp: L.sp * (1 + .18 * LV), prize: L.prize + 2 * LV })), TOL = Math.max(1.9, 3.2 - .45 * LV);
   let li = 0, cur = 0, set = [], picks = 3, total = 0, raf = 0, t0 = performance.now(), msg = '', msgT = 0, open = 0, over = false, ph = [];
   const SHEAR = 52, newLock = () => { cur = 0; set = []; ph = Array.from({ length: LOCKS[li].pins }, () => Math.random() * 6.28); open = 0; };
   newLock();
   const pinY = (i, now) => { const L = LOCKS[li]; return SHEAR + Math.sin(now / 1000 * L.sp * (1 + i * .13) + ph[i]) * 16; };
   C.cv.onpointerdown = () => { if (over || open) return; const now = performance.now(), y = pinY(cur, now), d = Math.abs(y - SHEAR);
-    if (d < 3.2) { set[cur] = true; cur++; sfx('tap'); msg = d < 1.2 ? '딸깍!' : '찰칵'; msgT = now;
+    if (d < TOL) { set[cur] = true; cur++; sfx('tap'); msg = d < 1.2 ? '딸깍!' : '찰칵'; msgT = now;
       if (cur >= LOCKS[li].pins) { open = now; total += LOCKS[li].prize + picks; sfx('win'); setTimeout(() => { if (over || !GAME) return; if (li >= LOCKS.length - 1) { over = true; stopGame(); lockEnd('🔐 금고를 열었어요!', `자물쇠 셋을 모두 열었다 · 남은 꼬챙이 ${picks}개`, total); return; } li++; newLock(); }, 1100); } }
     else { picks--; sfx('bad'); msg = '뚝! 꼬챙이가 부러졌다'; msgT = now; if (picks <= 0) { over = true; stopGame(); lockEnd('🔐 꼬챙이가 다 부러졌어요', `자물쇠 ${li}개를 열었다`, total); } } };
   const loop = now => { const L = LOCKS[li], [t, l, d] = L.col, n = L.pins;
     px(0, 0, 120, 150, '#20141a'); px(10, 10, 100, 84, d); px(12, 12, 96, 80, t); px(12, 12, 96, 3, l); px(12, 12, 3, 80, l);
-    const pw = 12, gx = 60 - (n * pw + (n - 1) * 4) / 2;
-    for (let i = 0; i < n; i++) { const x = gx + i * (pw + 4), y = set[i] ? SHEAR : pinY(i, now), act = i === cur && !open;
+    const pw = n > 5 ? 9 : 12, gp = n > 5 ? 3 : 4, gx = 60 - (n * pw + (n - 1) * gp) / 2;
+    for (let i = 0; i < n; i++) { const x = gx + i * (pw + gp), y = set[i] ? SHEAR : pinY(i, now), act = i === cur && !open;
       px(x, 20, pw, 64, '#1a1010'); px(x + 2, 20, pw - 4, 64, '#2a2020');
       px(x + 1, y - 22, pw - 2, 22, set[i] ? '#79b26e' : act ? '#ffe08a' : '#c8c0b0'); px(x + 1, y - 22, 2, 22, '#fff8');
       px(x + 1, y - 1, pw - 2, 2, act ? '#fff6c0' : '#1a1010'); px(x + 3, y + 1, pw - 6, 17, '#8a7a60'); px(x + 3, y, 2, 18, '#b0a080'); px(x + 4, y + 18, pw - 8, 4, '#6a5a48');
@@ -166,7 +168,7 @@ function lockStart() {
     for (let k = 0; k < 3; k++) { const ok = k < picks; px(16 + k * 10, 124, 2, 18, ok ? '#c8c8d0' : '#4a4048'); px(16 + k * 10, 124, 5, 2, ok ? '#c8c8d0' : '#4a4048'); }
     if (open) { const u = Math.min(1, (now - open) / 500); px(40, 96 - u * 10, 40, 6, l); txt('열렸다!', 60, 138, '#ffe08a', 9); }
     if (msg && now - msgT < 700) txt(msg, 60, 120, msg.startsWith('뚝') ? '#e88' : '#ffe08a', 7);
-    C.hudSet(`${L.n} (${li + 1}/3) · 핀 ${set.filter(Boolean).length}/${n} · 꼬챙이 ${picks} · 모은 은화 ${total}`);
+    C.hudSet(`${LV ? '🔒'.repeat(LV) + ' ' : ''}${L.n} (${li + 1}/3) · 핀 ${set.filter(Boolean).length}/${n} · 꼬챙이 ${picks} · 모은 은화 ${total}`);
     raf = requestAnimationFrame(loop); };
   lockGame(() => cancelAnimationFrame(raf)); raf = requestAnimationFrame(loop);
 }

@@ -124,6 +124,7 @@ const FURN = {
   teacart: { name: '티 카트', cat: 'living', cost: 65, hi: true, dims: () => ({ w: 2, d: 1, h: 54 }), parts: { c: ['metal', '#e0b050'], a: ['glass', '#f8f4ec'] }, drawHi(p, t, C) { TEACARTHI(p, t, C); } },
   lamp: { name: '스탠드', cat: 'living', cost: 25, hi: true, dims: () => ({ w: 1, d: 1, h: 80 }), parts: { a: ['light', '#f1e6cc'], c: ['metal', '#4a4a54'] }, drawHi(p, t, C) { LAMPHI(p, t, C); } },
   gclock: { name: '괘종시계', cat: 'living', cost: 300, eff: '혼자 하는 게임 하루 보상 +1회', hi: true, dims: () => ({ w: 1, d: 1, h: 92 }), parts: { b: ['wood', '#93592f'], c: ['metal', '#e0b050'] }, drawHi(p, t, C) { GCLOCKHI(p, t, C); } },
+  padlock: { name: '자물쇠', cat: 'small', cost: 60, max: 3, top: true, eff: '내 금고를 따기 어려워져요 (하나당 1단계, 최대 3)', hi: true, dims: () => ({ w: 1, d: 1, h: 30 }), parts: { a: ['metal', '#c9a036'], c: ['metal', '#b8bcc4'] }, drawHi(p, t, C) { PADLOCKHI(p, t, C); } },
   safe: { name: '금고', cat: 'small', cost: 200, eff: '출석 보상 +3 (최대 2개)', max: 2, hi: true, dims: () => ({ w: 1, d: 1, h: 38 }), parts: { a: ['body', '#5a606a'], c: ['metal', '#e0b050'] }, drawHi(p, t, C) { SAFEHI(p, t, C); } },
   globe: { name: '지구본', cat: 'living', cost: 55, hi: true, dims: () => ({ w: 1, d: 1, h: 50 }), parts: { a: ['body', '#3a6a9a'], c: ['metal', '#e0b050'] }, drawHi(p, t, C) { GLOBEHI(p, t, C); } },
   telescope: { name: '망원경', cat: 'living', cost: 90, hi: true, dims: () => ({ w: 1, d: 1, h: 60 }), parts: { c: ['metal', '#e0b050'], b: ['wood', '#5a3a24'] }, drawHi(p, t, C) { TELESCOPEHI(p, t, C); } },
@@ -1011,6 +1012,14 @@ const SAFEHI = (p, t, C) => { const { c, el } = p, A = C.a, M = C.c;   // 64 × 
   el(28, 36, 11, 11, M.o); el(28, 36, 10, 10, M.t); el(27, 35, 8, 8, M.L); el(28, 36, 7, 7, M.t); el(28, 36, 4, 4, A.d); for (let k = 0; k < 12; k++) { const a = k / 12 * Math.PI * 2; c(28 + Math.round(Math.cos(a) * 8), 36 + Math.round(Math.sin(a) * 8), 1, 1, A.o); } c(28, 26, 1, 4, '#a8344a');
   c(44, 30, 5, 14, M.o); c(45, 31, 3, 12, M.t); c(45, 31, 1, 12, M.L); c(5, 20, 4, 8, M.o); c(5, 44, 4, 8, M.o); c(6, 21, 2, 6, M.t); c(6, 45, 2, 6, M.t);
   [6, 50].forEach(x => { c(x, 68, 8, 8, A.o); c(x + 1, 68, 6, 6, A.d); }); };
+const PADLOCKHI = (p, t, C) => { const { c, el } = p, A = C.a, M = C.c;   // 64 × 60
+  el(32, 56, 17, 3, 'rgba(30,15,5,.2)');
+  const arc = (r, w, col) => { for (let a = 0; a <= Math.PI + .001; a += .03) { const x = 32 + Math.cos(a) * r, y = 26 - Math.sin(a) * (r + 2); c(Math.round(x - w / 2), Math.round(y - w / 2), w, w, col); } };
+  c(19, 26, 6, 8, M.o); c(39, 26, 6, 8, M.o); arc(10, 6, M.o); arc(10, 4, M.t); c(20, 26, 4, 8, M.t); c(40, 26, 4, 8, M.t); arc(10.6, 1.4, M.L); c(20, 26, 1, 7, M.L);
+  p.orr(13, 31, 38, 26, A.t, A.o, 5); c(16, 33, 32, 2, A.L); c(15, 35, 2, 18, A.l); c(16, 51, 32, 4, A.f); c(47, 35, 2, 16, A.f);
+  [[18, 37], [44, 37], [18, 50], [44, 50]].forEach(([x, y]) => { c(x, y, 2, 2, A.d); c(x, y, 1, 1, A.L); });
+  el(32, 41, 4, 4, A.o); el(32, 41, 3, 3, '#2a1a10'); c(31, 42, 3, 8, '#2a1a10'); c(30, 49, 5, 1, A.o);
+  if ((t >> 3) % 9 === 0) { c(22, 34, 2, 2, '#fff'); c(21, 35, 4, 1, '#fff'); } };
 const GLOBEHI = (p, t, C) => { const { c, el } = p, A = C.a, M = C.c, B = ramp('#5a3a24');   // 64 × 100
   el(32, 94, 18, 5, B.o); el(32, 93, 17, 4, B.t); el(28, 92, 8, 1, B.l); c(29, 70, 6, 22, B.o); c(30, 70, 4, 22, B.t); c(30, 70, 1, 22, B.l); el(32, 80, 5, 3, B.o);
   el(32, 36, 25, 25, A.o); const sp = clipPen(p, yy => { const dy = yy - 36; if (Math.abs(dy) > 23) return null; const hw = Math.sqrt(23 * 23 - dy * dy); return [32 - hw, 32 + hw]; });
@@ -1650,15 +1659,17 @@ function myRoom() {
   if (!P.room) P.room = defaultRoom(); const r = P.room; r.inv = r.inv || {}; r.items = r.items || []; r.ow = r.ow || ['plain', 'plank'];
   if (refundRemoved(r)) { ROOM_SAVE_T = 0; setTimeout(() => saveP(), 0); }
   if (sinGift(r, typeof mySin === 'function' ? mySin() : '')) setTimeout(() => saveP(), 0);
+  if (sinGift(r, 'safe')) setTimeout(() => saveP(), 0);
   if (migrateRoom(r) && Date.now() - ROOM_SAVE_T > 3000) { ROOM_SAVE_T = Date.now(); setTimeout(() => saveP(), 0); }
   return r;
 }
 /* 내 HO의 칠죄종 가구는 처음 한 번 무료로 방에 놓아 줘요 (자리가 없으면 보관함) */
 function sinGift(r, s) {
   if (!s || !FURN[s]) return false; r.gift = r.gift || []; if (r.gift.includes(s)) return false; r.gift.push(s);
+  if (r.items.some(i => i.k === s) || (r.inv && r.inv[s]) || (r.invc || []).some(x => x.k === s)) return true;   // 이미 가지고 있으면 표시만
   const p = nearFree(r, s, 5, 1); if (p) r.items.push({ id: rmId(), k: s, c: p.c, r: p.r }); else r.inv[s] = (r.inv[s] || 0) + 1; return true;
 }
-function hoRoom(uid) { if (ME && uid === ME.uid) return myRoom(); const p = PROGS.find(x => x.id === uid); const r = p && p.room ? JSON.parse(JSON.stringify(p.room)) : defaultRoom(); r.inv = r.inv || {}; r.items = r.items || []; migrateRoom(r); { const u = typeof USERS !== 'undefined' && USERS.find(x => x.id === uid); if (u && u.ho) sinGift(r, sinOf(u.ho)); } return r; }
+function hoRoom(uid) { if (ME && uid === ME.uid) return myRoom(); const p = PROGS.find(x => x.id === uid); const r = p && p.room ? JSON.parse(JSON.stringify(p.room)) : defaultRoom(); r.inv = r.inv || {}; r.items = r.items || []; migrateRoom(r); { const u = typeof USERS !== 'undefined' && USERS.find(x => x.id === uid); if (u && u.ho) sinGift(r, sinOf(u.ho)); if (u) sinGift(r, 'safe'); } return r; }
 function roomCnt(k) { if (!P || !P.room) return 0; const items = (P.room.items || []); if (k === 'plant') return items.filter(i => FURN[i.k] && FURN[i.k].plant).length; if (k === 'shelf') return items.filter(i => i.k === 'shelf' || i.k === 'tallshelf').length; return items.filter(i => i.k === k).length; }
 const wallCol = r => (r.cols.wall || {})[r.wall] || (WALLS[r.wall] || WALLS.plain).col, floorCol = r => (r.cols.floor || {})[r.floor] || (FLOORS[r.floor] || FLOORS.plank).col;
 
