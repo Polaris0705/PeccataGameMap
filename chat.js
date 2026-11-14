@@ -273,7 +273,7 @@ function chatKey(e) { if (e.key === 'Enter' && !e.shiftKey && !e.isComposing && 
 function mentionInsert(name) { const t = $('#chatText'); if (!t) return; t.value = (t.value ? t.value.replace(/\s*$/, ' ') : '') + '@' + name + ' '; CH.draft[CH.cur] = t.value; t.focus(); }
 async function chatImg(inp) {
   const f = inp.files[0]; if (!f) return;
-  const d = await compressImage(await readFile(f), 1000, .72);
+  const d = (typeof gifMaybe === 'function' && await gifMaybe(f, 480, 560000)) || await compressImage(await readFile(f), 1000, .72);
   if (!d) return toast('이미지를 읽지 못했어요');
   if (d.length > 900000) return toast('이미지가 너무 커요');
   CH.pendingImg = d; refreshInput();

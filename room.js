@@ -719,12 +719,14 @@ const TEACARTHI = (p, t, C) => { const { c, el } = p, M = C.c, A = C.a;   // 128
 };
 
 /* ── 직접 넣은 그림 (도트로 바꿔 저장한 작은 PNG) ── */
-let HI_IMG = null; const PIXC = {};
+let HI_IMG = null, HI_PH = 0, HI_MS = 140; const PIXC = {};
 function picPixels(url) { if (!url) return null; const e = PIXC[url]; if (e) return e.px ? e : null; PIXC[url] = { loading: true };
   const im = new Image(); im.onload = () => { const cv = document.createElement('canvas'); cv.width = im.width; cv.height = im.height; const g = cv.getContext('2d'); g.drawImage(im, 0, 0); const d = g.getImageData(0, 0, im.width, im.height).data, px = [];
     for (let i = 0; i < d.length; i += 4) px.push(`rgb(${d[i]},${d[i + 1]},${d[i + 2]})`); PIXC[url] = { w: im.width, h: im.height, px }; }; im.src = url; return null; }
 function hpic(p, x, y, w, h) { const P = picPixels(HI_IMG); if (!HI_IMG) return false; if (!P) { p.c(x, y, w, h, '#2a2230'); return true; }
-  const sx = w / P.w, sy = h / P.h; for (let j = 0; j < P.h; j++) for (let i = 0; i < P.w; i++) { const x1 = Math.round(i * sx), y1 = Math.round(j * sy); p.c(x + x1, y + y1, Math.round((i + 1) * sx) - x1, Math.round((j + 1) * sy) - y1, P.px[j * P.w + i]); }
+  // 움직이는 그림: 세로로 이어 붙인 프레임 중 지금 장면만
+  const fh = HI_PH && P.h > HI_PH && P.h % HI_PH === 0 ? HI_PH : P.h, nf = P.h / fh, o = nf > 1 ? Math.floor(Date.now() / (HI_MS || 140)) % nf * fh : 0;
+  const sx = w / P.w, sy = h / fh; for (let j = 0; j < fh; j++) for (let i = 0; i < P.w; i++) { const x1 = Math.round(i * sx), y1 = Math.round(j * sy); p.c(x + x1, y + y1, Math.round((i + 1) * sx) - x1, Math.round((j + 1) * sy) - y1, P.px[(o + j) * P.w + i]); }
   p.c(x, y, w, 1, 'rgba(0,0,0,.25)'); p.c(x, y, 1, h, 'rgba(0,0,0,.2)'); p.c(x + 2, y + 2, Math.round(w * .3), 1, 'rgba(255,255,255,.18)'); return true; }
 /* ── 식물 · 벽 장식 (고해상도) ── */
 function hflame(p, x, y, t, k) { const { c, el } = p, f = ((t + (k || 0)) % 3);   // (x,y)=심지 위치
@@ -1697,7 +1699,7 @@ function drawOrder(room) {
   return room.items.filter(i => FURN[i.k]).slice().sort((a, b) => L(a) - L(b) || pair(a, b) || key(a) - key(b) || (a.r + fd(a.k, a.dir)) - (b.r + fd(b.k, b.dir)) || a.c - b.c);
 }
 function drawSprite(g, k, x, y, t, alpha, col, dir, img) {
-  const f = FURN[k]; if (!f) return; dir = dir || 0; HI_IMG = (f.pic && img) || null;
+  const f = FURN[k]; if (!f) return; dir = dir || 0; HI_IMG = (f.pic && img) || null; HI_PH = f.pic ? f.pic.h : 0;
   g.save(); if (alpha != null) g.globalAlpha = alpha; const C = colsOf({ k, col });
   if (!g._fr || g._S == null) snapCtx(g, g.getTransform().a || 1);
   if (f.hi) { const dm = dimsOf(k, dir); f.drawHi(pen(g, x, y, dir === 3 ? dm.w * 64 : 0, .5), t || 0, C, dir); }
@@ -1718,7 +1720,7 @@ function paintRoom(cv, room, opts) {
   drawOrder(room).forEach(i => {
     const b = itemBox(i, room); if (!b) return; const f = FURN[i.k];
     if (i.r >= 0 && !f.flat && !f.top) { g.fillStyle = 'rgba(30,15,5,.22)'; g.fillRect(b.x + 3, b.y + b.h - 5, b.w - 6, 6); g.fillRect(b.x + 7, b.y + b.h + 1, b.w - 14, 2); }
-    drawSprite(g, i.k, b.x, b.y, t, i.id === dragId ? .35 : null, i.col, i.dir, i.img);
+    HI_MS = i.imgMs || 140; drawSprite(g, i.k, b.x, b.y, t, i.id === dragId ? .35 : null, i.col, i.dir, i.img);
     if (edit && RM.sel === 'id:' + i.id) { frameRect(g, b.x, b.y, b.w, b.h, '#ffe08a'); if (b.foot) frameRect(g, b.foot.x, b.foot.y, b.foot.w, b.foot.h, 'rgba(255,224,138,.6)'); }
   });
   if (edit && RM.hover) {
@@ -1813,13 +1815,14 @@ function paintPreview(c) {
   if (WALLS[k]) { drawWall(tg, k, 0, col && col.a); g.drawImage(tmp, OX + 40, OY + 20, 64, 64, 0, 0, c.width, c.height); }
   if (FLOORS[k]) { drawFloor(tg, k, col && col.a); g.drawImage(tmp, OX + 40, FY + 40, 64, 64, 0, 0, c.width, c.height); }
 }
-setInterval(() => {
-  RM.t++;
+let RM_HALF = 0;
+setInterval(() => {      // 140ms마다: 평소엔 두 번에 한 번 그리고, 움직이는 그림이 있으면 매번 그려요
+  RM_HALF ^= 1; if (!RM_HALF) RM.t++;
   if (!ME || !P || (tab !== 'room' && tab !== 'visit') || document.hidden) return;
-  const cv = document.getElementById('roomCv');
-  if (cv) paintRoom(cv, hoRoom(tab === 'room' ? ME.uid : RV), { edit: tab === 'room' && RM.edit });
-  if (RM.t % 4 === 0) document.querySelectorAll('canvas.rthumb').forEach(c => paintRoom(c, hoRoom(c.dataset.uid)));
-}, 280);
+  const cv = document.getElementById('roomCv'), room = cv && hoRoom(tab === 'room' ? ME.uid : RV);
+  if (cv && (!RM_HALF || room.items.some(i => i.imgMs))) paintRoom(cv, room, { edit: tab === 'room' && RM.edit });
+  if (!RM_HALF && RM.t % 4 === 0) document.querySelectorAll('canvas.rthumb').forEach(c => paintRoom(c, hoRoom(c.dataset.uid)));
+}, 140);
 
 /* ---------- 조작 ---------- */
 function cvPos(cv, ev) { const r = cv.getBoundingClientRect(); return { x: (ev.clientX - r.left) / r.width * RW, y: (ev.clientY - r.top) / r.height * RH }; }
@@ -1863,13 +1866,13 @@ function moveItem(it, s) { const room = myRoom(); if (!fits(room, it.k, s.c, s.r
 function placeInv(x, s) {
   const room = myRoom(), f = FURN[x.k]; if (!s) return;
   if (!fits(room, x.k, s.c, s.r, null, x.dir)) { sfx('bad'); toast('거기엔 이미 무언가 있어요'); return; }
-  room.invc = room.invc.filter(y => y !== x); const it = { id: rmId(), k: x.k, c: s.c, r: s.r }; if (x.col) it.col = x.col; if (x.rc) it.rc = x.rc; if (x.dir) it.dir = x.dir; if (x.img) it.img = x.img; room.items.push(it);
+  room.invc = room.invc.filter(y => y !== x); const it = { id: rmId(), k: x.k, c: s.c, r: s.r }; if (x.col) it.col = x.col; if (x.rc) it.rc = x.rc; if (x.dir) it.dir = x.dir; if (x.img) it.img = x.img; if (x.imgMs) it.imgMs = x.imgMs; room.items.push(it);
   const next = room.invc.find(y => y.k === x.k); RM.sel = next ? 'inv:' + next.id : null; RM.hover = null; sfx('pop'); saveP(); render();
   if (f.eff && f.max && roomCnt(x.k) > f.max) toast(`효과는 ${f.max}개까지만 적용돼요`);
 }
 function roomStore() {
   const room = myRoom(), it = room.items.find(i => 'id:' + i.id === RM.sel); if (!it) return;
-  room.items = room.items.filter(i => i !== it); const sv = { id: rmId(), k: it.k, col: it.col || null, rc: it.rc || 0, dir: it.dir || 0 }; if (it.img) sv.img = it.img; room.invc.push(sv); RM.sel = null; sfx('tap'); saveP(); render();
+  room.items = room.items.filter(i => i !== it); const sv = { id: rmId(), k: it.k, col: it.col || null, rc: it.rc || 0, dir: it.dir || 0 }; if (it.img) sv.img = it.img; if (it.imgMs) sv.imgMs = it.imgMs; room.invc.push(sv); RM.sel = null; sfx('tap'); saveP(); render();
 }
 const DIRN = ['앞', '왼쪽', '뒤', '오른쪽'];
 function zItem(id, d) { const it = myRoom().items.find(i => i.id === id); if (!it) return; const z = Math.max(-3, Math.min(3, (it.z || 0) + d)); if (z === (it.z || 0)) { toast(d > 0 ? '더 앞으로는 못 가요' : '더 뒤로는 못 가요'); return; } it.z = z; if (!it.z) delete it.z; sfx('tap'); saveP(); render(); }
@@ -1877,8 +1880,10 @@ function zItem(id, d) { const it = myRoom().items.find(i => i.id === id); if (!i
 function picPick(id) {
   const it = myRoom().items.find(i => i.id === id); if (!it || !FURN[it.k].pic) return;
   const inp = document.createElement('input'); inp.type = 'file'; inp.accept = 'image/*';
-  inp.onchange = () => { const file = inp.files && inp.files[0]; if (!file) return; const url = URL.createObjectURL(file), im = new Image();
-    im.onload = () => { try { it.img = pixelize(im, FURN[it.k].pic); delete PIXC[it.img]; saveP(); sfx('ok'); toast('그림을 넣었어요! 도트로 바꿔서 걸었어요'); render(); } catch (e) { toast('그림을 바꾸지 못했어요'); } URL.revokeObjectURL(url); };
+  inp.onchange = async () => { const file = inp.files && inp.files[0]; if (!file) return;
+    if (typeof gifStrip === 'function') { try { const s = await gifStrip(file, FURN[it.k].pic, pixelize); if (s) { it.img = s.url; it.imgMs = s.ms; delete PIXC[it.img]; saveP(); sfx('ok'); toast(`움직이는 그림을 넣었어요! (${s.n}장면)`); render(); return; } } catch (e) {} }
+    const url = URL.createObjectURL(file), im = new Image();
+    im.onload = () => { try { it.img = pixelize(im, FURN[it.k].pic); delete it.imgMs; delete PIXC[it.img]; saveP(); sfx('ok'); toast('그림을 넣었어요! 도트로 바꿔서 걸었어요'); render(); } catch (e) { toast('그림을 바꾸지 못했어요'); } URL.revokeObjectURL(url); };
     im.onerror = () => { toast('이 파일은 그림으로 열 수 없어요'); URL.revokeObjectURL(url); }; im.src = url; };
   inp.click();
 }
@@ -1892,7 +1897,7 @@ function pixelize(im, sz) {
   for (let i = 0; i < a.length; i += 4) { const m = (a[i] + a[i + 1] + a[i + 2]) / 3; for (let k = 0; k < 3; k++) a[i + k] = q(m + (a[i + k] - m) * 1.15); a[i + 3] = 255; }
   g.putImageData(d, 0, 0); return cv.toDataURL('image/png');
 }
-function picClear(id) { const it = myRoom().items.find(i => i.id === id); if (!it) return; delete it.img; saveP(); sfx('tap'); render(); }
+function picClear(id) { const it = myRoom().items.find(i => i.id === id); if (!it) return; delete it.img; delete it.imgMs; saveP(); sfx('tap'); render(); }
 function rotateItem(id, inInv) {
   const room = myRoom(), it = inInv ? room.invc.find(x => x.id === id) : room.items.find(i => i.id === id); if (!it) return; const f = FURN[it.k]; if (!f || !f.dirs) return;
   const cur = it.dir || 0, order = f.dirs, start = order.indexOf(cur);

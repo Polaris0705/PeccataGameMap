@@ -788,7 +788,7 @@ function profileModal(){
    <label class="muted" style="display:block;margin-top:8px"><input type="checkbox" style="width:auto" ${PROF.shareLoc?'checked':''} onchange="setShare(this.checked)"> 지도에서 내 위치를 다른 사람에게 보여주기</label>
    <div class="row" style="margin-top:8px"><button onclick="closeModal()">취소</button><button class="primary" onclick="saveProfile()">저장</button></div>`);
 }
-async function pfImg(inp,k){const f=inp.files[0];if(!f)return;PF[k]=await compressImage(await readFile(f),k==='charImg'?220:160,.82);profileModal();}
+async function pfImg(inp,k){const f=inp.files[0];if(!f)return;PF[k]=(typeof gifMaybe==='function'&&await gifMaybe(f,k==='charImg'?220:160,k==='charImg'?160000:90000))||await compressImage(await readFile(f),k==='charImg'?220:160,.82);profileModal();}
 async function saveProfile(){const n=(PF.name||'').trim();if(!n)return toast('이름을 입력해 주세요');
   try{await B.update('users/'+ME.uid,clean({name:n,avatar:PF.avatar||'',charImg:PF.charImg||''}));}catch(e){return toast('저장 실패: '+(e.code||e.message));}
   PF=null;closeModal();toast('프로필을 저장했어요');}
@@ -1580,7 +1580,7 @@ VIEWS.kitems=()=>{
   <div class="panel"><h2>지급된 물건 (${ITEMS.length})</h2><table><tr><th>물건</th><th>가진 사람</th><th>상태</th><th></th></tr>
    ${ITEMS.map(i=>`<tr><td>${esc(i.name)}${i.via?' <span class="muted">(조합)</span>':''}</td><td>${esc(i.ownerName||(userOf(i.owner)?uname(userOf(i.owner)):''))}</td><td>${i.revealed?'✦ 공개됨':i.inspectReq?'🔍 요청':''}</td><td style="white-space:nowrap">${!i.revealed?`<button class="sm" onclick="revealItem('${i.id}')">숨은 글 공개</button>`:''}<button class="sm danger" onclick="if(confirm('회수할까요?'))B.del('items/${i.id}')">회수</button></td></tr>`).join('')}</table></div>`;
 };
-async function itemImg(inp){const f=inp.files[0];if(!f)return;ITF.img=await compressImage(await readFile(f),480,.8);render();}
+async function itemImg(inp){const f=inp.files[0];if(!f)return;ITF.img=(typeof gifMaybe==='function'&&await gifMaybe(f,360,300000))||await compressImage(await readFile(f),480,.8);render();}
 async function saveDef(){
   if(!ITF.name.trim())return toast('이름을 입력해 주세요');
   const d=clean({name:ITF.name.trim(),desc:ITF.desc.trim(),hidden:ITF.hidden.trim(),img:ITF.img||''});
@@ -1617,6 +1617,7 @@ VIEWS.players=()=>{
 /* ================= 타이머 ================= */
 setInterval(()=>{if(ME&&P&&(tab==='garden'||tab==='lobby')&&!modalOpen())softRender();},1000);
 </script>
+<script src="gifkit.js"></script>
 <script src="chat.js"></script>
 <script src="games.js"></script>
 <script src="games2.js"></script>
