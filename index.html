@@ -975,7 +975,7 @@ async function loadMapData(key){
 /* ---- 방 · 위치 · 소집 ---- */
 let ROOMS={rooms:{},gather:null},MAP_PLACE=null;
 let LOC=(()=>{try{return JSON.parse(localStorage.getItem('peccata_loc')||'null');}catch(e){return null;}})();
-const ROOM_HINTS=[[/정원|온실|마당|뜰|화원/,['garden']],[/서재|도서|서고|연구|서실/,['books']],[/응접|살롱|거실|홀|라운지/,['blackjack','truth']],
+const ROOM_HINTS=[[/정원|온실|마당|뜰|화원/,['garden']],[/서재|도서|서고|연구|서실/,['books']],[/응접|살롱|거실|홀|라운지/,['blackjack']],
   [/주방|부엌|식당|티룸|다이닝|찻집|찬방/,['tycoon','silver']],[/놀이|오락|게임|유희|지하/,['sins','memory']],[/탑|다락|천문|별/,['tarot']],[/상점|매점|창고|가게/,['shop']],[/로비|현관|입구|대기/,['rank']]];
 function featsOf(name){const r=ROOMS.rooms&&ROOMS.rooms[name];if(r&&Array.isArray(r.feats))return r.feats.filter(k=>FEATS[k]);const h=ROOM_HINTS.find(([re])=>re.test(name||''));return h?h[1]:[];}
 const subOf=name=>(ROOMS.rooms&&ROOMS.rooms[name]&&ROOMS.rooms[name].sub)||'';
@@ -1562,6 +1562,7 @@ setInterval(()=>{if(ME&&P&&(tab==='garden'||tab==='lobby')&&!modalOpen())softRen
 <script src="kpdata.js"></script>
 <script src="tycoon.js"></script>
 <script src="party.js"></script>
+<script src="party2.js"></script>
 <script src="draw.js"></script>
 <script src="room.js"></script>
 <script src="games3.js"></script>

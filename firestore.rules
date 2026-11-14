@@ -157,18 +157,11 @@ service cloud.firestore {
       allow read, write: if signedIn();
     }
 
-    match /truths/{id} {
-      allow read: if signedIn();
-      allow create: if signedIn() && request.resource.data.uid == request.auth.uid
-        && request.resource.data.status == 'open';
-      allow update: if signedIn() && (resource.data.uid == request.auth.uid
-        || (resource.data.status == 'open' && onlyChanges(['votes'])));
-      allow delete: if isAdmin() || (signedIn() && resource.data.uid == request.auth.uid);
-    }
-
-    match /truthKeys/{id} {
-      allow read: if signedIn() && resource.data.uid == request.auth.uid;
-      allow create: if signedIn() && request.resource.data.uid == request.auth.uid;
+    match /wwActs/{id} {
+      allow read: if signedIn() && (resource.data.uid == request.auth.uid
+        || get(/databases/$(database)/documents/rooms/$(resource.data.room)).data.host == request.auth.uid);
+      allow create, update: if signedIn() && request.resource.data.uid == request.auth.uid
+        && exists(/databases/$(database)/documents/rooms/$(request.resource.data.room));
     }
 
     match /settings/{id} {

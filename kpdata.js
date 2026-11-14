@@ -113,7 +113,7 @@ async function kdResetAll() {
   let ok = 0; for (const { u } of dataPlayers()) { try { await B.set('progress/' + u.id, { reset: Date.now() }); ok++; } catch (e) {} }
   toast(`${ok}명의 진행을 초기화했어요`);
 }
-const BK_COLS = ['users', 'progress', 'items', 'itemDefs', 'recipes', 'bookings', 'queue', 'notes', 'sched', 'public', 'settings', 'channels', 'truths', 'roomLikes', 'guestbook'];
+const BK_COLS = ['users', 'progress', 'items', 'itemDefs', 'recipes', 'bookings', 'queue', 'notes', 'sched', 'public', 'settings', 'channels', 'roomLikes', 'guestbook'];
 async function kdBackup() {
   const cols = BK_COLS.concat($('#bkMap') && $('#bkMap').checked ? ['maps', 'mapchunks', 'assets'] : []), out = { app: 'peccata', ver: 1, at: Date.now(), cols: {} };
   toast('백업을 모으는 중…');

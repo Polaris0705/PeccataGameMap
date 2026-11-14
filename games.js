@@ -1,23 +1,21 @@
 /* =========================================================
-   숲속 저택 — 게임 모음 (index.html 전역 사용)
+   햄카타 — 게임 모음 (index.html 전역 사용)
    ========================================================= */
 const FEATS = {
   garden:   { n: '온실',          ic: '🌿', d: '씨앗 심고 수확하기' },
-  riddle:   { n: '저택의 수수께끼', ic: '🕯', d: '방마다 숨은 수수께끼' },
   shop:     { n: '상점',          ic: '🛍', d: '칭호와 이름표 테두리' },
   rank:     { n: '랭킹',          ic: '🏆', d: '오늘의 손님 순위' },
   tycoon:   { n: '티룸 타이쿤',    ic: '🍵', d: '손님 주문 맞춰 내기' },
-  sins:     { n: '칠죄종의 방',    ic: '🎲', d: '1분 미니게임 7종' },
+  sins:     { n: '찻잔 떨어뜨리기', ic: '🍵', d: '같은 다과 합치기' },
   memory:   { n: '카드 짝맞추기',  ic: '🃏', d: '같은 그림 찾기' },
   tarot:    { n: '타로 운세',      ic: '🔮', d: '하루 한 장' },
-  blackjack:{ n: '살롱 블랙잭',    ic: '♠️', d: '여럿이 은화 걸기' },
-  truth:    { n: '진실과 거짓',    ic: '🎭', d: '거짓 하나 맞히기' }
+  blackjack:{ n: '살롱 블랙잭',    ic: '♠️', d: '여럿이 은화 걸기' }
 };
 const FEAT_KEYS = Object.keys(FEATS);
 const DAILY_REWARD = 2;
 const dailyCap = () => DAILY_REWARD + (typeof roomCnt === 'function' && roomCnt('gclock') ? 1 : 0);           // 게임별 하루 보상 횟수
 let GAME = null; window.GAME_LOCK = false;
-let BJ = null, TRUTHS = [];
+let BJ = null;
 
 function stopGame() { if (GAME) { try { GAME.stop && GAME.stop(); } catch (e) {} GAME = null; } window.GAME_LOCK = false; }
 function lockGame(stop) { stopGame(); GAME = { stop, alive: true }; window.GAME_LOCK = true; return GAME; }
@@ -76,94 +74,8 @@ function teaStart() {
   lockGame(() => clearInterval(iv)); newG(); draw();
 }
 
-/* ================= 칠죄종의 방 ================= */
-const SIN_GAMES = {
-  wrath:    { n: '접시 깨기',     d: '20초 동안 나타나는 접시를 깨뜨려요' },
-  greed:    { n: '보물 상자',     d: '저주받은 상자를 피해 은화를 모아요' },
-  sloth:    { n: '알람 끄기',     d: '알람이 울리는 순간 눌러요 (일찍 깨면 실패)' },
-  gluttony: { n: '먹방',         d: '10초 동안 최대한 많이 먹어요' },
-  pride:    { n: '완벽한 정지',   d: '움직이는 바늘을 한가운데에 멈춰요' },
-  envy:     { n: '보석 기억',     d: '빛나는 보석의 순서를 따라 해요' },
-  lust:     { n: '가면무도회',    d: '하나만 다른 가면을 찾아요' }
-};
+/* 오늘의 죄 표시용 */
 const SIN_EMB = { wrath: '🔥', greed: '💰', sloth: '💤', gluttony: '🍗', pride: '👑', envy: '👁', lust: '🌹' };
-VIEWS.sins = () => `<div class="panel"><h2>🎲 칠죄종의 방</h2><p class="muted">일곱 개의 문 뒤에 짧은 게임이 하나씩 있어요. 자기 HO의 죄에 해당하는 게임은 보상이 1.5배예요. 게임마다 하루 보상 ${dailyCap()}회.</p>
-  <div id="gbox"><div class="grid g3">${HOS.map(h => { const g = SIN_GAMES[h.id]; const mine = mySin() === h.id;
-    return `<button class="room sindoor ${mine ? 'solved' : ''}" onclick="sinStart('${h.id}')"><div class="semb">${SIN_EMB[h.id] || ''}</div><div class="no">${h.name}${mine ? ' · 내 죄 ×1.5' : ''}</div><div class="rn">${g.n}</div><div class="muted" style="font-size:.8rem">${g.d}</div><div class="muted" style="font-size:.75rem">오늘 보상 ${playsLeft('sin_' + h.id)}회</div></button>`; }).join('')}</div></div></div>`;
-function sinEnd(id, coins, txt) {
-  if (window.SIN_BONUS) { const cb = window.SIN_BONUS; window.SIN_BONUS = null; stopGame(); cb(Math.min(20, Math.max(0, coins)), txt); return; }
-  const mult = mySin() === id ? 1.5 : 1, c = Math.min(20, Math.max(0, coins)) * mult, r = reward('sin_' + id, c);
-  finishGame(`<h2 style="color:var(--gold2);margin-top:0">${(HOS.find(h => h.id === id) || {}).name} · ${SIN_GAMES[id].n}</h2><p>${txt}</p><p class="muted">${r || '보상 없음'}</p><div class="row"><button class="primary" onclick="closeModal();sinStart('${id}')">다시</button><button onclick="closeModal()">닫기</button></div>`);
-}
-function sinStart(id) {
-  const b = gbox(); if (!b) return;
-  b.innerHTML = `<div class="row" style="justify-content:space-between;margin-bottom:8px"><b>${SIN_GAMES[id].n}</b><button class="sm" onclick="sinSkip()">${window.SIN_BONUS ? '건너뛰기' : '그만두기'}</button></div><div id="sinArea"></div>`;
-  ({ wrath: sinWrath, greed: sinGreed, sloth: sinSloth, gluttony: sinGlut, pride: sinPride, envy: sinEnvy, lust: sinLust })[id]();
-}
-function sinSkip() { if (window.SIN_BONUS) { const cb = window.SIN_BONUS; window.SIN_BONUS = null; stopGame(); cb(0, '건너뜀'); return; } stopGame(); render(); }
-const area = () => $('#sinArea');
-function sinWrath() {
-  let t = 20, hits = 0, cur = -1, boom = -1;
-  const draw = () => { const a = area(); if (!a) return; a.innerHTML = `<div class="row" style="justify-content:space-between"><b>⏱ ${t}</b><b>💥 ${hits}</b></div><div class="mgrid g3x">${Array.from({ length: 9 }, (_, i) => `<button class="mcell ${i === boom ? 'hit' : ''}" onpointerdown="wrathHit(${i})">${i === cur ? '🍽️' : i === boom ? '💥' : ''}</button>`).join('')}</div>`; };
-  window.wrathHit = i => { if (i === cur) { hits++; cur = -1; boom = i; setTimeout(() => { if (boom === i) { boom = -1; draw(); } }, 220); sfx('tap'); draw(); } else { sfx('bad'); } };
-  const sp = setInterval(() => { let n; do { n = rint(9); } while (n === cur); cur = n; draw(); }, 720);
-  const tm = setInterval(() => { t--; if (t <= 0) { stopGame(); sinEnd('wrath', hits, `접시 ${hits}장을 깨뜨렸다!`); } else draw(); }, 1000);
-  lockGame(() => { clearInterval(sp); clearInterval(tm); }); draw();
-}
-function sinGreed() {
-  const steps = [5, 10, 15, 25, 35, 50]; let lv = 0, pot = 0;
-  const draw = msg => { const a = area(); if (!a) return; a.innerHTML = `<p>${msg || '상자 셋 중 하나에는 저주가 들어 있다.'}</p><p>챙긴 은화 <b>${pot}</b> · 다음 상자 +${steps[lv]}</p>
-    <div class="toggles" style="justify-content:center">${[0, 1, 2].map(i => `<button style="font-size:2.2rem;padding:10px 20px" onclick="greedPick(${i})">🧰</button>`).join('')}</div>
-    ${pot ? '<button style="width:100%;margin-top:10px" onclick="greedStop()">그만하고 챙기기</button>' : ''}`; };
-  window.greedPick = i => { if (i === rint(3)) { stopGame(); sinEnd('greed', 0, '저주받은 상자였다… 챙긴 은화를 모두 잃었다.'); return; }
-    pot += steps[lv]; lv++; if (lv >= steps.length) { stopGame(); sinEnd('greed', pot, `모든 상자를 열었다! ${pot}은화`); return; } draw(`💰 +${steps[lv - 1]}! 더 열어 볼까?`); };
-  window.greedStop = () => { stopGame(); sinEnd('greed', pot, `${pot}은화를 챙겨 물러났다.`); };
-  lockGame(() => {}); draw();
-}
-function sinSloth() {
-  const N = 5; let r = 0, st = 'idle', t0 = 0, to = null; const times = []; const G = lockGame(() => clearTimeout(to));
-  const draw = (big, msg) => { const a = area(); if (!a) return; a.innerHTML = `<div class="tapzone ${st}" onpointerdown="slothTap()"><div><div style="font-size:2.8rem">${big}</div><div>${msg}</div><div class="muted">${Math.min(r + 1, N)}/${N}</div></div></div>`; };
-  const arm = () => { if (GAME !== G) return; st = 'wait'; draw('😴', '쿨쿨… 알람이 울리면 누르세요'); to = setTimeout(() => { st = 'go'; t0 = performance.now(); draw('⏰', '지금!'); }, 1500 + Math.random() * 3500); };
-  const next = () => { r++; st = 'idle'; if (r >= N) { const avg = Math.round(times.reduce((a, b) => a + b, 0) / N); stopGame(); sinEnd('sloth', Math.round(30 - (avg - 250) / 25), `평균 반응 ${avg}ms`); return; } draw('💤', '…'); setTimeout(arm, 700); };
-  window.slothTap = () => { if (st === 'wait') { clearTimeout(to); times.push(1500); toast('너무 일찍 일어났다!'); next(); } else if (st === 'go') { times.push(performance.now() - t0); next(); } };
-  arm();
-}
-function sinGlut() {
-  const foods = ['🍰', '🍗', '🍣', '🍜', '🍩', '🍔', '🥟', '🍕']; let t = 10, n = 0, started = false, iv = null;
-  const draw = () => { const a = area(); if (!a) return; a.innerHTML = `<div class="row" style="justify-content:space-between"><b>⏱ ${t}</b><b>😋 ${n}</b></div><div class="tapzone" onpointerdown="glutTap()"><div style="font-size:4rem">${foods[n % foods.length]}</div></div><p class="muted" style="text-align:center">${started ? '계속 눌러요!' : '누르면 시작해요'}</p>`; };
-  window.glutTap = () => { if (!started) { started = true; iv = setInterval(() => { t--; if (t <= 0) { stopGame(); sinEnd('gluttony', Math.round(n / 3), `${n}입 먹었다!`); } else draw(); }, 1000); } n++; draw(); };
-  lockGame(() => clearInterval(iv)); draw();
-}
-function sinPride() {
-  let tries = 0, total = 0, raf = 0, t0 = performance.now(), speed = 2.2, x = 0;
-  const loop = now => { x = (Math.sin((now - t0) / 1000 * speed) + 1) / 2; const n = $('#ndl'); if (n) n.style.left = `calc(${x * 100}% - 2px)`; raf = requestAnimationFrame(loop); };
-  const draw = msg => { const a = area(); if (!a) return; a.innerHTML = `<p>${msg || '가운데 금색 칸에 바늘을 멈춰요.'} (${tries + 1}/3)</p><div class="bar"><div class="mid"></div><div class="ndl" id="ndl"></div></div><button class="primary" style="width:100%;margin-top:12px" onpointerdown="prideTap()">멈춰!</button><p class="muted">점수 ${total}</p>`; };
-  window.prideTap = () => { const d = Math.abs(x - .5), pts = Math.max(0, Math.round(10 - d * 40)); total += pts; tries++; speed += 0.9;
-    if (tries >= 3) { stopGame(); sinEnd('pride', total, `총 ${total}점 (30점 만점)`); return; } draw(pts >= 9 ? `완벽해! +${pts}` : `+${pts}`); };
-  lockGame(() => cancelAnimationFrame(raf)); draw(); raf = requestAnimationFrame(loop);
-}
-function sinEnvy() {
-  const cols = [['#e05a6b', '루비'], ['#4fa36b', '에메랄드'], ['#4f7fd1', '사파이어'], ['#e2bd5c', '호박']];
-  let seq = [], inp = [], showing = false, tos = [];
-  const G = lockGame(() => tos.forEach(clearTimeout));
-  const draw = (lit, msg) => { const a = area(); if (!a) return; a.innerHTML = `<p>${msg}</p><div class="mgrid" style="grid-template-columns:1fr 1fr">${cols.map((c, i) => `<button class="gem ${lit === i ? 'lit' : ''}" style="background:${c[0]};color:${c[0]}" onpointerdown="envyTap(${i})"></button>`).join('')}</div><p class="muted">단계 ${seq.length}</p>`; };
-  const play = () => { if (GAME !== G) return; seq.push(rint(4)); inp = []; showing = true; draw(-1, '잘 봐요…');
-    seq.forEach((g, i) => { tos.push(setTimeout(() => draw(g, '잘 봐요…'), 700 + i * 650)); tos.push(setTimeout(() => draw(-1, '잘 봐요…'), 700 + i * 650 + 420)); });
-    tos.push(setTimeout(() => { showing = false; draw(-1, '같은 순서로 눌러요'); }, 700 + seq.length * 650)); };
-  window.envyTap = i => { if (showing) return; inp.push(i); draw(i, '같은 순서로 눌러요'); setTimeout(() => { if (!showing && GAME === G) draw(-1, '같은 순서로 눌러요'); }, 180);
-    if (seq[inp.length - 1] !== i) { stopGame(); sinEnd('envy', (seq.length - 1) * 4, `${seq.length - 1}단계까지 기억했다`); return; }
-    if (inp.length === seq.length) setTimeout(play, 500); };
-  play();
-}
-function sinLust() {
-  const pairs = [['🌹', '🥀'], ['🎭', '👺'], ['💍', '💎'], ['🦋', '🐛'], ['🍷', '🍸'], ['🗝️', '🔒'], ['🌙', '☀️'], ['🕯️', '🔥'], ['👁️', '👀']];
-  let t = 20, sc = 0, odd = 0, pr = pairs[0];
-  const newRound = () => { pr = pairs[rint(pairs.length)]; odd = rint(16); };
-  const draw = () => { const a = area(); if (!a) return; a.innerHTML = `<div class="row" style="justify-content:space-between"><b>⏱ ${t}</b><b>💘 ${sc}</b></div><div class="mgrid g4x">${Array.from({ length: 16 }, (_, i) => `<button class="mcell" style="font-size:1.6rem" onpointerdown="lustTap(${i})">${i === odd ? pr[1] : pr[0]}</button>`).join('')}</div>`; };
-  window.lustTap = i => { if (i === odd) { sc++; newRound(); } else { t = Math.max(0, t - 2); toast('그 가면이 아니에요 (-2초)'); } draw(); };
-  const iv = setInterval(() => { t--; if (t <= 0) { stopGame(); sinEnd('lust', sc * 2, `${sc}번 찾아냈다`); } else draw(); }, 1000);
-  lockGame(() => clearInterval(iv)); newRound(); draw();
-}
 
 /* ================= 카드 짝맞추기 ================= */
 VIEWS.memory = () => `<div class="panel"><h2>🃏 카드 짝맞추기</h2><p class="muted">같은 그림 두 장을 찾아요. 적게 뒤집을수록 은화가 많아요. ${capTxt('memory')}</p>
@@ -278,42 +190,9 @@ VIEWS.blackjack = () => {
    </div></div>`;
 };
 
-/* ================= 진실과 거짓 (여럿이) ================= */
-let TF2 = { s: ['', '', ''], lie: 0 };
-VIEWS.truth = () => {
-  const list = TRUTHS.slice(0, 15);
-  return `<div class="panel"><h2>🎭 진실과 거짓</h2><p class="muted">진술 셋 중 하나는 거짓말. 맞히면 +5 은화, 출제자는 속은 사람 한 명당 +2 은화(최대 10).</p>
-   <h3>내 진술 올리기</h3>${[0, 1, 2].map(i => `<div class="row" style="margin:4px 0;flex-wrap:nowrap"><label style="flex:0 0 auto"><input type="radio" name="tlie" style="width:auto" ${TF2.lie === i ? 'checked' : ''} onchange="TF2.lie=${i}"> 거짓</label><input maxlength="80" value="${esc(TF2.s[i])}" oninput="TF2.s[${i}]=this.value" placeholder="진술 ${i + 1}"></div>`).join('')}
-   <button class="primary" onclick="truthPost()">올리기</button></div>
-   ${list.map(t => { const mine = t.uid === ME.uid, my = (t.votes || {})[ME.uid], nv = Object.keys(t.votes || {}).length, rev = t.status === 'revealed';
-     return `<div class="panel"><div class="h" style="display:flex;justify-content:space-between;gap:6px;flex-wrap:wrap"><b>${esc(t.name)}의 진술</b><span class="muted">투표 ${nv}명${rev ? ' · 공개됨' : ''}</span></div>
-      ${t.s.map((x, i) => `<button class="choice ${my === i ? 'on' : ''}" ${mine || rev ? 'disabled' : ''} onclick="truthVote('${t.id}',${i})" style="${rev && i === t.lie ? 'border-color:var(--wine2);color:var(--wine2)' : ''}">${rev && i === t.lie ? '🤥 ' : ''}${esc(x)}${rev ? ` <span class="muted">(${Object.values(t.votes || {}).filter(v => v === i).length}표)</span>` : ''}</button>`).join('')}
-      ${mine && !rev ? `<div class="row"><button class="sm primary" ${nv ? '' : 'disabled'} onclick="truthReveal('${t.id}')">정답 공개</button><button class="sm danger" onclick="truthDel('${t.id}')">삭제</button></div>` : ''}
-      ${rev && my != null ? `<p>${my === t.lie ? '🎯 맞혔어요!' : '😵 속았어요…'}</p>` : ''}</div>`; }).join('')}`;
-};
-async function truthPost() {
-  const s = TF2.s.map(x => x.trim()); if (s.some(x => !x)) return toast('진술 세 개를 모두 적어 주세요');
-  try { const id = await B.add('truths', { uid: ME.uid, name: myHo() ? cname(myHo()) : PROF.name, s, status: 'open', votes: {}, lie: -1, at: Date.now() });
-    await B.set('truthKeys/' + id, { uid: ME.uid, lie: TF2.lie }); } catch (e) { return toast('실패: ' + (e.code || e.message)); }
-  TF2 = { s: ['', '', ''], lie: 0 }; render(); toast('올렸어요');
-}
-function truthVote(id, i) { B.update('truths/' + id, { ['votes.' + ME.uid]: i }).catch(e => toast('실패: ' + (e.code || e.message))); }
-async function truthReveal(id) { const k = await B.get('truthKeys/' + id); if (!k) return toast('정답 정보를 찾지 못했어요'); await B.update('truths/' + id, { status: 'revealed', lie: k.lie }); }
-function truthDel(id) { if (confirm('삭제할까요?')) B.del('truths/' + id); }
-function truthPayout() {
-  if (!P || !ME) return; P.truthPaid = P.truthPaid || []; let ch = false;
-  TRUTHS.filter(t => t.status === 'revealed' && !P.truthPaid.includes(t.id)).forEach(t => {
-    const v = t.votes || {};
-    if (t.uid === ME.uid) { const fooled = Object.values(v).filter(x => x !== t.lie).length; if (fooled) { earn(Math.min(10, fooled * 2)); toast(`🎭 ${fooled}명을 속였어요! +${Math.min(10, fooled * 2)}`); } P.truthPaid.push(t.id); ch = true; }
-    else if (v[ME.uid] != null) { if (v[ME.uid] === t.lie) { earn(5); toast('🎭 거짓을 맞혔어요! +5'); } P.truthPaid.push(t.id); ch = true; }
-  });
-  if (ch) { P.truthPaid = P.truthPaid.slice(-60); saveP(); }
-}
-
 /* ================= 구독 ================= */
 function gamesOnAuth(u) {
-  BJ = null; TRUTHS = []; stopGame(); if (!u) return;
+  BJ = null; stopGame(); if (!u) return;
   unsubs.push(B.onDoc('games/bj', d => { BJ = d; bjPayout(); if (tab === 'blackjack') softRender(); }));
-  unsubs.push(B.onCol('truths', l => { TRUTHS = l.sort((a, b) => (b.at || 0) - (a.at || 0)); truthPayout(); if (tab === 'truth') softRender(); }));
 }
 if (typeof ME !== 'undefined' && ME) gamesOnAuth(ME);

@@ -93,7 +93,7 @@ function msPanel() {
 }
 
 /* ---------- 비밀 칭호 ---------- */
-[{ id: 't_ms3', kind: 'title', name: '부지런한 손님', cost: -1 }, { id: 't_ms7', kind: 'title', name: '저택의 단골', cost: -1 }, { id: 't_week', kind: 'title', name: '지난주의 귀빈', cost: -1 }, { id: 't_relic', kind: 'title', name: '일곱 문의 열쇠', cost: -1 }]
+[{ id: 't_ms3', kind: 'title', name: '부지런한 손님', cost: -1 }, { id: 't_ms7', kind: 'title', name: '저택의 단골', cost: -1 }, { id: 't_week', kind: 'title', name: '지난주의 귀빈', cost: -1 }]
   .forEach(t => { if (!SHOP.some(x => x.id === t.id)) SHOP.push(t); });
 function grantTitle(id) { if (P.owned.includes(id)) return ''; P.owned.push(id); const t = SHOP.find(x => x.id === id); saveP(); return `<p>🎖 비밀 칭호 <b style="color:var(--gold2)">「${esc(t.name)}」</b>를 얻었어요! 상점에서 착용할 수 있어요.</p>`; }
 function titleUnlock() { const s = (P.ms && P.ms.streak) || 0; return (s >= 3 ? grantTitle('t_ms3') : '') + (s >= 7 ? grantTitle('t_ms7') : ''); }
@@ -130,19 +130,18 @@ const SIN_RULE = {
 const todaySin = () => { const n = Math.floor((Date.now() + 9 * 36e5) / 864e5); return HOS[n % HOS.length].id; };
 let DROP = null;
 VIEWS.sins = () => {
-  const s = todaySin(), D = P.drop || {}, doors = D.doors || {}, mine = mySin() === s;
+  const s = todaySin(), mine = mySin() === s;
   return `<div class="panel"><h2>🍵 찻잔 떨어뜨리기</h2>
    <div class="item" style="margin:6px 0 10px;border-color:var(--gold)"><div><b>오늘의 죄 · ${SIN_EMB[s]} ${sinName(s)}</b><div class="muted" style="font-size:.85rem">${SIN_RULE[s]}${mine ? ' · <b style="color:var(--gold2)">내 죄의 날! 은화 ×1.5</b>' : ''}</div></div></div>
-   <p class="muted">위에서 다과를 떨어뜨려 같은 것끼리 닿으면 합쳐져요. 빨리 연달아 합치면 <b>콤보</b>, 6콤보면 <b>피버</b>(점수 2배). 홀케이크 둘을 합치면 <b>죄의 문</b>이 열려 보너스 라운드가 시작돼요. 다과가 빨간 선 위에 오래 머물면 끝나요.</p>
-   <div style="display:flex;flex-wrap:wrap;gap:2px;align-items:center;font-size:1.25rem;margin:6px 0">${DROP_T.map(t => t[1]).join('<span class="muted" style="font-size:.7rem">›</span>')}<span class="muted" style="font-size:.7rem">›</span>🚪</div>
+   <p class="muted">위에서 다과를 떨어뜨려 같은 것끼리 닿으면 합쳐져요. 빨리 연달아 합치면 <b>콤보</b>, 6콤보면 <b>피버</b>(점수 2배). 홀케이크 둘을 합치면 <b>펑!</b> 하고 사라지며 큰 점수(+500)를 얻어요. 다과가 빨간 선 위에 오래 머물면 끝나요.</p>
+   <div style="display:flex;flex-wrap:wrap;gap:2px;align-items:center;font-size:1.25rem;margin:6px 0">${DROP_T.map(t => t[1]).join('<span class="muted" style="font-size:.7rem">›</span>')}<span class="muted" style="font-size:.7rem">›</span>💥</div>
    <div class="row" style="flex-wrap:wrap;gap:10px;margin:6px 0"><span>최고 점수 <b style="color:var(--gold2)">${(P.best || {}).sins || 0}</b></span><span class="muted">${capTxt('sins')}</span></div>
    <div id="gbox"><button class="primary" style="width:100%;font-size:1.15rem;padding:14px" onclick="dropStart()">▶ 시작</button></div>
-   <h3 style="margin-top:14px">🚪 죄의 문 도감 <span class="muted" style="font-size:.85rem">${Object.keys(doors).length}/7 · 다 열면 비밀 칭호</span></h3>
-   <div class="grid g3" style="gap:6px">${HOS.map(h => { const d = doors[h.id]; return `<div class="item" style="display:block;text-align:center;padding:8px;${d ? '' : 'opacity:.45'}"><div style="font-size:1.5rem">${d ? SIN_EMB[h.id] : '🔒'}</div><div style="font-size:.85rem">${h.name}${d ? ` · ${SIN_GAMES[h.id].n}` : ''}</div>${d ? `<div class="muted" style="font-size:.75rem">최고 +${d}</div>` : ''}</div>`; }).join('')}</div></div>`;
+</div>`;
 };
 function dropStart() {
-  const s = todaySin(); window.SIN_BONUS = null;
-  DROP = { s, balls: [], fx: [], txt: [], score: 0, combo: 0, best: 0, lastM: 0, fever: 0, aim: 90, cd: 0, q: [], hold: null, holdUsed: false, t: 0, warn: 0, shake: 0, maxT: 0, doors: 0, gold: 0, evT: 0, over: false, paused: false, id: 1 };
+  const s = todaySin();
+  DROP = { s, balls: [], fx: [], txt: [], score: 0, combo: 0, best: 0, lastM: 0, fever: 0, aim: 90, cd: 0, q: [], hold: null, holdUsed: false, t: 0, warn: 0, shake: 0, maxT: 0, pops: 0, gold: 0, evT: 0, over: false, paused: false, id: 1 };
   for (let i = 0; i < 3; i++) DROP.q.push(dropNext());
   dropMount();
 }
@@ -196,7 +195,6 @@ function dropStep(dt) {
   if (D.combo && D.t - D.lastM > 1.6) D.combo = 0;
   D.fx.forEach(f => { f.x += f.vx * dt; f.y += f.vy * dt; f.vy += 160 * dt; f.t -= dt; }); D.fx = D.fx.filter(f => f.t > 0);
   D.txt.forEach(f => { f.y -= 18 * dt; f.t -= dt * .8; }); D.txt = D.txt.filter(f => f.t > 0);
-  if (D.doorWait) { D.doorWait = false; dropDoor(); }
 }
 function dropMerge(a, b) {
   const D = DROP; a.dead = b.dead = true; const x = (a.x + b.x) / 2, y = (a.y + b.y) / 2, gold = a.gold || b.gold;
@@ -208,30 +206,13 @@ function dropMerge(a, b) {
   if (gold) { D.gold++; }
   if (a.t + 1 >= DROP_T.length) {          // 홀케이크 + 홀케이크 → 죄의 유물
     const pts = Math.round(500 * mult); D.score += pts; D.txt.push({ x, y, s: `+${pts}`, c: '#ffe08a', t: 1.3, big: 1 }); D.shake = .5; buzz(80);
-    D.doorWait = true; msEv('tier', 'sins', DROP_T.length); return;
+    D.pops++; D.txt.push({ x, y: y - 16, s: '💥 펑!', c: '#fff', t: 1.2, big: 1 }); sfx('win'); msEv('tier', 'sins', DROP_T.length); return;
   }
   const t = a.t + 1, r = DROP_T[t][0], pts = Math.round(DROP_T[t][4] * mult); D.score += pts; D.maxT = Math.max(D.maxT, t); msEv('tier', 'sins', t);
   D.balls.push({ id: D.id++, x, y, vx: (a.vx + b.vx) / 4, vy: Math.min(0, (a.vy + b.vy) / 4) - 30, t, r, gold, age: 1.3, ov: 0, pop: 1 });
   D.txt.push({ x, y: y - r, s: `+${pts}${D.combo > 1 ? ` ×${D.combo}` : ''}`, c: gold ? '#ffe08a' : '#fff', t: 1 });
   if (t >= 6) { D.shake = .25; buzz(25); }
   sfx(D.combo > 2 ? 'coin' : 'pop');
-}
-function dropDoor() {
-  const D = DROP; D.paused = true; const keys = HOS.map(h => h.id), sin = keys[Math.floor(Math.random() * keys.length)];
-  stopGame(); D.doors++;
-  const b = gbox(); if (!b) return;
-  b.innerHTML = `<div style="text-align:center;padding:24px 8px"><div style="font-size:3rem">🚪${SIN_EMB[sin]}</div><h2 style="color:var(--gold2)">${sinName(sin)}의 문이 열렸다!</h2><p>보너스 라운드 · <b>${SIN_GAMES[sin].n}</b></p><p class="muted">${SIN_GAMES[sin].d}${mySin() === sin ? ' · 내 죄라서 보너스 ×1.5' : ''}</p>
-   <button class="primary" style="width:100%;padding:12px" onclick="dropBonus('${sin}')">문 열기</button></div>`;
-  sfx('win'); setTimeout(() => shakeEl(b, 6), 50);
-}
-function dropBonus(sin) {
-  window.SIN_BONUS = (coins, txt) => {
-    const D = DROP; if (!D) return; const pts = Math.round(Math.max(0, coins) * 30 * (mySin() === sin ? 1.5 : 1)); D.score += pts;
-    P.drop = P.drop || {}; P.drop.doors = P.drop.doors || {}; P.drop.doors[sin] = Math.max(P.drop.doors[sin] || 0, pts);
-    if (Object.keys(P.drop.doors).length >= 7) { const h = grantTitle('t_relic'); if (h) setTimeout(() => toast('🎖 비밀 칭호 「일곱 문의 열쇠」!'), 1500); }
-    saveP(); D.paused = false; D.txt.push({ x: 90, y: 110, s: `🚪 ${txt} +${pts}`, c: '#ffe08a', t: 1.8 }); dropMount();
-  };
-  sinStart(sin);
 }
 function dropDraw() {
   const D = DROP, g = D && D.g; if (!g || !document.body.contains(D.cv)) return; const S = D.S, now = D.t;
@@ -276,12 +257,12 @@ function dropEnd(quit) {
   const r = reward('sins', coins, D.score); DROP = null;
   finishGame(`<h2 style="color:var(--gold2);margin-top:0">🍵 ${quit ? '여기까지!' : '다과가 넘쳤어요!'}</h2>
    <p style="font-size:2rem;margin:4px 0;color:var(--gold2)"><b>${D.score}</b></p><p class="muted">${r}</p>
-   <p class="muted">최고 단계 ${DROP_T[D.maxT][1]} ${DROP_T[D.maxT][2]} · 최대 콤보 ${D.best} · 연 문 ${D.doors}개${D.gold ? ` · 황금 합치기 ${D.gold}` : ''}${mine ? ' · 내 죄 ×1.5' : ''}</p>
+   <p class="muted">최고 단계 ${DROP_T[D.maxT][1]} ${DROP_T[D.maxT][2]} · 최대 콤보 ${D.best} · 홀케이크 펑 ${D.pops}번${D.gold ? ` · 황금 합치기 ${D.gold}` : ''}${mine ? ' · 내 죄 ×1.5' : ''}</p>
    <div class="row"><button class="primary" style="flex:1;padding:12px" onclick="closeModal();dropStart()">▶ 한 판 더</button><button onclick="closeModal()">닫기</button></div>`);
 }
 
 /* ---------- 이름 · 설명 ---------- */
-FEATS.sins = { n: '찻잔 떨어뜨리기', ic: '🍵', d: '같은 다과를 합쳐 죄의 문 열기' };
+FEATS.sins = { n: '찻잔 떨어뜨리기', ic: '🍵', d: '같은 다과를 합쳐 더 큰 다과로' };
 
 /* ================= 부엌 머지 (티룸 타이쿤 안) ================= */
 const KM_CH = {

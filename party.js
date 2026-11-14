@@ -1,6 +1,6 @@
 /* =========================================================
-   숲속 저택 — 파티 게임 (아무나 방을 열고 함께 하기)
-   눈치게임 · 은화 경매 · 라이어 게임
+   햄카타 — 파티 게임 (아무나 방을 열고 함께 하기)
+   눈치게임 · 은화 경매 · 라이어 게임 · 인랑(party2.js)
    ========================================================= */
 FEATS.party = { n: '파티 게임', ic: '🎉', d: '여럿이 실시간으로 함께' };
 if (!FEAT_KEYS.includes('party')) FEAT_KEYS.push('party');
@@ -67,7 +67,7 @@ function roomClose() { if (confirm('방을 닫을까요?')) { B.del('rooms/' + P
 function roomView(r) {
   const t = PARTY_TYPES[r.type], host = r.host === ME.uid, ps = Object.entries(r.players || {}), inRoom = !!(r.players || {})[ME.uid];
   const body = !inRoom ? `<p class="muted">이 방에 참가하지 않았어요.</p><button class="primary" onclick="roomJoin('${r.id}')">참가</button>`
-    : r.type === 'nunchi' ? nunchiView(r, host) : r.type === 'auction' ? auctionView(r, host) : liarView(r, host);
+    : r.type === 'nunchi' ? nunchiView(r, host) : r.type === 'auction' ? auctionView(r, host) : r.type === 'werewolf' && typeof wwView === 'function' ? wwView(r, host) : liarView(r, host);
   return `<div class="panel"><div class="row" style="justify-content:space-between"><h2 style="margin:0">${t.ic} ${t.n}</h2>
     <div class="row" style="flex:0 0 auto">${host ? '<button class="sm danger" onclick="roomClose()">방 닫기</button>' : ''}<button class="sm" onclick="roomLeave()">나가기</button><button class="sm" onclick="PROOM=null;render()">목록</button></div></div>
     <div class="toggles" style="margin:8px 0">${ps.map(([u, p]) => `<span class="chip ptchip ${u === ME.uid ? 'on' : ''}">${pxAva(u)}${u === r.host ? '👑 ' : ''}${esc(p.name)}</span>`).join('')}</div>
@@ -241,7 +241,7 @@ function nunchiSettle(r) {
 /* ---------- 구독 ---------- */
 function watchSecret() {
   const r = PROOM && roomOf(PROOM);
-  const want = r && r.type === 'liar' && r.status !== 'lobby' ? 'roomSecrets/' + r.id + '_' + ME.uid : null;
+  const want = r && (r.type === 'liar' || r.type === 'werewolf') && r.status !== 'lobby' ? 'roomSecrets/' + r.id + '_' + ME.uid : null;
   if (watchSecret.cur === want) return;
   if (PSEC_UNSUB) { PSEC_UNSUB(); PSEC_UNSUB = null; } PSECRET = null; watchSecret.cur = want;
   if (want) PSEC_UNSUB = B.onDoc(want, d => { PSECRET = d; if (tab === 'party') softRender(); });
@@ -252,7 +252,7 @@ function partyOnAuth(u) {
   clearInterval(PTIMER); if (!u) return;
   unsubs.push(B.onCol('rooms', l => {
     PROOMS = l.sort((a, b) => (b.at || 0) - (a.at || 0));
-    PROOMS.forEach(r => { if (!(r.players || {})[ME.uid]) return; auctionSettle(r); liarSettle(r); nunchiSettle(r); liarHost(r); });
+    PROOMS.forEach(r => { if (!(r.players || {})[ME.uid]) return; auctionSettle(r); liarSettle(r); nunchiSettle(r); liarHost(r); if (typeof wwSettle === 'function') wwSettle(r); });
     watchSecret();
     if (tab === 'party') softRender();
   }));
