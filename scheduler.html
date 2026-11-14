@@ -1053,6 +1053,19 @@ function addMaps(ev){
   });
   ev.target.value='';
 }
+/* 지금 맵의 그림만 바꾸기: 장소 영역·이름표·공개 설정은 그대로 (비율로 맞춰 놓여요) */
+function replaceMapImg(){
+  const m=S.maps[S.curMapIdx];if(!m)return;
+  const inp=document.createElement('input');inp.type='file';inp.accept='image/*';
+  inp.onchange=()=>{const f=inp.files&&inp.files[0];if(!f)return;const r=new FileReader();
+    r.onload=e=>{const img=new Image();img.onload=()=>{
+      const a0=m.img?m.img.width/m.img.height:0,a1=img.width/img.height;
+      m.img=img;m.dataURL=e.target.result;m.ver=(m.ver||0)+1;m.uploaded=false;
+      switchMapTo(S.curMapIdx);renderPlaces();
+      if(a0&&Math.abs(a0-a1)/a0>.05)alert('그림 비율이 예전과 달라요. 장소 영역은 비율 위치 그대로 옮겨 놓았으니 ✏ 편집 모드에서 확인해 주세요.');
+    };img.src=e.target.result;};r.readAsDataURL(f);};
+  inp.click();
+}
 function renderMapTabs(){
   const row=document.getElementById('mapTabsRow');
   if(!S.maps.length){row.innerHTML='<span style="font-size:11px;color:var(--text3);font-family:var(--font);">맵 없음</span>';return;}
@@ -1062,7 +1075,7 @@ function renderMapTabs(){
       <button class="map-tab" onclick="openMapNameEdit(${i})" title="이름 변경" style="padding:3px 6px;border-left:none;${i===S.curMapIdx?'background:var(--accent3);':''}">✏</button>
       <button class="map-tab" onclick="toggleMapReveal(${i})" title="PL에게 이 맵 공개/숨김" style="padding:3px 6px;border-left:none;${m.revealed?'color:var(--green);':'opacity:.55;'}">${m.revealed?'👁 공개':'🚫 비공개'}</button>
     </div>`).join('')
-    +`<button class="map-tab" onclick="deleteMap()" style="color:var(--red);border-color:#e0a0a0;margin-left:4px;">× 삭제</button>`;
+    +`<button class="map-tab" onclick="replaceMapImg()" style="margin-left:4px;" title="영역은 그대로 두고 그림만 바꿔요">🖼 그림 바꾸기</button><button class="map-tab" onclick="deleteMap()" style="color:var(--red);border-color:#e0a0a0;margin-left:4px;">× 삭제</button>`;
 }
 function switchMapTo(idx){
   S.curMapIdx=idx;renderMapTabs();updateMapDaySelect();
@@ -1896,7 +1909,7 @@ function applyPreset(name){
 
 /* ═══════════════ SAVE / LOAD ═══════════════ */
 function saveProject(){
-  const saveMaps=S.maps.map(m=>({key:m.key,name:m.name,revealed:!!m.revealed,dataURL:m.dataURL}));
+  const saveMaps=S.maps.map(m=>({key:m.key,name:m.name,revealed:!!m.revealed,ver:m.ver||0,dataURL:m.dataURL}));
   const data={
     version:2,
     days:S.days,slotsPerDay:S.slotsPerDay,dayNames:S.dayNames,
@@ -2159,7 +2172,7 @@ function applyBooking(b){
   if(!BR)return;
   const KEYS=['days','slotsPerDay','dayNames','names','places','schedule','departures','condEvents','customColors','pcIdx','tod','now'];
   let last=null,started=false,pending=null,assetSig=null;
-  function textState(){const o={};KEYS.forEach(k=>o[k]=S[k]);o.maps=S.maps.map(m=>({key:m.key,name:m.name,revealed:!!m.revealed}));o.appTitle=document.getElementById('appTitle').textContent.trim();return JSON.stringify(o);}
+  function textState(){const o={};KEYS.forEach(k=>o[k]=S[k]);o.maps=S.maps.map(m=>({key:m.key,name:m.name,revealed:!!m.revealed,ver:m.ver||0}));o.appTitle=document.getElementById('appTitle').textContent.trim();return JSON.stringify(o);}
   function sig(){return Object.entries(S.portraits).map(([k,v])=>'p'+k+v.length).join()+'|'+Object.entries(S.tokens).map(([k,v])=>'t'+k+v.length).join();}
   function busy(){return !!document.querySelector('.overlay.open')||isDrag||isMoveMode||isResizeMode||isLabelMode;}
   async function apply(st){
@@ -2171,9 +2184,10 @@ function applyBooking(b){
     const next=[];
     for(const m of (st.maps||[])){
       let loc=S.maps.find(x=>x.key===m.key);
+      if(loc&&(m.ver||0)!==(loc.ver||0)&&loc.uploaded){const data=await BR.loadMap(m.key,m.ver||0);if(data){const im=await new Promise(res=>{const i=new Image();i.onload=()=>res(i);i.onerror=()=>res(null);i.src=data;});if(im){loc.img=im;loc.dataURL=data;loc.ver=m.ver||0;}}}
       if(!loc){
         const data=await BR.loadMap(m.key);if(!data)continue;
-        loc=await new Promise(res=>{const img=new Image();img.onload=()=>res({key:m.key,name:m.name,img,dataURL:data,uploaded:true});img.onerror=()=>res(null);img.src=data;});
+        loc=await new Promise(res=>{const img=new Image();img.onload=()=>res({key:m.key,name:m.name,img,dataURL:data,uploaded:true,ver:m.ver||0});img.onerror=()=>res(null);img.src=data;});
         if(!loc)continue;
       }
       loc.name=m.name;loc.revealed=!!m.revealed;next.push(loc);
@@ -2193,7 +2207,7 @@ function applyBooking(b){
   setInterval(()=>{
     if(pending&&!busy())apply(pending);
     if(!started)return;
-    S.maps.forEach(m=>{if(!m.key)m.key=mkKey();if(!m.uploaded){m.uploaded=true;BR.uploadMap(m.key,m.name,m.dataURL);}});
+    S.maps.forEach(m=>{if(!m.key)m.key=mkKey();if(!m.uploaded){m.uploaded=true;BR.uploadMap(m.key,m.name,m.dataURL,m.ver||0);}});
     const t=textState();if(t!==last){last=t;BR.saveSched(JSON.parse(t));}
     const sg=sig();if(sg!==assetSig){assetSig=sg;BR.saveAssets(S.portraits,S.tokens);}
   },1500);

@@ -976,8 +976,10 @@ function clockBadge(){const c=PUB&&PUB.clock;if(!c)return '';const SY='①②③
 
 /* ================= PL: 지도 ================= */
 let mapSel=null;const MAPIMG={};
-async function loadMapData(key){
-  const meta=await B.get('maps/'+key);if(!meta||!meta.n)return null;
+async function loadMapData(key,ver){
+  let meta=await B.get('maps/'+key);
+  for(let t=0;ver&&meta&&(meta.ver||0)<ver&&t<8;t++){await new Promise(r=>setTimeout(r,2500));meta=await B.get('maps/'+key);}   // 새 그림이 다 올라갈 때까지 기다려요
+  if(!meta||!meta.n)return null;
   const parts=await Promise.all(Array.from({length:meta.n},(_,i)=>B.get('mapchunks/'+key+'_'+i)));
   if(parts.some(p=>!p))return null;
   return parts.map(p=>p.d).join('');
@@ -1085,10 +1087,10 @@ async function mzCropSave(){const c=MZ_CROP;if(!c)return;const crop=Object.assig
 function mzCropAuto(){if(MZ_CROP)MZ_CROP.r=null;mzCropSave();}
 async function drawPlMap(){
   const cv=$('#plMap');if(!cv||!mapSel)return;
-  const key=mapSel,img=MAPIMG[key];
-  if(!img){MAPIMG[key]='loading';const data=await loadMapData(key);
-    if(!data){delete MAPIMG[key];const l=$('#mapLoading');if(l)l.textContent='지도를 불러오지 못했어요. 잠시 후 다시 열어 주세요.';return;}
-    const im=new Image();im.onload=()=>{MAPIMG[key]=im;if(tab==='map')drawPlMap();};im.src=data;return;}
+  const key=mapSel,ver=(((PUB&&PUB.maps)||[]).find(m=>m.key===key)||{}).ver||0,ck=key+'@'+ver,img=MAPIMG[ck];
+  if(!img){MAPIMG[ck]='loading';const data=await loadMapData(key,ver);
+    if(!data){delete MAPIMG[ck];const l=$('#mapLoading');if(l)l.textContent='지도를 불러오지 못했어요. 잠시 후 다시 열어 주세요.';return;}
+    const im=new Image();im.onload=()=>{MAPIMG[ck]=im;if(tab==='map')drawPlMap();};im.src=data;return;}
   if(img==='loading')return;
   const V=mzView(key,img),box=cv.parentElement,dpr=Math.min(3,window.devicePixelRatio||1),ar=(V.h*img.height)/(V.w*img.width);
   let W=box.clientWidth,H=Math.round(W*ar);
@@ -1456,14 +1458,15 @@ window.KPBridge={
     B.set('sched/main',{state:JSON.stringify(st),writer:CLIENT_ID,at:Date.now()}).catch(e=>toast('스케줄 저장 실패: '+(e.code||e.message)));
     B.set('public/main',derivePublic(st)).catch(()=>{});
   },
-  async uploadMap(key,name,dataURL){
+  async uploadMap(key,name,dataURL,ver){
     try{const c=await compressImage(dataURL,1600,.8);const CH=700000,n=Math.ceil(c.length/CH);
-      const ops=[{op:'set',path:'maps/'+key,data:{name,n,at:Date.now()}}];
+      const ops=[];
       for(let i=0;i<n;i++)ops.push({op:'set',path:'mapchunks/'+key+'_'+i,data:{d:c.slice(i*CH,(i+1)*CH)}});
+      ops.push({op:'set',path:'maps/'+key,data:{name,n,ver:ver||0,at:Date.now()}});   // 조각을 다 올린 뒤에 목록을 바꿔요
       for(let i=0;i<ops.length;i+=3)await B.batch(ops.slice(i,i+3));
     }catch(e){toast('맵 업로드 실패: '+(e.code||e.message));}
   },
-  loadMap:key=>loadMapData(key),
+  loadMap:(key,ver)=>loadMapData(key,ver),
   async saveAssets(portraits,tokens){
     const out={portraits:{},tokens:{}};
     for(const [c,v] of Object.entries(portraits||{}))out.portraits[c]=await compressImage(v,96,.8);
@@ -1479,7 +1482,7 @@ function derivePublic(st){
   const dep={};Object.entries(st.departures||{}).forEach(([c,d])=>dep[c]={day:d.day,slot:d.slot});
   return clean({
     days:st.days,slotsPerDay:st.slotsPerDay,dayNames:st.dayNames,names:st.names,
-    maps:maps.filter(m=>m.revealed).map(m=>({key:m.key,name:m.name})),
+    maps:maps.filter(m=>m.revealed).map(m=>({key:m.key,name:m.name,ver:m.ver||0})),
     places:(st.places||[]).filter(p=>p.revealed).map(p=>{const m=p.mapIdx!=null?maps[p.mapIdx]:null;const on=m&&m.revealed;
       return {name:p.name,color:color(p.name),mapKey:on?m.key:null,nx:on?p.nx??null:null,ny:on?p.ny??null:null,nw:on?p.nw??null:null,nh:on?p.nh??null:null,lbl:p.lbl||null,lox:p.lox??null,loy:p.loy??null,lc:p.lc||null,lb:p.lb||null};}),
     occ,dep,clock:(()=>{const n=st.now;if(!n||!n.d)return null;return {day:n.d,slot:n.s,dayName:(st.dayNames||[])[n.d-1]||('Day '+(n.d-1)),tod:(st.tod||{})[n.d+'_'+n.s]||'',locs:(()=>{const open=new Set((st.places||[]).filter(p=>p.revealed).map(p=>p.name)),o={};Object.entries(st.schedule||{}).forEach(([c,m])=>{const a=m&&m['d'+n.d+'s'+n.s];if(a&&a.place&&open.has(a.place))o[c]=a.place;});return o;})()};})(),at:Date.now()
