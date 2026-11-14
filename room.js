@@ -1782,7 +1782,7 @@ VIEWS.room = () => {
 VIEWS.visit = () => {
   if (RV) {
     const room = hoRoom(RV), likes = likesOf(RV), liked = likes.some(l => l.uid === ME.uid);
-    return `<div style="margin:-4px 0 10px"><button class="sm" onclick="RV=null;render()">← 방 목록</button> <button class="sm" onclick="go('room')">🏠 내 방으로</button></div>
+    return `<div style="margin:-4px 0 10px"><button class="sm" onclick="RV=null;render()">← 방 목록</button> <button class="sm" onclick="go('room')">🏠 내 방으로</button> <button class="sm" onclick="RV=null;go('map')">🗺 지도로</button></div>
      <div class="panel roompanel"><div class="row" style="justify-content:space-between;align-items:center;flex-wrap:wrap;gap:6px">
       <h2 style="margin:0">🚪 ${esc(roomTitle(RV))}</h2>
       ${RV === ME.uid ? `<span class="muted">❤ ${likes.length}</span>` : `<button class="${liked ? 'primary' : ''}" onclick="roomLike('${RV}')">${liked ? '❤' : '🤍'} 좋아요 ${likes.length}</button>`}</div>

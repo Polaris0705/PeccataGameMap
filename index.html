@@ -991,6 +991,9 @@ const ROOM_HINTS=[[/정원|온실|마당|뜰|화원/,['garden']],[/서재|도서
   [/주방|부엌|식당|티룸|다이닝|찻집|찬방/,['tycoon','silver']],[/놀이|오락|게임|유희|지하/,['sins','memory']],[/탑|다락|천문|별/,['tarot']],[/상점|매점|창고|가게/,['shop']],[/로비|현관|입구|대기/,['rank']]];
 function featsOf(name){const r=ROOMS.rooms&&ROOMS.rooms[name];if(r&&Array.isArray(r.feats))return r.feats.filter(k=>FEATS[k]);const h=ROOM_HINTS.find(([re])=>re.test(name||''));return h?h[1]:[];}
 const subOf=name=>(ROOMS.rooms&&ROOMS.rooms[name]&&ROOMS.rooms[name].sub)||'';
+const hoRoomOf=name=>(ROOMS.rooms&&ROOMS.rooms[name]&&ROOMS.rooms[name].ho)||'';
+/* 지도 장소 → 그 HO의 방 구경 (내 HO면 내 방) */
+function enterHoRoom(code){const u=USERS.find(x=>x.ho===code);if(!u)return toast('아직 이 방의 주인이 없어요');if(ME&&u.id===ME.uid)return go('room');RV=u.id;go('visit');}
 const placeIdx=name=>((PUB&&PUB.places)||[]).findIndex(p=>p.name===name);
 function unassigned(){const pl=(PUB&&PUB.places)||[];return FEAT_KEYS.filter(k=>!pl.some(p=>featsOf(p.name).includes(k)));}
 const FREE_FEATS=['shop','rank'];            // 지도와 상관없이 늘 열려 있는 것
@@ -1053,9 +1056,10 @@ VIEWS.map=()=>{
   if(cur){const fs=featsOf(cur.name),sub=subOf(cur.name),sm=maps.find(m=>m.key===sub),ppl=whoAt(cur.name);
     h+=`<div class="panel" id="placePanel"><h2>📍 ${esc(cur.name)}</h2>${ppl.length?`<p class="muted">여기 있는 사람: ${ppl.map(u=>esc(u.ho?cname(u.ho):uname(u))).join(', ')}</p>`:''}
      <div class="grid g3">${sm?`<button class="room solved" onclick="enterSub('${sub}')"><div class="rn">🚪 ${esc(sm.name)} 안으로</div><div class="muted" style="font-size:.8rem">세부 지도 보기</div></button>`:''}
+     ${hoRoomOf(cur.name)?(()=>{const c=hoRoomOf(cur.name),mine=myHo()===c;return `<button class="room solved" onclick="enterHoRoom('${c}')"><div class="rn">🚪 ${esc(cname(c))}의 방 ${mine?'(내 방)':'들어가기'}</div><div class="muted" style="font-size:.8rem">${mine?'꾸미러 가기':'구경하기 · 방명록'}</div></button>`;})():''}
      ${fs.map(featCard).join('')}
      ${myHo()?`<button class="room" onclick="bookAt(${JSON.stringify(cur.name).replace(/"/g,'&quot;')})"><div class="rn">🗝 이곳 조사 예약</div><div class="muted" style="font-size:.8rem">일정표에서 시간 고르기</div></button>`:''}</div>
-     ${!fs.length&&!sm?'<p class="muted">이 방에서 할 수 있는 건 조사뿐인 것 같아요.</p>':''}</div>`;}
+     ${!fs.length&&!sm&&!hoRoomOf(cur.name)?'<p class="muted">이 방에서 할 수 있는 건 조사뿐인 것 같아요.</p>':''}</div>`;}
   h+=extraPanel();
   return h;
 };
@@ -1144,7 +1148,7 @@ window.addEventListener('resize',()=>{if(tab==='map')drawPlMap();});
 /* ---- KP: 방 기능 설정 / 소집 ---- */
 function openRoomSettings(){
   const places=(PUB&&PUB.places)||[];window._rs={};
-  places.forEach(p=>{window._rs[p.name]={feats:featsOf(p.name).slice(),sub:subOf(p.name)};});
+  places.forEach(p=>{window._rs[p.name]={feats:featsOf(p.name).slice(),sub:subOf(p.name),ho:hoRoomOf(p.name)};});
   rsModal();
 }
 function rsModal(){
@@ -1152,7 +1156,8 @@ function rsModal(){
   modal(`<h2 style="color:var(--gold2);margin-top:0">🗺 방 기능 설정</h2><p class="muted">공개된 장소만 나와요. 방마다 놀거리와 세부 지도를 정해요.</p>
    ${places.length?places.map((p,i)=>{const r=window._rs[p.name];return `<div class="card"><b>${esc(p.name)}</b>
      <div class="toggles" style="margin:6px 0">${FEAT_KEYS.map(k=>`<button class="sm ${r.feats.includes(k)?'on':''}" onclick="rsTog(${i},'${k}')">${FEATS[k].ic} ${FEATS[k].n}</button>`).join('')}</div>
-     <label class="muted" style="font-size:.8rem">세부 지도 <select style="width:auto" onchange="window._rs[PUB.places[${i}].name].sub=this.value"><option value="">없음</option>${maps.filter(m=>m.key!==p.mapKey).map(m=>`<option value="${m.key}" ${r.sub===m.key?'selected':''}>${esc(m.name)}</option>`).join('')}</select></label></div>`;}).join(''):'<p class="muted">공개된 장소가 없어요.</p>'}
+     <label class="muted" style="font-size:.8rem">세부 지도 <select style="width:auto" onchange="window._rs[PUB.places[${i}].name].sub=this.value"><option value="">없음</option>${maps.filter(m=>m.key!==p.mapKey).map(m=>`<option value="${m.key}" ${r.sub===m.key?'selected':''}>${esc(m.name)}</option>`).join('')}</select></label>
+     <label class="muted" style="font-size:.8rem;margin-left:8px">🚪 HO 방 <select style="width:auto" onchange="window._rs[PUB.places[${i}].name].ho=this.value"><option value="">없음</option>${HO_CODES.map(c=>`<option value="${c}" ${r.ho===c?'selected':''}>${esc(cname(c))}</option>`).join('')}</select></label></div>`;}).join(''):'<p class="muted">공개된 장소가 없어요.</p>'}
    <div class="row" style="margin-top:8px"><button onclick="closeModal()">취소</button><button class="primary" onclick="rsSave()">저장</button></div>`);
 }
 function rsTog(i,k){const r=window._rs[PUB.places[i].name];r.feats=r.feats.includes(k)?r.feats.filter(x=>x!==k):[...r.feats,k];rsModal();}
