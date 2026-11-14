@@ -117,7 +117,9 @@ function chatHeadHtml() {
   else if (m && m.type === 'secret') info = '참여: ' + (m.members || []).map(cname).join(', ') + ' · KP';
   else if (id === 'ooc') info = '캐릭터 밖 잡담 채널';
   else info = '모두가 함께하는 RP 채널';
-  return `<div><b>${esc(chanTitle(id))}</b>${isLocked() ? ' <span class="badge rejected">🔒 잠김</span>' : ''}<div class="muted" style="font-size:.78rem">${esc(info)}</div></div>
+  const mem = typeof isOnline === 'function' ? chanMemberUids(id).map(u => USERS.find(x => x.id === u)).filter(u => u && (u.ho || isAdminEmail(u.email))).sort((a, b) => isOnline(b) - isOnline(a)) : [];
+  const who = mem.length ? `<div style="font-size:.74rem;margin-top:2px">${mem.map(u => `<span style="margin-right:6px;${isOnline(u) ? '' : 'opacity:.5'}"><span class="odot${isOnline(u) ? '' : ' off'}"></span>${esc(u.ho ? cname(u.ho) : uname(u))}</span>`).join('')}</div>` : '';
+  return `<div><b>${esc(chanTitle(id))}</b>${isLocked() ? ' <span class="badge rejected">🔒 잠김</span>' : ''}<div class="muted" style="font-size:.78rem">${esc(info)}</div>${who}</div>
    <div class="row" style="flex:0 0 auto;gap:5px">${IS_ADMIN && !id.startsWith('dm_') ? `<button class="sm" onclick="toggleLock('${id}')">${isLocked() ? '🔓 잠금 해제' : '🔒 잠그기'}</button>` : ''}
    ${IS_ADMIN && m && m.type === 'secret' ? `<button class="sm" onclick="chanEdit('${id}')">⚙</button>` : ''}<button class="sm" onclick="exportLog()">로그</button></div>`;
 }
@@ -226,7 +228,7 @@ function msgHtml(m, prev) {
   const mname = m.kind === 'ic' ? cname(m.code) : (m.pname || '');
   return `<div class="msg ${m.kind}${mine ? ' mine' : ''}${grouped ? ' grp' : ''}${tome}" onclick="selMsg('${m.id}')">
     <div class="av">${grouped ? '' : avatarHtml(m.kind === 'ic' ? m.code : '', sp.name, m.kind === 'ooc' ? m.uid : '')}</div>
-    <div class="mb">${grouped ? '' : `<div class="nm"><span onclick="event.stopPropagation();mentionInsert(${JSON.stringify(mname).replace(/"/g, '&quot;')})">${esc(sp.name)}</span> <small>${esc(sp.sub)}</small> ${time}</div>`}${body}${grouped && (m.edited || sel) ? time : ''}${acts}</div></div>`;
+    <div class="mb">${grouped ? '' : `<div class="nm"><span onclick="event.stopPropagation();mentionInsert(${JSON.stringify(mname).replace(/"/g, '&quot;')})">${esc(sp.name)}</span>${typeof onlineDot === 'function' ? onlineDot(m.uid) : ''} <small>${esc(sp.sub)}</small> ${time}</div>`}${body}${grouped && (m.edited || sel) ? time : ''}${acts}</div></div>`;
 }
 function renderChatLog() {
   const el = $('#chatLog'); if (!el) return;

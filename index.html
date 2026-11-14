@@ -100,6 +100,9 @@ table{width:100%;border-collapse:collapse;font-size:.88rem}td,th{border-bottom:1
 .story{white-space:pre-line}
 .auth{max-width:420px;margin:30px auto}
 .mapbox{position:relative}
+
+.odot{display:inline-block;width:8px;height:8px;border-radius:50%;background:#4cd964;box-shadow:0 0 0 1px #0a0806,0 0 4px #4cd964;margin:0 3px;vertical-align:middle}.odot.off{background:#6a6058;box-shadow:0 0 0 1px #0a0806}
+.onchip{cursor:pointer;font-size:.8rem;padding:2px 8px;margin-right:4px}
 #plMap{width:100%;display:block;border-radius:8px;cursor:pointer;touch-action:none}
 .mztools{display:flex;gap:4px;flex-wrap:wrap;justify-content:flex-end;align-items:center;margin-top:6px}
 .mapbox.mzfull .mztools{position:absolute;right:8px;top:calc(8px + env(safe-area-inset-top));margin:0;z-index:2}
@@ -525,6 +528,20 @@ let ME=null,PROF=null,IS_ADMIN=false,P=null,PUB=null;
 let USERS=[],BOOKINGS=[],ITEMS=[],QUEUE=[],NOTES=[],PROGS=[],CALL=null,CALLS=[],DEFS=[],RECIPES=[];
 let unsubs=[],tab='',pendingRender=false,MODAL_ITEM=null;
 let MZ={},MZ_FULL=false,MZ_CROP=null;
+/* ---- 접속 중 표시: 1분마다 users/{uid}.seen 갱신, 화면을 떠나면 off ---- */
+const ONLINE_MS=150000;
+const isOnline=u=>!!(u&&u.seen&&!u.off&&Date.now()-u.seen<ONLINE_MS);
+const onlineDot=uid=>isOnline(USERS.find(x=>x.id===uid))?'<span class="odot" title="접속 중"></span>':'';
+const seenTxt=u=>isOnline(u)?'접속 중':!u||!u.seen?'기록 없음':(()=>{const m=Math.round((Date.now()-u.seen)/60000);return m<60?`${Math.max(1,m)}분 전`:m<1440?`${Math.round(m/60)}시간 전`:`${Math.round(m/1440)}일 전`;})();
+let BEAT_UID=null;
+function presenceBeat(off){if(!ME||!B)return;B.update('users/'+ME.uid,{seen:Date.now(),off:!!off}).catch(()=>{});}
+setInterval(()=>{if(!ME){BEAT_UID=null;return;}if(BEAT_UID!==ME.uid){BEAT_UID=ME.uid;presenceBeat(false);return;}if(!document.hidden&&Date.now()%60000<3000)presenceBeat(false);},3000);
+document.addEventListener('visibilitychange',()=>{if(ME)presenceBeat(document.hidden);});
+window.addEventListener('pagehide',()=>{if(ME)presenceBeat(true);});
+function onlineChip(){const n=USERS.filter(isOnline).length;return `<span class="chip onchip" onclick="onlineList()" title="접속 중인 사람">🟢 ${n}명</span>`;}
+function onlineList(){const l=USERS.filter(u=>u.ho||isAdminEmail(u.email)).slice().sort((a,b)=>(isOnline(b)-isOnline(a))||((b.seen||0)-(a.seen||0)));
+  modal(`<h2 style="color:var(--gold2);margin-top:0">🟢 지금 접속</h2>${l.map(u=>`<div class="item" style="margin:4px 0"><div>${isOnline(u)?'<span class="odot"></span> ':'<span class="odot off"></span> '}<b>${esc(u.ho?cname(u.ho):uname(u))}</b> <span class="muted" style="font-size:.8rem">${esc(u.ho?uname(u):'KP')}</span></div><span class="muted" style="font-size:.8rem">${seenTxt(u)}</span></div>`).join('')}<button style="width:100%;margin-top:8px" onclick="closeModal()">닫기</button>`);}
+setInterval(()=>{if(ME&&document.querySelector('.onchip'))softRender();},60000);
 const cname=c=>(PUB&&PUB.names&&PUB.names[c])||c;
 const dayName=d=>(PUB&&PUB.dayNames&&PUB.dayNames[d-1])||('Day '+(d-1));
 const slotsOf=d=>(PUB&&PUB.slotsPerDay&&PUB.slotsPerDay[d-1])||3;
@@ -640,7 +657,7 @@ function headerHtml(){
   const av=PROF.avatar?`<img src="${PROF.avatar}" alt="">`:esc((PROF.name||'?').slice(0,1));
   const role=IS_ADMIN?('KP'+(PROF.ho?' / '+cname(PROF.ho):'')):(PROF.ho?cname(PROF.ho):'HO 미선택');
   return `<header class="top"><h1>${esc(CONFIG.title)}</h1><div class="who">${DEMO?'<span class="demo">데모 모드</span>':''}
-   ${clockBadge()}<span class="coin">${P.coins} 은화</span>
+   ${clockBadge()}${onlineChip()}<span class="coin">${P.coins} 은화</span>
    <div class="pmenu"><button class="pbtn" onclick="event.stopPropagation();MENU=!MENU;render()"><span class="pav">${av}</span><span><b>${esc(PROF.name)}</b> <small class="muted">· ${esc(role)}</small></span> ▾</button>
    ${MENU?`<div class="pdrop" onclick="event.stopPropagation()">
      <button onclick="MENU=false;render();openProfile()">👤 프로필 편집</button>
@@ -701,7 +718,7 @@ async function doAuth(){
   }catch(x){err(authErr(x));}
 }
 async function doReset(){const e=$('#aEmail').value.trim();if(!e)return $('#aErr').textContent='이메일을 먼저 입력해 주세요';try{await B.resetPw(e);toast('재설정 메일을 보냈어요');}catch(x){$('#aErr').textContent=authErr(x);}}
-function logout(){B.signOut();}
+function logout(){const u=ME;if(u){B.update('users/'+u.uid,{seen:Date.now(),off:true}).catch(()=>{}).finally(()=>B.signOut());}else B.signOut();}
 
 function hoView(){
   const taken=c=>usersWithHo(c).filter(u=>u.id!==ME.uid);
@@ -1020,13 +1037,15 @@ function pxTok(u){const im=tokImg(u);if(!im)return null;const k=u.id+'|'+im._src
 const PXAVA={};
 function pxAva(uid){const u=USERS.find(x=>x.id===uid);if(!u)return '';const c=pxTok(u);if(!c)return '';if(!PXAVA[uid]||PXAVA[uid].k!==c._k)PXAVA[uid]={k:c._k,url:c.toDataURL()};return `<img class="pxava" src="${PXAVA[uid].url}" alt="">`;}
 function drawTok(ctx,u,cx,cy,sz){
+  const on=isOnline(u)||u.id===ME.uid;ctx.save();if(!on)ctx.globalAlpha=.5;
   const x=Math.round(cx-sz/2),y=Math.round(cy-sz/2),me=u.id===ME.uid,bob=me?Math.round(Math.sin(Date.now()/300)):0;
   ctx.fillStyle='rgba(0,0,0,.45)';ctx.fillRect(x+3,y+sz+1,sz-4,3);
   ctx.fillStyle='#140c06';ctx.fillRect(x-3,y-3+bob,sz+6,sz+6);ctx.fillStyle=me?'#ffe27a':'#e9e1d4';ctx.fillRect(x-2,y-2+bob,sz+4,sz+4);
   const pt=pxTok(u);ctx.imageSmoothingEnabled=false;
   if(pt)ctx.drawImage(pt,x,y+bob,sz,sz);else{ctx.fillStyle='#3a2a20';ctx.fillRect(x,y+bob,sz,sz);ctx.fillStyle='#ffe27a';ctx.font="bold "+Math.round(sz*.5)+"px 'Galmuri11',sans-serif";ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText((u.ho?cname(u.ho):uname(u)).slice(0,1),cx,cy+bob+1);}
   const nm=(u.ho?cname(u.ho):uname(u)).slice(0,6);ctx.font="11px 'Galmuri11',sans-serif";ctx.textAlign='center';ctx.textBaseline='alphabetic';const tw=ctx.measureText(nm).width;
-  ctx.fillStyle='#140c06';ctx.fillRect(Math.round(cx-tw/2-4),y+sz+5,Math.round(tw+8),14);ctx.fillStyle=me?'#ffe27a':'#ffffff';ctx.fillText(nm,cx,y+sz+16);ctx.textAlign='left';}
+  ctx.fillStyle='#140c06';ctx.fillRect(Math.round(cx-tw/2-4),y+sz+5,Math.round(tw+8),14);ctx.fillStyle=me?'#ffe27a':'#ffffff';ctx.fillText(nm,cx,y+sz+16);ctx.textAlign='left';
+  if(on){ctx.fillStyle='#140c06';ctx.fillRect(x+sz-3,y-4+bob,8,8);ctx.fillStyle='#4cd964';ctx.fillRect(x+sz-2,y-3+bob,6,6);}ctx.restore();}
 function featCard(k){const f=FEATS[k];return `<button class="room" onclick="openFeat('${k}')">${IS_ADMIN&&!FREE_FEATS.includes(k)&&featAt(k)<0?'<div class="muted" style="font-size:.72rem">KP만 · 아직 공개된 장소에 없음</div>':''}<div class="rn">${f.ic} ${f.n}</div><div class="muted" style="font-size:.8rem">${f.d}</div></button>`;}
 VIEWS.map=()=>{
   const maps=(PUB&&PUB.maps)||[],places=(PUB&&PUB.places)||[];
@@ -1614,10 +1633,10 @@ async function saveRecipe(){const {a,b,r,consume}=RCF;if(!a||!b||!r)return toast
 VIEWS.players=()=>{
   const rows=rankRows();
   return `<div class="panel"><h2>플레이어 · 랭킹</h2><p class="muted">HO를 바꾸면 바로 반영돼요.</p>
-  <div style="overflow-x:auto"><table><tr><th>#</th><th>이름</th><th>HO</th><th>보유</th><th>누적</th><th>수수께끼</th><th></th></tr>
+  <div style="overflow-x:auto"><table><tr><th>#</th><th>이름</th><th>HO</th><th>보유</th><th>누적</th><th>수수께끼</th><th>접속</th><th></th></tr>
   ${rows.map((r,i)=>`<tr><td>${i+1}</td><td>${esc(uname(r.u))}<div class="muted" style="font-size:.75rem">${esc(r.u.email||'')}</div></td>
    <td><select style="width:auto" onchange="B.update('users/${r.u.id}',{ho:this.value})"><option value="">-</option>${HO_CODES.map(c=>{const t=usersWithHo(c).find(x=>x.id!==r.u.id);return `<option value="${c}" ${r.u.ho===c?'selected':''} ${t?'disabled':''}>${esc(cname(c))}</option>`;}).join('')}</select>${isAdminEmail(r.u.email)?' <span class="badge">KP</span>':''}</td>
-   <td>${r.coins}</td><td><b>${r.earned}</b></td><td>${r.solved}/${RIDDLES.length}</td><td><button class="sm" onclick="callAsk('${r.u.id}')">🔔</button></td></tr>`).join('')}</table></div></div>
+   <td>${r.coins}</td><td><b>${r.earned}</b></td><td>${r.solved}/${RIDDLES.length}</td><td style="white-space:nowrap;font-size:.8rem">${isOnline(r.u)?'<span class="odot"></span>접속 중':`<span class="muted">${seenTxt(r.u)}</span>`}</td><td><button class="sm" onclick="callAsk('${r.u.id}')">🔔</button></td></tr>`).join('')}</table></div></div>
   ${appPanel()}
   <div class="panel"><h2>KP 계정</h2><p class="muted">KP도 HO가 있으면 PL처럼 함께 참여해요.</p>
    ${USERS.filter(u=>isAdminEmail(u.email)).map(u=>`<div class="row" style="margin:6px 0"><span style="flex:1">${esc(uname(u))} <span class="muted">${esc(u.email)}</span></span>

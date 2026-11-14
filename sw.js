@@ -1,5 +1,5 @@
 /* 햄카타 서비스 워커 — 앱 설치 + 푸시 알림 */
-const CACHE = 'peccata-v46';
+const CACHE = 'peccata-v47';
 const SHELL = ['./', './index.html', './scheduler.html', './gifkit.js', './chat.js', './games.js', './games2.js', './kpdata.js', './games3.js', './rhythm.js', './party.js', './party2.js', './draw.js', './room.js', './tycoon.js', './icons.js', './fonts/Galmuri11.woff2', './fonts/Galmuri11-Bold.woff2', './config.js', './manifest.json', './icon-192.png', './icon-512.png', './apple-touch-icon.png'];
 
 self.addEventListener('install', e => {
