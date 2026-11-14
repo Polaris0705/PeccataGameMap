@@ -157,13 +157,51 @@ function txSetRules(list) {
   txScan(document.body); pxRefresh();
 }
 
+/* ============================================================
+   {HO1} · {분노} → 그 HO를 고른 사람의 캐릭터 이름, {HO1:PL} · {분노:PL} → 플레이어 닉네임
+   아직 주인이 없으면 HO 이름(HO1 · 분노). 채팅·메모 등 사람이 쓴 글에도 적용돼요.
+   ============================================================ */
+const TK_SKIP = 'input,textarea,script,style,[contenteditable],.notk';
+const TKORIG = new WeakMap(), TKOUT = new WeakMap();
+let TKRE = null;
+function tkRe() {
+  if (TKRE) return TKRE; const sins = (typeof HOS !== 'undefined' ? HOS : []).map(h => h.name).filter(Boolean);
+  TKRE = new RegExp('\\{\\s*(HO[1-9]' + (sins.length ? '|' + sins.join('|') : '') + ')\\s*(:\\s*PL)?\\s*\\}', 'gi'); return TKRE;
+}
+function tkCode(k) {
+  if (/^HO\d$/i.test(k)) return k.toUpperCase();
+  const h = (typeof HOS !== 'undefined' ? HOS : []).find(x => x.name === k); if (!h || typeof CONFIG === 'undefined') return '';
+  return Object.keys(CONFIG.hoSins || {}).find(c => CONFIG.hoSins[c] === h.id) || '';
+}
+function tkStr(v) {
+  v = String(v == null ? '' : v); if (v.indexOf('{') < 0) return v; const re = tkRe(); re.lastIndex = 0;
+  return v.replace(re, (m, k, pl) => { const code = tkCode(k); if (!code) return m;
+    const u = typeof USERS !== 'undefined' ? USERS.find(x => x.ho === code) : null;
+    if (!u) return /^HO\d$/i.test(k) ? code : k;
+    return pl ? (typeof uname === 'function' ? uname(u) : u.name || code) : (typeof cname === 'function' ? cname(code) : code); });
+}
+function tkNode(n) {
+  const v = n.nodeValue; if (!v || v.indexOf('{') < 0 || TKOUT.get(n) === v) return;
+  const p = n.parentElement; if (!p || p.closest(TK_SKIP)) return;
+  const out = tkStr(v); if (out === v) return; TKORIG.set(n, v); TKOUT.set(n, out); n.nodeValue = out;
+}
+function tkScan(root) {
+  if (!root) return; if (root.nodeType === 3) return tkNode(root);
+  if (root.textContent && root.textContent.indexOf('{') < 0) return;
+  const tw = document.createTreeWalker(root, NodeFilter.SHOW_TEXT); const l = []; while (tw.nextNode()) l.push(tw.currentNode); l.forEach(tkNode);
+}
+/* HO 주인이나 캐릭터 이름이 바뀌면 다시 계산 */
+function tkRefresh() {
+  TKRE = null; const tw = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT); const l = []; while (tw.nextNode()) l.push(tw.currentNode);
+  l.forEach(n => { if (TKORIG.has(n) && TKOUT.get(n) === n.nodeValue) { const o = TKORIG.get(n), out = tkStr(o); if (out !== n.nodeValue) { TKOUT.set(n, out); n.nodeValue = out; } } else tkNode(n); });
+}
 const pxObs = new MutationObserver(recs => {
   const px = document.documentElement.classList.contains('px');
   for (const r of recs) {
-    if (r.type === 'characterData') { txNode(r.target); const p = r.target.parentElement; if (px && p) pxScan(p); continue; }
+    if (r.type === 'characterData') { tkNode(r.target); txNode(r.target); const p = r.target.parentElement; if (px && p) pxScan(p); continue; }
     r.addedNodes.forEach(n => {
-      if (n.nodeType === 1) { if (n.classList.contains('pxi')) return; txScan(n); if (px) pxScan(n); }
-      else if (n.nodeType === 3 && n.parentElement) { txNode(n); if (px) { PX_RE.lastIndex = 0; if (PX_RE.test(n.nodeValue)) pxScan(n.parentElement); } }
+      if (n.nodeType === 1) { if (n.classList.contains('pxi')) return; tkScan(n); txScan(n); if (px) pxScan(n); }
+      else if (n.nodeType === 3 && n.parentElement) { tkNode(n); txNode(n); if (px) { PX_RE.lastIndex = 0; if (PX_RE.test(n.nodeValue)) pxScan(n.parentElement); } }
     });
   }
 });
