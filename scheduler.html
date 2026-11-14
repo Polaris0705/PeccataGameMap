@@ -71,7 +71,7 @@ body{background:var(--bg);color:var(--text);font-family:var(--font);font-size:va
 .slot-hcol .sl-num,.slot-hcol .sl-tod{cursor:pointer;padding:0 2px;}
 .slot-hcol .sl-tod{font-size:11px;opacity:.85}
 .slot-hcol.now{background:var(--accent3);color:var(--accent);font-weight:700;outline:1px solid var(--accent2);}
-.sch-row{display:flex;align-items:stretch;margin-bottom:3px;flex:1;min-height:32px;}
+.sch-row{display:flex;align-items:stretch;margin-bottom:3px;flex:1 0 auto;min-height:32px;}
 .row-label{width:150px;min-width:150px;display:flex;align-items:center;gap:4px;padding-right:6px;justify-content:flex-end;align-self:center;}
 .row-limg{width:26px;height:26px;border-radius:3px;object-fit:cover;border:1px solid var(--border2);}
 .row-lph{width:26px;height:26px;border-radius:3px;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;font-family:var(--font);}
@@ -83,8 +83,9 @@ body{background:var(--bg);color:var(--text);font-family:var(--font);font-size:va
 .slot:hover{border-color:var(--border2);background:var(--bg4);}
 .slot.fixed-ev{background:#fdf0f0;border-color:var(--red);cursor:not-allowed;}
 .slot.filled{border-color:transparent;}
-.slot-in{width:100%;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:1px;gap:1px;}
-.slot-txt{font-size:9px;line-height:1.1;text-align:center;overflow:hidden;white-space:nowrap;width:100%;padding:0 2px;}
+.slot-in{width:100%;min-height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:2px 1px;gap:1px;}
+.slot-in>*{flex-shrink:0}
+.slot-txt{font-size:9px;line-height:1.35;text-align:center;overflow:hidden;width:100%;padding:1px 2px;word-break:keep-all;overflow-wrap:anywhere;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;}
 .slot-pimgs{display:flex;gap:1px;justify-content:center;}
 .slot-pimg{width:18px;height:18px;border-radius:50%;object-fit:cover;border:1px solid rgba(0,0,0,.15);box-shadow:0 1px 3px rgba(0,0,0,.15);}
 .day-gap{width:5px;flex-shrink:0;background:var(--bg);align-self:stretch;}
