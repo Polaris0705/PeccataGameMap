@@ -11,16 +11,23 @@ function decide(col, type, id, cur, prev, ctx) {
   if (col === 'calls') {
     if (cur.ack || !cur.at || cur.at < ctx.start) return out;
     if (prev && prev.at === cur.at) return out;
-    to(id, '🔔 KP 호출', cur.msg || '차례예요!', 'call');
+    to(id, cur.pre ? '⏳ 곧 차례예요' : '🔔 KP 호출', cur.msg || '차례예요!', cur.pre ? 'call-pre' : 'call');
   }
 
   if (col === 'bookings') {
     if (!prev) {
       if (cur.status === 'pending' && (cur.at || 0) >= ctx.start)
         to(ctx.admins, '🗝 새 조사 예약', `${cur.name || ''}: ${cur.place || ''} ${slotTxt(cur)}${cur.note ? ' · ' + cur.note : ''}`, 'booking');
+      if (cur.status === 'pending' && (cur.at || 0) >= ctx.start && ctx.hos) (cur.parts || []).forEach(c => (ctx.hos[c] || []).filter(u => u !== cur.uid).forEach(u => to(u, '🙋 같이 가자는 신청', `${cur.name || ''}: ${cur.place || ''} ${slotTxt(cur)}`, 'booking-inv-' + id)));
     } else if (prev.status !== cur.status) {
       if (cur.status === 'approved') to(cur.uid, '✅ 조사 예약 승인', `${cur.place || ''} ${slotTxt(cur)}`, 'booking-' + id);
       if (cur.status === 'rejected') to(cur.uid, '조사 예약 거절', `${cur.place || ''}${cur.kpNote ? ' · ' + cur.kpNote : ''}`, 'booking-' + id);
+      if (cur.status === 'cancelled' && prev.status === 'approved') to(cur.uid, '조사 예약 취소', `${cur.place || ''} ${slotTxt(cur)}${cur.kpNote ? ' · ' + cur.kpNote : ''}`, 'booking-' + id);
+    } else {
+      if (cur.status === 'approved' && cur.changedAt && cur.changedAt !== prev.changedAt) to(cur.uid, '📝 조사 예약 변경', `${cur.place || ''} ${slotTxt(cur)}${cur.kpNote ? ' · ' + cur.kpNote : ''}`, 'booking-' + id);
+      if (cur.status === 'approved' && !prev.cancelReq && cur.cancelReq) to(ctx.admins, '🗝 예약 취소 요청', `${cur.name || ''}: ${cur.place || ''} ${slotTxt(cur)}${cur.cancelNote ? ' · ' + cur.cancelNote : ''}`, 'booking-req');
+      if (cur.status === 'approved' && cur.reqNo && cur.reqNo !== prev.reqNo) to(cur.uid, '취소 요청 거절', `${cur.place || ''}${cur.kpNote ? ' · ' + cur.kpNote : ''}`, 'booking-' + id);
+      if (cur.status === 'pending' && cur.editedAt && cur.editedAt !== prev.editedAt) to(ctx.admins, '✏ 예약 수정', `${cur.name || ''}: ${cur.place || ''} ${slotTxt(cur)}`, 'booking');
     }
   }
 

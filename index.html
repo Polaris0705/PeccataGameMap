@@ -95,6 +95,7 @@ table{width:100%;border-collapse:collapse;font-size:.88rem}td,th{border-bottom:1
 #callBar b{font-size:1.05rem}
 @keyframes pulse{0%,100%{box-shadow:0 0 0 rgba(230,207,154,0)}50%{box-shadow:0 0 22px rgba(230,207,154,.7)}}
 #callBar{animation:pulse 1.4s infinite}
+#callBar.pre{animation:none;background:linear-gradient(90deg,#3a3020,#4a3a20)}#callBar button{padding:6px 10px}
 #schedWrap{display:none;padding:0 14px 20px}
 #schedWrap iframe{width:100%;height:calc(100vh - 170px);min-height:560px;border:1px solid var(--line);border-radius:10px;background:#fff}
 .story{white-space:pre-line}
@@ -205,6 +206,7 @@ body.chat-on.dock-mob.sheet-open #chatDock{transform:none}
 tr.mine .bc.free{background:rgba(201,169,106,.07)}
 .bc.busy{background:repeating-linear-gradient(45deg,var(--panel2),var(--panel2) 4px,var(--inbg) 4px,var(--inbg) 8px);cursor:not-allowed}
 .bc.dep{background:var(--inbg);opacity:.5;cursor:not-allowed}
+.bc.past{background:var(--inbg);opacity:.35;cursor:not-allowed}.bgs.now{color:var(--gold2);background:rgba(201,160,54,.15)}
 .bc.pend{outline:1.5px dashed var(--gold);outline-offset:-4px;color:var(--gold2)}
 .bgrid tr .bc.sel{background:var(--wine);color:#fff;font-weight:700}
 .legend{display:flex;gap:12px;flex-wrap:wrap;font-size:.75rem;color:var(--muted)}
@@ -339,7 +341,7 @@ button i.pxi{margin-right:1px}
 </style>
 </head>
 <body>
-<div id="callBar"><div class="in"><div>🔔 <b id="callMsg"></b><div class="muted" style="color:#f3d6d9" id="callSub"></div></div><button class="primary" onclick="ackCall()">확인했어요</button></div></div>
+<div id="callBar"><div class="in"><div>🔔 <b id="callMsg"></b><div class="muted" style="color:#f3d6d9" id="callSub"></div></div><span id="callBtns" class="row" style="flex:0 0 auto;gap:6px"></span></div></div>
 <div class="wrap"><div id="app"><div class="panel">불러오는 중…</div></div></div>
 <div id="schedWrap"></div>
 <div id="modal"><div class="box" id="mbox"></div></div>
@@ -534,7 +536,7 @@ const isOnline=u=>!!(u&&u.seen&&!u.off&&Date.now()-u.seen<ONLINE_MS);
 const onlineDot=uid=>isOnline(USERS.find(x=>x.id===uid))?'<span class="odot" title="접속 중"></span>':'';
 const seenTxt=u=>isOnline(u)?'접속 중':!u||!u.seen?'기록 없음':(()=>{const m=Math.round((Date.now()-u.seen)/60000);return m<60?`${Math.max(1,m)}분 전`:m<1440?`${Math.round(m/60)}시간 전`:`${Math.round(m/1440)}일 전`;})();
 let BEAT_UID=null;
-function presenceBeat(off){if(!ME||!B)return;B.update('users/'+ME.uid,{seen:Date.now(),off:!!off}).catch(()=>{});}
+function presenceBeat(off){if(!ME||!B)return;B.update('users/'+ME.uid,{seen:Date.now(),off:!!off,push:!!(typeof PUSH_ON!=='undefined'&&PUSH_ON)}).catch(()=>{});}
 setInterval(()=>{if(!ME){BEAT_UID=null;return;}if(BEAT_UID!==ME.uid){BEAT_UID=ME.uid;presenceBeat(false);return;}if(!document.hidden&&Date.now()%60000<3000)presenceBeat(false);},3000);
 document.addEventListener('visibilitychange',()=>{if(ME)presenceBeat(document.hidden);});
 window.addEventListener('pagehide',()=>{if(ME)presenceBeat(true);});
@@ -565,7 +567,7 @@ let AUTH_SEQ=0;
 async function onAuth(u){
   const seq=++AUTH_SEQ;
   unsubs.forEach(f=>{try{f();}catch(e){}});unsubs=[];
-  ME=u;PROF=null;P=null;IS_ADMIN=false;CALL=null;attChecked=false;
+  ME=u;PROF=null;P=null;IS_ADMIN=false;CALL=null;attChecked=false;window.LOGIN_AT=Date.now();
   document.body.classList.remove('kp');
   const sw=$('#schedWrap');sw.innerHTML='';sw.style.display='none';
   if(typeof chatOnAuth==='function')chatOnAuth(null);
@@ -603,7 +605,7 @@ async function onAuth(u){
   if(IS_ADMIN){
     sub(B.onCol('itemDefs',l=>{DEFS=l.sort((a,b)=>(a.at||0)-(b.at||0));softRender();}));
     sub(B.onCol('recipes',l=>{RECIPES=l;softRender();}));
-    sub(B.onCol('calls',l=>{CALLS=l;softRender();}));
+    sub(B.onCol('calls',l=>{const pv={};CALLS.forEach(c=>pv[c.id]=c);if(CALLS.length||l.length)l.forEach(c=>{const p=pv[c.id];if(p&&!p.ack&&c.ack&&c.reply&&c.reply!=='ok'){const u=userOf(c.id);toast(`🔔 ${u?(u.ho?cname(u.ho):uname(u)):'?'}: ${REPLY[c.reply]}`);try{beep();}catch(e){}}});CALLS=l;softRender();}));
     mountScheduler();
   }else{
     sub(B.onDoc('calls/'+u.uid,d=>{onCall(d);}));
@@ -736,13 +738,16 @@ let titleTimer=null;
 function onCall(d){
   CALL=d;const bar=$('#callBar');
   if(d&&!d.ack){
-    $('#callMsg').textContent=d.msg||'차례예요!';$('#callSub').textContent=`${d.by||'KP'} · ${ago(d.at)}`;bar.style.display='block';
+    $('#callMsg').textContent=(d.pre?'⏳ ':'')+(d.msg||'차례예요!');$('#callSub').textContent=`${d.by||'KP'} · ${ago(d.at)}`;bar.style.display='block';bar.classList.toggle('pre',!!d.pre);
+    $('#callBtns').innerHTML=d.pre?`<button class="primary" onclick="ackCall('ok')">알겠어요</button>`:`<button class="primary" onclick="ackCall('go')">지금 갈게요</button><button onclick="ackCall('5m')">5분만</button><button onclick="ackCall('no')">지금 어려워요</button>`;
+    clearInterval(window.RERING);let n=0;window.RERING=setInterval(()=>{if(!CALL||CALL.ack||n>=3)return clearInterval(window.RERING);n++;beep();try{navigator.vibrate&&navigator.vibrate([200,100,200]);}catch(e){}
+      try{if(document.hidden&&window.Notification&&Notification.permission==='granted')new Notification(CONFIG.title,{body:'(다시) '+(CALL.msg||'차례예요!')});}catch(e){}},150000);   // 확인 안 하면 2분 30초마다 다시 (3번까지)
     if(d.at!==lastCallAt){lastCallAt=d.at;beep();
       try{if(document.hidden&&window.Notification&&Notification.permission==='granted')new Notification(CONFIG.title,{body:d.msg||'차례예요!'});}catch(e){}
       clearInterval(titleTimer);let f=false;titleTimer=setInterval(()=>{document.title=(f=!f)?'🔔 호출!':CONFIG.title;},900);}
-  }else{bar.style.display='none';clearInterval(titleTimer);document.title=CONFIG.title;}
+  }else{bar.style.display='none';clearInterval(titleTimer);clearInterval(window.RERING);document.title=CONFIG.title;}
 }
-function ackCall(){if(CALL)B.update('calls/'+ME.uid,{ack:true});}
+function ackCall(r){if(CALL)B.update('calls/'+ME.uid,{ack:true,reply:r||'ok',ackAt:Date.now()});}
 function askNotify(){if(!window.Notification)return toast('이 브라우저는 알림을 지원하지 않아요');Notification.requestPermission().then(p=>toast(p==='granted'?'알림을 켰어요':'알림이 허용되지 않았어요'));}
 
 /* ================= 앱 설치 / 푸시 ================= */
@@ -954,7 +959,7 @@ const shopMul=()=>mySin()==='envy'?0.9:1;
 
 /* ================= PL: 로비 ================= */
 function queueInfo(code){
-  const idx=QUEUE.findIndex(q=>(q.codes||[]).includes(code));
+  const idx=QUEUE.findIndex(q=>q.status!=='done'&&(q.codes||[]).includes(code));
   if(idx<0)return '';
   const q=QUEUE[idx];
   if(q.status==='current')return `<span class="badge live">진행 중</span> ${esc(q.label)}`;
@@ -987,6 +992,7 @@ VIEWS.lobby=()=>{
 
 /* ---- 진행 시간대 ---- */
 const TOD_NAME={morning:'아침',day:'낮',evening:'저녁',night:'밤'},TOD_EMO={morning:'🌅',day:'☀️',evening:'🌇',night:'🌙'};
+const TOD_IC={morning:'🌅',day:'☀️',evening:'🌇',night:'🌙'};
 const curTod=()=>(PUB&&PUB.clock&&PUB.clock.tod)||'';
 function clockBadge(){const c=PUB&&PUB.clock;if(!c)return '';const SY='①②③④⑤⑥⑦⑧⑨⑩';
   return `<span class="clockb" title="지금 진행 중인 시간">${esc(c.dayName||'')} ${SY[c.slot-1]||c.slot}${c.tod?` · ${TOD_EMO[c.tod]} ${TOD_NAME[c.tod]}`:''}</span>`;}
@@ -1241,7 +1247,8 @@ let BK_PREV=null;
 function bookingNotify(prev,l){
   const say=(t,b)=>{toast(t+' · '+bkWhen(b)+' '+b.place);try{beep();}catch(e){}try{if(document.hidden&&window.Notification&&Notification.permission==='granted')new Notification(CONFIG.title||'햄카타',{body:t+' · '+b.place});}catch(e){}};
   const me=myHo&&myHo();
-  l.forEach(b=>{const p=prev[b.id];if(!p)return;const mine=b.uid===ME.uid,inv=mine||(me&&(b.parts||[]).includes(me));
+  l.forEach(b=>{const p=prev[b.id];if(!p){if(b.status==='pending'&&b.uid!==ME.uid&&me&&(b.parts||[]).includes(me)&&(b.at||0)>Date.now()-600000)say('🙋 '+(b.name||'누군가')+'님이 같이 가자고 해요',b);return;}const mine=b.uid===ME.uid,inv=mine||(me&&(b.parts||[]).includes(me));
+    {const r0=p.resp||{},r1=b.resp||{};Object.keys(r1).forEach(c=>{if(r1[c]==='no'&&r0[c]!=='no'&&(IS_ADMIN||mine))say(`${cname(c)}: 같이 못 간대요`,b);});}
     if(IS_ADMIN&&!mine){if(!p.cancelReq&&b.cancelReq)say('🗝 예약 취소 요청: '+(b.name||''),b);if(b.status==='pending'&&b.editedAt&&b.editedAt!==p.editedAt)say('✏ 예약 수정: '+(b.name||''),b);}
     if(!inv)return;
     if(p.status!==b.status){if(b.status==='approved')say('✅ 조사 예약 승인',b);else if(b.status==='rejected')say('조사 예약 거절',b);else if(b.status==='cancelled'&&p.status==='approved')say('조사 예약이 취소됐어요',b);}
@@ -1261,9 +1268,11 @@ function bookingCard(b,opts={}){
   return `<div class="card"><div class="h"><div><b>${esc(dayName(b.day))} ${sl}</b> · ${esc(b.place)} <span class="badge ${b.status}">${STATUS[b.status]||b.status}</span>${b.cancelReq&&b.status==='approved'?' <span class="badge pending">취소 요청 중</span>':''}${b.changedAt&&b.status==='approved'?' <span class="badge">KP가 변경</span>':''}${b.editedAt&&b.status==='pending'?' <span class="badge">수정됨</span>':''}</div>
     <div class="row" style="flex:0 0 auto">${opts.actions||''}</div></div>
     <div class="muted">신청: ${esc(b.name||'')} · 참가: ${esc(parts)}${b.note?` · "${esc(b.note)}"`:''}</div>
+    ${(b.parts||[]).length>1&&b.status==='pending'?`<div class="muted" style="font-size:.8rem">동행: ${(b.parts||[]).filter(c=>{const o=USERS.find(u=>u.id===b.uid);return !o||o.ho!==c;}).map(c=>{const r=(b.resp||{})[c];return `${esc(cname(c))} ${r==='ok'?'<span style="color:var(--green2)">✓</span>':r==='no'?'<span style="color:var(--wine2)">✕ 못 감</span>':NPC_CODES.includes(c)?'':'<span title="아직 답 없음">…</span>'}`;}).join(' · ')}</div>`:''}
     ${b.cancelReq&&b.cancelNote?`<div class="muted">취소 이유: ${esc(b.cancelNote)}</div>`:''}${b.kpNote?`<div class="muted" style="color:var(--gold2)">KP: ${esc(b.kpNote)}</div>`:''}${opts.extra||''}</div>`;
 }
 function cellState(c,d,s){
+  const ck=PUB.clock;if(ck&&(d<ck.day||(d===ck.day&&s<ck.slot)))return {k:'past',t:''};
   const dp=PUB.dep&&PUB.dep[c];if(dp&&(d>dp.day||(d===dp.day&&s>=dp.slot)))return {k:'dep',t:'이탈'};
   const me=myHo();
   if(PUB.occ&&PUB.occ[c]&&PUB.occ[c]['d'+d+'s'+s]){
@@ -1275,11 +1284,11 @@ function cellState(c,d,s){
   return {k:'free',t:''};
 }
 function bookGrid(){
-  const me=myHo(),rows=[me,...HO_CODES.filter(c=>c!==me),...NPC_CODES],days=PUB.days||1;
+  const me=myHo(),npcOn=BK.npc||BK.parts.some(c=>NPC_CODES.includes(c)),rows=[me,...HO_CODES.filter(c=>c!==me),...(npcOn?NPC_CODES:[])],days=PUB.days||1;
   let h='<div class="bgwrap"><table class="bgrid"><tr><th class="bgn"></th>';
   for(let d=1;d<=days;d++)h+=`<th colspan="${slotsOf(d)}" class="bgd dstart">${esc(dayName(d))}</th>`;
   h+='</tr><tr><th class="bgn"></th>';
-  for(let d=1;d<=days;d++)for(let s=1;s<=slotsOf(d);s++)h+=`<th class="bgs${s===1?' dstart':''}">${SYMS[s-1]||s}</th>`;
+  for(let d=1;d<=days;d++)for(let s=1;s<=slotsOf(d);s++){const ck=PUB.clock,nw=ck&&ck.day===d&&ck.slot===s;h+=`<th class="bgs${s===1?' dstart':''}${nw?' now':''}" title="${nw?'지금 진행 중':''}">${nw?'▶':''}${SYMS[s-1]||s}${TOD_IC[(PUB.tod||{})[d+'_'+s]]||''}</th>`;}
   h+='</tr>';
   rows.forEach(c=>{
     h+=`<tr class="${c===me?'mine':''}"><th class="bgn" title="${esc(cname(c))}">${esc(cname(c))}${c===me?' <small>(나)</small>':''}</th>`;
@@ -1289,10 +1298,11 @@ function bookGrid(){
     }
     h+='</tr>';
   });
+  if(NPC_CODES.length&&!BK.parts.some(c=>NPC_CODES.includes(c))){let n=0;for(let d=1;d<=days;d++)n+=slotsOf(d);h+=`<tr><td colspan="${n+1}" style="text-align:center;padding:4px"><button class="sm" onclick="BK.npc=!BK.npc;render()">${BK.npc?'NPC 접기 ▴':`NPC ${NPC_CODES.length}명 보기 ▾`}</button></td></tr>`;}
   return h+'</table></div>';
 }
 function gridTap(c,d,s){
-  const me=myHo(),st=cellState(c,d,s);
+  const me=myHo(),st=cellState(c,d,s);if(st.k==='past')return toast('이미 지난 시간이에요');
   if(st.k==='busy'||st.k==='dep')return toast(st.k==='dep'?'이탈한 캐릭터예요':'이미 일정이 있는 칸이에요');
   if(c===me){
     if(BK.day!==d){BK.day=d;BK.slots=[];BK.parts=[me];}
@@ -1316,7 +1326,8 @@ VIEWS.book=()=>{
   const mine=BOOKINGS.filter(b=>b.uid===ME.uid||(b.parts||[]).includes(me));
   const qi=queueInfo(me);
   const when=BK.slots.length?`${esc(dayName(BK.day))} ${BK.slots.slice().sort((a,b)=>a-b).map(s=>SYMS[s-1]||s).join('')}`:'';
-  return `<div class="panel"><h2>조사 예약</h2>
+  const inv=BOOKINGS.filter(b=>b.status==='pending'&&b.uid!==ME.uid&&(b.parts||[]).includes(me)&&!(b.resp||{})[me]);
+  return `${inv.length?`<div class="panel" style="border-color:var(--gold)"><h2>🙋 같이 가자는 신청 (${inv.length})</h2>${inv.map(b=>bookingCard(b,{actions:`<button class="sm primary" onclick="bookResp('${b.id}','ok')">같이 가요</button><button class="sm danger" onclick="bookResp('${b.id}','no')">못 가요</button>`})).join('')}</div>`:''}<div class="panel"><h2>조사 예약</h2>
    <p class="muted">① <b>내 줄</b>에서 시간 칸 → ② 함께 갈 사람 → ③ 장소 고르고 신청</p>
    ${bookGrid()}
    <div class="legend"><span><i style="background:var(--wine)"></i>선택</span><span><i style="outline:1.5px dashed var(--gold);outline-offset:-2px"></i>신청 중</span><span><i style="background:repeating-linear-gradient(45deg,var(--panel2),var(--panel2) 3px,var(--inbg) 3px,var(--inbg) 6px)"></i>일정 있음</span><span><i style="background:var(--inbg);opacity:.6"></i>이탈</span></div>
@@ -1342,6 +1353,7 @@ async function submitBooking(){
   BK.slots=[];BK.note='';BK.parts=[myHo()];
   toast(dup?'신청했어요 (같은 슬롯에 다른 신청이 있어 KP가 조율할 수 있어요)':'예약을 신청했어요');render();
 }
+async function bookResp(id,r){const me=myHo(),b=BOOKINGS.find(x=>x.id===id);try{await B.update('bookings/'+id,{resp:Object.assign({},b&&b.resp,{[me]:r})});}catch(e){return toast('실패: '+(e.code||e.message));}toast(r==='ok'?'같이 간다고 알렸어요':'못 간다고 알렸어요');}
 function cancelBooking(id){if(!confirm('이 예약 신청을 취소할까요?'))return;if(BK.edit===id)BK.edit=null;B.update('bookings/'+id,{status:'cancelled'});}
 /* PL: 대기 중 예약 고치기 · 승인된 예약 취소 요청 */
 function bookEdit(id){const b=BOOKINGS.find(x=>x.id===id);if(!b)return;BK={day:b.day,slots:(b.slots||[]).slice(),place:b.place,parts:(b.parts||[]).slice(),note:b.note||'',edit:id};render();window.scrollTo({top:0,behavior:'smooth'});toast('위에서 바꾼 뒤 "수정 저장"을 눌러요');}
@@ -1489,6 +1501,13 @@ let schedWin=null;
 const CLIENT_ID=rid();
 window.KPBridge={
   clientId:CLIENT_ID,
+  nowChanged(cur,nx){
+    try{if(localStorage.getItem('peccata_autocall')==='0')return;}catch(e){}
+    const by=PROF&&PROF.name||'KP',t=Date.now(),done=new Set(),jobs=[],TI=TOD_IC[cur.tod]||'';
+    cur.ps.forEach(p=>usersWithHo(p.c).forEach(u=>{if(done.has(u.id))return;done.add(u.id);jobs.push(B.set('calls/'+u.id,{msg:`차례예요! ${cur.day} ${cur.sym}${TI} · ${p.place}`,at:t,by,ack:false,pre:false}));}));
+    let pre=0;if(nx)nx.ps.forEach(p=>usersWithHo(p.c).forEach(u=>{if(done.has(u.id))return;done.add(u.id);pre++;jobs.push(B.set('calls/'+u.id,{msg:`곧 차례예요 · 다음 ${nx.day} ${nx.sym}${TOD_IC[nx.tod]||''} · ${p.place}`,at:t,by,ack:false,pre:true}));}));
+    Promise.all(jobs).then(()=>toast(`🔔 ${done.size-pre}명 호출${pre?` · ⏳ ${pre}명 예고`:''}`)).catch(e=>toast('호출 실패: '+(e.code||e.message)));
+  },
   review:id=>reviewBooking(id),
   ready(win){
     schedWin=win;let first=true;pushPending();
@@ -1532,7 +1551,7 @@ function derivePublic(st){
     maps:maps.filter(m=>m.revealed).map(m=>({key:m.key,name:m.name,ver:m.ver||0})),
     places:(st.places||[]).filter(p=>p.revealed).map(p=>{const m=p.mapIdx!=null?maps[p.mapIdx]:null;const on=m&&m.revealed;
       return {name:p.name,color:color(p.name),mapKey:on?m.key:null,nx:on?p.nx??null:null,ny:on?p.ny??null:null,nw:on?p.nw??null:null,nh:on?p.nh??null:null,lbl:p.lbl||null,lox:p.lox??null,loy:p.loy??null,lc:p.lc||null,lb:p.lb||null};}),
-    occ,dep,clock:(()=>{const n=st.now;if(!n||!n.d)return null;return {day:n.d,slot:n.s,dayName:(st.dayNames||[])[n.d-1]||('Day '+(n.d-1)),tod:(st.tod||{})[n.d+'_'+n.s]||'',locs:(()=>{const open=new Set((st.places||[]).filter(p=>p.revealed).map(p=>p.name)),o={};Object.entries(st.schedule||{}).forEach(([c,m])=>{const a=m&&m['d'+n.d+'s'+n.s];if(a&&a.place&&open.has(a.place))o[c]=a.place;});return o;})()};})(),at:Date.now()
+    tod:st.tod||{},occ,dep,clock:(()=>{const n=st.now;if(!n||!n.d)return null;return {day:n.d,slot:n.s,dayName:(st.dayNames||[])[n.d-1]||('Day '+(n.d-1)),tod:(st.tod||{})[n.d+'_'+n.s]||'',locs:(()=>{const open=new Set((st.places||[]).filter(p=>p.revealed).map(p=>p.name)),o={};Object.entries(st.schedule||{}).forEach(([c,m])=>{const a=m&&m['d'+n.d+'s'+n.s];if(a&&a.place&&open.has(a.place))o[c]=a.place;});return o;})()};})(),at:Date.now()
   });
 }
 function mountScheduler(){
@@ -1562,7 +1581,7 @@ VIEWS.kbook=()=>{
   const chk=b=>{if(!schedWin||!schedWin.checkBooking)return '';const e=schedWin.checkBooking(b);return e?`<div class="muted" style="color:var(--wine2)">⚠ ${esc(e)}</div>`:'<div class="muted" style="color:var(--green2)">✓ 충돌 없음</div>';};
   const reqs=BOOKINGS.filter(b=>b.status==='approved'&&b.cancelReq),appr=BOOKINGS.filter(b=>b.status==='approved').sort((a,b)=>a.day-b.day||Math.min(...(a.slots||[9]))-Math.min(...(b.slots||[9])));
   return `${reqs.length?`<div class="panel" style="border-color:var(--gold)"><h2>취소 요청 (${reqs.length})</h2>${reqs.map(b=>bookingCard(b,{actions:`<button class="sm primary" onclick="kbCancel('${b.id}',true)">수락</button><button class="sm" onclick="kbReqReject('${b.id}')">거절</button>`})).join('')}</div>`:''}
-   <div class="panel"><h2>승인 대기 (${pend.length})</h2>
+   <div class="panel"><div class="row" style="justify-content:space-between;align-items:center"><h2 style="margin:0">승인 대기 (${pend.length})</h2>${pend.length>1?`<button class="sm primary" onclick="approveAll()">충돌 없는 것 모두 승인+대기열</button>`:''}</div>
    ${pend.length?pend.map(b=>bookingCard(b,{extra:chk(b),actions:`<button class="sm primary" onclick="approve('${b.id}',true)">승인+대기열</button><button class="sm" onclick="approve('${b.id}',false)">승인</button><button class="sm danger" onclick="rejectAsk('${b.id}')">거절</button>`})).join(''):'<p class="muted">대기 중인 예약이 없어요.</p>'}</div>
    <div class="panel"><h2>승인된 예약 (${appr.length})</h2>${appr.map(b=>bookingCard(b,{actions:`<button class="sm" onclick="kbEdit('${b.id}')">✏ 변경</button><button class="sm danger" onclick="kbCancel('${b.id}')">취소</button>`})).join('')||'<p class="muted">없음</p>'}</div>
    <div class="panel"><h2>최근 처리</h2>${done.filter(b=>b.status!=='approved').map(b=>bookingCard(b)).join('')||'<p class="muted">없음</p>'}</div>`;
@@ -1597,6 +1616,12 @@ async function kbEditGo(){const E=KBE,b=BOOKINGS.find(x=>x.id===E.id);if(!b)retu
   QUEUE.filter(q=>q.bookingId===E.id).forEach(q=>B.update('queue/'+q.id,{label:bookingLabel(nb),codes:nb.parts}).catch(()=>{}));
   closeModal();toast('예약을 바꾸고 일정표에도 반영했어요');if(E.back)setTimeout(openBookList,50);KBE=null;}
 function bookingLabel(b){return `${dayName(b.day)} ${(b.slots||[]).map(s=>SYMS[s-1]||s).join('')} · ${b.place}`;}
+async function approveAll(){
+  if(!schedWin||!schedWin.checkBooking)return toast('스케줄러를 불러오는 중이에요. 잠시 후 다시 눌러 주세요');
+  const L=BOOKINGS.filter(b=>b.status==='pending').sort((a,b)=>a.day-b.day||Math.min(...(a.slots||[9]))-Math.min(...(b.slots||[9]))||(a.at||0)-(b.at||0));
+  let ok=0,skip=0;for(const b of L){if(schedWin.checkBooking(b)||Object.values(b.resp||{}).includes('no')){skip++;continue;}await approve(b.id,true);ok++;}
+  toast(`${ok}건 승인${skip?` · ${skip}건은 겹치거나 못 가는 사람이 있어 남겨 뒀어요`:''}`);
+}
 async function approve(id,toQueue){
   const b=BOOKINGS.find(x=>x.id===id);if(!b)return;
   if(!schedWin||!schedWin.applyBooking)return toast('스케줄러를 불러오는 중이에요. 잠시 후 다시 눌러 주세요');
@@ -1611,7 +1636,10 @@ async function reject(id){window._bookList=!!window._bookListBack;await B.update
 /* ================= KP: 호출·대기열 ================= */
 let QADD={label:'',codes:[]};
 const callOf=uid=>CALLS.find(c=>c.id===uid);
-function callState(uid){const c=callOf(uid);if(!c)return '';return c.ack?`<span class="badge approved">확인 ✓</span>`:`<span class="badge pending">호출 중…</span>`;}
+const REPLY={go:'✓ 갈게요',ok:'확인 ✓','5m':'⏳ 5분만',no:'✕ 어려워요'};
+function callState(uid){const c=callOf(uid),u=userOf(uid),pf=u&&u.push===false?' <span title="푸시 알림이 꺼져 있어요 (앱을 열어 둬야 호출을 받아요)">🔕</span>':'';if(!c)return pf;
+  if(c.ack)return `<span class="badge ${c.reply==='no'?'rejected':c.reply==='5m'?'pending':'approved'}">${REPLY[c.reply]||'확인 ✓'}</span>${pf}`;
+  const m=Math.floor((Date.now()-(c.at||0))/60000);return `<span class="badge ${m>=3?'rejected':'pending'}">${c.pre?'예고':'호출'} ${m>=3?`⚠ ${m}분째 미확인`:'중…'}</span>${pf}`;}
 VIEWS.kqueue=()=>{
   const ps=players();
   const cur=QUEUE.find(q=>q.status==='current');
@@ -1619,8 +1647,9 @@ VIEWS.kqueue=()=>{
    ${ROOMS.gather?`<p class="muted" style="margin:6px 0 0">지금 소집 중: <b>${esc(ROOMS.gather.place)}</b> · ${ago(ROOMS.gather.at)}</p>`:''}</div>
    <div class="panel"><h2>대기열</h2>
    <button class="primary" style="width:100%" onclick="nextTurn()">▶ 다음 차례 호출${cur?' (현재 차례 완료 처리)':''}</button>
-   ${QUEUE.map((q,i)=>{const us=(q.codes||[]).flatMap(usersWithHo);return `<div class="card"><div class="qitem"><div>${q.status==='current'?'<span class="badge live">진행 중</span>':`<span class="badge">${i+1}</span>`} <b>${esc(q.label)}</b><div class="muted">${(q.codes||[]).map(c=>esc(cname(c))).join(', ')} ${us.map(u=>callState(u.id)).join(' ')}</div></div>
-     <div class="row" style="flex:0 0 auto"><button class="sm" onclick="callQueue('${q.id}')">호출</button><button class="sm" onclick="moveQ('${q.id}',-1)">↑</button><button class="sm" onclick="moveQ('${q.id}',1)">↓</button><button class="sm danger" onclick="B.del('queue/${q.id}')">완료</button></div></div></div>`;}).join('')||'<p class="muted">대기열이 비어 있어요.</p>'}
+   ${QUEUE.filter(q=>q.status!=='done').map((q,i)=>{const us=(q.codes||[]).flatMap(usersWithHo);return `<div class="card"><div class="qitem"><div>${q.status==='current'?'<span class="badge live">진행 중</span>':`<span class="badge">${i+1}</span>`} <b>${esc(q.label)}</b><div class="muted">${(q.codes||[]).map(c=>esc(cname(c))).join(', ')} ${us.map(u=>callState(u.id)).join(' ')}</div></div>
+     <div class="row" style="flex:0 0 auto"><button class="sm" onclick="callQueue('${q.id}')">호출</button><button class="sm" onclick="moveQ('${q.id}',-1)">↑</button><button class="sm" onclick="moveQ('${q.id}',1)">↓</button><button class="sm danger" onclick="B.update('queue/${q.id}',{status:'done',doneAt:Date.now()})">완료</button></div></div></div>`;}).join('')||'<p class="muted">대기열이 비어 있어요.</p>'}
+   ${(()=>{const dn=QUEUE.filter(q=>q.status==='done').sort((a,b)=>(b.doneAt||0)-(a.doneAt||0));return dn.length?`<details style="margin-top:10px"><summary><b>✔ 끝난 조사 (${dn.length})</b></summary>${dn.map(q=>`<div class="item" style="margin:4px 0"><div><b>${esc(q.label)}</b><div class="muted" style="font-size:.8rem">${(q.codes||[]).map(c=>esc(cname(c))).join(', ')} · ${q.doneAt?new Date(q.doneAt).toLocaleString('ko-KR',{month:'numeric',day:'numeric',hour:'2-digit',minute:'2-digit'}):''}</div></div><button class="sm" onclick="B.update('queue/${q.id}',{status:'waiting',order:Date.now()})">되돌리기</button></div>`).join('')}<button class="sm danger" style="margin-top:6px" onclick="if(confirm('끝난 조사 기록을 모두 지울까요?'))QUEUE.filter(q=>q.status==='done').forEach(q=>B.del('queue/'+q.id))">기록 지우기</button></details>`:'';})()}
    <h3>직접 추가</h3><input placeholder="이름 (예: 2층 서재 조사)" value="${esc(QADD.label)}" oninput="QADD.label=this.value">
    <div class="toggles" style="margin-top:6px">${HO_CODES.map(c=>`<button class="${QADD.codes.includes(c)?'on':''}" onclick="QADD.codes=QADD.codes.includes('${c}')?QADD.codes.filter(x=>x!=='${c}'):[...QADD.codes,'${c}'];render()">${esc(cname(c))}</button>`).join('')}</div>
    <button style="margin-top:6px" onclick="addQueue()">대기열에 추가</button></div>
@@ -1631,11 +1660,11 @@ function callAsk(uid){const u=userOf(uid);modal(`<h2 style="color:var(--gold2);m
 async function callQueue(id){const q=QUEUE.find(x=>x.id===id);if(!q)return;const uids=(q.codes||[]).flatMap(usersWithHo).map(u=>u.id);
   if(!uids.length)return toast('이 HO로 가입한 PL이 없어요');await callUsers(uids,`차례예요! ${q.label}`);toast('호출했어요');}
 async function nextTurn(){
-  const cur=QUEUE.filter(q=>q.status==='current');for(const q of cur)await B.del('queue/'+q.id);
-  const nx=QUEUE.find(q=>q.status!=='current');if(!nx)return toast('대기열이 비었어요');
+  const cur=QUEUE.filter(q=>q.status==='current');for(const q of cur)await B.update('queue/'+q.id,{status:'done',doneAt:Date.now()});
+  const nx=QUEUE.find(q=>q.status!=='current'&&q.status!=='done');if(!nx)return toast('대기열이 비었어요');
   await B.update('queue/'+nx.id,{status:'current'});await callQueue(nx.id);
 }
-async function moveQ(id,d){const i=QUEUE.findIndex(q=>q.id===id),j=i+d;if(j<0||j>=QUEUE.length)return;const a=QUEUE[i],b=QUEUE[j];
+async function moveQ(id,d){const L=QUEUE.filter(q=>q.status!=='done'),i=L.findIndex(q=>q.id===id),j=i+d;if(j<0||j>=L.length)return;const a=L[i],b=L[j];
   await B.batch([{op:'update',path:'queue/'+a.id,data:{order:b.order}},{op:'update',path:'queue/'+b.id,data:{order:a.order}}]);}
 async function addQueue(){if(!QADD.label.trim()||!QADD.codes.length)return toast('이름과 참가자를 정해 주세요');
   await B.add('queue',{label:QADD.label.trim(),codes:QADD.codes,status:'waiting',order:Date.now(),at:Date.now()});QADD={label:'',codes:[]};render();}

@@ -15,11 +15,12 @@ webpush.setVapidDetails(process.env.VAPID_SUBJECT || 'mailto:kp@example.com', ne
 const ADMIN_EMAILS = (process.env.ADMIN_EMAILS || '').split(',').map(s => s.trim().toLowerCase()).filter(Boolean);
 
 const START = Date.now();
-let admins = [];
+let admins = [], hos = {};
 let sent = 0, lastError = '';
 
 db.collection('users').onSnapshot(s => {
   admins = s.docs.filter(d => ADMIN_EMAILS.includes(String(d.data().email || '').toLowerCase())).map(d => d.id);
+  hos = {}; s.docs.forEach(d => { const h = d.data().ho; if (h) (hos[h] = hos[h] || []).push(d.id); });
 }, e => { lastError = 'users: ' + e.message; console.error(lastError); });
 
 async function sendTo(uid, payload) {
@@ -45,7 +46,7 @@ function watch(col) {
       const id = ch.doc.id, cur = ch.type === 'removed' ? null : ch.doc.data();
       const before = prev.get(id);
       if (!first) {
-        decide(col, ch.type, id, cur, before, { start: START, admins }).forEach(n =>
+        decide(col, ch.type, id, cur, before, { start: START, admins, hos }).forEach(n =>
           sendTo(n.uid, { title: n.title, body: n.body, tag: n.tag, url: './' }).catch(e => { lastError = e.message; console.error(e); }));
       }
       if (cur) prev.set(id, cur); else prev.delete(id);

@@ -12,6 +12,7 @@ function notePool(p) { p = p || P; const held = (p.notes || []).map(n => n.id); 
 // earn()에서 부름: 저장은 earn이 해요
 function noteTry() {
   if (NOTE_SKIP || !P || !ME || !PROF || !PROF.ho) return;
+  if (Date.now() - (window.LOGIN_AT || 0) < 120000) return;   // 접속 직후 2분은 쪽지 없음 (출석·예약 방해 안 하게)
   const cf = NOTECFG; if (!cf.on) return; P.notes = P.notes || [];
   const d = noteDay(); if (d.n >= cf.perDay || P.notes.length >= cf.hold || NOTE_PENDING) return;
   if (Math.random() * 100 >= cf.pct) return;

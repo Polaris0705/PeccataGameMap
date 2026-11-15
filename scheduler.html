@@ -67,6 +67,7 @@ body{background:var(--bg);color:var(--text);font-family:var(--font);font-size:va
 .sch-day-hdr{display:flex;padding-left:150px;margin-bottom:2px;}
 .sch-slot-hdr{display:flex;padding-left:150px;margin-bottom:6px;}
 .day-hcol{text-align:center;font-size:11px;color:var(--text2);font-family:var(--font);}
+.sch-nowbar{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin:0 0 6px;font-size:11px;font-family:var(--font);color:var(--text2)}.sch-nowbar label{display:flex;gap:3px;align-items:center;cursor:pointer}
 .slot-hcol{flex:1;text-align:center;font-size:10px;color:var(--text3);font-family:var(--font);display:flex;justify-content:center;gap:3px;align-items:center;}
 .slot-hcol .sl-num,.slot-hcol .sl-tod{cursor:pointer;padding:0 2px;}
 .slot-hcol .sl-tod{font-size:11px;opacity:.85}
@@ -822,12 +823,28 @@ function openMapNameEdit(idx){
 /* ═══════════════ 시간대 · 지금 진행 중 ═══════════════ */
 const TOD_ORDER=['morning','day','evening','night'],TOD_IC={morning:'🌅',day:'☀️',evening:'🌇',night:'🌙'};
 function cycleTod(d,s){S.tod=S.tod||{};const k=d+'_'+s,i=TOD_ORDER.indexOf(S.tod[k]);if(i===TOD_ORDER.length-1)delete S.tod[k];else S.tod[k]=TOD_ORDER[i+1];renderSchedule();}
-function setNowSlot(d,s){S.now=(S.now&&S.now.d===d&&S.now.s===s)?null:{d,s};renderSchedule();}
+function setNowSlot(d,s){S.now=(S.now&&S.now.d===d&&S.now.s===s)?null:{d,s};renderSchedule();if(S.now)notifyNow();}
+/* '지금 진행 중' 칸이 바뀌면 앱에 알려서 그 칸 참가자 호출 + 다음 칸 참가자 예고 */
+const SYM10=['①','②','③','④','⑤','⑥','⑦','⑧','⑨','⑩'];
+function slotInfo(d,s){const ps=[];ALL.forEach(c=>{const a=getA(c,d,s);if(a&&!isDeparted(c,d,s))ps.push({c,place:a.place||'',ev:a.stype==='event'});});
+  return {d,s,day:S.dayNames[d-1]||('Day '+(d-1)),sym:SYM10[s-1]||String(s),tod:(S.tod||{})[d+'_'+s]||'',ps};}
+function nextOf(d,s){return s<slotsOf(d)?{d,s:s+1}:(d<S.days?{d:d+1,s:1}:null);}
+function notifyNow(){if(!S.now)return;try{const kb=parent.KPBridge;if(kb&&kb.nowChanged){const nx=nextOf(S.now.d,S.now.s);kb.nowChanged(slotInfo(S.now.d,S.now.s),nx?slotInfo(nx.d,nx.s):null);}}catch(e){}}
+function nextNow(){
+  if(!S.now)S.now={d:1,s:1};
+  else{const nx=nextOf(S.now.d,S.now.s);
+    if(!nx){if(!confirm('마지막 칸이에요. 새 Day를 추가하고 넘어갈까요?'))return;addDay();S.now={d:S.days,s:1};}
+    else S.now=nx;}
+  renderSchedule();notifyNow();
+}
+const autoCallOn=()=>{try{return localStorage.getItem('peccata_autocall')!=='0';}catch(e){return true;}};
+function setAutoCall(v){try{localStorage.setItem('peccata_autocall',v?'1':'0');}catch(e){}}
 
 /* ═══════════════ SCHEDULE ═══════════════ */
 function renderSchedule(){
   const wrap=document.getElementById('schWrap');
   let h='';
+  h+=`<div class="sch-nowbar"><button class="btn sm pri" onclick="nextNow()" title="지금 진행 중인 칸을 한 칸 넘겨요 (날도 넘어가요)">▶ 다음 칸으로</button><span>${S.now?`지금: <b>${S.dayNames[S.now.d-1]||'Day '+(S.now.d-1)} ${SYM10[S.now.s-1]||S.now.s}</b>`:'진행 중인 칸 없음 (칸 번호를 누르거나 ▶)'}</span><label title="진행 중인 칸이 바뀌면 그 칸 사람을 호출하고, 다음 칸 사람에게 예고를 보내요"><input type="checkbox" ${autoCallOn()?'checked':''} onchange="setAutoCall(this.checked)"> 🔔 자동 호출</label></div>`;
   // Day headers
   h+='<div class="sch-day-hdr">';
   for(let d=1;d<=S.days;d++){

@@ -77,7 +77,10 @@ service cloud.firestore {
         || (signedIn() && resource.data.uid == request.auth.uid      // 승인된 예약 취소 요청 / 철회
             && resource.data.status == 'approved'
             && request.resource.data.status == 'approved'
-            && onlyChanges(['cancelReq', 'cancelNote', 'cancelAt']));
+            && onlyChanges(['cancelReq', 'cancelNote', 'cancelAt']))
+        || (signedIn() && resource.data.status == 'pending'                 // 같이 가자는 신청에 답하기
+            && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.ho in resource.data.parts
+            && onlyChanges(['resp']));
       allow delete: if isAdmin();
     }
 
@@ -88,7 +91,7 @@ service cloud.firestore {
     match /calls/{uid} {
       allow read: if isMe(uid) || isAdmin();
       allow write: if isAdmin();
-      allow update: if isMe(uid) && onlyChanges(['ack']);
+      allow update: if isMe(uid) && onlyChanges(['ack', 'reply', 'ackAt']);
     }
 
     match /itemDefs/{id} {
