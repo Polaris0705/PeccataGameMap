@@ -23,7 +23,7 @@ window.APP_CONFIG = {
   adminEmails: ["hbfb1107@gmail.com", "amilia0705@gmail.com","nyommyuk@gmail.com"],
 
   // 푸시 알림용 VAPID 공개키 (README 6단계). 비워 두면 푸시 버튼이 숨겨져요.
-  vapidPublicKey: "",
+  vapidPublicKey: "BFFI6mdcrGbaG-yuFuzp49T7rm9rL__uICQkeyuKh_tQDtjj-0dOOZy_tfmpVeHYPGvpIDzixhCWVjC0NqCklbg",
 
   // 채팅 CoC 판정 규칙: 6 = 6판, 7 = 7판
   cocEdition: 7,
