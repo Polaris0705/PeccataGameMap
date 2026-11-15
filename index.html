@@ -90,7 +90,7 @@ table{width:100%;border-collapse:collapse;font-size:.88rem}td,th{border-bottom:1
 #modal .box{background:var(--panel);border:1px solid var(--gold);border-radius:12px;max-width:540px;width:100%;max-height:88vh;overflow:auto;padding:18px}
 #toast{position:fixed;left:50%;bottom:22px;transform:translateX(-50%);background:var(--gold);color:var(--ontext);padding:10px 18px;border-radius:20px;font-weight:600;opacity:0;transition:.3s;pointer-events:none;z-index:40;max-width:90vw;text-align:center}
 #toast.show{opacity:1}
-#callBar{position:sticky;top:0;z-index:25;display:none;background:linear-gradient(90deg,var(--wine),#5a1520);color:#fff;padding:12px 14px;border-bottom:2px solid var(--gold);box-shadow:0 4px 18px rgba(0,0,0,.5)}
+#callBar{position:fixed;left:0;right:0;top:0;z-index:45;display:none;background:linear-gradient(90deg,var(--wine),#5a1520);color:#fff;padding:12px 14px;border-bottom:2px solid var(--gold);box-shadow:0 4px 18px rgba(0,0,0,.5)}
 #callBar .in{max-width:900px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}
 #callBar b{font-size:1.05rem}
 @keyframes pulse{0%,100%{box-shadow:0 0 0 rgba(230,207,154,0)}50%{box-shadow:0 0 22px rgba(230,207,154,.7)}}
@@ -605,11 +605,10 @@ async function onAuth(u){
   if(IS_ADMIN){
     sub(B.onCol('itemDefs',l=>{DEFS=l.sort((a,b)=>(a.at||0)-(b.at||0));softRender();}));
     sub(B.onCol('recipes',l=>{RECIPES=l;softRender();}));
-    sub(B.onCol('calls',l=>{const pv={};CALLS.forEach(c=>pv[c.id]=c);if(CALLS.length||l.length)l.forEach(c=>{const p=pv[c.id];if(p&&!p.ack&&c.ack&&c.reply&&c.reply!=='ok'){const u=userOf(c.id);toast(`🔔 ${u?(u.ho?cname(u.ho):uname(u)):'?'}: ${REPLY[c.reply]}`);try{beep();}catch(e){}}});CALLS=l;softRender();}));
+    sub(B.onCol('calls',l=>{const pv={};CALLS.forEach(c=>pv[c.id]=c);if(CALLS.length||l.length)l.forEach(c=>{const p=pv[c.id];if(p&&c.id!==ME.uid&&!p.ack&&c.ack&&c.reply&&c.reply!=='ok'){const u=userOf(c.id);toast(`🔔 ${u?(u.ho?cname(u.ho):uname(u)):'?'}: ${REPLY[c.reply]}`);try{beep();}catch(e){}}});CALLS=l;softRender();}));
     mountScheduler();
-  }else{
-    sub(B.onDoc('calls/'+u.uid,d=>{onCall(d);}));
   }
+  sub(B.onDoc('calls/'+u.uid,d=>{onCall(d);}));   // KP도 HO를 맡을 수 있으니 모두 호출을 받아요
   if(typeof chatOnAuth==='function')chatOnAuth(u);
   if(typeof gamesOnAuth==='function')gamesOnAuth(u);
   if(typeof partyOnAuth==='function')partyOnAuth(u);
@@ -746,7 +745,11 @@ function onCall(d){
       try{if(document.hidden&&window.Notification&&Notification.permission==='granted')new Notification(CONFIG.title,{body:d.msg||'차례예요!'});}catch(e){}
       clearInterval(titleTimer);let f=false;titleTimer=setInterval(()=>{document.title=(f=!f)?'🔔 호출!':CONFIG.title;},900);}
   }else{bar.style.display='none';clearInterval(titleTimer);clearInterval(window.RERING);document.title=CONFIG.title;}
+  callPad();if(typeof tab!=='undefined'&&tab==='map')softRender();
 }
+function callPad(){const bar=$('#callBar');document.body.style.paddingTop=bar&&bar.style.display==='block'?bar.offsetHeight+'px':'';}
+window.addEventListener('resize',()=>{try{callPad()}catch(e){}});
+function gatherGo(i){if(CALL&&!CALL.ack&&String(CALL.msg||'').startsWith('📣'))ackCall('go');selectPlace(i);}
 function ackCall(r){if(CALL)B.update('calls/'+ME.uid,{ack:true,reply:r||'ok',ackAt:Date.now()});}
 function askNotify(){if(!window.Notification)return toast('이 브라우저는 알림을 지원하지 않아요');Notification.requestPermission().then(p=>toast(p==='granted'?'알림을 켰어요':'알림이 허용되지 않았어요'));}
 
@@ -1063,7 +1066,7 @@ VIEWS.map=()=>{
   const cur=places.find(p=>p.name===MAP_PLACE);
   let h='';
   if(g)h+=`<div class="panel" style="border-color:var(--gold)">📣 <b>${esc(g.by||'KP')}</b>님이 <b>${esc(g.place)}</b>(으)로 모두를 불렀어요.${g.msg?` <span class="muted">"${esc(g.msg)}"</span>`:''}
-    <div class="row" style="margin-top:6px">${placeIdx(g.place)>=0?`<button class="sm primary" onclick="selectPlace(${placeIdx(g.place)})">그곳으로 이동</button>`:''}${IS_ADMIN?'<button class="sm" onclick="clearGather()">소집 해제</button>':''}</div></div>`;
+    <div class="row" style="margin-top:6px">${placeIdx(g.place)>=0?`<button class="sm primary" onclick="gatherGo(${placeIdx(g.place)})">그곳으로 이동</button>`:''}${IS_ADMIN?'<button class="sm" onclick="clearGather()">소집 해제</button>':''}</div>${gatherReply(g)}</div>`;
   if(PROF.shareLoc===undefined)h+=`<div class="panel"><b>내 위치를 다른 사람에게 보여줄까요?</b><p class="muted" style="margin:4px 0 8px">보여주면 내 위치에 토큰이 떠요. 프로필에서 바꿀 수 있어요.</p><div class="row"><button class="primary" onclick="setShare(true)">보여주기</button><button onclick="setShare(false)">숨기기</button></div></div>`;
   if(!maps.length&&!places.length){
     h+=`<div class="panel"><h2>저택 지도</h2><p class="muted">아직 공개된 장소가 없어요.</p>${IS_ADMIN?'<button class="sm" onclick="openRoomSettings()">⚙ 방 기능 설정</button>':''}</div>`;
@@ -1199,6 +1202,11 @@ async function gatherSend(){
   await B.set('settings/rooms',{gather:{place,map:p.mapKey||'',msg,by:PROF.name,at:Date.now()}},true);
   const uids=USERS.filter(u=>u.ho&&u.id!==ME.uid).map(u=>u.id);
   await callUsers(uids,`📣 ${place}(으)로 모여 주세요${msg?' — '+msg:''}`);closeModal();toast('모두를 불렀어요');
+}
+function gatherReply(g){
+  const c=CALL;if(!c||!String(c.msg||'').startsWith('📣')||(c.at||0)<(g.at||0)-60000)return '';
+  if(!c.ack)return `<div class="row" style="margin-top:8px;gap:6px"><span class="muted" style="flex:0 0 auto">응답:</span><button class="sm primary" onclick="ackCall('go')">지금 갈게요</button><button class="sm" onclick="ackCall('5m')">5분만</button><button class="sm" onclick="ackCall('no')">어려워요</button></div>`;
+  return `<p class="muted" style="margin:6px 0 0">내 응답: <b>${REPLY[c.reply]||'확인 ✓'}</b></p>`;
 }
 function clearGather(){B.set('settings/rooms',{gather:null},true);}
 /* ---- 이스터에그 은화 ---- */
