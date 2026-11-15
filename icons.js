@@ -165,19 +165,19 @@ const TK_SKIP = 'input,textarea,script,style,[contenteditable],.notk';
 const TKORIG = new WeakMap(), TKOUT = new WeakMap();
 let TKRE = null;
 function tkRe() {
-  if (TKRE) return TKRE; const sins = (typeof HOS !== 'undefined' ? HOS : []).map(h => h.name).filter(Boolean);
+  if (TKRE) return TKRE; const sins = [...new Set((typeof HOS !== 'undefined' ? HOS : []).flatMap(h => [h.name, h.base]).filter(Boolean))];
   TKRE = new RegExp('\\{\\s*(HO[1-9]' + (sins.length ? '|' + sins.join('|') : '') + ')\\s*(:\\s*PL)?\\s*\\}', 'gi'); return TKRE;
 }
 function tkCode(k) {
   if (/^HO\d$/i.test(k)) return k.toUpperCase();
-  const h = (typeof HOS !== 'undefined' ? HOS : []).find(x => x.name === k); if (!h || typeof CONFIG === 'undefined') return '';
+  const h = (typeof HOS !== 'undefined' ? HOS : []).find(x => x.name === k || x.base === k); if (!h || typeof CONFIG === 'undefined') return '';
   return Object.keys(CONFIG.hoSins || {}).find(c => CONFIG.hoSins[c] === h.id) || '';
 }
 function tkStr(v) {
   v = String(v == null ? '' : v); if (v.indexOf('{') < 0) return v; const re = tkRe(); re.lastIndex = 0;
   return v.replace(re, (m, k, pl) => { const code = tkCode(k); if (!code) return m;
     const u = typeof USERS !== 'undefined' ? USERS.find(x => x.ho === code) : null;
-    if (!u) return /^HO\d$/i.test(k) ? code : k;
+    if (!u) { if (/^HO\d$/i.test(k)) return code; const h = HOS.find(x => x.name === k || x.base === k); return h ? h.name : k; }
     return pl ? (typeof uname === 'function' ? uname(u) : u.name || code) : (typeof cname === 'function' ? cname(code) : code); });
 }
 function tkNode(n) {

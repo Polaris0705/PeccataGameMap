@@ -1989,7 +1989,7 @@ function openFurnShop() {
       ${f.eff ? `<div style="color:var(--gold2);font-size:.85rem">✨ ${f.eff}</div>` : ''}<div class="muted" style="font-size:.78rem">색: ${Object.values(f.parts || {}).map(([n]) => PN[n] || n).join(' · ')}</div></div>
       <button onclick="buyFurn('${k}')" ${P.coins < price(f.cost) ? 'disabled' : ''}>${price(f.cost)} 은화</button></div>`).join('');
   }
-  modal(`<h2 style="color:var(--gold2);margin-top:0">🛒 저택 가구점</h2><p class="muted" style="margin:0 0 6px">보유 은화 <b>${P.coins}</b> · 염료 ${room.dye}${mySin() === 'envy' ? ' · 질투의 눈썰미로 10% 할인 중' : ''}</p>
+  modal(`<h2 style="color:var(--gold2);margin-top:0">🛒 저택 가구점</h2><p class="muted" style="margin:0 0 6px">보유 은화 <b>${P.coins}</b> · 염료 ${room.dye}${mySin() === 'envy' ? ' · ' + sinName('envy') + '의 눈썰미로 10% 할인 중' : ''}</p>
    <div class="toggles">${tabs.map(([k, v]) => `<span class="chip ${SHOPTAB === k ? 'on' : ''}" onclick="SHOPTAB='${k}';openFurnShop()">${v}</span>`).join('')}</div>
    <div style="max-height:58vh;overflow:auto">${list}</div><button style="width:100%;margin-top:8px" onclick="closeModal();render()">닫기</button>`);
   document.querySelectorAll('#mbox canvas.fprev').forEach(c => { c.style.imageRendering = 'pixelated'; paintPreview(c); });

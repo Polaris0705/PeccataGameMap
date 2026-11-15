@@ -106,7 +106,7 @@ earn = function (n) { if (P && n > 0) { wkRoll().e += n; if (!MS_SKIP) msEv('coi
 const wkOf = (p, w) => p.wk && p.wk.w === w ? p.wk.e || 0 : p.wkLast && p.wkLast.w === w ? p.wkLast.e || 0 : 0;
 let RANK_TAB = 'week';
 VIEWS.rank = () => {
-  const w = weekId(), rows = players().map(u => { const p = PROGS.find(x => x.id === u.id) || {}, t = SHOP.find(x => x.id === p.title); return { u, wk: wkOf(p, w), earned: p.earned || 0, title: t ? t.name : '' }; })
+  const w = weekId(), rows = players().map(u => { const p = PROGS.find(x => x.id === u.id) || {}, t = titleTxt(p, u); return { u, wk: wkOf(p, w), earned: p.earned || 0, title: t }; })
     .sort((a, b) => RANK_TAB === 'week' ? b.wk - a.wk : b.earned - a.earned);
   const med = i => ['👑', '🥈', '🥉'][i] || i + 1, lw = weekId(1), champ = players().map(u => ({ u, e: wkOf(PROGS.find(x => x.id === u.id) || {}, lw) })).sort((a, b) => b.e - a.e)[0];
   return `<div class="panel"><h2>🏆 손님 랭킹</h2>
@@ -173,7 +173,7 @@ function dropStep(dt) {
   const G = D.s === 'sloth' ? 210 : 420, E = D.s === 'lust' ? .42 : .12, SUB = 3, h = dt / SUB;
   // 오늘의 죄 이벤트
   D.evT += dt;
-  if (D.s === 'wrath' && D.evT > 12) { D.evT = 0; D.balls.forEach(b => { b.vy -= 90 + Math.random() * 80; b.vx += (Math.random() - .5) * 140; }); D.shake = .35; D.txt.push({ x: 90, y: 120, s: '🔥 분노!', c: '#ff8a60', t: 1 }); buzz(40); sfx('bad'); }
+  if (D.s === 'wrath' && D.evT > 12) { D.evT = 0; D.balls.forEach(b => { b.vy -= 90 + Math.random() * 80; b.vx += (Math.random() - .5) * 140; }); D.shake = .35; D.txt.push({ x: 90, y: 120, s: '🔥 ' + sinName('wrath') + '!', c: '#ff8a60', t: 1 }); buzz(40); sfx('bad'); }
   if (D.s === 'gluttony' && D.evT > 18) { D.evT = 0; const sm = D.balls.filter(b => b.t <= 2 && b.age > 1).sort((a, b) => a.t - b.t)[0]; if (sm) { sm.dead = true; D.txt.push({ x: sm.x, y: sm.y, s: '🍗 냠!', c: '#ffd080', t: 1 }); sfx('pop'); } }
   for (let s = 0; s < SUB; s++) {
     D.balls.forEach(b => { b.vy += G * h; b.x += b.vx * h; b.y += b.vy * h; b.vx *= .995;

@@ -121,6 +121,7 @@ function safeGo(owner, id) {
 }
 function lockEnd(title, line, total) {
   const T = LP_T, before = P.coins, r = reward('lockpick', Math.min(25, total)), got = Math.max(0, P.coins - before), amt = Math.floor(got / 2);
+  if (T && amt > 0) { P.stole = (P.stole || 0) + 1; saveP(); }
   if (T && amt > 0) B.set(`thefts/${T.owner}/log/${T.key}`, { owner: T.owner, thief: ME.uid, amt, at: Date.now(), done: false }).catch(e => console.warn('theft', e));
   LP_T = null;
   finishGame(`<h2 style="color:var(--gold2);margin-top:0">${title}</h2><p>${line}</p><p class="muted">${r || '보상 없음'}${amt > 0 ? ` · 금고 주인의 은화 ${amt}닢이 사라졌어요` : ''}</p>

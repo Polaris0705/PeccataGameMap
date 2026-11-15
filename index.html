@@ -612,6 +612,8 @@ async function onAuth(u){
   if(typeof chatOnAuth==='function')chatOnAuth(u);
   if(typeof gamesOnAuth==='function')gamesOnAuth(u);
   if(typeof partyOnAuth==='function')partyOnAuth(u);
+  sub(B.onDoc('settings/hos',d=>{if(typeof hoNamesApply==='function')hoNamesApply(d&&d.names);softRender();}));
+  sub(B.onDoc('settings/titles',d=>{KT=(d&&d.list)||[];softRender();}));
   if(typeof roomOnAuth==='function')roomOnAuth(u);
 }
 
@@ -637,7 +639,7 @@ function render(){
   if(!IS_ADMIN&&!PROF.ho){app.innerHTML=headerHtml()+hoView();return;}
   const groups=IS_ADMIN?kpTabs():PL_TABS;
   const flat=groups.flatMap(g=>g[1]);
-  if(!flat.find(t=>t[0]===tab)&&!(typeof FEATS!=='undefined'&&FEATS[tab]&&featOpen(tab))&&!(tab==='visit'&&(PROF.ho||IS_ADMIN))&&!(tab==='kdata'&&IS_ADMIN))tab=flat[0][0];
+  if(!flat.find(t=>t[0]===tab)&&!(typeof FEATS!=='undefined'&&FEATS[tab]&&featOpen(tab))&&!(tab==='visit'&&(PROF.ho||IS_ADMIN))&&!((tab==='kdata'||tab==='ktitle')&&IS_ADMIN))tab=flat[0][0];
   const badge=k=>{
     if(k==='sched'){const n=BOOKINGS.filter(b=>b.status==='pending').length;return n?` <span class="dot"></span>${n}`:'';}
     if(k==='kitems'){const n=ITEMS.filter(i=>i.inspectReq).length;return n?` <span class="dot"></span>${n}`:'';}
@@ -665,7 +667,7 @@ function headerHtml(){
      <button onclick="MENU=false;render();openTheme()">🎨 테마 · 글꼴</button>
      <button onclick="MENU=false;render();openAppModal()">📱 앱 · 알림</button>
      <button onclick="MENU=false;toggleSfx();render()">${SFX_ON?'🔇 효과음 끄기':'🔊 효과음 켜기'}</button>
-     ${IS_ADMIN?'<button onclick="MENU=false;render();openGameSettings()">⚙ 저택 설정 (KP)</button><button onclick="MENU=false;render();txToggle(true)">✏ 글자 고치기 (KP)</button><button onclick="MENU=false;go(\'kdata\')">🗂 데이터 관리 (KP)</button>':''}
+     ${IS_ADMIN?'<button onclick="MENU=false;render();openGameSettings()">⚙ 저택 설정 (KP)</button><button onclick="MENU=false;render();txToggle(true)">✏ 글자 고치기 (KP)</button><button onclick="MENU=false;go(\'kdata\')">🗂 데이터 관리 (KP)</button><button onclick="MENU=false;go(\'ktitle\')">🎖 칭호 · HO 이름 (KP)</button>':''}
      <hr><button class="danger" onclick="MENU=false;logout()">로그아웃</button></div>`:''}</div></div></header>`;
 }
 document.addEventListener('click',()=>{if(MENU){MENU=false;render();}});
@@ -970,7 +972,7 @@ function queueInfo(code){
   return `<span class="badge pending">대기 ${ahead+1}번째</span> ${esc(q.label)}`;
 }
 VIEWS.lobby=()=>{
-  const t=SHOP.find(x=>x.id===P.title),f=SHOP.find(x=>x.id===P.frame);
+  const t={name:titleTxt(P,meU())},f=SHOP.find(x=>x.id===P.frame);
   const now=Date.now(),pl=P.plots.slice(0,P.plotCount);
   const ready=pl.filter(p=>p.seed&&now-p.start>=p.dur).length;
   const solved=RIDDLES.filter(r=>(P.riddles[r.id]||{}).solved).length;
@@ -1237,7 +1239,7 @@ async function eggTap(key,mx,my,cv,ev){
       catch(x){P.egg.found.push(best.id);saveP();return toast('누군가 먼저 가져간 자리 같다…');}
       finally{eggBusy=false;}
     }
-    P.egg.found.push(best.id);P.egg.n++;earn(EGG.coins);sfx('spark');
+    P.egg.found.push(best.id);P.egg.n++;P.eggTot=(P.eggTot||0)+1;earn(EGG.coins);sfx('spark');
     sparkle(cv,ev,'+'+EGG.coins);toast(`✨ 반짝! 은화 ${EGG.coins}개를 찾았다 (오늘 ${P.egg.n}/${EGG.perDay})`);
   }else if(bd<(RC('cat')?0.2:0.13)&&P.egg.n<EGG.perDay&&Date.now()-eggHintAt>5000){eggHintAt=Date.now();sparkle(cv,ev,'',true,true);toast('…근처에서 무언가 반짝인 것 같다');}
 }
@@ -1438,7 +1440,7 @@ VIEWS.garden=()=>{
     if(el>=p.dur)h+=`<div class="plot ready"><div class="icon">${sd.icon}</div><div><b>${sd.name}</b><div class="muted">다 자랐어요!</div></div><button class="primary" onclick="harvest(${i})">수확 +${Math.round(sd.sell*sellMul())}</button></div>`;
     else h+=`<div class="plot"><div class="icon" style="filter:grayscale(.6)">🌱</div><div><b>${sd.name}</b><div class="prog"><i style="width:${pct}%"></i></div><div class="muted">${fmt(p.dur-el)} 남음</div></div><div></div></div>`;
   }
-  return `<div class="panel"><h2>온실</h2><p class="muted">씨앗을 심으면 실제 시간에 맞춰 자라요.${mySin()==='sloth'?' (나태 특전: 25% 빨리 자람)':''}${mySin()==='greed'?' (탐욕 특전: 판매가 +15%)':''}</p>
+  return `<div class="panel"><h2>온실</h2><p class="muted">씨앗을 심으면 실제 시간에 맞춰 자라요.${mySin()==='sloth'?' ('+sinName('sloth')+' 특전: 25% 빨리 자람)':''}${mySin()==='greed'?' ('+sinName('greed')+' 특전: 판매가 +15%)':''}</p>
     <div class="grid g3">${h}</div><div style="margin-top:12px"><button onclick="harvestAll()" style="width:100%">전부 수확</button></div></div>`;
 };
 function seedPick(i){modal(`<h2 style="color:var(--gold2);margin-top:0">어떤 씨앗을 심을까요?</h2>${SEEDS.map(s=>{const d=s.min*60000*growMul();return `<div class="item" style="margin:6px 0"><div>${s.icon} <b>${s.name}</b><div class="muted">${fmt(d)} · 판매 ${Math.round(s.sell*sellMul())} 은화</div></div><button onclick="plant(${i},'${s.id}')" ${P.coins<s.cost?'disabled':''}>${s.cost} 은화</button></div>`;}).join('')}<button style="width:100%;margin-top:8px" onclick="closeModal()">닫기</button>`);}
@@ -1453,7 +1455,7 @@ const rs=id=>P.riddles[id]||(P.riddles[id]={solved:false,wrong:0,hints:0,got:0})
 const curReward=r=>Math.round(Math.max(10,r.reward-5*rs(r.id).wrong)*riddleMul());
 VIEWS.riddle=()=>{
   const all=RIDDLES.every(r=>rs(r.id).solved);
-  return `<div class="panel"><h2>저택의 수수께끼</h2><p class="muted">틀릴 때마다 보상이 5은화씩 줄어요(최소 10). 힌트는 은화로 살 수 있어요.${mySin()==='pride'?' (오만 특전: 보상 +20%)':''}</p>
+  return `<div class="panel"><h2>저택의 수수께끼</h2><p class="muted">틀릴 때마다 보상이 5은화씩 줄어요(최소 10). 힌트는 은화로 살 수 있어요.${mySin()==='pride'?' ('+sinName('pride')+' 특전: 보상 +20%)':''}</p>
    <div class="grid g3">${RIDDLES.map((r,i)=>{const st=rs(r.id);return `<div class="room ${st.solved?'solved':''}" onclick="openRiddle('${r.id}')"><div class="no">No.${String(i+1).padStart(2,'0')} ${st.solved?'✦ 해결':''}</div><div class="rn">${r.room}</div><div class="muted">${st.solved?`+${st.got} 은화 획득`:`보상 ${curReward(r)} 은화`}</div></div>`;}).join('')}
    <div class="room ${P.secret?'solved':''}" onclick="openSecret()" style="${all?'':'opacity:.45'}"><div class="no">No.??</div><div class="rn">${all?'숨겨진 방':'???'}</div><div class="muted">${all?(P.secret?'개방됨':'문이 열렸다…'):'모든 수수께끼를 풀면'}</div></div></div></div>`;
 };
@@ -1492,14 +1494,14 @@ VIEWS.shop=()=>{
   const row=it=>{const own=P.owned.includes(it.id),eq=(it.kind==='title'?P.title:P.frame)===it.id;
     const btn=own?(eq?'<button disabled>착용 중</button>':`<button onclick="equip('${it.id}')">착용</button>`):(it.cost<0?'<button disabled>비밀</button>':`<button onclick="buy('${it.id}')" ${P.coins<price(it)?'disabled':''}>${price(it)} 은화</button>`);
     return `<div class="item"><div><b>${it.kind==='title'?'「'+esc(it.name)+'」':esc(it.name)}</b></div>${btn}</div>`;};
-  return `<div class="panel"><h2>칭호</h2>${mySin()==='envy'?'<p class="muted">질투 특전: 10% 할인 적용 중</p>':''}<div class="grid" style="gap:6px">${SHOP.filter(x=>x.kind==='title').map(row).join('')}</div></div>
+  return `${ktShopHtml()}<div class="panel"><h2>칭호</h2>${mySin()==='envy'?`<p class="muted">${sinName('envy')} 특전: 10% 할인 적용 중</p>`:''}<div class="grid" style="gap:6px">${SHOP.filter(x=>x.kind==='title').map(row).join('')}</div></div>
    <div class="panel"><h2>이름표 테두리</h2><div class="grid" style="gap:6px">${SHOP.filter(x=>x.kind==='frame').map(row).join('')}${P.frame?`<button onclick="P.frame='';saveP();render()">테두리 벗기</button>`:''}</div></div>`;
 };
 function buy(id){const it=SHOP.find(x=>x.id===id);if(!spend(Math.round(it.cost*shopMul())))return;P.owned.push(id);equip(id);toast(`${it.name} 구매!`);}
 function equip(id){const it=SHOP.find(x=>x.id===id);if(it.kind==='title')P.title=id;else P.frame=id;saveP();render();}
 function rankRows(){
-  return players().map(u=>{const p=PROGS.find(x=>x.id===u.id)||{};const t=SHOP.find(x=>x.id===p.title);
-    return {u,earned:p.earned||0,coins:p.coins||0,title:t?t.name:'',solved:Object.values(p.riddles||{}).filter(r=>r.solved).length};}).sort((a,b)=>b.earned-a.earned);
+  return players().map(u=>{const p=PROGS.find(x=>x.id===u.id)||{};
+    return {u,earned:p.earned||0,coins:p.coins||0,title:titleTxt(p,u),solved:Object.values(p.riddles||{}).filter(r=>r.solved).length};}).sort((a,b)=>b.earned-a.earned);
 }
 VIEWS.rank=()=>`<div class="panel"><h2>오늘의 손님 랭킹</h2><p class="muted">누적 획득 은화 기준이에요.${IS_ADMIN?` ${PROF.ho?'KP도 HO가 있어서 순위에 함께 들어가요.':'KP는 HO를 배정받으면 순위에 들어가요. (지금 누적: <b>'+P.earned+'</b> 은화)'}`:''}</p><table><tr><th>#</th><th>손님</th><th>HO</th><th>누적</th></tr>
   ${rankRows().map((r,i)=>`<tr${r.u.id===ME.uid?' style="color:var(--gold2)"':''}><td>${i+1}</td><td>${r.title?`<span class="muted">「${esc(r.title)}」</span> `:''}${esc(uname(r.u))}</td><td>${esc(r.u.ho?cname(r.u.ho):'-')}</td><td>${r.earned}</td></tr>`).join('')}</table></div>`;
@@ -1751,5 +1753,6 @@ setInterval(()=>{if(ME&&P&&(tab==='garden'||tab==='lobby')&&!modalOpen())softRen
 <script src="games3.js"></script>
 <script src="rhythm.js"></script>
 <script src="shelf.js"></script>
+<script src="titles.js"></script>
 </body>
 </html>
