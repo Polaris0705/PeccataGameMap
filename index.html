@@ -614,6 +614,7 @@ async function onAuth(u){
   if(typeof partyOnAuth==='function')partyOnAuth(u);
   sub(B.onDoc('settings/hos',d=>{if(typeof hoNamesApply==='function')hoNamesApply(d&&d.names);softRender();}));
   sub(B.onDoc('settings/titles',d=>{KT=(d&&d.list)||[];softRender();}));
+  if(typeof furnOnAuth==='function')furnOnAuth(sub);
   if(typeof roomOnAuth==='function')roomOnAuth(u);
 }
 
@@ -639,7 +640,7 @@ function render(){
   if(!IS_ADMIN&&!PROF.ho){app.innerHTML=headerHtml()+hoView();return;}
   const groups=IS_ADMIN?kpTabs():PL_TABS;
   const flat=groups.flatMap(g=>g[1]);
-  if(!flat.find(t=>t[0]===tab)&&!(typeof FEATS!=='undefined'&&FEATS[tab]&&featOpen(tab))&&!(tab==='visit'&&(PROF.ho||IS_ADMIN))&&!((tab==='kdata'||tab==='ktitle')&&IS_ADMIN))tab=flat[0][0];
+  if(!flat.find(t=>t[0]===tab)&&!(typeof FEATS!=='undefined'&&FEATS[tab]&&featOpen(tab))&&!(tab==='visit'&&(PROF.ho||IS_ADMIN))&&!(['kdata','ktitle','kfurn'].includes(tab)&&IS_ADMIN))tab=flat[0][0];
   const badge=k=>{
     if(k==='sched'){const n=BOOKINGS.filter(b=>b.status==='pending').length;return n?` <span class="dot"></span>${n}`:'';}
     if(k==='kitems'){const n=ITEMS.filter(i=>i.inspectReq).length;return n?` <span class="dot"></span>${n}`:'';}
@@ -667,7 +668,7 @@ function headerHtml(){
      <button onclick="MENU=false;render();openTheme()">🎨 테마 · 글꼴</button>
      <button onclick="MENU=false;render();openAppModal()">📱 앱 · 알림</button>
      <button onclick="MENU=false;toggleSfx();render()">${SFX_ON?'🔇 효과음 끄기':'🔊 효과음 켜기'}</button>
-     ${IS_ADMIN?'<button onclick="MENU=false;render();openGameSettings()">⚙ 저택 설정 (KP)</button><button onclick="MENU=false;render();txToggle(true)">✏ 글자 고치기 (KP)</button><button onclick="MENU=false;go(\'kdata\')">🗂 데이터 관리 (KP)</button><button onclick="MENU=false;go(\'ktitle\')">🎖 칭호 · HO 이름 (KP)</button>':''}
+     ${IS_ADMIN?'<button onclick="MENU=false;render();openGameSettings()">⚙ 저택 설정 (KP)</button><button onclick="MENU=false;render();txToggle(true)">✏ 글자 고치기 (KP)</button><button onclick="MENU=false;go(\'kdata\')">🗂 데이터 관리 (KP)</button><button onclick="MENU=false;go(\'ktitle\')">🎖 칭호 · HO 이름 (KP)</button><button onclick="MENU=false;go(\'kfurn\')">🪑 가구 관리 (KP)</button>':''}
      <hr><button class="danger" onclick="MENU=false;logout()">로그아웃</button></div>`:''}</div></div></header>`;
 }
 document.addEventListener('click',()=>{if(MENU){MENU=false;render();}});
@@ -1754,5 +1755,7 @@ setInterval(()=>{if(ME&&P&&(tab==='garden'||tab==='lobby')&&!modalOpen())softRen
 <script src="rhythm.js"></script>
 <script src="shelf.js"></script>
 <script src="titles.js"></script>
+<script src="dotedit.js"></script>
+<script src="furnmgr.js"></script>
 </body>
 </html>

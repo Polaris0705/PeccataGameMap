@@ -192,6 +192,36 @@ service cloud.firestore {
       allow delete: if isAdmin() || (signedIn() && resource.data.uid == request.auth.uid);
     }
 
+    // 직접 만든 가구 (KP 가구 · PL 전용 가구)
+    match /furn/{id} {
+      allow read: if signedIn();
+      allow create: if isAdmin() || (signedIn() && request.resource.data.by == request.auth.uid && request.resource.data.kind == 'pl');
+      allow update: if isAdmin() || (signedIn() && resource.data.by == request.auth.uid && resource.data.kind == 'pl'
+        && request.resource.data.by == request.auth.uid && request.resource.data.kind == 'pl');
+      allow delete: if isAdmin();
+    }
+
+    // 기본 가구 그림 덮어쓰기 (KP)
+    match /furnOv/{k} {
+      allow read: if signedIn();
+      allow write: if isAdmin();
+    }
+
+    // 경매 (PL 가구 복제품)
+    match /auctions/{id} {
+      allow read: if signedIn();
+      allow create: if signedIn() && request.resource.data.seller == request.auth.uid && request.resource.data.bid == null;
+      allow update: if isAdmin()
+        || (signedIn() && request.auth.uid != resource.data.seller && onlyChanges(['bid', 'n', 'endAt'])
+            && request.resource.data.bid.uid == request.auth.uid
+            && request.time.toMillis() < resource.data.endAt
+            && request.resource.data.endAt <= resource.data.endAt
+            && (resource.data.bid == null || request.resource.data.bid.amt > resource.data.bid.amt))
+        || (signedIn() && resource.data.bid != null && request.auth.uid == resource.data.bid.uid && onlyChanges(['got']))
+        || (isMe(resource.data.seller) && onlyChanges(['paid']));
+      allow delete: if isAdmin() || (isMe(resource.data.seller) && resource.data.bid == null);
+    }
+
     match /thefts/{owner}/log/{id} {
       allow read: if isMe(owner) || isAdmin();
       allow create: if signedIn() && owner != request.auth.uid

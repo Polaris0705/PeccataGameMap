@@ -76,7 +76,7 @@ function todSky(p, t, x, y, w, h) {
 /* ---------- 가구 목록 ----------
    w×d = 바닥 칸, h = 그림 높이(px), cat = 가구점 분류, parts = 색을 바꿀 수 있는 부분 {a,b,c}
    draw(p, t, C)  C.a / C.b / C.c = 각 부분의 색 램프 */
-const PN = { cushion: '쿠션', sheet: '시트', pattern: '무늬', border: '테두리', rose: '장미', runner: '러너', cloth: '천', wood: '나무', metal: '장식', stone: '돌', leaf: '잎', pot: '화분', glass: '유리', curtain: '커튼', frame: '틀', body: '몸', fur: '털', paper: '종이', light: '불빛', hair: '머리카락', face: '얼굴' };
+const PN = { cushion: '쿠션', sheet: '시트', pattern: '무늬', border: '테두리', rose: '장미', runner: '러너', cloth: '천', wood: '나무', metal: '장식', stone: '돌', leaf: '잎', pot: '화분', glass: '유리', curtain: '커튼', frame: '틀', body: '몸', fur: '털', paper: '종이', light: '불빛', hair: '머리카락', face: '얼굴', gold: '금박', thread: '실' };
 const FURN = {
   /* ===== 침실 ===== */
   bed: { name: '침대', cat: 'bed', cost: 60, hi: true, dirs: [0, 1, 2, 3], dims: d => d % 2 ? { w: 3, d: 2, h: 75 } : { w: 2, d: 3, h: 110 },
@@ -157,6 +157,15 @@ const FURN = {
   birdcage: { name: '새장', cat: 'small', cost: 70, hi: true, dims: () => ({ w: 1, d: 1, h: 66 }), parts: { c: ['metal', '#e0b050'], a: ['fur', '#ffd060'] }, drawHi(p, t, C) { BIRDCAGEHI(p, t, C); } },
   cat: { name: '검은 고양이', cat: 'small', cost: 180, eff: '이스터에그 반짝임 범위 넓어짐', hi: true, dims: () => ({ w: 1, d: 1, h: 26 }), parts: { a: ['fur', '#24242c'], c: ['light', '#e8c77a'] }, drawHi(p, t, C) { CATHI(p, t, C); } },
   candle: { name: '촛대', cat: 'small', cost: 20, hi: true, dims: () => ({ w: 1, d: 1, h: 46 }), parts: { c: ['metal', '#e0b050'] }, drawHi(p, t, C) { CANDLEHI(p, t, C); } },
+  /* ===== 취미·생활 (v58) ===== */
+  clawtub: { name: '다리 욕조', cat: 'hobby', cost: 160, hi: true, dims: () => ({ w: 2, d: 1, h: 40 }), parts: { a: ['body', '#f4f0ea'], c: ['metal', '#e0b050'] }, drawHi(p, t, C) { CLAWTUBHI(p, t, C); } },
+  typewriter: { name: '타자기 책상', cat: 'hobby', cost: 70, hi: true, dims: () => ({ w: 1, d: 1, h: 48 }), parts: { a: ['body', '#2e2e36'], b: ['wood', '#8a5530'], c: ['metal', '#e0b050'] }, drawHi(p, t, C) { TYPEWRITERHI(p, t, C); } },
+  sewing: { name: '재봉틀', cat: 'hobby', cost: 90, hi: true, dims: () => ({ w: 1, d: 1, h: 54 }), parts: { a: ['thread', '#a8344a'], b: ['wood', '#93592f'] }, drawHi(p, t, C) { SEWINGHI(p, t, C); } },
+  dollhouse: { name: '인형의 집', cat: 'hobby', cost: 110, hi: true, dims: () => ({ w: 1, d: 1, h: 58 }), parts: { a: ['body', '#f1d6c0'], b: ['wood', '#3a5a8a'] }, drawHi(p, t, C) { DOLLHOUSEHI(p, t, C); } },
+  rockhorse: { name: '흔들 목마', cat: 'hobby', cost: 85, hi: true, dims: () => ({ w: 1, d: 1, h: 46 }), parts: { a: ['body', '#f4ece0'], b: ['cloth', '#a8344a'], c: ['wood', '#93592f'] }, drawHi(p, t, C) { ROCKHORSEHI(p, t, C); } },
+  hatstand: { name: '모자·코트 걸이', cat: 'hobby', cost: 55, hi: true, dims: () => ({ w: 1, d: 1, h: 70 }), parts: { a: ['cloth', '#3a4a6a'], b: ['wood', '#5a3a24'] }, drawHi(p, t, C) { HATSTANDHI(p, t, C); } },
+  byobu: { name: '금박 병풍', cat: 'gothic', cost: 140, hi: true, dims: () => ({ w: 2, d: 1, h: 56 }), parts: { a: ['gold', '#e0b850'], b: ['frame', '#3a1a14'] }, drawHi(p, t, C) { BYOBUHI(p, t, C); } },
+  hibachi: { name: '화로와 쇠주전자', cat: 'gothic', cost: 75, hi: true, dims: () => ({ w: 1, d: 1, h: 30 }), parts: { a: ['pot', '#3a5a8a'], c: ['metal', '#e0b050'] }, drawHi(p, t, C) { HIBACHIHI(p, t, C); } },
   /* ===== 칠죄종 ===== */
   wrath: { name: '분노의 난로', cat: 'sin', cost: 130, hi: true, dims: () => ({ w: 1, d: 1, h: 54 }), parts: { c: ['metal', '#3a3a44'], a: ['light', '#ff6a2a'] }, drawHi(p, t, C) { WRATHHI(p, t, C); } },
   greed: { name: '탐욕의 보석함', cat: 'sin', cost: 130, hi: true, dims: () => ({ w: 1, d: 1, h: 34 }), parts: { c: ['metal', '#e0b050'] }, drawHi(p, t, C) { GREEDHI(p, t, C); } },
@@ -1508,10 +1517,116 @@ const LUSTHI = (p, t, C) => { const { c, el, ln } = p, A = C.a, B = C.b, R = ram
     for (let v = 9; v < 15; v++) for (let u = 19; u < 25; u++) pt(u, v, v < 12 ? '#d8303a' : '#f4e8d0'); pt(21, 14, '#8a5a34'); pt(22, 14, '#8a5a34');
     for (let u = -1; u < 31; u++) pt(u, 19, '#1e3a6a'); };
   book(30, 53);
-  // 옆으로 쓰러진 토끼 인형 (귀가 늘어짐)
-  hblob(p, [['e', [84, 56, 9, 6], '#f4ece4', '#c8b8a8'], ['e', [96, 52, 6, 6], '#f4ece4', '#c8b8a8'], ['l', [100, 48, 110, 42, 5], '#f4ece4', '#c8b8a8'], ['l', [100, 51, 111, 50, 5], '#f4ece4', '#c8b8a8'], ['e', [76, 60, 3, 2], '#f4ece4', '#c8b8a8'], ['e', [88, 61, 3, 2], '#f4ece4', '#c8b8a8']]);
-  hleaf(p, 101, 48, 108, 44, 2, { o: '#f4b8c8', l: '#f4b8c8', t: '#f4b8c8', f: '#f4b8c8' });
-  c(95, 50, 2, 2, OL); c(95, 50, 1, 1, '#ffffff'); c(98, 52, 1, 1, OL); el(93, 54, 1, 1, '#e87890'); c(88, 51, 3, 6, R.t); el(84, 58, 5, 3, '#ffffff'); };
+  // 나란히 앉은 토끼 인형 둘 — 왼쪽은 동그란 눈, 오른쪽은 반원 눈 (오른쪽 귀 하나는 접힘)
+  const bunny = (x, y, fur, ln, half) => { const PK = { o: '#f4b8c8', l: '#f4b8c8', t: '#f4b8c8', f: '#f4b8c8' };
+    const ears = half ? [['l', [x - 3, y - 19, x - 5, y - 30, 4], fur, ln], ['l', [x + 3, y - 19, x + 10, y - 24, 4], fur, ln]]
+                      : [['l', [x - 3, y - 19, x - 4, y - 31, 4], fur, ln], ['l', [x + 3, y - 19, x + 4, y - 31, 4], fur, ln]];
+    hblob(p, [...ears, ['e', [x, y - 6, 7, 6], fur, ln], ['e', [x - 4, y, 3, 2], fur, ln], ['e', [x + 4, y, 3, 2], fur, ln], ['e', [x, y - 16, 6, 5], fur, ln]]);
+    if (half) { hleaf(p, x - 3, y - 21, x - 5, y - 28, 1, PK); hleaf(p, x + 4, y - 20, x + 9, y - 23, 1, PK); }
+    else { hleaf(p, x - 3, y - 21, x - 4, y - 29, 1, PK); hleaf(p, x + 3, y - 21, x + 4, y - 29, 1, PK); }
+    [-3, 2].forEach(dx => { const ex = x + dx;
+      if (half) { c(ex, y - 17, 2, 1, OL); c(ex - 1, y - 16, 1, 1, OL); c(ex + 2, y - 16, 1, 1, OL); }   // 반눈 ⩌ (선만)
+      else { c(ex, y - 17, 2, 2, OL); c(ex, y - 17, 1, 1, '#ffffff'); } });   // 동그란 눈 + 반짝
+    c(x - 1, y - 14, 2, 1, '#e87890'); el(x - 5, y - 14, 1, 1, '#f4a8b8'); el(x + 5, y - 14, 1, 1, '#f4a8b8'); el(x, y - 4, 3, 2, '#ffffff'); };
+  bunny(84, 66, '#f4ece4', '#c8b8a8', false);
+  bunny(99, 66, '#f6e4e8', '#c8a8b0', true);
+  };
+/* ===== 새 가구 (v58): 취미·생활 + 앤틱 ===== */
+// 다리 달린 욕조 128 × 80
+const CLAWTUBHI = (p, t, C) => { const { c, el, ln } = p, A = C.a, M = C.c;
+  el(64, 76, 56, 3, 'rgba(0,0,0,.18)');
+  [[18], [104]].forEach(([x]) => { el(x + 3, 72, 6, 5, M.o); el(x + 3, 71, 5, 4, M.t); c(x + 1, 66, 5, 6, M.o); c(x + 2, 66, 3, 5, M.t); c(x + 2, 66, 1, 4, M.L); [-4, 0, 4].forEach(d => c(x + 3 + d, 75, 2, 2, M.o)); });
+  for (let y = 16; y < 68; y++) { const u = (y - 16) / 52, sh = Math.round(Math.pow(u, 3) * 18), x0 = 6 + sh, x1 = 122 - sh;
+    c(x0 - 1, y, x1 - x0 + 2, 1, A.o); c(x0, y, x1 - x0, 1, u < .15 ? A.L : A.t); c(x0, y, 4, 1, A.l); c(x1 - 7, y, 7, 1, A.f); if (u > .8) c(x0 + 2, y, x1 - x0 - 4, 1, A.f); }
+  c(14, 34, 100, 2, M.t); c(14, 34, 100, 1, M.L);
+  el(64, 18, 58, 10, A.o); el(64, 18, 57, 9, A.L); el(64, 19, 52, 7, '#7ab8d0'); el(64, 20, 48, 5, '#9ad0e4'); for (let i = 0; i < 6; i++) { const x = 34 + i * 12 + ((t >> 2) + i) % 3; el(x, 18 + (i % 2), 4, 2, '#ffffff'); el(x + 3, 17 + (i % 2), 2, 1, '#eef8ff'); }
+  c(110, 6, 4, 12, M.o); c(111, 6, 2, 11, M.t); c(104, 4, 14, 4, M.o); c(105, 5, 12, 2, M.L); c(102, 7, 4, 5, M.o); c(103, 8, 2, 3, M.t); el(108, 3, 3, 1, M.d);
+  if (t % 8 < 4) c(103, 13, 1, 2, '#9ad0e4');
+  c(24, 11, 10, 4, '#e8c060'); c(24, 11, 10, 1, '#fff2b0'); };
+// 타자기 책상 64 × 96
+const TYPEWRITERHI = (p, t, C) => { const { c, el } = p, B = C.b, A = C.a, M = C.c;
+  el(32, 92, 28, 3, 'rgba(0,0,0,.18)');
+  c(2, 42, 60, 8, B.o); c(3, 43, 58, 5, B.t); c(3, 43, 58, 1, B.L); c(3, 47, 58, 1, B.d); hgrain(p, 4, 44, 56, 3, B, 3);
+  [[5], [53]].forEach(([x]) => { c(x, 50, 6, 42, B.o); c(x + 1, 50, 4, 41, B.t); c(x + 1, 50, 1, 41, B.l); }); c(11, 52, 42, 10, B.o); c(12, 53, 40, 8, B.f); c(29, 56, 6, 2, M.t);
+  c(18, 2, 28, 24, '#f8f4ea'); c(18, 2, 28, 1, '#ffffff'); for (let i = 0; i < 6; i++) c(21, 6 + i * 3, 10 + (i * 7) % 12, 1, '#7a7a84'); c(17, 24, 30, 1, '#c8c0b0');
+  c(8, 22, 48, 7, A.o); c(9, 23, 46, 5, A.t); c(9, 23, 46, 1, A.L); el(8, 25, 3, 3, A.o); el(56, 25, 3, 3, A.o); c(56, 21, 6, 2, M.t);
+  c(10, 28, 44, 14, A.o); c(11, 29, 42, 12, A.t); c(11, 29, 42, 1, A.l); c(14, 30, 36, 2, M.t); c(25, 30, 14, 1, M.L);
+  for (let r = 0; r < 3; r++) for (let k = 0; k < 9 - (r === 2 ? 2 : 0); k++) { const x = 14 + r * 2 + k * 4 + (r === 2 ? 2 : 0), y = 33 + r * 3; c(x, y, 3, 2, '#e8e0d0'); c(x, y + 2, 3, 1, '#4a4a52'); }
+  c(20, 41, 24, 1, A.o); };
+// 금박 병풍 128 × 112
+const BYOBUHI = (p, t, C) => { const { c, el, ln } = p, A = C.a, B = C.b;
+  el(64, 108, 60, 3, 'rgba(0,0,0,.2)');
+  for (let k = 0; k < 4; k++) { const x0 = 4 + k * 30, back = k % 2, top = back ? 8 : 4, bot = back ? 102 : 106, w = 30;
+    c(x0, top, w, bot - top, B.o); c(x0 + 2, top + 2, w - 4, bot - top - 4, back ? A.f : A.t);
+    for (let y = top + 2; y < bot - 2; y += 6) for (let x = x0 + 2; x < x0 + w - 2; x += 6) c(x + ((y >> 1) % 2) * 3, y, 1, 1, back ? A.t : A.l);
+    c(x0 + 2, top + 2, w - 4, 1, back ? A.t : A.L); c(x0 + (back ? w - 3 : 2), top + 2, 1, bot - top - 4, back ? A.d : A.l); }
+  const G = ramp('#3f6b3a'), S = ramp('#5a3a24');
+  ln(14, 98, 30, 50, S.t, 3); ln(30, 50, 40, 30, S.t, 2); [[24, 62], [34, 40], [44, 30]].forEach(([x, y]) => { el(x, y, 10, 4, G.o); el(x, y - 1, 9, 3, G.t); el(x - 2, y - 2, 5, 1, G.l); });
+  el(62, 30, 10, 10, '#c8303a'); el(61, 29, 8, 8, '#e04848');
+  [[84, 52], [100, 40]].forEach(([x, y], i) => { el(x, y, 8, 3, '#ffffff'); el(x + 6, y - 3, 2, 3, '#ffffff'); c(x + 7, y - 6, 2, 2, '#e02a2a'); c(x + 9, y - 4, 4, 1, OL); ln(x - 2, y + 2, x - 4, y + 12, OL, 1); ln(x + 2, y + 2, x + 1, y + 12, OL, 1); ln(x - 8, y - 1 - i * 2, x - 14, y - 8, '#e8e8f0', 2); ln(x + 8, y - 1, x + 14, y - 9 + i * 2, '#e8e8f0', 2); c(x - 15, y - 9, 3, 2, OL); c(x + 13, y - 10 + i * 2, 3, 2, OL); });
+  for (let x = 6; x < 124; x += 9) { c(x, 94, 5, 4, '#e8e8f0'); c(x + 1, 93, 3, 1, '#ffffff'); }
+  for (let k = 0; k < 4; k++) { const x0 = 4 + k * 30; c(x0 + 1, (k % 2 ? 8 : 4) + 1, 28, 1, GOLD); } };
+// 화로 + 쇠주전자 64 × 60
+const HIBACHIHI = (p, t, C) => { const { c, el } = p, A = C.a, M = C.c;
+  el(32, 56, 26, 3, 'rgba(0,0,0,.2)');
+  for (let y = 26; y < 56; y++) { const u = (y - 26) / 30, hw = Math.round(26 - Math.pow(u - .3, 2) * 10); c(32 - hw - 1, y, hw * 2 + 2, 1, A.o); c(32 - hw, y, hw * 2, 1, A.t); c(32 - hw, y, 4, 1, A.l); c(32 + hw - 5, y, 5, 1, A.f); }
+  for (let k = 0; k < 6; k++) { const x = 12 + k * 8; c(x, 38 + (k % 2) * 4, 5, 1, '#f1e6cc'); c(x + 2, 37 + (k % 2) * 4, 1, 3, '#f1e6cc'); }
+  el(32, 27, 27, 6, A.o); el(32, 27, 26, 5, A.L); el(32, 28, 22, 4, '#8a8a84'); el(32, 28, 20, 3, '#b4b0a4');
+  [[24, 28], [36, 29], [30, 27]].forEach(([x, y], i) => { el(x, y, 4, 2, '#2a2224'); c(x - 1, y, 2, 1, (t + i) % 6 < 3 ? '#ff6a2a' : '#ffa040'); });
+  el(32, 16, 13, 10, '#24202a'); el(31, 15, 11, 9, '#3a3640'); for (let i = 0; i < 5; i++) for (let j = 0; j < 3; j++) c(23 + i * 4, 11 + j * 4, 1, 1, '#5a5662'); el(28, 10, 4, 2, '#5a5662');
+  c(44, 14, 8, 2, '#24202a'); c(50, 12, 3, 3, '#24202a'); el(32, 6, 5, 2, '#24202a'); c(31, 3, 3, 2, '#3a3640');
+  for (let i = 0; i < 16; i++) { const a = Math.PI + i / 15 * Math.PI; c(32 + Math.round(Math.cos(a) * 15), 8 + Math.round(Math.sin(a) * 10), 1, 1, M.t); }
+  hsteam(p, 52, 8, t, 0); };
+// 재봉틀 64 × 108
+const SEWINGHI = (p, t, C) => { const { c, el, ln } = p, B = C.b, A = C.a;
+  el(32, 104, 28, 3, 'rgba(0,0,0,.2)'); const I = '#2a2a30', I2 = '#4a4a54';
+  [[4], [54]].forEach(([x]) => { c(x, 52, 6, 50, I); c(x + 1, 52, 2, 48, I2); c(x - 2, 98, 10, 4, I); });
+  for (let i = 0; i < 4; i++) { ln(10, 56 + i * 10, 54, 66 + i * 10, I, 1); ln(54, 56 + i * 10, 10, 66 + i * 10, I, 1); }
+  el(32, 74, 11, 11, I); el(32, 74, 9, 9, '#3a3a44'); for (let k = 0; k < 6; k++) { const a = k / 6 * Math.PI * 2 + t * .15; ln(32, 74, 32 + Math.round(Math.cos(a) * 8), 74 + Math.round(Math.sin(a) * 8), I2, 1); } el(32, 74, 2, 2, GOLD);
+  c(10, 92, 44, 5, I); c(12, 93, 40, 2, I2); for (let x = 14; x < 50; x += 4) c(x, 93, 2, 1, I);
+  c(0, 44, 64, 8, B.o); c(1, 45, 62, 5, B.t); c(1, 45, 62, 1, B.L); hgrain(p, 2, 46, 60, 4, B, 5);
+  c(8, 16, 40, 8, I); c(9, 17, 38, 2, I2); c(40, 16, 10, 28, I); c(41, 17, 3, 26, I2); c(10, 24, 6, 14, I); c(11, 25, 2, 12, I2); c(6, 38, 46, 6, I); c(7, 39, 44, 1, I2);
+  c(12, 38, 1, 4, '#c8c8d0'); c(10, 42, 6, 2, '#c8c8d0');
+  for (let x = 18; x < 40; x += 3) c(x, 19, 2, 1, GOLD); c(42, 22, 6, 1, GOLD); c(42, 30, 6, 1, GOLD); el(45, 26, 2, 2, GOLD);
+  el(52, 24, 6, 6, I); el(52, 24, 5, 5, I2); c(52, 19, 1, 10, '#c8c8d0');
+  c(26, 8, 6, 8, A.o); c(27, 8, 4, 8, A.t); c(27, 8, 1, 8, A.L); c(25, 7, 8, 2, '#c4864e'); c(25, 15, 8, 2, '#c4864e'); ln(29, 9, 12, 25, A.t, 1);
+  c(18, 40, 30, 3, '#f1e6cc'); c(18, 40, 30, 1, '#ffffff'); };
+// 인형의 집 64 × 116
+const DOLLHOUSEHI = (p, t, C) => { const { c, el } = p, A = C.a, B = C.b, W = ramp('#c4864e');
+  el(32, 112, 30, 3, 'rgba(0,0,0,.2)');
+  c(0, 100, 64, 12, W.o); c(1, 101, 62, 10, W.t); c(1, 101, 62, 1, W.L); c(1, 108, 62, 1, W.f);
+  c(6, 38, 52, 62, A.o); c(7, 39, 50, 61, A.t); c(7, 39, 2, 61, A.l); c(53, 39, 4, 61, A.f); for (let y = 44; y < 100; y += 6) c(7, y, 50, 1, A.f);
+  for (let i = 0; i < 18; i++) { const w = Math.round(i * 32 / 17); c(32 - w, 20 + i, w * 2, 1, B.o); if (i) c(33 - w, 20 + i, w * 2 - 2, 1, i % 3 ? B.t : B.f); }
+  c(0, 37, 64, 3, B.o); c(1, 38, 62, 1, B.l); c(30, 14, 4, 7, B.o); c(42, 18, 6, 10, '#7a3a2a'); c(42, 18, 6, 2, '#5a2a1a');
+  const win = (x, y, lit) => { c(x, y, 12, 14, '#5a3a24'); c(x + 1, y + 1, 10, 12, lit ? '#ffe08a' : '#3a4a6a'); c(x + 6, y + 1, 1, 12, '#5a3a24'); c(x + 1, y + 7, 10, 1, '#5a3a24'); c(x - 1, y + 14, 14, 2, '#f1e6cc'); if (lit) c(x + 2, y + 2, 3, 3, '#fff6d0'); };
+  win(12, 46, true); win(40, 46, (t >> 4) % 3 > 0); win(12, 70, (t >> 4) % 4 !== 1); el(32, 30, 5, 5, '#5a3a24'); el(32, 30, 4, 4, '#ffe08a'); c(32, 26, 1, 8, '#5a3a24'); c(28, 30, 9, 1, '#5a3a24');
+  c(38, 76, 14, 24, '#5a3a24'); c(39, 77, 12, 23, '#8a5530'); c(39, 77, 12, 1, '#a8693d'); el(48, 88, 1, 1, GOLD); c(36, 98, 18, 2, '#f1e6cc');
+  [[10, 92], [22, 94]].forEach(([x, y]) => { el(x, y, 4, 3, '#4f8a55'); el(x - 1, y - 1, 2, 1, '#79b26e'); c(x, y - 2, 1, 1, '#f08ab0'); }); };
+// 흔들 목마 64 × 92 (옆모습, 머리는 오른쪽)
+const ROCKHORSEHI = (p, t, C) => { const { c, el, ln } = p, A = C.a, B = C.b, W = C.c, sw = Math.round(Math.sin(t * .25) * 2);
+  el(32, 88, 28, 3, 'rgba(0,0,0,.2)');
+  for (let x = 2; x < 62; x++) { const u = (x - 32) / 30, y = 80 + Math.round(u * u * 6) - Math.round(u * sw * 2); c(x, y, 1, 4, W.o); c(x, y + 1, 1, 2, x % 6 ? W.t : W.l); }
+  const q = p.sub(0, sw), cc = q.c, ee = q.el, ll = q.ln;
+  [[18, 0], [24, 1], [40, 1], [46, 0]].forEach(([x, back], i) => { const fx = x + (i < 2 ? -5 : 5); ll(x, 50, fx, 76, back ? A.f : A.o, 4); ll(x, 50, fx, 76, back ? A.d : A.t, 2); cc(fx - 2, 75, 5, 3, '#3a2418'); });
+  ee(32, 44, 19, 9, A.o); ee(32, 43, 18, 8, A.t); ee(28, 39, 11, 3, A.L); ee(34, 49, 14, 2, A.f); [[22, 44], [30, 47], [38, 42], [26, 41], [42, 47]].forEach(([x, y]) => ee(x, y, 2, 1, A.l));
+  for (let i = 0; i < 16; i++) { const x = 44 + Math.round(i * .55), y = 42 - i; cc(x - 4, y, 9, 1, A.o); cc(x - 3, y, 7, 1, A.t); cc(x - 3, y, 2, 1, A.l); }
+  ee(53, 22, 6, 5, A.o); ee(53, 22, 5, 4, A.t); ee(58, 25, 5, 3, A.o); ee(58, 25, 4, 2, A.l); cc(61, 25, 1, 1, OL); ee(54, 20, 1, 1, OL); cc(53, 19, 1, 1, '#ffffff'); cc(49, 15, 2, 4, A.o); cc(50, 16, 1, 2, '#f4b8c8');
+  for (let i = 0; i < 9; i++) { cc(42 + Math.round(i * .5), 18 + i * 3, 4, 4, '#5a3a24'); cc(43 + Math.round(i * .5), 19 + i * 3, 2, 2, '#7a5034'); }
+  for (let i = 0; i < 6; i++) ll(14, 40 + i, 6 - (i % 3), 58 + i * 2, i % 2 ? '#5a3a24' : '#7a5034', 1);
+  for (let x = 23; x < 39; x++) { const y = 34 + Math.round(Math.pow((x - 31) / 8, 2) * 2); cc(x, y, 1, 6, B.o); cc(x, y + 1, 1, 4, x < 25 || x > 36 ? B.f : B.t); cc(x, y + 1, 1, 1, B.L); }
+  cc(30, 40, 2, 7, B.o); cc(29, 46, 4, 2, GOLD);
+  ll(58, 26, 46, 34, B.t, 1); ll(55, 22, 58, 26, GOLD, 1); };
+// 모자 · 코트 걸이 64 × 140
+const HATSTANDHI = (p, t, C) => { const { c, el, ln } = p, B = C.b, A = C.a;
+  el(32, 136, 22, 3, 'rgba(0,0,0,.2)');
+  [[-1], [1]].forEach(([s]) => { ln(32, 124, 32 + s * 20, 134, B.o, 3); ln(32, 124, 32 + s * 20, 134, B.t, 1); }); ln(32, 124, 32, 136, B.o, 3);
+  c(29, 14, 6, 112, B.o); c(30, 14, 4, 112, B.t); c(30, 14, 1, 112, B.L); el(32, 12, 5, 4, B.o); el(32, 11, 4, 3, B.l); el(32, 70, 4, 2, B.o);
+  [[-1, 22], [1, 26], [-1, 40], [1, 44]].forEach(([s, y]) => { ln(32, y, 32 + s * 14, y - 8, B.o, 3); ln(32, y, 32 + s * 14, y - 8, B.l, 1); el(32 + s * 15, y - 9, 2, 2, GOLD); });
+  el(16, 13, 13, 3, '#24202a'); el(16, 8, 8, 6, '#24202a'); el(15, 7, 6, 4, '#3a3640'); c(9, 11, 14, 2, A.t);
+  for (let y = 38; y < 98; y++) { const u = (y - 38) / 60, w = Math.round(10 + u * 8); c(46 - Math.round(w / 2), y, w, 1, y % 7 ? A.t : A.f); c(46 - Math.round(w / 2), y, 2, 1, A.l); c(46 + Math.round(w / 2) - 2, y, 2, 1, A.d); }
+  c(44, 36, 6, 4, A.o); ln(41, 40, 46, 56, A.d, 1); for (let y = 46; y < 90; y += 10) el(48, y, 1, 1, GOLD);
+  for (let y = 30; y < 74; y++) { const sx = 16 + Math.round(Math.sin(y / 6) * 2); c(sx, y, 6, 1, (y >> 2) % 2 ? '#a8344a' : '#f1e6cc'); } for (let x = 0; x < 6; x += 2) c(16 + x, 74, 1, 4, '#a8344a');
+  ln(40, 126, 44, 98, '#3a2418', 2); el(44, 97, 3, 2, GOLD); };
 const SHELFHI = {
   books(p, _x, y0, y1, seed, w) { const { c } = p, cols = ['#a8344a', '#3a5a8a', '#c9a96a', '#4f8a55', '#6a4a8a', '#b8693d', '#e8dcc0', '#2a6a6a', '#7a2a3a', '#d8c070', '#5a7a9a'];
     let x = 0, i = seed; const H = y1 - y0;
@@ -1563,7 +1678,7 @@ const SHELFHI = {
   },
 };
 
-const FCATS = [['bed', '침실'], ['living', '거실'], ['gothic', '앤틱'], ['plant', '식물'], ['small', '소품'], ['sin', '칠죄종'], ['window', '창문·커튼'], ['deco', '벽 장식']];
+const FCATS = [['bed', '침실'], ['living', '거실'], ['gothic', '앤틱'], ['plant', '식물'], ['small', '소품'], ['hobby', '취미·생활'], ['sin', '칠죄종'], ['window', '창문·커튼'], ['deco', '벽 장식']];
 const WALLS = {
   plain: { name: '기본 벽', cost: 0, col: '#6a5444' }, green: { name: '숲빛 얼룩', cost: 30, col: '#3e6e50' }, stripe: { name: '줄무늬', cost: 40, col: '#6a3440' },
   damask: { name: '다마스크', cost: 70, col: '#2e4434' }, panel: { name: '나무 패널', cost: 60, col: '#7a6050' }, brick: { name: '벽돌', cost: 50, col: '#7a3a2a' },
@@ -1775,12 +1890,14 @@ VIEWS.room = () => {
    <div class="row" style="flex-wrap:wrap;gap:6px;margin-top:8px">
      <button class="${RM.edit ? 'primary' : ''}" onclick="roomEdit(${!RM.edit})">${RM.edit ? '✔ 꾸미기 끝' : '✏ 꾸미기'}</button>
      <button onclick="openFurnShop()">🛒 가구점</button>
+     <button onclick="SHOPTAB='mine';openFurnShop()">✏ 가구 그리기</button>
+     <button onclick="SHOPTAB='auc';openFurnShop()">🔨 경매장</button>
      <button onclick="RV=null;go('visit')">👀 놀러 가기</button>
      <button onclick="go('map')">🚪 저택으로 나가기</button></div>
    ${RM.edit ? `<div class="roomedit">
      ${selItem ? `<p style="margin:6px 0"><b>${FURN[selItem.k].name}</b> 선택됨 — 옮길 칸을 누르거나 끌어서 옮겨요.</p>
-        <div class="row" style="flex-wrap:wrap;gap:6px">${FURN[selItem.k].dirs ? `<button class="sm" onclick="rotateItem('${selItem.id}')">↻ 돌리기 (${DIRN[selItem.dir || 0]})</button>` : ''}<button class="sm" onclick="recolorItem('${selItem.id}')">${recolorLabel(selItem.rc || 0, room.dye)}</button>${FURN[selItem.k].pic ? `<button class="sm" onclick="picPick('${selItem.id}')">🖼 그림 넣기</button>${selItem.img ? `<button class="sm" onclick="picClear('${selItem.id}')">↺ 기본 그림</button>` : ''}` : ''}<button class="sm" onclick="zItem('${selItem.id}',1)">⬆ 앞으로</button><button class="sm" onclick="zItem('${selItem.id}',-1)">⬇ 뒤로</button><button class="sm" onclick="roomStore()">📦 보관함으로</button><button class="sm" onclick="RM.sel=null;render()">선택 해제</button></div>`
-      : selInv ? `<p style="margin:6px 0"><b>${FURN[selInv.k].name}</b> — 놓을 칸을 눌러요. ${FURN[selInv.k].wall ? '(벽 장식은 위쪽 벽에)' : ''}</p><div class="row" style="flex-wrap:wrap;gap:6px">${FURN[selInv.k].dirs ? `<button class="sm" onclick="rotateItem('${selInv.id}',true)">↻ 돌리기 (${DIRN[selInv.dir || 0]})</button>` : ''}<button class="sm" onclick="recolorItem('${selInv.id}',true)">${recolorLabel(selInv.rc || 0, room.dye)}</button><button class="sm" onclick="RM.sel=null;RM.hover=null;render()">취소</button></div>`
+        <div class="row" style="flex-wrap:wrap;gap:6px">${FURN[selItem.k].dirs ? `<button class="sm" onclick="rotateItem('${selItem.id}')">↻ 돌리기 (${DIRN[selItem.dir || 0]})</button>` : ''}${Object.keys(FURN[selItem.k].parts || {}).length ? `<button class="sm" onclick="recolorItem('${selItem.id}')">${recolorLabel(selItem.rc || 0, room.dye)}</button>` : ''}${FURN[selItem.k].pic ? `<button class="sm" onclick="picPick('${selItem.id}')">🖼 그림 넣기</button>${selItem.img ? `<button class="sm" onclick="picClear('${selItem.id}')">↺ 기본 그림</button>` : ''}` : ''}<button class="sm" onclick="zItem('${selItem.id}',1)">⬆ 앞으로</button><button class="sm" onclick="zItem('${selItem.id}',-1)">⬇ 뒤로</button><button class="sm" onclick="roomStore()">📦 보관함으로</button><button class="sm" onclick="RM.sel=null;render()">선택 해제</button></div>`
+      : selInv ? `<p style="margin:6px 0"><b>${FURN[selInv.k].name}</b> — 놓을 칸을 눌러요. ${FURN[selInv.k].wall ? '(벽 장식은 위쪽 벽에)' : ''}</p><div class="row" style="flex-wrap:wrap;gap:6px">${FURN[selInv.k].dirs ? `<button class="sm" onclick="rotateItem('${selInv.id}',true)">↻ 돌리기 (${DIRN[selInv.dir || 0]})</button>` : ''}${Object.keys(FURN[selInv.k].parts || {}).length ? `<button class="sm" onclick="recolorItem('${selInv.id}',true)">${recolorLabel(selInv.rc || 0, room.dye)}</button>` : ''}<button class="sm" onclick="RM.sel=null;RM.hover=null;render()">취소</button></div>`
       : '<p class="muted" style="margin:6px 0">가구를 눌러 고르고, 원하는 칸을 누르거나 끌어서 옮겨요.</p>'}
      <h4 style="margin:10px 0 4px">📦 보관함 <span class="muted">${room.invc.length}</span></h4>
      ${room.invc.length ? `<div class="toggles">${Object.entries(group).map(([k, list]) => list.map(x => `<span class="chip ${selInv === x ? 'on' : ''}" onclick="RM.sel='inv:${x.id}';RM.hover=null;render()">${fprev(k, x.col, 0, x.dir)} ${FURN[k].name}</span>`).join('')).join('')}</div>` : '<p class="muted">비어 있어요. 가구점에서 사 오세요.</p>'}
@@ -1811,7 +1928,7 @@ VIEWS.visit = () => {
 
 /* ---------- 렌더 후처리 · 애니메이션 ---------- */
 function roomAfter() {
-  if (tab !== 'room' && tab !== 'visit') return;
+  if (tab !== 'room' && tab !== 'visit') { document.querySelectorAll('#view canvas.fprev').forEach(c => { c.style.imageRendering = 'pixelated'; paintPreview(c); }); return; }
   const cv = document.getElementById('roomCv');
   if (cv) { const uid = tab === 'room' ? ME.uid : RV; paintRoom(cv, hoRoom(uid), { edit: tab === 'room' && RM.edit }); if (tab === 'room') bindRoomCv(cv); else bindViewCv(cv, uid); }
   document.querySelectorAll('canvas.rthumb').forEach(c => paintRoom(c, hoRoom(c.dataset.uid)));
@@ -1970,7 +2087,7 @@ const price = c => Math.round(c * (typeof shopMul === 'function' ? shopMul() : 1
 function openFurnShop() {
   const room = myRoom();
   const tabs = [...FCATS, ['wp', '벽지'], ['fl', '바닥'], ['dye', '염료']];
-  if (!tabs.some(([k]) => k === SHOPTAB)) SHOPTAB = 'bed';
+  if (!tabs.some(([k]) => k === SHOPTAB) && !['mine', 'auc'].includes(SHOPTAB)) SHOPTAB = (FCATS[0] || ['bed'])[0];
   const owned = k => room.invc.filter(x => x.k === k).length + room.items.filter(i => i.k === k).length;
   let list = '';
   if (SHOPTAB === 'dye') {
@@ -1983,10 +2100,10 @@ function openFurnShop() {
       <div style="flex:1;margin-left:10px"><b>${w.name}</b>${room[slot] === k ? ' <span class="badge live">사용 중</span>' : ''}</div>
       ${has ? (room[slot] === k ? '' : `<button onclick="roomSet('${slot}','${k}');openFurnShop()">적용</button>`) : `<button onclick="buyDeco('${slot}','${k}')" ${P.coins < price(w.cost) ? 'disabled' : ''}>${price(w.cost)} 은화</button>`}</div>`; }).join('');
   } else {
-    list = Object.entries(FURN).filter(([k, f]) => f.cat === SHOPTAB).map(([k, f]) => `<div class="item" style="margin:6px 0">
+    list = Object.entries(FURN).filter(([k, f]) => f.cat === SHOPTAB && !f.hidden).map(([k, f]) => `<div class="item" style="margin:6px 0">
       <div style="width:84px;text-align:center;flex:0 0 84px">${fprev(k, null, 84)}</div>
       <div style="flex:1;margin-left:8px"><b>${f.name}</b><span class="muted"> (${f.wall ? f.w + '칸' : fw(k) + '×' + fd(k) + '칸'}${f.dirs ? ' · 4방향' : ''})</span>${owned(k) ? ` <span class="badge">보유 ${owned(k)}</span>` : ''}
-      ${f.eff ? `<div style="color:var(--gold2);font-size:.85rem">✨ ${f.eff}</div>` : ''}<div class="muted" style="font-size:.78rem">색: ${Object.values(f.parts || {}).map(([n]) => PN[n] || n).join(' · ')}</div></div>
+      ${f.eff ? `<div style="color:var(--gold2);font-size:.85rem">✨ ${f.eff}</div>` : ''}${Object.keys(f.parts || {}).length ? `<div class="muted" style="font-size:.78rem">색: ${Object.values(f.parts || {}).map(([n]) => PN[n] || n).join(' · ')}</div>` : f.custom ? '<div class="muted" style="font-size:.78rem">✏ 저택에서 만든 가구</div>' : ''}</div>
       <button onclick="buyFurn('${k}')" ${P.coins < price(f.cost) ? 'disabled' : ''}>${price(f.cost)} 은화</button></div>`).join('');
   }
   modal(`<h2 style="color:var(--gold2);margin-top:0">🛒 저택 가구점</h2><p class="muted" style="margin:0 0 6px">보유 은화 <b>${P.coins}</b> · 염료 ${room.dye}${mySin() === 'envy' ? ' · ' + sinName('envy') + '의 눈썰미로 10% 할인 중' : ''}</p>
@@ -1996,6 +2113,7 @@ function openFurnShop() {
 }
 function buyFurn(k) {
   const f = FURN[k], c = price(f.cost); if (P.coins < c) return toast('은화가 부족해요');
+  if (!Object.keys(f.parts || {}).length) { if (!confirm(`${f.name}을(를) ${c} 은화에 살까요?`) || !spend(c)) return; const room = myRoom(); room.invc.push({ id: rmId(), k, col: null, rc: 0 }); saveP(); sfx('ok'); toast(`${f.name}을(를) 샀어요! 꾸미기에서 놓아 보세요`); openFurnShop(); return; }
   furnColorModal(k, null, `${f.name} — 색 고르고 사기`, `${c} 은화로 사기`, '산 뒤에도 한 번은 무료로 색을 바꿀 수 있어요.', cols => {
     if (!spend(c)) return; const room = myRoom(); room.invc.push({ id: rmId(), k, col: cols, rc: 0 }); saveP(); sfx('ok'); toast(`${f.name}을(를) 샀어요! 꾸미기에서 놓아 보세요`); openFurnShop(); }, 'openFurnShop()');
 }
