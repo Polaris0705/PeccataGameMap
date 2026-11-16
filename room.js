@@ -1948,7 +1948,7 @@ setInterval(() => {      // 140ms마다: 평소엔 두 번에 한 번 그리고,
   RM_HALF ^= 1; if (!RM_HALF) RM.t++;
   if (!ME || !P || (tab !== 'room' && tab !== 'visit') || document.hidden) return;
   const cv = document.getElementById('roomCv'), room = cv && hoRoom(tab === 'room' ? ME.uid : RV);
-  if (cv && (!RM_HALF || room.items.some(i => i.imgMs))) paintRoom(cv, room, { edit: tab === 'room' && RM.edit });
+  if (cv && (!RM_HALF || room.items.some(i => i.imgMs) || (typeof roomHasFrames === 'function' && roomHasFrames(room)))) paintRoom(cv, room, { edit: tab === 'room' && RM.edit });
   if (!RM_HALF && RM.t % 4 === 0) document.querySelectorAll('canvas.rthumb').forEach(c => paintRoom(c, hoRoom(c.dataset.uid)));
 }, 140);
 

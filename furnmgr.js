@@ -36,29 +36,34 @@ function cfRegister(list) {
   });
   furnCfgApply(FCFG);
 }
-/* drawSprite가 직접 만든 가구를 만나면 여기서 그려요 */
-function cfDraw(g, f, x, y, dir) {
-  const d = f.custom, pics = d.pics || {}; dir = dir || 0;
-  const src = dir === 2 && pics[2] ? pics[2] : dir % 2 && pics[1] ? pics[1] : pics[0], im = cfImg(src); if (!im) return;
-  const S = g._S || 1, dm = dimsOf('cf_' + d.id, dir), w = dm.w * T, h = dm.h;
+/* 장면 그림(세로로 이어 붙인 PNG)에서 지금 장면 하나를 칸 크기에 맞춰 그려요 */
+const picKey = (pics, dir) => { dir = dir || 0; return dir === 2 && pics[2] ? 2 : dir % 2 && pics[1] ? 1 : 0; };
+function stripDraw(g, im, n, ms, x, y, w, h, mirror) {
+  n = Math.max(1, n || 1); const fh = im.height / n, fi = n > 1 ? Math.floor(Date.now() / (ms || 220)) % n : 0, S = g._S || 1;
   const X = Math.round(x * S), Y = Math.round(y * S), Wd = Math.round(w * S), Hd = Math.round(h * S);
   g.save(); g.setTransform(1, 0, 0, 1, 0, 0); g.imageSmoothingEnabled = false;
-  if (dir === 3) { g.translate(X + Wd, Y); g.scale(-1, 1); g.drawImage(im, 0, 0, Wd, Hd); } else g.drawImage(im, X, Y, Wd, Hd);
+  if (mirror) { g.translate(X + Wd, Y); g.scale(-1, 1); g.drawImage(im, 0, fi * fh, im.width, fh, 0, 0, Wd, Hd); } else g.drawImage(im, 0, fi * fh, im.width, fh, X, Y, Wd, Hd);
   g.restore();
 }
+/* drawSprite가 직접 만든 가구를 만나면 여기서 그려요 */
+function cfDraw(g, f, x, y, dir) {
+  const d = f.custom, pics = d.pics || {}; dir = dir || 0; const pk = picKey(pics, dir), im = cfImg(pics[pk]); if (!im) return;
+  const dm = dimsOf('cf_' + d.id, dir); stripDraw(g, im, (d.picN || {})[pk], (d.picMs || {})[pk], x, y, dm.w * T, dm.h, dir === 3);
+}
+/* 방에 움직이는 장면 그림이 있으면 매번 다시 그려요 */
+function roomHasFrames(room) { return (room.items || []).some(i => { const f = FURN[i.k]; if (!f) return false; const o = f.custom || FOV[i.k]; return o && Object.values(o.picN || {}).some(n => n > 1); }); }
 let ORIG_DS = null;
 (function () { const _ds = drawSprite; ORIG_DS = _ds; drawSprite = function (g, k, x, y, t, alpha, col, dir, img) {
   const f = FURN[k]; if (!f) return; const ov = !f.custom && ovPic(k, dir);
   if (!f.custom && !ov) return _ds(g, k, x, y, t, alpha, col, dir, img);
   g.save(); if (alpha != null) g.globalAlpha = alpha; if (!g._fr || g._S == null) snapCtx(g, g.getTransform().a || 1);
-  if (f.custom) cfDraw(g, f, x, y, dir); else ovDraw(g, k, ov, x, y, col, dir); g.restore(); }; })();
+  if (f.custom) cfDraw(g, f, x, y, dir); else ovDraw(g, k, ov, x, y, col, dir, t); g.restore(); }; })();
 
 /* ================= 기본 가구 그림 덮어쓰기 (KP) =================
    furnOv/{가구} : { pics:{0:앞,1:옆(왼쪽),2:뒤}, at }   안 그린 방향은 원래 그림
    PL이 바꾼 색은 유지: 원래 기본색의 명암 6단계와 똑같은 도트를 고른 색의 명암으로 바꿔요 */
 let FOV = {};
-function ovPic(k, dir) { const o = FOV[k]; if (!o || !o.pics) return null; dir = dir || 0; const f = FURN[k];
-  if (dir === 2) return o.pics[2] || null; if (dir % 2) return o.pics[1] || null; return o.pics[0] || null; }
+function ovPic(k, dir) { const o = FOV[k]; if (!o || !o.pics) return null; dir = dir || 0; const pk = dir === 2 ? 2 : dir % 2 ? 1 : 0; return o.pics[pk] ? pk + 1 : null; }   // 1~3 (0이면 없음)
 const OVC = {};
 function ovRecolored(k, url, col) {
   const im = cfImg(url); if (!im) return null; const defs = defCol(k), cur = Object.assign({}, defs, col || {}), map = {};
@@ -70,13 +75,34 @@ function ovRecolored(k, url, col) {
   for (let i = 0; i < p.length; i += 4) { if (!p[i + 3]) continue; const m = map[hx(p[i], p[i + 1], p[i + 2])]; if (m) { const v = deHex(m); p[i] = v[0]; p[i + 1] = v[1]; p[i + 2] = v[2]; } }
   g.putImageData(d, 0, 0); return OVC[key] = c;
 }
-function ovDraw(g, k, url, x, y, col, dir) {
-  const im = ovRecolored(k, url, col); if (!im) return; const dm = dimsOf(k, dir), S = g._S || 1;
-  const X = Math.round(x * S), Y = Math.round(y * S), Wd = Math.round(dm.w * T * S), Hd = Math.round(dm.h * S);
-  g.save(); g.setTransform(1, 0, 0, 1, 0, 0); g.imageSmoothingEnabled = false;
-  if (dir === 3) { g.translate(X + Wd, Y); g.scale(-1, 1); g.drawImage(im, 0, 0, Wd, Hd); } else g.drawImage(im, X, Y, Wd, Hd);
-  g.restore();
+function ovDraw(g, k, pk1, x, y, col, dir, t) {
+  const o = FOV[k], pk = pk1 - 1, im = ovRecolored(k, o.pics[pk], col); if (!im) return; const dm = dimsOf(k, dir);
+  stripDraw(g, im, (o.picN || {})[pk], (o.picMs || {})[pk], x, y, dm.w * T, dm.h, dir === 3);
+  if (o.anim !== false) ovMotion(g, k, x, y, col, dir, t);
 }
+/* 원래 가구에서 움직이는 부분(불꽃·김 등)만 찾아서 겹쳐 그려요 */
+const OVMASK = {};
+function ovMaskOf(k, dir) {
+  const key = k + '|' + (dir || 0); if (key in OVMASK) return OVMASK[key];
+  const dm = dimsOf(k, dir), w = dm.w * 64, h = Math.max(2, Math.round(dm.h * 2)), c = document.createElement('canvas'); c.width = w; c.height = h;
+  const g = c.getContext('2d'); g.imageSmoothingEnabled = false; snapCtx(g, 2); let base = null; const diff = new Uint8Array(w * h); let any = false;
+  for (let t = 0; t < 48; t++) { g.clearRect(0, 0, w, h); try { ORIG_DS(g, k, 0, 0, t, null, null, dir); } catch (e) { break; } const d = g.getImageData(0, 0, w, h).data;
+    if (!base) { base = d; continue; } for (let i = 0, j = 0; i < d.length; i += 4, j++) if (!diff[j] && (d[i] !== base[i] || d[i + 1] !== base[i + 1] || d[i + 2] !== base[i + 2] || d[i + 3] !== base[i + 3])) { diff[j] = 1; any = true; } }
+  if (!any) return OVMASK[key] = null;
+  const m = document.createElement('canvas'); m.width = w; m.height = h; const mg = m.getContext('2d'), md = mg.createImageData(w, h);
+  for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) { let on = false; for (let dy = -1; dy <= 1 && !on; dy++) for (let dx = -1; dx <= 1 && !on; dx++) { const X = x + dx, Y = y + dy; if (X >= 0 && Y >= 0 && X < w && Y < h && diff[Y * w + X]) on = true; } if (on) md.data[(y * w + x) * 4 + 3] = 255; }
+  mg.putImageData(md, 0, 0); return OVMASK[key] = m;
+}
+const ovHasAnim = k => ovDirs(k).some(([d]) => !!ovMaskOf(k, d)) || (FURN[k] && FURN[k].dirs && !!ovMaskOf(k, 3));
+let OVOFF = null;
+function ovMotion(g, k, x, y, col, dir, t) {
+  const m = ovMaskOf(k, dir); if (!m) return; if (!OVOFF) OVOFF = document.createElement('canvas'); const c = OVOFF; if (c.width !== m.width || c.height !== m.height) { c.width = m.width; c.height = m.height; }
+  const og = c.getContext('2d'); og.setTransform(1, 0, 0, 1, 0, 0); og.globalCompositeOperation = 'source-over'; og.clearRect(0, 0, c.width, c.height); og.imageSmoothingEnabled = false;
+  snapCtx(og, 2); ORIG_DS(og, k, 0, 0, t || 0, null, col, dir); og.setTransform(1, 0, 0, 1, 0, 0); og.globalCompositeOperation = 'destination-in'; og.drawImage(m, 0, 0); og.globalCompositeOperation = 'source-over';
+  const dm = dimsOf(k, dir), S = g._S || 1; g.save(); g.setTransform(1, 0, 0, 1, 0, 0); g.imageSmoothingEnabled = false; g.drawImage(c, Math.round(x * S), Math.round(y * S), Math.round(dm.w * T * S), Math.round(dm.h * S)); g.restore();
+}
+/* 장면 그림 미리보기 (첫 장면만) */
+function stripThumb(url, n, hgt) { n = Math.max(1, n || 1); return `<span style="display:inline-block;height:${hgt}px;width:${hgt}px;background:#2a2420 url('${url}') no-repeat center top/contain;image-rendering:pixelated;${n > 1 ? `background-size:auto ${hgt * n}px;` : ''}"></span>${n > 1 ? `<span class="badge" style="margin-left:-14px">${n}</span>` : ''}`; }
 /* 원래 그림을 도트 그림(PNG)으로 */
 function ovOrigPng(k, dir) {
   const dm = dimsOf(k, dir), w = dm.w * 64, h = Math.max(2, Math.round(dm.h * 2)), c = document.createElement('canvas'); c.width = w; c.height = h;
@@ -87,23 +113,26 @@ function ovOrigPng(k, dir) {
 let OVD = null;
 const ovDirs = k => { const f = FURN[k]; return f.wall || !f.dirs ? [[0, '그림']] : [[0, '앞모습'], [1, '옆모습 (왼쪽 보기)'], [2, '뒷모습']]; };
 function ovEdit(k) {
-  const f = FURN[k]; if (!f || f.custom) return; if (!OVD || OVD.k !== k) OVD = { k, pics: Object.assign({}, (FOV[k] || {}).pics || {}) };
+  const f = FURN[k]; if (!f || f.custom) return; if (!OVD || OVD.k !== k) { const o = FOV[k] || {}; OVD = { k, pics: Object.assign({}, o.pics || {}), picN: Object.assign({}, o.picN || {}), picMs: Object.assign({}, o.picMs || {}), anim: o.anim !== false }; }
+  const hasAnim = ovHasAnim(k);
   modal(`<h2 style="color:var(--gold2);margin-top:0">🎨 ${esc(f.name)} 그림 바꾸기</h2>
    <p class="muted" style="font-size:.85rem;margin:0 0 6px">원래 그림을 불러와서 고쳐요. 저장하면 이미 놓인 것까지 모든 방에서 바뀌어요. 안 그린 방향은 원래 그림이에요.${Object.keys(f.parts || {}).length ? '<br>PL이 바꾼 색도 유지돼요. 원래 색(명암 그대로)으로 칠한 부분이 바뀌어요.' : ''}${f.pic ? '<br>⚠ 이 가구는 PL이 넣은 그림 대신 이 그림이 보여요.' : ''}</p>
-   ${ovDirs(k).map(([d, n]) => { const s = dimsOf(k, d); return `<div class="item" style="margin:4px 0"><div style="display:flex;align-items:center;gap:8px">${OVD.pics[d] ? `<img src="${OVD.pics[d]}" style="height:56px;max-width:110px;image-rendering:pixelated;background:#2a2420">` : `<span style="width:56px;text-align:center">${fprev(k, null, 56, d === 1 ? 1 : d)}</span>`}<div><b>${n}</b> ${OVD.pics[d] ? '<span class="badge live">바꿈</span>' : '<span class="muted">원래 그림</span>'}<div class="muted" style="font-size:.75rem">${s.w * 64}×${Math.round(s.h * 2)}</div></div></div>
-     <div class="row" style="flex:0 0 auto;gap:4px"><button class="sm primary" onclick="ovDraw1('${k}',${d})">🎨 그리기</button>${OVD.pics[d] ? `<button class="sm" onclick="delete OVD.pics[${d}];ovEdit('${k}')">↺</button>` : ''}</div></div>`; }).join('')}
+   ${ovDirs(k).map(([d, n]) => { const s = dimsOf(k, d); return `<div class="item" style="margin:4px 0"><div style="display:flex;align-items:center;gap:8px">${OVD.pics[d] ? stripThumb(OVD.pics[d], OVD.picN[d], 56) : `<span style="width:56px;text-align:center">${fprev(k, null, 56, d === 1 ? 1 : d)}</span>`}<div><b>${n}</b> ${OVD.pics[d] ? '<span class="badge live">바꿈</span>' : '<span class="muted">원래 그림</span>'}<div class="muted" style="font-size:.75rem">${s.w * 64}×${Math.round(s.h * 2)}${(OVD.picN[d] || 1) > 1 ? ` · 장면 ${OVD.picN[d]}장` : ''}</div></div></div>
+     <div class="row" style="flex:0 0 auto;gap:4px"><button class="sm primary" onclick="ovDraw1('${k}',${d})">🎨 그리기</button>${OVD.pics[d] ? `<button class="sm" onclick="delete OVD.pics[${d}];delete OVD.picN[${d}];delete OVD.picMs[${d}];ovEdit('${k}')">↺</button>` : ''}</div></div>`; }).join('')}
+   ${hasAnim ? `<label style="display:block;margin-top:8px"><input type="checkbox" style="width:auto;margin:0 6px 0 0;vertical-align:middle" ${OVD.anim ? 'checked' : ''} onchange="OVD.anim=this.checked"> ✨ 원래 움직임(불꽃·김 등) 겹치기</label><p class="muted" style="font-size:.75rem;margin:2px 0 0">원래 가구에서 움직이던 자리에 원래 움직임을 겹쳐 보여요. 모양을 많이 바꿨으면 끄는 게 나아요.</p>` : ''}
    <div class="row" style="margin-top:10px"><button onclick="OVD=null;closeModal()">취소</button>${FOV[k] ? `<button class="danger" onclick="ovReset('${k}')">전부 원래대로</button>` : ''}<button class="primary" onclick="ovSave('${k}')">저장</button></div>`);
   document.querySelectorAll('#mbox canvas.fprev').forEach(c => { c.style.imageRendering = 'pixelated'; paintPreview(c); });
 }
 function ovDraw1(k, d) {
   const s = dimsOf(k, d), f = FURN[k];
-  dotEdit({ W: s.w * 64, H: Math.round(s.h * 2), src: OVD.pics[d] || ovOrigPng(k, d), foot: f.wall ? 0 : s.d * 32 + 8, title: f.name + ' · ' + ovDirs(k).find(x => x[0] === d)[1],
-    onSave: url => { if (url) OVD.pics[d] = url; else delete OVD.pics[d]; ovEdit(k); }, onCancel: () => ovEdit(k) });
+  dotEdit({ W: s.w * 64, H: Math.round(s.h * 2), src: OVD.pics[d] || ovOrigPng(k, d), n: OVD.pics[d] ? OVD.picN[d] || 1 : 1, ms: OVD.picMs[d], foot: f.wall ? 0 : s.d * 32 + 8, title: f.name + ' · ' + ovDirs(k).find(x => x[0] === d)[1],
+    onSave: (url, m) => { if (url) { OVD.pics[d] = url; OVD.picN[d] = m.n; OVD.picMs[d] = m.ms; } else { delete OVD.pics[d]; delete OVD.picN[d]; delete OVD.picMs[d]; } ovEdit(k); }, onCancel: () => ovEdit(k) });
 }
 async function ovSave(k) {
   const pics = OVD.pics; if (!Object.keys(pics).length) return ovReset(k, true);
   if (JSON.stringify(pics).length > 900000) return toast('그림이 너무 커요');
-  try { await B.set('furnOv/' + k, { pics, at: Date.now() }); OVD = null; closeModal(); toast('그림을 바꿨어요! 모든 방에 적용돼요'); } catch (e) { toast('저장 실패: ' + (e.code || e.message)); }
+  const picN = {}, picMs = {}; Object.keys(pics).forEach(d => { picN[d] = OVD.picN[d] || 1; picMs[d] = OVD.picMs[d] || 220; });
+  try { await B.set('furnOv/' + k, { pics, picN, picMs, anim: OVD.anim !== false, at: Date.now() }); OVD = null; closeModal(); toast('그림을 바꿨어요! 모든 방에 적용돼요'); } catch (e) { toast('저장 실패: ' + (e.code || e.message)); }
 }
 async function ovReset(k, quiet) {
   if (!quiet && !confirm('이 가구를 원래 그림으로 되돌릴까요?')) return;
@@ -145,23 +174,24 @@ function cfForm() {
    <label class="f">높이 (도트) <span class="muted" id="cfHv">${d.H}</span></label><input id="cfH" type="range" min="16" max="${maxH}" step="2" value="${Math.min(maxH, d.H)}" oninput="$('#cfHv').textContent=this.value" onchange="cfFormRead();cfForm()">
    <p class="muted" style="font-size:.78rem;margin:2px 0 6px">칸 하나는 가로 64도트예요. ${d.wall ? '벽 높이는 최대 ' + maxH + '도트.' : '초록 점선 안이 바닥에 닿는 부분이에요.'}</p>
    ${kp ? `<div class="row" style="gap:6px"><div style="flex:1"><label class="f">가격</label><input id="cfCost" type="number" min="0" value="${d.cost || 0}"></div><div style="flex:1"><label class="f">분류</label><select id="cfCat">${FCATS.map(([k, v]) => `<option value="${k}" ${d.cat === k ? 'selected' : ''}>${esc(v)}</option>`).join('')}</select></div></div>
-    <label style="display:block;margin-top:6px"><input type="checkbox" id="cfSell" ${d.sell !== false ? 'checked' : ''}> 가구점에서 팔기</label>` : ''}
-   <div style="margin-top:8px">${cfDirs().map(([k, n]) => { const s = cfSize(k); return `<div class="item" style="margin:4px 0"><div style="display:flex;align-items:center;gap:8px">${d.pics[k] ? `<img src="${d.pics[k]}" style="height:48px;max-width:96px;image-rendering:pixelated;background:#2a2420">` : '<span class="muted" style="width:48px;text-align:center">없음</span>'}<div><b>${n}</b>${k === 0 ? '' : ' <span class="muted">(없어도 돼요)</span>'}<div class="muted" style="font-size:.75rem">${s.W}×${s.H}</div></div></div>
+    <label style="display:block;margin-top:6px"><input type="checkbox" style="width:auto;margin:0 6px 0 0;vertical-align:middle" id="cfSell" ${d.sell !== false ? 'checked' : ''}> 가구점에서 팔기</label>` : ''}
+   <div style="margin-top:8px">${cfDirs().map(([k, n]) => { const s = cfSize(k); return `<div class="item" style="margin:4px 0"><div style="display:flex;align-items:center;gap:8px">${d.pics[k] ? stripThumb(d.pics[k], (d.picN || {})[k], 48) : '<span class="muted" style="width:48px;text-align:center">없음</span>'}<div><b>${n}</b>${k === 0 ? '' : ' <span class="muted">(없어도 돼요)</span>'}<div class="muted" style="font-size:.75rem">${s.W}×${s.H}${((d.picN || {})[k] || 1) > 1 ? ` · 장면 ${d.picN[k]}장` : ''}</div></div></div>
      <div class="row" style="flex:0 0 auto;gap:4px"><button class="sm primary" onclick="cfDraw1(${k})">🎨 그리기</button>${d.pics[k] && k ? `<button class="sm" onclick="delete CFD.pics[${k}];cfForm()">✕</button>` : ''}</div></div>`; }).join('')}</div>
-   <p class="muted" style="font-size:.78rem">옆모습이 있으면 4방향으로 돌릴 수 있어요 (오른쪽은 좌우 뒤집기).</p>
+   <p class="muted" style="font-size:.78rem">옆모습이 있으면 4방향으로 돌릴 수 있어요 (오른쪽은 좌우 뒤집기). 편집기에서 장면을 늘리면 움직이는 가구가 돼요 (최대 4장).</p>
    <div class="row" style="margin-top:10px"><button onclick="CFD=null;closeModal();${kp ? "go('kfurn')" : 'openFurnShop()'}">취소</button><button class="primary" onclick="cfSave()">저장</button></div>`);
 }
 function cfDraw1(k) {
   cfFormRead(); const s = cfSize(k);
-  dotEdit({ W: s.W, H: s.H, src: CFD.pics[k] || (k && CFD.pics[0] && cfSize(0).W === s.W ? null : null), foot: CFD.wall ? 0 : (k === 1 ? CFD.w : CFD.d) * 64 / 2 + 8, title: (CFD.name || '새 가구') + ' · ' + cfDirs().find(x => x[0] === k)[1],
-    onSave: url => { if (url) CFD.pics[k] = url; else delete CFD.pics[k]; cfForm(); }, onCancel: () => cfForm() });
+  CFD.picN = CFD.picN || {}; CFD.picMs = CFD.picMs || {};
+  dotEdit({ W: s.W, H: s.H, src: CFD.pics[k] || null, n: CFD.picN[k] || 1, ms: CFD.picMs[k], foot: CFD.wall ? 0 : (k === 1 ? CFD.w : CFD.d) * 64 / 2 + 8, title: (CFD.name || '새 가구') + ' · ' + cfDirs().find(x => x[0] === k)[1],
+    onSave: (url, m) => { if (url) { CFD.pics[k] = url; CFD.picN[k] = m.n; CFD.picMs[k] = m.ms; } else { delete CFD.pics[k]; delete CFD.picN[k]; delete CFD.picMs[k]; } cfForm(); }, onCancel: () => cfForm() });
 }
 async function cfSave() {
   cfFormRead(); const d = CFD; if (!d.name) return toast('이름을 넣어 주세요'); if (!d.pics[0]) return toast(d.wall ? '그림을 그려 주세요' : '앞모습은 꼭 그려 주세요');
   // 크기가 바뀌었으면 맞지 않는 그림은 다시 그려야 해요
-  const bad = []; await Promise.all(Object.keys(d.pics).map(k => new Promise(r => { const im = new Image(); im.onload = () => { const s = cfSize(+k); if (im.width !== s.W || im.height !== s.H) bad.push(+k); r(); }; im.onerror = r; im.src = d.pics[k]; })));
-  if (bad.length) { if (!confirm('크기를 바꿔서 그림 크기가 맞지 않아요. 그림을 새 크기에 맞춰 늘리지 않고 아래에 맞춰 둘까요?')) return; for (const k of bad) d.pics[k] = await cfRefit(d.pics[k], cfSize(k)); }
-  const doc = { name: d.name.slice(0, 24), kind: d.kind, by: d.by || ME.uid, byName: d.byName || PROF.name || '', wall: !!d.wall, w: d.w, d: d.wall ? 0 : d.d, H: d.H, wy: d.wy == null ? null : d.wy, pics: d.pics, at: d.at || Date.now(), upd: Date.now() };
+  const bad = []; await Promise.all(Object.keys(d.pics).map(k => new Promise(r => { const im = new Image(); im.onload = () => { const s = cfSize(+k), n = ((d.picN || {})[k] || 1); if (im.width !== s.W || im.height !== s.H * n) bad.push(+k); r(); }; im.onerror = r; im.src = d.pics[k]; })));
+  if (bad.length) { if (!confirm('크기를 바꿔서 그림 크기가 맞지 않아요. 그림을 새 크기에 맞춰 늘리지 않고 아래에 맞춰 둘까요?')) return; for (const k of bad) d.pics[k] = await cfRefit(d.pics[k], cfSize(k), (d.picN || {})[k] || 1); }
+  const doc = { name: d.name.slice(0, 24), kind: d.kind, by: d.by || ME.uid, byName: d.byName || PROF.name || '', wall: !!d.wall, w: d.w, d: d.wall ? 0 : d.d, H: d.H, wy: d.wy == null ? null : d.wy, pics: d.pics, picN: d.picN || {}, picMs: d.picMs || {}, at: d.at || Date.now(), upd: Date.now() };
   if (d.kind === 'kp') Object.assign(doc, { cost: d.cost, cat: d.cat, sell: d.sell !== false });
   const size = JSON.stringify(doc).length; if (size > 900000) return toast('그림이 너무 커요. 크기를 줄여 주세요');
   try { const id = d.id || ('f' + Date.now().toString(36) + Math.random().toString(36).slice(2, 5)); await B.set('furn/' + id, clean(doc));
@@ -169,7 +199,8 @@ async function cfSave() {
     CFD = null; closeModal(); toast(d.id ? '고쳤어요' : (d.kind === 'pl' ? '가구를 만들었어요! 보관함에 넣어 뒀어요' : '가구를 만들었어요')); if (d.kind === 'kp') go('kfurn'); else openFurnShop();
   } catch (e) { toast('저장 실패: ' + (e.code || e.message)); }
 }
-function cfRefit(url, s) { return new Promise(r => { const im = new Image(); im.onload = () => { const c = document.createElement('canvas'); c.width = s.W; c.height = s.H; c.getContext('2d').drawImage(im, Math.round((s.W - im.width) / 2), s.H - im.height); r(c.toDataURL('image/png')); }; im.src = url; }); }
+function cfRefit(url, s, n) { n = n || 1; return new Promise(r => { const im = new Image(); im.onload = () => { const fh = im.height / n, c = document.createElement('canvas'); c.width = s.W; c.height = s.H * n; const g = c.getContext('2d');
+  for (let i = 0; i < n; i++) g.drawImage(im, 0, i * fh, im.width, fh, Math.round((s.W - im.width) / 2), i * s.H + s.H - fh, im.width, fh); r(c.toDataURL('image/png')); }; im.src = url; }); }
 async function cfDelete(id) {
   const d = CFURN.find(x => x.id === id); if (!d) return;
   if (IS_ADMIN && d.kind === 'kp') { if (!confirm('이 가구를 지울까요? 이미 가진 사람의 방에서도 사라져요.')) return; try { await B.del('furn/' + id); toast('지웠어요'); } catch (e) { toast('실패: ' + (e.code || e.message)); } return; }
