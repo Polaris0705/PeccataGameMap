@@ -125,7 +125,8 @@ function ovEdit(k) {
 }
 function ovDraw1(k, d) {
   const s = dimsOf(k, d), f = FURN[k];
-  dotEdit({ W: s.w * 64, H: Math.round(s.h * 2), src: OVD.pics[d] || ovOrigPng(k, d), n: OVD.pics[d] ? OVD.picN[d] || 1 : 1, ms: OVD.picMs[d], foot: f.wall ? 0 : s.d * 32 + 8, title: f.name + ' · ' + ovDirs(k).find(x => x[0] === d)[1],
+  const orig = ovOrigPng(k, d);
+  dotEdit({ W: s.w * 64, H: Math.round(s.h * 2), src: OVD.pics[d] || orig, orig, key: 'ov_' + k + '_' + d, n: OVD.pics[d] ? OVD.picN[d] || 1 : 1, ms: OVD.picMs[d], foot: f.wall ? 0 : s.d * 32 + 8, title: f.name + ' · ' + ovDirs(k).find(x => x[0] === d)[1],
     onSave: (url, m) => { if (url) { OVD.pics[d] = url; OVD.picN[d] = m.n; OVD.picMs[d] = m.ms; } else { delete OVD.pics[d]; delete OVD.picN[d]; delete OVD.picMs[d]; } ovEdit(k); }, onCancel: () => ovEdit(k) });
 }
 async function ovSave(k) {
@@ -183,7 +184,7 @@ function cfForm() {
 function cfDraw1(k) {
   cfFormRead(); const s = cfSize(k);
   CFD.picN = CFD.picN || {}; CFD.picMs = CFD.picMs || {};
-  dotEdit({ W: s.W, H: s.H, src: CFD.pics[k] || null, n: CFD.picN[k] || 1, ms: CFD.picMs[k], foot: CFD.wall ? 0 : (k === 1 ? CFD.w : CFD.d) * 64 / 2 + 8, title: (CFD.name || '새 가구') + ' · ' + cfDirs().find(x => x[0] === k)[1],
+  dotEdit({ W: s.W, H: s.H, src: CFD.pics[k] || null, key: 'cf_' + (CFD.id || 'new') + '_' + k, n: CFD.picN[k] || 1, ms: CFD.picMs[k], foot: CFD.wall ? 0 : (k === 1 ? CFD.w : CFD.d) * 64 / 2 + 8, title: (CFD.name || '새 가구') + ' · ' + cfDirs().find(x => x[0] === k)[1],
     onSave: (url, m) => { if (url) { CFD.pics[k] = url; CFD.picN[k] = m.n; CFD.picMs[k] = m.ms; } else { delete CFD.pics[k]; delete CFD.picN[k]; delete CFD.picMs[k]; } cfForm(); }, onCancel: () => cfForm() });
 }
 async function cfSave() {
@@ -308,7 +309,7 @@ VIEWS.kfurn = () => {
    <div class="panel"><h2>🪑 가구 옮기기 · 숨기기</h2><p class="muted" style="margin:0 0 6px">숨긴 가구는 가구점에서 안 보여요. 이미 가진 건 그대로예요. 🎨 그림으로 기본 가구 그림을 고칠 수 있어요.</p>
     ${FCATS.map(([ck, cv]) => { const items = all.filter(([k, f]) => f.cat === ck); return `<details ${KF_OPEN === ck ? 'open' : ''} ontoggle="if(this.open)KF_OPEN='${ck}'"><summary><b>${esc(cv)}</b> <span class="muted">${items.length}</span></summary>
       ${items.map(([k, f]) => `<div class="item" style="margin:3px 0"><div style="display:flex;align-items:center;gap:6px"><span style="width:44px;text-align:center">${fprev(k, null, 40)}</span><span>${esc(f.name)}${f.custom ? ' ✏' : ''}${FOV[k] ? ' <span class="badge live">그림 바꿈</span>' : ''}</span></div>
-        <div class="row" style="flex:0 0 auto;gap:4px"><select onchange="kfMove('${k}',this.value)">${FCATS.map(([a, b]) => `<option value="${a}" ${a === ck ? 'selected' : ''}>${esc(b)}</option>`).join('')}</select>${f.custom ? '' : `<button class="sm" onclick="ovEdit('${k}')">🎨 그림</button>`}<button class="sm ${f.hidden ? 'danger' : ''}" onclick="kfHide('${k}')">${f.hidden ? '🙈 숨김' : '👁 보임'}</button></div></div>`).join('') || '<p class="muted">비어 있어요.</p>'}</details>`; }).join('')}</div>
+        <div class="row" style="flex:0 0 auto;gap:4px"><select onchange="kfMove('${k}',this.value)">${FCATS.map(([a, b]) => `<option value="${a}" ${a === ck ? 'selected' : ''}>${esc(b)}</option>`).join('')}</select>${f.custom ? '' : `<button class="sm" onclick="ovEdit('${k}')">🎨 그림</button>${FOV[k] ? `<button class="sm" onclick="ovReset('${k}')">↺ 원래대로</button>` : ''}`}<button class="sm ${f.hidden ? 'danger' : ''}" onclick="kfHide('${k}')">${f.hidden ? '🙈 숨김' : '👁 보임'}</button></div></div>`).join('') || '<p class="muted">비어 있어요.</p>'}</details>`; }).join('')}</div>
    <div class="panel"><div class="row" style="justify-content:space-between"><h2 style="margin:0">✏ KP가 만든 가구</h2><button class="primary" style="flex:0 0 auto" onclick="cfNew('kp')">+ 새 가구</button></div>
     ${kp.map(d => `<div class="item" style="margin:6px 0"><div style="display:flex;align-items:center;gap:6px"><span style="width:64px;text-align:center">${fprev('cf_' + d.id, null, 60)}</span><div><b>${esc(d.name)}</b><div class="muted" style="font-size:.78rem">${d.cost} 은화 · ${esc((FCATS.find(x => x[0] === d.cat) || [, '?'])[1])}${d.sell === false ? ' · 판매 안 함' : ''}</div></div></div>
       <div class="row" style="flex:0 0 auto;gap:4px"><button class="sm" onclick="kfGiveAsk('${d.id}')">🎁 주기</button><button class="sm" onclick="cfEdit('${d.id}')">고치기</button><button class="sm danger" onclick="cfDelete('${d.id}')">지우기</button></div></div>`).join('') || '<p class="muted">아직 없어요.</p>'}</div>
