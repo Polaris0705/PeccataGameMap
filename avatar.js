@@ -136,25 +136,25 @@ const AV_DRAW = {
     else { [9, 10, 10, 11, 11, 12, 12, 12, 13, 13, 13, 14].forEach((h, i) => H(49 + i, side ? h - 2 : h, C.t, of)); if (!side) for (let x = 15; x < 34; x += 5) R(x, 52, 1, 9, C.f); H(60, side ? 11 : 13, C.f, of);
       if (b === 'hakama') { H(49, hw, C.d, of); H(50, hw, C.d, of); if (!side) { H(47, 5, '#f4e6c8'); H(48, 5, '#f4e6c8'); } } } },
   top(P2, t, C) { const { R, H, M, side, back } = P2, hw = side ? 7 : 9, of = side ? -1 : 0;
-    const body = col => { for (let y = 40; y < 50; y++) H(y, hw, col, of); }, arms = (col, wide) => { if (side) { R(20, 41, 7 + (wide ? 2 : 0), wide ? 11 : 9, col); R(26 + (wide ? 2 : 0), 41, 1, wide ? 11 : 9, C.f); } else { M(11 - (wide ? 2 : 0), 41, 5 + (wide ? 2 : 0), wide ? 11 : 9, col); M(15, 42, 1, 7, C.f); } };
+    const body = col => { for (let y = 40; y < 50; y++) H(y, hw, col, of); }, arms = (col, wide) => { if (P2.noArms) return; if (side) { R(20, 41, 7 + (wide ? 2 : 0), wide ? 11 : 9, col); R(26 + (wide ? 2 : 0), 41, 1, wide ? 11 : 9, C.f); } else { M(11 - (wide ? 2 : 0), 41, 5 + (wide ? 2 : 0), wide ? 11 : 9, col); M(15, 42, 1, 7, C.f); } };
     const front = !back && !side;
     if (['shirt', 'blouse', 'knit', 'gakuran'].includes(t)) { body(C.t); arms(C.t); if (!side) { R(15, 41, 1, 9, C.f); R(32, 41, 1, 9, C.f); } }
     if (t === 'shirt' && front) { M(20, 40, 4, 2, C.L); R(23, 42, 2, 8, C.l); R(23, 43, 1, 1, C.f); R(23, 46, 1, 1, C.f); }
-    if (t === 'blouse' && front) { R(19, 40, 10, 3, '#c03050'); R(22, 40, 4, 3, '#a02040'); R(20, 43, 2, 3, '#c03050'); R(26, 43, 2, 3, '#c03050'); M(11, 49, 5, 1, C.f); }
-    if (t === 'knit') { for (let y = 42; y < 50; y += 2) H(y, hw, C.l, of); if (!back) { H(40, 4, C.d); H(41, 3, C.d); } if (!side) M(11, 49, 5, 2, C.f); }
-    if (t === 'gakuran') { H(40, 4, C.d); if (front) { R(23, 41, 2, 9, C.d); for (let y = 42; y < 50; y += 3) R(23, y, 2, 1, '#e0b050'); M(11, 48, 5, 1, '#e0b050'); } }
+    if (t === 'blouse' && front) { R(19, 40, 10, 3, '#c03050'); R(22, 40, 4, 3, '#a02040'); R(20, 43, 2, 3, '#c03050'); R(26, 43, 2, 3, '#c03050'); if (!P2.noArms) M(11, 49, 5, 1, C.f); }
+    if (t === 'knit') { for (let y = 42; y < 50; y += 2) H(y, hw, C.l, of); if (!back) { H(40, 4, C.d); H(41, 3, C.d); } if (!side && !P2.noArms) M(11, 49, 5, 2, C.f); }
+    if (t === 'gakuran') { H(40, 4, C.d); if (front) { R(23, 41, 2, 9, C.d); for (let y = 42; y < 50; y += 3) R(23, y, 2, 1, '#e0b050'); if (!P2.noArms) M(11, 48, 5, 1, '#e0b050'); } }
     if (t === 'vest') { body('#f4f0e6'); arms('#f4f0e6'); for (let y = 42; y < 50; y++) H(y, hw, C.t, of); if (!side) { R(15, 42, 1, 8, C.f); R(32, 42, 1, 8, C.f); }
-      if (front) { R(21, 40, 6, 5, '#f4f0e6'); R(23, 41, 2, 6, '#5a2a3a'); R(22, 41, 4, 1, '#5a2a3a'); R(27, 44, 1, 1, '#e0b050'); R(27, 47, 1, 1, '#e0b050'); M(11, 49, 5, 1, '#d8d0c0'); } }
-    if (t === 'yagasuri') { body(C.t); arms(C.t, true); for (let y = 42; y < 50; y += 4) for (let x = (side ? 18 : 12) + (y % 8 ? 3 : 0); x < (side ? 30 : 36); x += 6) { R(x, y, 1, 2, C.L); R(x + 1, y + 1, 1, 2, C.L); R(x - 1, y + 1, 1, 2, C.L); }
+      if (front) { R(21, 40, 6, 5, '#f4f0e6'); R(23, 41, 2, 6, '#5a2a3a'); R(22, 41, 4, 1, '#5a2a3a'); R(27, 44, 1, 1, '#e0b050'); R(27, 47, 1, 1, '#e0b050'); if (!P2.noArms) M(11, 49, 5, 1, '#d8d0c0'); } }
+    if (t === 'yagasuri') { body(C.t); arms(C.t, true); for (let y = 42; y < 50; y += 4) for (let x = (side ? 18 : P2.noArms ? 16 : 12) + (y % 8 ? 3 : 0); x < (side ? 30 : P2.noArms ? 32 : 36); x += 6) { R(x, y, 1, 2, C.L); R(x + 1, y + 1, 1, 2, C.L); R(x - 1, y + 1, 1, 2, C.L); }
       if (front) { R(19, 40, 2, 6, '#f4f0e6'); R(27, 40, 2, 6, '#f4f0e6'); R(21, 40, 6, 1, P2.sk.t); } } },
   one(P2, o, C) { const { R, H, M, side, back, legs } = P2, hw = side ? 7 : 9, of = side ? -1 : 0, front = !back && !side;
-    const body = col => { for (let y = 40; y < 50; y++) H(y, hw, col, of); }, arms = (col, wide) => { if (side) R(20, 41, 7 + (wide ? 3 : 0), wide ? 12 : 9, col); else M(11 - (wide ? 3 : 0), 41, 5 + (wide ? 3 : 0), wide ? 12 : 9, col); };
+    const body = col => { for (let y = 40; y < 50; y++) H(y, hw, col, of); }, arms = (col, wide) => { if (P2.noArms) return; if (side) R(20, 41, 7 + (wide ? 3 : 0), wide ? 12 : 9, col); else M(11 - (wide ? 3 : 0), 41, 5 + (wide ? 3 : 0), wide ? 12 : 9, col); };
     const skirt = (col, rows) => rows.forEach((h, i) => H(49 + i, side ? h - 2 : h, col, of));
-    if (o === 'maid') { skirt(C.t, [10, 11, 12, 12, 13, 13, 14, 14, 14]); body(C.t); arms(C.t); if (side) R(19, 40, 8, 3, C.t); else { M(9, 40, 7, 3, C.t); M(9, 42, 7, 1, C.f); }
+    if (o === 'maid') { skirt(C.t, [10, 11, 12, 12, 13, 13, 14, 14, 14]); body(C.t); arms(C.t); if (P2.noArms) {} else if (side) R(19, 40, 8, 3, C.t); else { M(9, 40, 7, 3, C.t); M(9, 42, 7, 1, C.f); }
       if (!back) { for (let y = 43; y < 58; y++) H(y, side ? 4 : 6, '#f8f4ea', side ? -3 : 0); H(57, side ? 5 : 7, '#e8e0d0', side ? -3 : 0); if (front) { for (let x = 18; x < 30; x += 3) R(x, 57, 2, 1, '#f8f4ea'); H(40, 4, '#f8f4ea'); R(22, 41, 4, 2, '#c03050'); } }
       else { R(17, 48, 14, 2, '#f8f4ea'); R(15, 46, 5, 4, '#f8f4ea'); R(28, 46, 5, 4, '#f8f4ea'); } }
     if (o === 'kimono') { skirt(C.t, [10, 10, 10, 10, 11, 11, 11, 11, 11, 12, 12, 12]); body(C.t); arms(C.t, true); for (let y = 45; y < 49; y++) H(y, hw, '#e0b050', of); H(46, hw, '#c89030', of);
-      [[14, 52], [30, 56], [20, 58], [34, 44], [12, 43]].filter(([x]) => !side || (x > 16 && x < 30)).concat(side ? [[18, 52], [26, 44]] : []).forEach(([x, y]) => { R(x, y, 3, 1, C.L); R(x + 1, y - 1, 1, 3, C.L); R(x + 1, y, 1, 1, '#ffe27a'); });
+      [[14, 52], [30, 56], [20, 58], [34, 44], [12, 43]].filter(([x, y]) => side ? x > 16 && x < 30 : !P2.noArms || y >= 49 || (x > 15 && x < 31)).concat(side ? [[18, 52], [26, 44]] : []).forEach(([x, y]) => { R(x, y, 3, 1, C.L); R(x + 1, y - 1, 1, 3, C.L); R(x + 1, y, 1, 1, '#ffe27a'); });
       if (front) { R(19, 40, 2, 5, '#f4f0e6'); R(27, 40, 2, 5, '#f4f0e6'); R(23, 49, 2, 11, C.f); } if (back) { R(17, 44, 14, 7, '#e0b050'); R(20, 45, 8, 5, '#c89030'); } }
     if (o === 'dress') { skirt(C.t, [10, 11, 12, 13, 14, 14, 15, 15]); H(56, side ? 13 : 15, C.l, of); H(57, side ? 13 : 15, C.l, of); body(C.t); arms(C.l);
       if (!side) for (let x = 12; x < 37; x += 5) R(x, 51, 1, 5, C.f); if (!back) { H(40, 5, '#f8f4ea'); H(41, 4, '#f8f4ea'); R(22, 46, 4, 2, '#f8f4ea'); } }
@@ -204,15 +204,39 @@ function avRecolor(url, from, to) {
   for (let i = 0; i < p.length; i += 4) { if (!p[i + 3]) continue; const m = map[deToHex(p[i], p[i + 1], p[i + 2])]; if (m) { p[i] = m[0]; p[i + 1] = m[1]; p[i + 2] = m[2]; } }
   g.putImageData(d, 0, 0); return AVRC[key] = c;
 }
+/* 고친 몸에서 사라진 부분(원래 몸에는 있고 새 몸에는 없는 곳)과 그 둘레 3칸 → 옷도 지울 자리 */
+const AVCUT = {};
+function avBodyCut(vw, url) {
+  const k = vw + '|' + url.length + url.slice(-40); if (AVCUT[k]) return AVCUT[k];
+  const im = cfImg(url); if (!im) return null;
+  const a = avLayerPng('body', vw, true).getContext('2d').getImageData(0, 0, AVW, AVH).data;
+  const c = document.createElement('canvas'); c.width = AVW; c.height = AVH; const cg = c.getContext('2d'); cg.drawImage(im, 0, 0, AVW, AVH); const b = cg.getImageData(0, 0, AVW, AVH).data;
+  const N = AVW * AVH, gone = new Uint8Array(N), cut = new Uint8Array(N); let armAll = 0, armGone = 0;
+  for (let i = 0; i < N; i++) { gone[i] = a[i * 4 + 3] > 0 && !b[i * 4 + 3] ? 1 : 0; const x = i % AVW, y = (i / AVW) | 0;
+    if (vw !== 1 && y >= 41 && y <= 53 && (x < 15 || x >= 33) && a[i * 4 + 3]) { armAll++; armGone += gone[i]; } }
+  for (let y = 0; y <= 53; y++) for (let x = 0; x < AVW; x++) { const i = y * AVW + x; if (b[i * 4 + 3]) continue;
+    let hit = 0; for (let dy = -2; dy <= 2 && !hit; dy++) for (let dx = -2; dx <= 2; dx++) { const X = x + dx, Y = y + dy; if (X >= 0 && Y >= 0 && X < AVW && Y < AVH && gone[Y * AVW + X]) { hit = 1; break; } }
+    cut[i] = hit; }
+  return AVCUT[k] = { cut, noArms: armAll > 0 && armGone / armAll > .6 };
+}
 function avSprite(cfg, dir, step) {
   const key = JSON.stringify(cfg) + '|' + dir + '|' + step; if (AVC[key]) return AVC[key];
   const c = document.createElement('canvas'); c.width = AVW; c.height = AVH; const g = c.getContext('2d'), P2 = avP2(g, cfg, dir, step), vw = avView(dir);
-  let pending = false;
-  const layer = lk => { if (AV_SKIP && lk === AV_SKIP) return; const ov = AVOV[lk], src = ov && ov.pics && ov.pics[vw];
-    if (src) { const [f, t] = avLayerCol(lk, cfg), im = avRecolor(src, f, t); if (!im) { pending = true; return; } const bob = lk === 'body' || lk.startsWith('shoes') || lk.startsWith('bottom') ? 0 : 0; g.drawImage(im, 0, bob, AVW, AVH); return; }
-    avDrawLayer(P2, lk); };
+  let pending = false, G = g, PP = P2;
+  // 몸을 고쳐서 팔 등이 없어진 자리에는 옷(상의·한 벌·하의)도 안 그림
+  const bp = AVOV.body && AVOV.body.pics || {}, bsrc = bp[vw], bc = bsrc ? avBodyCut(vw, bsrc) : null; if (bsrc && !bc) pending = true;
+  // 옆모습은 팔이 몸통 위에 겹쳐서 알 수 없음 → 앞모습 기준
+  const fc = vw === 1 && bsrc && bp[0] ? avBodyCut(0, bp[0]) : null; if (vw === 1 && bsrc && bp[0] && !fc) pending = true;
+  P2.noArms = !!(vw === 1 ? fc && fc.noArms : bc && bc.noArms);
+  const cutAll = bc ? bc.cut : null;
+  const masked = (lk, fn, img) => { const cut = img || !P2.noArms ? cutAll : null; if (!cut || !/^(top|one)\b/.test(lk)) return fn();
+    const t = document.createElement('canvas'); t.width = AVW; t.height = AVH; const tg = t.getContext('2d'); G = tg; PP = avP2(tg, cfg, dir, step); PP.noArms = P2.noArms; fn(); G = g; PP = P2;
+    const d = tg.getImageData(0, 0, AVW, AVH); for (let i = 0; i < cut.length; i++) if (cut[i]) d.data[i * 4 + 3] = 0; tg.putImageData(d, 0, 0); g.drawImage(t, 0, 0); };
+  const layer = lk => { if (AV_SKIP && lk === AV_SKIP) return; masked(lk, () => { const ov = AVOV[lk], src = ov && ov.pics && ov.pics[vw];
+    if (src) { const [f, t] = avLayerCol(lk, cfg), im = avRecolor(src, f, t); if (!im) { pending = true; return; } G.drawImage(im, 0, 0, AVW, AVH); return; }
+    avDrawLayer(PP, lk); }, !!(AVOV[lk] && AVOV[lk].pics && AVOV[lk].pics[vw])); };
   const custom = slot => { const id = cfg[slot]; if (!id || !id.startsWith('w:')) return false; const w = WEAR.find(x => 'w:' + x.id === id); if (!w) { pending = true; return true; } const pics = w.pics || {}, src = vw === 2 && pics[2] ? pics[2] : vw === 1 && pics[1] ? pics[1] : pics[0], im = cfImg(src);
-    if (!im) pending = true; else g.drawImage(im, 0, 0, AVW, AVH); return true; };
+    if (!im) pending = true; else masked(slot, () => G.drawImage(im, 0, 0, AVW, AVH), true); return true; };
   const item = slot => { if (!cfg[slot]) return; if (!custom(slot)) layer(slot + ':' + cfg[slot]); };
   if (cfg.hair) layer('hairB:' + cfg.hair);
   layer('body');
@@ -379,7 +403,8 @@ function avOvSection() {
 }
 function avOvCfg(key) { const [k, id] = key.split(':'), c = Object.assign({}, AV_DEF); if (k === 'eye') c.eye = id; if (k === 'hairB' || k === 'hairF') { c.hair = id; c.hairCol = AV_ITEMS.hair[id][2]; }
   if (AV_ITEMS[k] && k !== 'eye' && k !== 'hair') { if (k === 'one') { c.one = id; } else c[k] = id; const ck = { top: 'topCol', bottom: 'botCol', one: 'oneCol', shoes: 'shoeCol', hat: 'hatCol', acc: 'accCol' }[k]; c[ck] = AV_ITEMS[k][id][2]; } return c; }
-function avLayerPng(key, view, raw) { const c = document.createElement('canvas'); c.width = AVW; c.height = AVH; const g = c.getContext('2d'), P2 = avP2(g, avOvCfg(key), view, 0); avDrawLayer(P2, key); return raw ? c : c.toDataURL('image/png'); }
+function avNoArms(vw) { const bp = AVOV.body && AVOV.body.pics || {}; if (!bp[vw]) return false; const r = avBodyCut(vw === 1 ? 0 : vw, vw === 1 ? bp[0] || '' : bp[vw]); return !!(r && r.noArms); }
+function avLayerPng(key, view, raw) { const c = document.createElement('canvas'); c.width = AVW; c.height = AVH; const g = c.getContext('2d'), P2 = avP2(g, avOvCfg(key), view, 0); if (key !== 'body') P2.noArms = avNoArms(view); avDrawLayer(P2, key); return raw ? c : c.toDataURL('image/png'); }
 let AVOD = null;
 function avOvEdit(key) {
   if (!AVOD || AVOD.key !== key) AVOD = { key, pics: Object.assign({}, (AVOV[key] || {}).pics || {}) };
