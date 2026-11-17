@@ -98,7 +98,7 @@ const AVH_HAIR = {
       if (!back) {
         if (side) on = !(x < 10 && y >= (slick ? 9 : [12, 12.5, 11.5, 12, 12.5, 11.5, 12, 12, 12, 12][Math.max(0, xi - 1)] || 12)) && !(y > 12 && x < 10) && !(y >= lockTo && x < 14);
         else { const inWin = x >= 6 && x < 18, tip = slick ? 9 : bang[xi - 6], fh = AV_HEADG[Math.floor(y) - 4] || 0, dx = Math.abs(x + .25 - 12);
-          on = !(inWin && y >= tip); if (y >= 12) on = on && dx >= fh - 1 && y < lockTo + ((xi * 3) % 2) * .5 - (dx < fh + 1 ? 0 : 0); }
+          on = !(inWin && y >= tip); if (y >= 12) on = on && dx >= Math.min(6, fh - 1.5) && y < lockTo + ((xi * 3) % 2) * .5; }   // 얼굴 보이는 폭: 앞머리 창보다 넓어지지 않게, 아래로 갈수록 좁게
       } else on = y <= 17;
       if (on) R(x, y, .5, 1, C.t); } }
     // 결: 진한 점들 + 윗부분 하이라이트
