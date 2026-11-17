@@ -51,7 +51,7 @@ function booksStart() {
    <div class="row" style="gap:6px;margin-top:8px;max-width:420px;margin-left:auto;margin-right:auto"><button style="flex:1" id="shU" onclick="shUndo()"></button><button style="flex:1" id="shS" onclick="shShuffle()"></button><button style="flex:1" id="shH" onclick="shHint()"></button></div>`;
   const cv = $('#gcv'), cw = cv.clientWidth || 360, S = Math.max(2, Math.round(cw / W * (window.devicePixelRatio || 1)) || 2);
   cv.width = W * S; cv.height = H * S; const g = cv.getContext('2d'); g.imageSmoothingEnabled = false;
-  SH = { lv, boxes: B.boxes, C: B.C, cols, BW, BH, W, H, S, g, cv, undo: 3, shuf: 1, hint: 2, hist: [], score: 0, moves: 0, combo: 0, lastClr: -9, fx: [], pops: [], drag: null, sel: null, hl: null, over: false, t0: performance.now() };
+  SH = { lv, boxes: B.boxes, C: B.C, cols, BW, BH, W, H, S, g, cv, undo: 3, shuf: 1, hint: Math.max(0, 2 + (typeof fortHint === 'function' ? fortHint() : 0)), hist: [], score: 0, moves: 0, combo: 0, lastClr: -9, fx: [], pops: [], drag: null, sel: null, hl: null, over: false, t0: performance.now() };
   shBind(); shHud();
   let raf = 0; const loop = () => { shDraw(); raf = requestAnimationFrame(loop); };
   lockGame(() => cancelAnimationFrame(raf)); raf = requestAnimationFrame(loop);

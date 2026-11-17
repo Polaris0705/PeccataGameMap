@@ -958,11 +958,11 @@ function saveP(){if(ME&&P)B.set('progress/'+ME.uid,clean(P));}
 function earn(n){P.coins+=n;P.earned+=n;if(typeof logAct==='function')logAct(n);if(n>0&&typeof noteTry==='function')noteTry();saveP();if(n>0)sfx('coin');}
 function spend(n){if(P.coins<n){toast('은화가 부족해요');return false;}P.coins-=n;if(typeof logAct==='function')logAct(-n);saveP();return true;}
 const RC=k=>typeof roomCnt==='function'?roomCnt(k):0;
-const growMul=()=>(mySin()==='sloth'?0.75:1)*(1-0.05*Math.min(3,RC('plant')));
+const growMul=()=>(mySin()==='sloth'?0.75:1)*(1-0.05*Math.min(3,RC('plant')))*(typeof fortGrow==='function'?fortGrow():1);
 const hintCost=i=>Math.round(HINT_COST[i]*(RC('shelf')?0.8:1));
 const sellMul=()=>mySin()==='greed'?1.15:1;
 const riddleMul=()=>mySin()==='pride'?1.2:1;
-const shopMul=()=>mySin()==='envy'?0.9:1;
+const shopMul=()=>(mySin()==='envy'?0.9:1)*(typeof fortShop==='function'?fortShop():1);
 
 /* ================= PL: 로비 ================= */
 function queueInfo(code){
@@ -987,6 +987,7 @@ VIEWS.lobby=()=>{
   return `<div class="namecard ${f?f.cls:''}"><div class="sig">${ci?`<img src="${ci}" alt="">`:esc(cname(myHo()).slice(0,1))}</div>
      <div><div class="t">「${esc(t?t.name:'')}」</div><div class="n">${esc(PROF.name)}</div><div class="muted">${esc(cname(myHo()))}${h?` · ${h.name} — ${esc(h.perk)}`:''}</div></div></div>
    <div class="grid g2" style="margin-top:14px">
+    ${typeof fortPanel==='function'?fortPanel():''}
     <div class="panel" style="margin:0"><h2>🗝 조사</h2><p>${qi||'<span class="muted">대기열에 없어요</span>'}</p><p class="muted">승인 대기 ${pend} · 승인됨 ${appr}</p><button onclick="go('book')">조사 예약</button></div>
     <div class="panel" style="margin:0"><h2>🎒 소지품</h2><p>${ITEMS.filter(i=>i.owner===ME.uid).length}개 ${newItems?`<span class="badge pending">새 물건 ${newItems}</span>`:''}</p><button onclick="go('items')">소지품 열기</button></div>
     <div class="panel" style="margin:0"><h2>🌿 온실</h2><p>수확 가능 <b>${ready}</b></p>${featOpen('garden')?`<button onclick="goFeat('garden')">온실로</button>`:'<p class="muted">🔒 아직 온실을 찾지 못했어요</p>'}</div>
@@ -1766,5 +1767,6 @@ setInterval(()=>{if(ME&&P&&(tab==='garden'||tab==='lobby')&&!modalOpen())softRen
 <script src="dotedit.js"></script>
 <script src="furnmgr.js"></script>
 <script src="social.js"></script>
+<script src="fortune.js"></script>
 </body>
 </html>

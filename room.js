@@ -1885,7 +1885,7 @@ VIEWS.room = () => {
   return `<div class="panel roompanel">
    <div class="row" style="justify-content:space-between;align-items:center;flex-wrap:wrap;gap:6px">
      <h2 style="margin:0">🏠 ${esc(roomTitle(ME.uid))}</h2>
-     <span class="muted">❤ ${likes} · 📖 ${GUESTBOOK.filter(g => g.owner === ME.uid).length} · 🎨 염료 ${room.dye}</span></div>
+     <span class="muted">❤ ${likes} · 📖 ${GUESTBOOK.filter(g => g.owner === ME.uid).length} · 🎨 염료 ${room.dye}</span>${typeof fortBadge === 'function' ? fortBadge(P, true) : ''}</div>
    <canvas id="roomCv" class="roomcv${RM.edit ? ' editing' : ''}" width="${RW * 2}" height="${RH * 2}"></canvas>
    <div class="row" style="flex-wrap:wrap;gap:6px;margin-top:8px">
      <button class="${RM.edit ? 'primary' : ''}" onclick="roomEdit(${!RM.edit})">${RM.edit ? '✔ 꾸미기 끝' : '✏ 꾸미기'}</button>
@@ -1915,7 +1915,7 @@ VIEWS.visit = () => {
      <div class="panel roompanel"><div class="row" style="justify-content:space-between;align-items:center;flex-wrap:wrap;gap:6px">
       <h2 style="margin:0">🚪 ${esc(roomTitle(RV))}</h2>
       ${RV === ME.uid ? `<span class="muted">❤ ${likes.length}</span>` : `<div class="row" style="gap:4px;flex:0 0 auto"><button class="${liked ? 'primary' : ''}" onclick="roomLike('${RV}')">${liked ? '❤' : '🤍'} ${likes.length}</button><button onclick="diaryOpen('${RV}')">📔 일기장</button><button onclick="giftOpen('${RV}')">🎁 선물</button></div>`}</div>
-      <canvas id="roomCv" class="roomcv" width="${RW * 2}" height="${RH * 2}"></canvas>${effectsHtml(room)}
+      ${typeof fortBadge === 'function' ? `<div style="margin:4px 0">${fortBadge(PROGS.find(p => p.id === RV), RV === ME.uid)}</div>` : ''}<canvas id="roomCv" class="roomcv" width="${RW * 2}" height="${RH * 2}"></canvas>${effectsHtml(room)}
       ${likes.length ? `<p class="muted" style="margin:6px 0 0">❤ ${likes.map(l => esc(l.name || '')).join(', ')}</p>` : ''}</div>${gbHtml(RV)}`;
   }
   const us = USERS.filter(u => u.ho).sort((a, b) => String(a.ho).localeCompare(String(b.ho)));

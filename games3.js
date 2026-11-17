@@ -18,8 +18,8 @@ function starsOf(id, coins, score) {
 }
 const starHtml = n => n < 0 ? '' : `<span style="display:block;font-size:1.7rem;letter-spacing:4px;color:var(--gold2);margin:4px 0">${'★'.repeat(n)}<span style="opacity:.22">${'★'.repeat(3 - n)}</span></span>`;
 function reward(id, coins, score) {
-  const g = gameDay(); g.p[id] = (g.p[id] || 0) + 1; coins = Math.max(0, Math.round(coins));
-  const sc = score == null ? coins : score, st = starsOf(id, coins, sc);
+  const g = gameDay(); g.p[id] = (g.p[id] || 0) + 1; const sc0 = coins; coins = Math.max(0, Math.round(coins * (typeof fortCoin === 'function' ? fortCoin() : 1)));
+  const sc = score == null ? sc0 : score, st = starsOf(id, sc0, sc);
   P.best = P.best || {}; const prev = P.best[id] || 0, nb = sc > prev && sc > 0; if (nb) P.best[id] = sc;
   P.stars = P.stars || {}; if (st > (P.stars[id] || 0)) P.stars[id] = st;
   msEv('play', id, 1); if (st > 0) msEv('star', id, st);
