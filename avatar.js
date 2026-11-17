@@ -26,58 +26,102 @@ const avCfgOf = p => p && p.avatar ? Object.assign({}, AV_DEF, p.avatar) : null;
 const avOwns = (p, slot, id) => { if (!id) return true; if (id.startsWith('w:')) return (p.wardrobe || []).includes(id) || avTitleWear(p).includes(id) || (WEAR.find(w => 'w:' + w.id === id) || {}).by === (p === P ? ME.uid : p.id); const it = (AV_ITEMS[slot] || {})[id]; return !!it && (it[1] === 0 || (p.wardrobe || []).includes(slot + ':' + id)); };
 function avTitleWear(p) { try { return (typeof KT !== 'undefined' ? KT : []).filter(d => d.wear && ktHas(p, d.id)).map(d => 'w:' + d.wear); } catch (e) { return []; } }
 
-/* ---------- 그리기 ---------- */
+/* ---------- 그리기 (부위별 층 · KP가 덮어쓴 그림이 있으면 그걸로) ---------- */
+let AVOV = {};   // avOv/{층 키} { pics:{0,1,2} }  층 키: body · eye:round · hairB:bob · hairF:bob · top:shirt …
 const AVC = {};
-function avSprite(cfg, dir, step) {
-  const key = JSON.stringify(cfg) + '|' + dir + '|' + step; if (AVC[key]) return AVC[key];
-  const view = dir === 2 ? 'back' : dir % 2 ? 'side' : 'front';
-  const c = document.createElement('canvas'); c.width = AVW; c.height = AVH; const g = c.getContext('2d');
+const avView = dir => dir === 2 ? 2 : dir % 2 ? 1 : 0;
+function avP2(g, cfg, dir, step) {
   const R = (x, y, w, h, col) => { if (w <= 0 || h <= 0) return; g.fillStyle = col; g.fillRect(Math.round(x), Math.round(y), Math.round(w), Math.round(h)); };
   const E = (cx, cy, rx, ry, col) => { for (let y = -ry; y <= ry; y++) { const w = Math.round(rx * Math.sqrt(Math.max(0, 1 - (y / (ry + .5)) ** 2))); R(cx - w, cy + y, w * 2 + 1, 1, col); } };
-  const sk = ramp(cfg.skin), side = view === 'side', back = view === 'back', cx = side ? 23 : 24;
-  const lift = [0, -1, 0, 1][step] || 0;   // 걷기: 다리 번갈아
-  const legs = side ? [[20, 5, lift], [24, 5, -lift]] : [[17, 5, lift], [26, 5, -lift]];
-  const torso = side ? { x: 17, w: 14 } : { x: 14, w: 20 };
-  const one = cfg.one, P2 = { R, E, g, sk, side, back, view, cx, legs, torso, lift, cfg };
-  let pending = false; const custom = slot => { const id = cfg[slot]; if (!id || !id.startsWith('w:')) return false; const w = WEAR.find(x => 'w:' + x.id === id); if (!w) { pending = true; return true; } const pics = w.pics || {}, src = dir === 2 && pics[2] ? pics[2] : dir % 2 && pics[1] ? pics[1] : pics[0], im = cfImg(src);
-    if (!im) pending = true; if (im) g.drawImage(im, 0, 0, AVW, AVH); return true; };
-  // 1) 뒷머리
-  if (!custom('__')) AVH_HAIR.back(P2, cfg.hair, ramp(cfg.hairCol));
-  // 2) 몸 (다리 · 기본 속옷)
-  legs.forEach(([x, w, l]) => { R(x, 52 + l, w, 11, sk.t); R(x, 52 + l, 1, 11, sk.f); });
-  R(torso.x, 37, torso.w, 14, '#e8e0d0'); R(torso.x, 46, torso.w, 6, '#4a4048');
-  // 3) 신발 4) 하의 5) 상의 / 한 벌
-  if (!custom('shoes') && cfg.shoes) AV_DRAW.shoes(P2, cfg.shoes, ramp(cfg.shoeCol || '#3a2418'));
-  if (one) { if (!custom('one')) AV_DRAW.one(P2, one, ramp(cfg.oneCol || '#2a2a34')); }
-  else { if (cfg.bottom && !custom('bottom')) AV_DRAW.bottom(P2, cfg.bottom, ramp(cfg.botCol || '#3a3a44')); if (cfg.top && !custom('top')) AV_DRAW.top(P2, cfg.top, ramp(cfg.topCol || '#f4f0e6')); }
-  // 손
-  if (side) E(17, 50, 2, 2, sk.t); else { E(12, 50, 2, 2, sk.t); E(36, 50, 2, 2, sk.t); }
-  // 6) 머리 · 얼굴
-  R(cx - 3, 32, 6, 5, sk.f); E(cx, 20, 14, 14, sk.t); if (!back) { E(cx - (side ? 3 : 0), 24, 12, 9, sk.t); }
-  if (side) { R(cx - 15, 22, 2, 3, sk.t); E(cx + 6, 22, 2, 3, sk.f); }
-  if (!back) AV_FACE(P2, cfg.eye, ramp(cfg.eyeCol || '#3a2a20'));
-  // 7) 앞머리 8) 모자 · 액세서리
-  AVH_HAIR.front(P2, cfg.hair, ramp(cfg.hairCol));
-  if (cfg.acc && !custom('acc')) AV_DRAW.acc(P2, cfg.acc, ramp(cfg.accCol || '#c8a040'));
-  if (cfg.hat && !custom('hat')) AV_DRAW.hat(P2, cfg.hat, ramp(cfg.hatCol || '#3a3030'));
+  const view = dir === 2 ? 'back' : dir % 2 ? 'side' : 'front', side = view === 'side', lift = [0, -1, 0, 1][step] || 0;
+  return { R, E, g, cfg, view, side, back: view === 'back', cx: side ? 23 : 24, lift, sk: ramp(cfg.skin),
+    legs: side ? [[20, 5, lift], [24, 5, -lift]] : [[18, 5, lift], [25, 5, -lift]], torso: side ? { x: 17, w: 14 } : { x: 15, w: 18 } };
+}
+/* 층 하나 그리기 (원래 그림) */
+function avDrawLayer(P2, key) {
+  const [k, id] = key.split(':'), c = P2.cfg;
+  if (k === 'body') return AV_BODY(P2);
+  if (k === 'eye') return AV_FACE(P2, id, ramp(c.eyeCol || '#3a2a20'));
+  if (k === 'hairB') return AVH_HAIR.back(P2, id, ramp(c.hairCol));
+  if (k === 'hairF') return AVH_HAIR.front(P2, id, ramp(c.hairCol));
+  const colKey = { top: 'topCol', bottom: 'botCol', one: 'oneCol', shoes: 'shoeCol', hat: 'hatCol', acc: 'accCol' }[k];
+  return AV_DRAW[k] && AV_DRAW[k](P2, id, ramp(c[colKey] || (AV_ITEMS[k][id] || [])[2] || '#888888'));
+}
+/* 층의 기본 색 (덮어쓴 그림의 색 바꾸기 기준) */
+function avLayerCol(key, cfg) {
+  const [k, id] = key.split(':');
+  if (k === 'body') return [SKINS[0], cfg.skin];
+  if (k === 'eye') return [AV_ITEMS.eye[id] ? AV_ITEMS.eye[id][2] : '#3a2a20', cfg.eyeCol];
+  if (k === 'hairB' || k === 'hairF') return [AV_ITEMS.hair[id] ? AV_ITEMS.hair[id][2] : '#3a2418', cfg.hairCol];
+  const colKey = { top: 'topCol', bottom: 'botCol', one: 'oneCol', shoes: 'shoeCol', hat: 'hatCol', acc: 'accCol' }[k];
+  return [(AV_ITEMS[k] && AV_ITEMS[k][id] || [])[2], cfg[colKey]];
+}
+const AVRC = {};
+function avRecolor(url, from, to) {
+  const im = cfImg(url); if (!im) return null; if (!from || !to || from.toLowerCase() === to.toLowerCase()) return im;
+  const key = url.length + url.slice(-30) + from + to; if (AVRC[key]) return AVRC[key];
+  const A = ramp(from), Bm = ramp(to), map = {}; ['L', 'l', 't', 'f', 'd', 'o'].forEach(q => { map[A[q].toLowerCase()] = deHex(Bm[q]); });
+  const c = document.createElement('canvas'); c.width = im.width; c.height = im.height; const g = c.getContext('2d'); g.drawImage(im, 0, 0); const d = g.getImageData(0, 0, c.width, c.height), p = d.data;
+  for (let i = 0; i < p.length; i += 4) { if (!p[i + 3]) continue; const m = map[deToHex(p[i], p[i + 1], p[i + 2])]; if (m) { p[i] = m[0]; p[i + 1] = m[1]; p[i + 2] = m[2]; } }
+  g.putImageData(d, 0, 0); return AVRC[key] = c;
+}
+function avSprite(cfg, dir, step) {
+  const key = JSON.stringify(cfg) + '|' + dir + '|' + step; if (AVC[key]) return AVC[key];
+  const c = document.createElement('canvas'); c.width = AVW; c.height = AVH; const g = c.getContext('2d'), P2 = avP2(g, cfg, dir, step), vw = avView(dir);
+  let pending = false;
+  const layer = lk => { const ov = AVOV[lk], src = ov && ov.pics && ov.pics[vw];
+    if (src) { const [f, t] = avLayerCol(lk, cfg), im = avRecolor(src, f, t); if (!im) { pending = true; return; } const bob = lk === 'body' || lk.startsWith('shoes') || lk.startsWith('bottom') ? 0 : 0; g.drawImage(im, 0, bob, AVW, AVH); return; }
+    avDrawLayer(P2, lk); };
+  const custom = slot => { const id = cfg[slot]; if (!id || !id.startsWith('w:')) return false; const w = WEAR.find(x => 'w:' + x.id === id); if (!w) { pending = true; return true; } const pics = w.pics || {}, src = vw === 2 && pics[2] ? pics[2] : vw === 1 && pics[1] ? pics[1] : pics[0], im = cfImg(src);
+    if (!im) pending = true; else g.drawImage(im, 0, 0, AVW, AVH); return true; };
+  const item = slot => { if (!cfg[slot]) return; if (!custom(slot)) layer(slot + ':' + cfg[slot]); };
+  if (cfg.hair) layer('hairB:' + cfg.hair);
+  layer('body');
+  item('shoes');
+  if (cfg.one) item('one'); else { item('bottom'); item('top'); }
+  if (vw !== 2) layer('eye:' + (cfg.eye || 'round'));
+  if (cfg.hair) layer('hairF:' + cfg.hair);
+  item('acc'); item('hat');
   // 외곽선 자동
   const d = g.getImageData(0, 0, AVW, AVH), p = d.data, src = p.slice();
   for (let y = 0; y < AVH; y++) for (let x = 0; x < AVW; x++) { const k = (y * AVW + x) * 4; if (src[k + 3]) continue;
-    if ([[1, 0], [-1, 0], [0, 1], [0, -1]].some(([a, b]) => { const X = x + a, Y = y + b; return X >= 0 && Y >= 0 && X < AVW && Y < AVH && src[(Y * AVW + X) * 4 + 3] > 100; })) { p[k] = 30; p[k + 1] = 18; p[k + 2] = 14; p[k + 3] = 255; } }
+    if ([[1, 0], [-1, 0], [0, 1], [0, -1]].some(([a, b]) => { const X = x + a, Y = y + b; return X >= 0 && Y >= 0 && X < AVW && Y < AVH && src[(Y * AVW + X) * 4 + 3] > 100; })) { p[k] = 42; p[k + 1] = 24; p[k + 2] = 20; p[k + 3] = 255; } }
   g.putImageData(d, 0, 0);
   let out = c; if (dir === 3) { const m = document.createElement('canvas'); m.width = AVW; m.height = AVH; const mg = m.getContext('2d'); mg.translate(AVW, 0); mg.scale(-1, 1); mg.drawImage(c, 0, 0); out = m; }
   if (!pending) AVC[key] = out; return out;
 }
-/* 얼굴 */
+/* 몸: 다리 · 속옷 · 손 · 목 · 머리(얼굴형) — 큰 머리 2등신 */
+function AV_BODY(P2) {
+  const { R, E, sk, side, back, cx, legs, torso } = P2;
+  legs.forEach(([x, w, l]) => { R(x, 52 + l, w, 11, sk.t); R(x + w - 1, 52 + l, 1, 11, sk.f); R(x, 61 + l, w, 2, sk.f); });
+  R(torso.x + 1, 38, torso.w - 2, 13, '#ece6da'); E(torso.x + 3, 39, 3, 2, '#ece6da'); E(torso.x + torso.w - 4, 39, 3, 2, '#ece6da'); R(torso.x + 1, 47, torso.w - 2, 5, '#4a4048');
+  if (side) { R(19, 39, 4, 9, sk.t); E(20, 49, 2, 2, sk.t); R(19, 39, 1, 9, sk.f); }
+  else { R(12, 39, 3, 9, sk.t); R(33, 39, 3, 9, sk.t); E(13, 49, 2, 2, sk.t); E(34, 49, 2, 2, sk.t); E(13, 50, 1, 0, sk.f); E(34, 50, 1, 0, sk.f); }
+  R(cx - 3, 33, 6, 6, sk.f); R(cx - 2, 33, 4, 4, sk.t);
+  // 머리: 이마가 넓고 볼이 통통한 둥근 얼굴
+  E(cx, 20, 15, 15, sk.t);
+  if (!back) { E(cx - (side ? 4 : 0), 26, 13, 9, sk.t); if (side) { E(cx - 13, 25, 2, 3, sk.t); E(cx + 4, 24, 3, 4, sk.f); E(cx + 4, 24, 2, 3, sk.t); } else { R(cx - 13, 30, 3, 2, sk.f); R(cx + 10, 30, 3, 2, sk.f); } }
+}
+/* 얼굴: 크고 반짝이는 눈 (머리의 1/4 높이) · 낮은 위치 */
 function AV_FACE(P2, eye, C) {
-  const { R, E, side, cx } = P2, ey = 23, pos = side ? [cx - 9] : [cx - 7, cx + 6];
-  pos.forEach(x => {
-    if (eye === 'round') { R(x - 1, ey - 1, 3, 4, C.o); R(x, ey - 2, 1, 1, C.o); R(x - 1, ey, 1, 1, '#ffffff'); }
-    else if (eye === 'half') { R(x - 1, ey + 1, 3, 1, C.o); R(x - 2, ey + 2, 1, 1, C.o); R(x + 2, ey + 2, 1, 1, C.o); }
-    else if (eye === 'sharp') { R(x - 2, ey, 4, 1, C.o); R(x - 1, ey + 1, 3, 2, C.t); R(x, ey + 1, 1, 1, '#ffffff'); }
-    else { R(x - 2, ey + 1, 4, 1, C.o); R(x - 1, ey + 2, 2, 1, C.d); }
+  const { R, E, side, cx } = P2, ey = 23, pos = side ? [[cx - 9, -1]] : [[cx - 7, -1], [cx + 7, 1]];
+  pos.forEach(([x, o]) => {
+    if (eye === 'round') {
+      R(x - 3, ey, 6, 1, C.o); R(x - 2, ey - 1, 4, 1, C.o); if (!side || o) R(x + (o > 0 ? 3 : -4), ey - 1, 1, 1, C.o);
+      R(x - 3, ey + 1, 6, 6, C.d); R(x - 2, ey + 2, 4, 3, C.t); R(x - 2, ey + 4, 4, 2, C.l); R(x - 1, ey + 6, 2, 1, C.L);
+      R(x - 3, ey + 1, 1, 6, C.o); R(x + 2, ey + 1, 1, 6, C.o); R(x - 2, ey + 7, 4, 1, C.f);
+      R(x - 2, ey + 1, 2, 2, '#ffffff'); R(x + 1, ey + 5, 1, 1, '#ffffff');
+    } else if (eye === 'half') {
+      R(x - 2, ey + 3, 4, 1, C.o); R(x - 3, ey + 4, 1, 1, C.o); R(x + 2, ey + 4, 1, 1, C.o); R(x - 4, ey + 5, 1, 1, C.o); R(x + 3, ey + 5, 1, 1, C.o);
+    } else if (eye === 'sharp') {
+      R(x - 3, ey + 1, 7, 1, C.o); R(x + (o > 0 ? 3 : -4), ey, 1, 1, C.o); R(x - 3, ey + 2, 6, 4, C.d); R(x - 2, ey + 3, 4, 2, C.t); R(x - 2, ey + 4, 4, 1, C.l);
+      R(x - 3, ey + 2, 1, 4, C.o); R(x + 2, ey + 2, 1, 4, C.o); R(x - 2, ey + 6, 4, 1, C.f); R(x - 2, ey + 2, 1, 1, '#ffffff'); R(x + 1, ey + 2, 1, 1, '#ffffff');
+    } else {   // 졸린 눈: 눈꺼풀이 반쯤
+      R(x - 3, ey + 3, 6, 1, C.o); R(x - 3, ey + 4, 6, 3, C.d); R(x - 2, ey + 5, 4, 1, C.t); R(x - 2, ey + 6, 4, 1, C.l); R(x - 3, ey + 4, 1, 3, C.o); R(x + 2, ey + 4, 1, 3, C.o); R(x - 2, ey + 7, 4, 1, C.f); R(x - 2, ey + 4, 1, 1, '#ffffff');
+    }
   });
-  if (!side) { R(cx - 1, 29, 2, 1, '#a85a5a'); E(cx - 9, 27, 1, 0, '#f4a0a0'); E(cx + 9, 27, 1, 0, '#f4a0a0'); } else { R(cx - 12, 29, 2, 1, '#a85a5a'); E(cx - 6, 27, 1, 0, '#f4a0a0'); }
+  if (side) { R(cx - 13, 32, 2, 1, '#b05a5a'); E(cx - 6, 30, 2, 0, '#f6a8a8'); }
+  else { R(cx - 1, 32, 3, 1, '#b05a5a'); R(cx, 33, 1, 1, '#d88080'); E(cx - 9, 30, 2, 0, '#f6a8a8'); E(cx + 9, 30, 2, 0, '#f6a8a8'); }
 }
 /* 머리카락 */
 const AVH_HAIR = {
@@ -89,8 +133,9 @@ const AVH_HAIR = {
     if (h === 'bob') { R(cx - 15 + (side ? 6 : 0), 16, side ? 19 : 30, 14, C.t); }
   },
   front(P2, h, C) { const { R, E, side, back, cx } = P2;
-    E(cx, 13, 14, 10, C.t); E(cx - 3, 8, 7, 3, C.l); R(cx - 14, 13, 28, 4, C.t);
-    if (back) { E(cx, 18, 14, 13, C.t); E(cx - 4, 12, 6, 3, C.l); if (h === 'bun') { E(cx, 6, 6, 5, C.t); E(cx - 2, 5, 3, 2, C.l); } if (h === 'pony') { E(cx, 14, 3, 3, '#c03050'); } return; }
+    const cap = lim => { for (let y = -11; y <= 11; y++) { if (14 + y > lim) break; const w = Math.round(16 * Math.sqrt(Math.max(0, 1 - (y / 11.5) ** 2))); R(cx - w, 14 + y, w * 2 + 1, 1, C.t); } };
+    cap(back ? 30 : 17); E(cx - 4, 7, 7, 2, C.l); R(cx + 5, 6, 3, 1, C.l);
+    if (back) { E(cx, 19, 16, 14, C.t); E(cx - 4, 12, 6, 3, C.l); if (h === 'bun') { E(cx, 6, 6, 5, C.t); E(cx - 2, 5, 3, 2, C.l); } if (h === 'pony') { E(cx, 14, 3, 3, '#c03050'); } return; }
     if (side) {   // 왼쪽을 봄
       R(cx - 4, 10, 18, 12, C.t); R(cx + 6, 13, 8, 18, C.t); R(cx - 14, 13, 10, 5, C.t);
       if (h === 'bob' || h === 'long' || h === 'wavy') R(cx + 2, 16, 12, 14, C.t);
@@ -286,8 +331,45 @@ const AVTEST_ROOM = '__avtest';
 function avRandCfg() { const pick = o => { const k = Object.keys(o); return k[Math.floor(Math.random() * k.length)]; }, rc = () => '#' + [0, 0, 0].map(() => (60 + Math.floor(Math.random() * 160)).toString(16).padStart(2, '0')).join('');
   const one = Math.random() < .4 ? pick(AV_ITEMS.one) : ''; return Object.assign({}, AV_DEF, { skin: SKINS[Math.floor(Math.random() * 5)], eye: pick(AV_ITEMS.eye), hair: pick(AV_ITEMS.hair), hairCol: rc(), top: pick(AV_ITEMS.top), topCol: rc(), bottom: pick(AV_ITEMS.bottom), botCol: rc(), shoes: pick(AV_ITEMS.shoes), one, oneCol: one ? rc() : '', hat: Math.random() < .4 ? pick(AV_ITEMS.hat) : '', hatCol: rc(), acc: Math.random() < .4 ? pick(AV_ITEMS.acc) : '', accCol: '#c8a040' }); }
 function avFake(n) { AVFAKE.length = 0; for (let i = 0; i < n; i++) { const x = OX + 60 + i * 120, y = FY + 120 + i * 40; AVFAKE.push({ id: 'fake' + i, cfg: avRandCfg(), x, y, tx: x, ty: y, t0: Date.now(), dir: 0 }); } render(); }
+function avPwTry() { const v = ($('#avPw') || {}).value || ''; if (v.trim() === '1117') { try { sessionStorage.setItem('peccata_avpw', '1'); } catch (e) {} render(); } else { sfx('bad'); toast('비밀번호가 달라요'); } }
+const AV_OV_GROUPS = () => [['몸', [['body', '기본 몸 · 얼굴형']]], ['눈', Object.entries(AV_ITEMS.eye).map(([k, v]) => ['eye:' + k, v[0]])],
+  ['머리 (앞)', Object.entries(AV_ITEMS.hair).map(([k, v]) => ['hairF:' + k, v[0] + ' 앞머리'])], ['머리 (뒤)', Object.entries(AV_ITEMS.hair).map(([k, v]) => ['hairB:' + k, v[0] + ' 뒷머리'])],
+  ...['top', 'bottom', 'one', 'shoes', 'hat', 'acc'].map(sl => [AV_SLOTS.find(x => x[0] === sl)[1], Object.entries(AV_ITEMS[sl]).map(([k, v]) => [sl + ':' + k, v[0]])])];
+let AVOV_OPEN = '';
+function avOvSection() {
+  return `<div class="panel"><h2>🎨 기본 그림 고치기</h2><p class="muted" style="margin:0 0 6px;font-size:.82rem">기본 몸·눈·머리·옷 그림을 도트 편집기로 고쳐요. 저장하면 모든 아바타에 적용돼요. 원래 색(명암 그대로)으로 칠한 부분은 피부·머리·옷 색 바꾸기가 계속 돼요.</p>
+    ${AV_OV_GROUPS().map(([gn, list]) => `<details ${AVOV_OPEN === gn ? 'open' : ''} ontoggle="if(this.open)AVOV_OPEN='${gn}'"><summary><b>${gn}</b> <span class="muted">${list.filter(([k]) => AVOV[k]).length ? '· 고친 것 ' + list.filter(([k]) => AVOV[k]).length : ''}</span></summary>
+      ${list.map(([k, n]) => `<div class="item" style="margin:3px 0"><div style="display:flex;align-items:center;gap:8px"><canvas class="avovp" data-k="${k}" width="${AVW}" height="${AVH}" style="width:32px;image-rendering:pixelated;background:#2a2420"></canvas><span>${esc(n)}${AVOV[k] ? ' <span class="badge live">바꿈</span>' : ''}</span></div>
+        <div class="row" style="flex:0 0 auto;gap:4px"><button class="sm" onclick="avOvEdit('${k}')">✏ 고치기</button>${AVOV[k] ? `<button class="sm" onclick="avOvReset('${k}')">↺ 원래대로</button>` : ''}</div></div>`).join('')}</details>`).join('')}</div>`;
+}
+function avOvCfg(key) { const [k, id] = key.split(':'), c = Object.assign({}, AV_DEF); if (k === 'eye') c.eye = id; if (k === 'hairB' || k === 'hairF') { c.hair = id; c.hairCol = AV_ITEMS.hair[id][2]; }
+  if (AV_ITEMS[k] && k !== 'eye' && k !== 'hair') { if (k === 'one') { c.one = id; } else c[k] = id; const ck = { top: 'topCol', bottom: 'botCol', one: 'oneCol', shoes: 'shoeCol', hat: 'hatCol', acc: 'accCol' }[k]; c[ck] = AV_ITEMS[k][id][2]; } return c; }
+function avLayerPng(key, view, raw) { const c = document.createElement('canvas'); c.width = AVW; c.height = AVH; const g = c.getContext('2d'), P2 = avP2(g, avOvCfg(key), view, 0); avDrawLayer(P2, key); return raw ? c : c.toDataURL('image/png'); }
+let AVOD = null;
+function avOvEdit(key) {
+  if (!AVOD || AVOD.key !== key) AVOD = { key, pics: Object.assign({}, (AVOV[key] || {}).pics || {}) };
+  const nm = (AV_OV_GROUPS().flatMap(g => g[1]).find(x => x[0] === key) || [, key])[1];
+  modal(`<h2 style="color:var(--gold2);margin-top:0">🎨 ${esc(nm)} 고치기</h2><p class="muted" style="font-size:.82rem;margin:0 0 6px">오른쪽 방향은 옆모습을 뒤집어 써요. 안 고친 방향은 원래 그림이에요.</p>
+    ${[[0, '앞모습'], [1, '옆모습 (왼쪽 보기)'], [2, '뒷모습']].map(([d, n]) => `<div class="item" style="margin:4px 0"><div style="display:flex;align-items:center;gap:8px"><img src="${AVOD.pics[d] || avLayerPng(key, d === 1 ? 1 : d)}" style="height:60px;image-rendering:pixelated;background:#2a2420"><div><b>${n}</b> ${AVOD.pics[d] ? '<span class="badge live">바꿈</span>' : '<span class="muted">원래 그림</span>'}</div></div>
+      <div class="row" style="flex:0 0 auto;gap:4px"><button class="sm primary" onclick="avOvDraw('${key}',${d})">🎨 그리기</button>${AVOD.pics[d] ? `<button class="sm" onclick="delete AVOD.pics[${d}];avOvEdit('${key}')">↺</button>` : ''}</div></div>`).join('')}
+    <div class="row" style="margin-top:10px"><button onclick="AVOD=null;closeModal()">취소</button><button class="primary" onclick="avOvSave('${key}')">저장</button></div>`);
+}
+function avOvDraw(key, d) {
+  const orig = avLayerPng(key, d), cfg = avOvCfg(key), m = document.createElement('canvas'); m.width = AVW; m.height = AVH; const saved = AVOV[key]; delete AVOV[key]; Object.keys(AVC).forEach(k => delete AVC[k]);
+  m.getContext('2d').drawImage(avSprite(cfg, d, 0), 0, 0); if (saved) AVOV[key] = saved; Object.keys(AVC).forEach(k => delete AVC[k]);
+  dotEdit({ W: AVW, H: AVH, src: AVOD.pics[d] || orig, orig, key: 'avov_' + key + '_' + d, title: key + ' · ' + ['앞', '옆', '뒤'][d],
+    onSave: url => { if (url) AVOD.pics[d] = url; else delete AVOD.pics[d]; avOvEdit(key); }, onCancel: () => avOvEdit(key) });
+  const im = new Image(); im.onload = () => { if (DE) { DE.ref = { img: im, data: null, a: .3, on: true, x: 0, y: 0, s: 1, crisp: true }; deUI(); deDraw(); } }; im.src = m.toDataURL();
+}
+const avOvId = key => key.replace(':', '__');
+async function avOvSave(key) {
+  const pics = AVOD.pics; try { if (!Object.keys(pics).length) await B.del('avOv/' + avOvId(key)); else await B.set('avOv/' + avOvId(key), { key, pics, at: Date.now() }); AVOD = null; closeModal(); toast(Object.keys(pics).length ? '저장했어요! 모든 아바타에 적용돼요' : '원래 그림으로 돌렸어요'); } catch (e) { toast('실패: ' + (e.code || e.message)); }
+}
+async function avOvReset(key) { if (!confirm('이 그림을 원래대로 되돌릴까요?')) return; try { await B.del('avOv/' + avOvId(key)); toast('원래대로 되돌렸어요'); } catch (e) { toast('실패: ' + (e.code || e.message)); } }
 VIEWS.kavatar = () => {
   if (!IS_ADMIN) return '<div class="panel">KP만 볼 수 있어요.</div>';
+  let ok = false; try { ok = sessionStorage.getItem('peccata_avpw') === '1'; } catch (e) {}
+  if (!ok) return `<div class="panel" style="max-width:360px;margin:30px auto;text-align:center"><h2>🔒 아바타 시험실</h2><p class="muted">비밀번호를 넣어 주세요.</p><input id="avPw" type="password" inputmode="numeric" maxlength="12" style="text-align:center;font-size:1.2rem" onkeydown="if(event.key==='Enter')avPwTry()"><button class="primary" style="width:100%;margin-top:8px" onclick="avPwTry()">들어가기</button></div>`;
   const mine = avCfgOf(P), kpW = WEAR.filter(w => w.kind === 'kp'), plW = WEAR.filter(w => w.kind === 'pl');
   return `<div class="panel"><h2>🧍 아바타 시험실</h2><p class="muted" style="margin:0 0 6px">지금은 <b>${AVCFG.open ? '모두에게 공개 중' : 'KP 화면에서만'}</b> 보여요. 다 둘러보고 괜찮으면 공개하세요.</p>
     <div class="row" style="gap:6px;flex-wrap:wrap"><button class="primary" onclick="avEdit()">${mine ? '✏ 내 아바타 꾸미기' : '＋ 내 아바타 만들기'}</button><button onclick="avFake(${AVFAKE.length ? 0 : 2})">${AVFAKE.length ? '손님 없애기' : '👥 시험용 손님 2명'}</button><button onclick="avFake(2)">🎲 손님 다시 뽑기</button>
@@ -296,6 +378,7 @@ VIEWS.kavatar = () => {
     <canvas id="avTestCv" class="roomcv" width="${RW * 2}" height="${RH * 2}"></canvas></div>
    <div class="panel"><div class="row" style="justify-content:space-between;align-items:center"><h2 style="margin:0">🧥 KP가 만든 옷</h2><button class="primary" style="flex:0 0 auto" onclick="wfNew('one','kp')">＋ 새 옷</button></div>
     ${kpW.map(w => `<div class="item" style="margin:4px 0"><div style="display:flex;align-items:center;gap:8px"><img src="${(w.pics || {})[0] || ''}" style="height:48px;image-rendering:pixelated;background:#2a2420"><div><b>${esc(w.name)}</b><div class="muted" style="font-size:.78rem">${esc((AV_SLOTS.find(s => s[0] === w.slot) || [, ''])[1])} · ${w.cost || 0} 은화${w.sell === false ? ' · 판매 안 함' : ''}</div></div></div><div class="row" style="flex:0 0 auto;gap:4px"><button class="sm" onclick="wfEdit('${w.id}')">고치기</button><button class="sm danger" onclick="wfDel('${w.id}')">지우기</button></div></div>`).join('') || '<p class="muted">아직 없어요. 칭호 보상으로 줄 옷도 여기서 만들어요.</p>'}</div>
+   ${avOvSection()}
    ${plW.length ? `<div class="panel"><h2>🎨 PL이 만든 옷 (${plW.length})</h2>${plW.map(w => `<div class="item" style="margin:4px 0"><div style="display:flex;align-items:center;gap:8px"><img src="${(w.pics || {})[0] || ''}" style="height:40px;image-rendering:pixelated;background:#2a2420"><b>${esc(w.name)}</b> <span class="muted">${esc(w.byName || '')}</span></div><button class="sm danger" onclick="wfDel('${w.id}')">지우기</button></div>`).join('')}</div>` : ''}`;
 };
 async function avOpenToggle() { const v = !AVCFG.open; if (v && !confirm('모든 PL에게 아바타를 공개할까요? 처음 방에 들어오면 아바타 만들기 창이 떠요.')) return; try { await B.set('settings/avatar', { open: v }, true); toast(v ? '모두에게 공개했어요' : 'KP만 보이게 했어요'); } catch (e) { toast('실패: ' + (e.code || e.message)); } }
@@ -306,11 +389,12 @@ function avTestPaint() {
   cv.onclick = ev => { if (!avCfgOf(P)) return toast('먼저 아바타를 만들어 주세요'); const p = cvPos(cv, ev); avWalkTo(AVTEST_ROOM, p.x, p.y); };
 }
 let AV_PAINT_OWNER = null;
-setInterval(() => { if (tab === 'kavatar' && !document.hidden) avTestPaint(); }, 140);
+setInterval(() => { if (tab === 'kavatar' && !document.hidden) { avTestPaint(); document.querySelectorAll('canvas.avovp:not([data-done])').forEach(c => { c.dataset.done = 1; const k = c.dataset.k, cfg = avOvCfg(k), g = c.getContext('2d'); g.clearRect(0, 0, AVW, AVH); g.drawImage(avSprite(cfg, 0, 0), 0, 0); }); } }, 140);
 function avOnAuth(sub) {
   sub(B.onDoc('settings/avatar', d => { AVCFG = Object.assign({ open: false }, d || {}); softRender(); }));
   sub(B.onCol('wear', l => { WEAR = l; Object.keys(AVC).forEach(k => delete AVC[k]); softRender(); }));
   sub(B.onCol('avpos', l => { AVPOS = l; }));
+  sub(B.onCol('avOv', l => { AVOV = {}; l.forEach(d => { if (d.key) AVOV[d.key] = d; }); Object.keys(AVC).forEach(k => delete AVC[k]); Object.keys(AVRC).forEach(k => delete AVRC[k]); softRender(); }));
 }
 /* 처음 공개됐을 때 PL에게 만들기 권하기 */
 setInterval(() => { try { if (!ME || !AVCFG.open || IS_ADMIN || !PROF || !PROF.ho || !P || avCfgOf(P) || tab !== 'room' || document.querySelector('#modal[style*="flex"]')) return; if (sessionStorage.getItem('peccata_avask')) return; sessionStorage.setItem('peccata_avask', '1');

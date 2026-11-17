@@ -265,6 +265,10 @@ service cloud.firestore {
       allow update: if isAdmin() || (signedIn() && resource.data.by == request.auth.uid && resource.data.kind == 'pl' && request.resource.data.by == request.auth.uid && request.resource.data.kind == 'pl');
       allow delete: if isAdmin() || (signedIn() && resource.data.by == request.auth.uid);
     }
+    match /avOv/{id} {
+      allow read: if signedIn();
+      allow write: if isAdmin();
+    }
     match /avpos/{uid} {
       allow read: if signedIn();
       allow write: if isMe(uid);
