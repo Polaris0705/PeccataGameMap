@@ -192,6 +192,57 @@ service cloud.firestore {
       allow delete: if isAdmin() || (signedIn() && resource.data.uid == request.auth.uid);
     }
 
+    // 세션 일정 · 참석 응답
+    match /sessions/{id} {
+      allow read: if signedIn();
+      allow create, delete: if isAdmin();
+      allow update: if isAdmin() || (signedIn() && onlyChanges(['rsvp']));
+    }
+
+    // 일정 조율 (체크 = 안 되는 날)
+    match /availMonths/{ym} {
+      allow read: if signedIn();
+      allow write: if isAdmin();
+    }
+    match /availRows/{id} {
+      allow read: if signedIn();
+      allow write: if isAdmin() || (signedIn() && request.resource.data.code == myHo()
+        && id == request.resource.data.ym + '_' + request.resource.data.code);
+      allow delete: if isAdmin();
+    }
+
+    // 선물함 (받는 사람만 읽기)
+    match /giftbox/{owner}/in/{id} {
+      allow read: if isMe(owner) || isAdmin();
+      allow create: if signedIn() && request.resource.data.from == request.auth.uid && request.resource.data.got == false;
+      allow update: if isMe(owner) && onlyChanges(['got']);
+      allow delete: if isMe(owner) || isAdmin();
+    }
+
+    // 저택 소식지 (기고 → KP 승인 → 게재)
+    match /newsReq/{id} {
+      allow read, update, delete: if isAdmin();
+      allow create: if signedIn() && request.resource.data.by == request.auth.uid;
+    }
+    match /news/{id} {
+      allow read: if signedIn();
+      allow create, delete: if isAdmin();
+      allow update: if isAdmin() || (signedIn() && onlyChanges(['reacts', 'cmts', 'reads']));
+    }
+
+    // 캐릭터 일기 (가린 부분은 diarySec 에 따로, 허락받은 사람만)
+    match /diaries/{id} {
+      allow read: if signedIn();
+      allow create: if signedIn() && request.resource.data.uid == request.auth.uid;
+      allow update, delete: if isAdmin() || (signedIn() && resource.data.uid == request.auth.uid && request.resource.data.uid == request.auth.uid);
+    }
+    match /diarySec/{id} {
+      allow read: if isAdmin() || (signedIn() && (resource.data.owner == request.auth.uid || request.auth.uid in resource.data.who));
+      allow create: if signedIn() && request.resource.data.owner == request.auth.uid;
+      allow update: if signedIn() && resource.data.owner == request.auth.uid && request.resource.data.owner == request.auth.uid;
+      allow delete: if isAdmin() || (signedIn() && resource.data.owner == request.auth.uid);
+    }
+
     // 직접 만든 가구 (KP 가구 · PL 전용 가구)
     match /furn/{id} {
       allow read: if signedIn();

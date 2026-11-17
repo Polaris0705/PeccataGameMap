@@ -1893,6 +1893,7 @@ VIEWS.room = () => {
      <button onclick="SHOPTAB='mine';openFurnShop()">✏ 가구 그리기</button>
      <button onclick="SHOPTAB='auc';openFurnShop()">🔨 경매장</button>
      <button onclick="RV=null;go('visit')">👀 놀러 가기</button>
+     <button onclick="diaryOpen(ME.uid)">📔 일기장</button>
      <button onclick="go('map')">🚪 저택으로 나가기</button></div>
    ${RM.edit ? `<div class="roomedit">
      ${selItem ? `<p style="margin:6px 0"><b>${FURN[selItem.k].name}</b> 선택됨 — 옮길 칸을 누르거나 끌어서 옮겨요.</p>
@@ -1913,7 +1914,7 @@ VIEWS.visit = () => {
     return `<div style="margin:-4px 0 10px"><button class="sm" onclick="RV=null;render()">← 방 목록</button> <button class="sm" onclick="go('room')">🏠 내 방으로</button> <button class="sm" onclick="RV=null;go('map')">🗺 지도로</button></div>
      <div class="panel roompanel"><div class="row" style="justify-content:space-between;align-items:center;flex-wrap:wrap;gap:6px">
       <h2 style="margin:0">🚪 ${esc(roomTitle(RV))}</h2>
-      ${RV === ME.uid ? `<span class="muted">❤ ${likes.length}</span>` : `<button class="${liked ? 'primary' : ''}" onclick="roomLike('${RV}')">${liked ? '❤' : '🤍'} 좋아요 ${likes.length}</button>`}</div>
+      ${RV === ME.uid ? `<span class="muted">❤ ${likes.length}</span>` : `<div class="row" style="gap:4px;flex:0 0 auto"><button class="${liked ? 'primary' : ''}" onclick="roomLike('${RV}')">${liked ? '❤' : '🤍'} ${likes.length}</button><button onclick="diaryOpen('${RV}')">📔 일기장</button><button onclick="giftOpen('${RV}')">🎁 선물</button></div>`}</div>
       <canvas id="roomCv" class="roomcv" width="${RW * 2}" height="${RH * 2}"></canvas>${effectsHtml(room)}
       ${likes.length ? `<p class="muted" style="margin:6px 0 0">❤ ${likes.map(l => esc(l.name || '')).join(', ')}</p>` : ''}</div>${gbHtml(RV)}`;
   }

@@ -615,12 +615,13 @@ async function onAuth(u){
   sub(B.onDoc('settings/hos',d=>{if(typeof hoNamesApply==='function')hoNamesApply(d&&d.names);softRender();}));
   sub(B.onDoc('settings/titles',d=>{KT=(d&&d.list)||[];softRender();}));
   if(typeof furnOnAuth==='function')furnOnAuth(sub);
+  if(typeof socialOnAuth==='function')socialOnAuth(sub);
   if(typeof roomOnAuth==='function')roomOnAuth(u);
 }
 
 /* ================= 렌더 ================= */
-const PL_TABS=[['저택',[['room','🏠 내 방'],['map','🗺 저택 지도'],['book','조사 예약'],['items','소지품'],['memo','메모'],['lobby','내 정보']]]];
-const KP_TABS=[['KP',[['sched','스케줄러'],['kqueue','호출·대기열'],['kitems','아이템'],['memo','메모'],['players','플레이어']]],
+const PL_TABS=[['저택',[['room','🏠 내 방'],['map','🗺 저택 지도'],['book','조사 예약'],['items','소지품'],['memo','메모'],['cal','📅 일정'],['news','📰 소식지'],['lobby','내 정보']]]];
+const KP_TABS=[['KP',[['kdash','🧭 대시보드'],['sched','스케줄러'],['kqueue','호출·대기열'],['kitems','아이템'],['memo','메모'],['players','플레이어'],['cal','📅 일정'],['news','📰 소식지']]],
                ['여가',[['garden','온실'],['riddle','수수께끼'],['shop','상점'],['rank','랭킹']]]];
 const kpTabs=()=>PROF&&PROF.ho?[KP_TABS[0],['내 HO',[['room','🏠 내 방'],['map','🗺 저택 지도'],['book','조사 예약'],['items','소지품'],['lobby','내 정보']]]]:[KP_TABS[0],['저택',[['map','🗺 저택 지도']]]];
 function softRender(){
@@ -1349,7 +1350,8 @@ VIEWS.book=()=>{
    <label class="f">하고 싶은 행동 (선택)</label><input maxlength="80" value="${esc(BK.note)}" oninput="BK.note=this.value" placeholder="예: 책장 뒤를 살펴본다">
    ${BK.edit?`<div class="row" style="margin-top:12px"><button class="primary" style="flex:1" onclick="submitBooking()">수정 저장</button><button onclick="bookEditStop()">그만두기</button></div>`:'<button class="primary" style="width:100%;margin-top:12px" onclick="submitBooking()">예약 신청</button>'}</div>`}</div>
    <div class="panel"><h2>내 조사 일정</h2>${qi?`<p>${qi}</p>`:''}
-   ${mine.length?mine.map(b=>bookingCard(b,{actions:b.uid!==ME.uid?'':b.status==='pending'?`<button class="sm" onclick="bookEdit('${b.id}')">✏ 고치기</button><button class="sm danger" onclick="cancelBooking('${b.id}')">취소</button>`:b.status==='approved'?(b.cancelReq?`<button class="sm" onclick="cancelReqUndo('${b.id}')">요청 철회</button>`:`<button class="sm danger" onclick="cancelReqAsk('${b.id}')">취소 요청</button>`):''})).join(''):'<p class="muted">아직 예약이 없어요.</p>'}</div>`;
+   ${(()=>{const hide=P.bkHide||[],old=mine.filter(b=>bkOld(b)&&!hide.includes(b.id));const act=mine.filter(b=>!bkOld(b));return (act.length?act.map(b=>bookingCard(b,{actions:b.uid!==ME.uid?'':b.status==='pending'?`<button class="sm" onclick="bookEdit('${b.id}')">✏ 고치기</button><button class="sm danger" onclick="cancelBooking('${b.id}')">취소</button>`:b.status==='approved'?(b.cancelReq?`<button class="sm" onclick="cancelReqUndo('${b.id}')">요청 철회</button>`:`<button class="sm danger" onclick="cancelReqAsk('${b.id}')">취소 요청</button>`):''})).join(''):'<p class="muted">다가오는 예약이 없어요.</p>')
+     +(old.length?`<details style="margin-top:8px"><summary class="muted">지난 예약 (${old.length})</summary>${old.map(b=>bookingCard(b,{actions:`<button class="sm" onclick="bkHide('${b.id}')">✕ 지우기</button>`})).join('')}<button class="sm" style="margin-top:6px" onclick="bkHideAll()">🧹 지난 예약 모두 지우기</button></details>`:'');})()}</div>`;
 };
 function togBK(k,v){BK[k]=BK[k].includes(v)?BK[k].filter(x=>x!==v):[...BK[k],v];if(k==='slots')BK.parts=BK.parts.filter(c=>c===myHo()||!BK.slots.some(s=>busyOf(c,BK.day,s)));render();}
 async function submitBooking(){
@@ -1587,15 +1589,21 @@ function pushPending(){
 }
 
 /* ================= KP: 예약 관리 ================= */
+/* 지난 예약: 시간이 지났거나 거절·취소된 것 */
+function bkOld(b){if(b.status==='rejected'||b.status==='cancelled')return true;if(b.status!=='approved')return false;const ck=PUB.clock;if(!ck)return false;const last=Math.max(...(b.slots||[0]));return b.day<ck.day||(b.day===ck.day&&last<ck.slot);}
+function bkHide(id){P.bkHide=[...(P.bkHide||[]),id].slice(-300);saveP();render();}
+function bkHideAll(){const me=myHo(),l=BOOKINGS.filter(b=>(b.uid===ME.uid||(b.parts||[]).includes(me))&&bkOld(b)).map(b=>b.id);P.bkHide=[...new Set([...(P.bkHide||[]),...l])].slice(-300);saveP();render();toast('지난 예약을 정리했어요');}
+async function kbDel(id){try{await B.del('bookings/'+id);}catch(e){toast('실패: '+(e.code||e.message));}}
+async function kbClean(){const l=BOOKINGS.filter(bkOld);if(!l.length)return;if(!confirm(`지난 예약·처리 기록 ${l.length}개를 지울까요? (스케줄러 표는 그대로예요)`))return;try{await Promise.all(l.map(b=>B.del('bookings/'+b.id)));toast('정리했어요');}catch(e){toast('실패: '+(e.code||e.message));}}
 VIEWS.kbook=()=>{
   const pend=BOOKINGS.filter(b=>b.status==='pending'),done=BOOKINGS.filter(b=>b.status!=='pending').slice(0,25);
   const chk=b=>{if(!schedWin||!schedWin.checkBooking)return '';const e=schedWin.checkBooking(b);return e?`<div class="muted" style="color:var(--wine2)">⚠ ${esc(e)}</div>`:'<div class="muted" style="color:var(--green2)">✓ 충돌 없음</div>';};
-  const reqs=BOOKINGS.filter(b=>b.status==='approved'&&b.cancelReq),appr=BOOKINGS.filter(b=>b.status==='approved').sort((a,b)=>a.day-b.day||Math.min(...(a.slots||[9]))-Math.min(...(b.slots||[9])));
+  const reqs=BOOKINGS.filter(b=>b.status==='approved'&&b.cancelReq),appr=BOOKINGS.filter(b=>b.status==='approved'&&!bkOld(b)).sort((a,b)=>a.day-b.day||Math.min(...(a.slots||[9]))-Math.min(...(b.slots||[9])));
   return `${reqs.length?`<div class="panel" style="border-color:var(--gold)"><h2>취소 요청 (${reqs.length})</h2>${reqs.map(b=>bookingCard(b,{actions:`<button class="sm primary" onclick="kbCancel('${b.id}',true)">수락</button><button class="sm" onclick="kbReqReject('${b.id}')">거절</button>`})).join('')}</div>`:''}
    <div class="panel"><div class="row" style="justify-content:space-between;align-items:center"><h2 style="margin:0">승인 대기 (${pend.length})</h2>${pend.length>1?`<button class="sm primary" onclick="approveAll()">충돌 없는 것 모두 승인+대기열</button>`:''}</div>
    ${pend.length?pend.map(b=>bookingCard(b,{extra:chk(b),actions:`<button class="sm primary" onclick="approve('${b.id}',true)">승인+대기열</button><button class="sm" onclick="approve('${b.id}',false)">승인</button><button class="sm danger" onclick="rejectAsk('${b.id}')">거절</button>`})).join(''):'<p class="muted">대기 중인 예약이 없어요.</p>'}</div>
    <div class="panel"><h2>승인된 예약 (${appr.length})</h2>${appr.map(b=>bookingCard(b,{actions:`<button class="sm" onclick="kbEdit('${b.id}')">✏ 변경</button><button class="sm danger" onclick="kbCancel('${b.id}')">취소</button>`})).join('')||'<p class="muted">없음</p>'}</div>
-   <div class="panel"><h2>최근 처리</h2>${done.filter(b=>b.status!=='approved').map(b=>bookingCard(b)).join('')||'<p class="muted">없음</p>'}</div>`;
+   ${(()=>{const old=BOOKINGS.filter(bkOld);return `<div class="panel"><details><summary><b>지난 예약 · 처리 기록 (${old.length})</b></summary>${old.map(b=>bookingCard(b,{actions:`<button class="sm" onclick="kbDel('${b.id}')">✕ 지우기</button>`})).join('')||'<p class="muted">없음</p>'}</details>${old.length?'<button class="sm danger" style="margin-top:6px" onclick="kbClean()">🧹 전부 정리</button>':''}</div>`;})()}`;
 };
 /* KP: 승인된 예약 취소 · 변경 (일정표도 함께) */
 function kbCancel(id,fromReq){const b=BOOKINGS.find(x=>x.id===id);if(!b)return;const back=!!window._bookList;window._bookList=false;
@@ -1757,5 +1765,6 @@ setInterval(()=>{if(ME&&P&&(tab==='garden'||tab==='lobby')&&!modalOpen())softRen
 <script src="titles.js"></script>
 <script src="dotedit.js"></script>
 <script src="furnmgr.js"></script>
+<script src="social.js"></script>
 </body>
 </html>

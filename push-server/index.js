@@ -15,11 +15,12 @@ webpush.setVapidDetails(process.env.VAPID_SUBJECT || 'mailto:kp@example.com', ne
 const ADMIN_EMAILS = (process.env.ADMIN_EMAILS || '').split(',').map(s => s.trim().toLowerCase()).filter(Boolean);
 
 const START = Date.now();
-let admins = [], hos = {};
+let admins = [], hos = {}, everyone = [];
 let sent = 0, lastError = '';
 
 db.collection('users').onSnapshot(s => {
   admins = s.docs.filter(d => ADMIN_EMAILS.includes(String(d.data().email || '').toLowerCase())).map(d => d.id);
+  everyone = s.docs.map(d => d.id);
   hos = {}; s.docs.forEach(d => { const h = d.data().ho; if (h) (hos[h] = hos[h] || []).push(d.id); });
 }, e => { lastError = 'users: ' + e.message; console.error(lastError); });
 
@@ -69,6 +70,26 @@ db.collection('pings').onSnapshot(s => {
       .finally(done);
   });
 }, e => { lastError = 'pings: ' + e.message; console.error(lastError); });
+
+// 세션 일정 알림: 1시간 전 · 시작 시간 (sessions 문서의 sent 로 한 번만)
+function fmt(ms) { const d = new Date(ms + 9 * 3600e3); const W = ['일', '월', '화', '수', '목', '금', '토']; return `${d.getUTCMonth() + 1}/${d.getUTCDate()} (${W[d.getUTCDay()]}) ${String(d.getUTCHours()).padStart(2, '0')}:${String(d.getUTCMinutes()).padStart(2, '0')}`; }
+async function sessionTick() {
+  try {
+    const now = Date.now(), snap = await db.collection('sessions').where('at', '>', now - 30 * 60e3).get();
+    for (const doc of snap.docs) {
+      const s = doc.data(), sent = s.sent || {}, upd = {};
+      if (!sent.h1 && s.at - now <= 60 * 60e3 && s.at - now > 5 * 60e3) upd.h1 = ['⏰ 1시간 뒤 세션이에요', `${s.title || '세션'} · ${fmt(s.at)}`];
+      if (!sent.st && now >= s.at && now - s.at < 20 * 60e3) upd.st = ['🎲 세션 시작 시간이에요', `${s.title || '세션'} · ${fmt(s.at)}`];
+      if (!sent.st && now - s.at >= 20 * 60e3) await doc.ref.update({ 'sent.st': true, 'sent.h1': true });
+      for (const [k, [title, body]] of Object.entries(upd)) {
+        await doc.ref.update({ ['sent.' + k]: true });
+        const skip = new Set(Object.entries(s.rsvp || {}).filter(([, v]) => v === 'n').map(([u]) => u));
+        await Promise.all(everyone.filter(u => !skip.has(u)).map(uid => sendTo(uid, { title, body, tag: 'sess', url: './' }).catch(() => {})));
+      }
+    }
+  } catch (e) { lastError = 'sessions: ' + e.message; console.error(lastError); }
+}
+setInterval(sessionTick, 60e3); setTimeout(sessionTick, 5e3);
 
 http.createServer((req, res) => {
   res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8' });
