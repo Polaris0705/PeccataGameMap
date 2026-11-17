@@ -19,7 +19,7 @@ VIEWS.books = () => {
    <div class="row" style="gap:12px;flex-wrap:wrap;margin:6px 0"><span>지금 <b style="color:var(--gold2)">${lv}단계</b></span><span class="muted">칸 ${C.boxes} · 줄 ${C.layers} · 물건 ${C.triples * 3}개</span><span class="muted">최고 ${S.best || 0}단계</span></div>
    <div style="display:flex;gap:6px;flex-wrap:wrap;font-size:.8rem" class="muted">↩ 되돌리기 3 · 🔀 섞기 1 · 💡 힌트 2</div></div>
    <div id="gbox"><button class="primary" style="width:100%;padding:14px;font-size:1.1rem;margin-top:8px" onclick="booksStart()">▶ ${lv}단계 시작</button></div>
-   ${lv > 1 ? `<button class="sm" style="margin-top:6px" onclick="if(confirm('1단계부터 다시 할까?')){P.shelf.lv=1;saveP();render()}">1단계부터 다시</button>` : ''}</div>`;
+   ${lv > 1 ? `<button class="sm" style="margin-top:6px" onclick="if(confirm('1단계부터 다시 할까요?')){P.shelf.lv=1;saveP();render()}">1단계부터 다시</button>` : ''}</div>`;
 };
 
 let SH = null;

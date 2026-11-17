@@ -2117,7 +2117,7 @@ function openFurnShop() {
 }
 function buyFurn(k) {
   const f = FURN[k], c = price(f.cost); if (P.coins < c) return toast('은화가 부족');
-  if (!Object.keys(f.parts || {}).length) { if (!confirm(`${f.name}을(를) ${c} 은화에 살까?`) || !spend(c)) return; const room = myRoom(); room.invc.push({ id: rmId(), k, col: null, rc: 0 }); saveP(); sfx('ok'); toast(`${f.name} 구입 완료! 꾸미기에서 놓아 보기`); openFurnShop(); return; }
+  if (!Object.keys(f.parts || {}).length) { if (!confirm(`${f.name}을(를) ${c} 은화에 살까요?`) || !spend(c)) return; const room = myRoom(); room.invc.push({ id: rmId(), k, col: null, rc: 0 }); saveP(); sfx('ok'); toast(`${f.name} 구입 완료! 꾸미기에서 놓아 보기`); openFurnShop(); return; }
   furnColorModal(k, null, `${f.name} — 색 고르고 사기`, `${c} 은화로 사기`, '산 뒤에도 한 번은 무료로 색을 바꿀 수 있음.', cols => {
     if (!spend(c)) return; const room = myRoom(); room.invc.push({ id: rmId(), k, col: cols, rc: 0 }); saveP(); sfx('ok'); toast(`${f.name} 구입 완료! 꾸미기에서 놓아 보기`); openFurnShop(); }, 'openFurnShop()');
 }
@@ -2139,7 +2139,7 @@ async function gbPost(owner) {
   try { await B.add('guestbook', { owner, uid: ME.uid, name: PROF.name || '', code: PROF.ho || '', text: text.slice(0, 300), at: Date.now() }); el.value = ''; el.blur(); sfx('ok'); render(); }
   catch (e) { toast('실패: ' + (e.code || e.message)); }
 }
-async function gbDel(id) { if (!confirm('이 글을 지울까?')) return; try { await B.del('guestbook/' + id); } catch (e) { toast('실패: ' + (e.code || e.message)); } }
+async function gbDel(id) { if (!confirm('이 글을 지울까요?')) return; try { await B.del('guestbook/' + id); } catch (e) { toast('실패: ' + (e.code || e.message)); } }
 
 function roomOnAuth(u) {
   roomUnsubs.forEach(f => { try { f(); } catch (e) {} }); roomUnsubs = []; ROOMLIKES = []; GUESTBOOK = []; RM = { edit: false, sel: null, drag: null, hover: null, t: RM.t }; RV = null;

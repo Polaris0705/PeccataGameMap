@@ -875,7 +875,7 @@ function themeModal(){
   const mineOn=TF.mode==='mine';
   modal(`<h2 style="color:var(--gold2);margin-top:0">🎨 테마 · 글꼴</h2>
    <div class="toggles"><button class="${!mineOn?'on':''}" onclick="themeKP()">KP 기본값 따르기</button><button class="${mineOn?'on':''}" onclick="TF.mode='mine';themeModal()">내 테마 쓰기</button></div>
-   <label class="f">스타일</label><div class="toggles"><button class="sm ${TF.ui!=='classic'?'on':''}" onclick="TF.ui='px';if(TF.font!=='pixel'&&confirm('글꼴도 갈무리11(도트)로 바꿀까?'))TF.font='pixel';themeMine();themeModal()">👾 도트</button><button class="sm ${TF.ui==='classic'?'on':''}" onclick="TF.ui='classic';if(TF.font==='pixel')TF.font='serif';themeMine();themeModal()">📜 클래식</button></div>
+   <label class="f">스타일</label><div class="toggles"><button class="sm ${TF.ui!=='classic'?'on':''}" onclick="TF.ui='px';if(TF.font!=='pixel'&&confirm('글꼴도 갈무리11(도트)로 바꿀까요?'))TF.font='pixel';themeMine();themeModal()">👾 도트</button><button class="sm ${TF.ui==='classic'?'on':''}" onclick="TF.ui='classic';if(TF.font==='pixel')TF.font='serif';themeMine();themeModal()">📜 클래식</button></div>
    <label class="f">프리셋</label><div class="toggles">${Object.entries(PRESETS).map(([id,p])=>`<button class="sm" onclick="themePreset('${id}')"><span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:${p.bg};border:2px solid ${p.accent};margin-right:5px;vertical-align:-1px"></span>${p.name}</button>`).join('')}</div>
    <label class="f">색 직접 고르기</label><div class="grid g2">${keys.map(([k,l])=>`<label class="colrow"><span>${l}</span><input type="color" value="${TF[k]||(k==='frame'?mix(TF.panel,TF.text,.4):'#000000')}" oninput="TF['${k}']=this.value;themeMine()"></label>`).join('')}</div>
    <label class="f">글꼴</label><select onchange="TF.font=this.value;themeMine()">${Object.entries(FONTS).map(([id,f])=>`<option value="${id}" ${TF.font===id?'selected':''}>${f.n}</option>`).join('')}</select>
@@ -1073,7 +1073,7 @@ VIEWS.map=()=>{
   let h='';
   if(g)h+=`<div class="panel" style="border-color:var(--gold)">📣 <b>${esc(g.by||'KP')}</b>님이 <b>${esc(g.place)}</b>(으)로 모두를 부름.${g.msg?` <span class="muted">"${esc(g.msg)}"</span>`:''}
     <div class="row" style="margin-top:6px">${placeIdx(g.place)>=0?`<button class="sm primary" onclick="gatherGo(${placeIdx(g.place)})">그곳으로 이동</button>`:''}${IS_ADMIN?'<button class="sm" onclick="clearGather()">소집 해제</button>':''}</div>${gatherReply(g)}</div>`;
-  if(PROF.shareLoc===undefined)h+=`<div class="panel"><b>내 위치를 다른 사람에게 보여 줄까?</b><p class="muted" style="margin:4px 0 8px">보여주면 내 위치에 토큰이 뜸. 프로필에서 바꿀 수 있음.</p><div class="row"><button class="primary" onclick="setShare(true)">보여주기</button><button onclick="setShare(false)">숨기기</button></div></div>`;
+  if(PROF.shareLoc===undefined)h+=`<div class="panel"><b>내 위치를 다른 사람에게 보여 줄까요?</b><p class="muted" style="margin:4px 0 8px">보여주면 내 위치에 토큰이 뜸. 프로필에서 바꿀 수 있음.</p><div class="row"><button class="primary" onclick="setShare(true)">보여주기</button><button onclick="setShare(false)">숨기기</button></div></div>`;
   if(!maps.length&&!places.length){
     h+=`<div class="panel"><h2>저택 지도</h2><p class="muted">아직 공개된 장소가 없음.</p>${IS_ADMIN?'<button class="sm" onclick="openRoomSettings()">⚙ 방 기능 설정</button>':''}</div>`;
     h+=extraPanel();
@@ -1369,7 +1369,7 @@ async function submitBooking(){
   toast(dup?'신청 완료 (같은 슬롯에 다른 신청이 있어 KP가 조율할 수 있음)':'예약 신청 완료');render();
 }
 async function bookResp(id,r){const me=myHo(),b=BOOKINGS.find(x=>x.id===id);try{await B.update('bookings/'+id,{resp:Object.assign({},b&&b.resp,{[me]:r})});}catch(e){return toast('실패: '+(e.code||e.message));}toast(r==='ok'?'같이 간다고 알림':'못 간다고 알림');}
-function cancelBooking(id){if(!confirm('이 예약 신청을 취소할까?'))return;if(BK.edit===id)BK.edit=null;B.update('bookings/'+id,{status:'cancelled'});}
+function cancelBooking(id){if(!confirm('이 예약 신청을 취소할까요?'))return;if(BK.edit===id)BK.edit=null;B.update('bookings/'+id,{status:'cancelled'});}
 /* PL: 대기 중 예약 고치기 · 승인된 예약 취소 요청 */
 function bookEdit(id){const b=BOOKINGS.find(x=>x.id===id);if(!b)return;BK={day:b.day,slots:(b.slots||[]).slice(),place:b.place,parts:(b.parts||[]).slice(),note:b.note||'',edit:id};render();window.scrollTo({top:0,behavior:'smooth'});toast('위에서 바꾼 뒤 "수정 저장"을 누름');}
 function bookEditStop(){BK={day:BK.day,slots:[],place:BK.place,parts:[myHo()],note:'',edit:null};render();}
@@ -1448,7 +1448,7 @@ VIEWS.garden=()=>{
   return `<div class="panel"><h2>온실</h2><p class="muted">씨앗을 심으면 실제 시간에 맞춰 자람.${mySin()==='sloth'?' ('+sinName('sloth')+' 특전: 25% 빨리 자람)':''}${mySin()==='greed'?' ('+sinName('greed')+' 특전: 판매가 +15%)':''}</p>
     <div class="grid g3">${h}</div><div style="margin-top:12px"><button onclick="harvestAll()" style="width:100%">전부 수확</button></div></div>`;
 };
-function seedPick(i){modal(`<h2 style="color:var(--gold2);margin-top:0">어떤 씨앗을 심을까?</h2>${SEEDS.map(s=>{const d=s.min*60000*growMul();return `<div class="item" style="margin:6px 0"><div>${s.icon} <b>${s.name}</b><div class="muted">${fmt(d)} · 판매 ${Math.round(s.sell*sellMul())} 은화</div></div><button onclick="plant(${i},'${s.id}')" ${P.coins<s.cost?'disabled':''}>${s.cost} 은화</button></div>`;}).join('')}<button style="width:100%;margin-top:8px" onclick="closeModal()">닫기</button>`);}
+function seedPick(i){modal(`<h2 style="color:var(--gold2);margin-top:0">어떤 씨앗을 심을까요?</h2>${SEEDS.map(s=>{const d=s.min*60000*growMul();return `<div class="item" style="margin:6px 0"><div>${s.icon} <b>${s.name}</b><div class="muted">${fmt(d)} · 판매 ${Math.round(s.sell*sellMul())} 은화</div></div><button onclick="plant(${i},'${s.id}')" ${P.coins<s.cost?'disabled':''}>${s.cost} 은화</button></div>`;}).join('')}<button style="width:100%;margin-top:8px" onclick="closeModal()">닫기</button>`);}
 function plant(i,id){const s=SEEDS.find(x=>x.id===id);if(!spend(s.cost))return;P.plots[i]={seed:id,start:Date.now(),dur:s.min*60000*growMul()};saveP();closeModal();render();toast(`${s.name}을(를) 심음`);}
 function harvest(i){const p=P.plots[i],s=SEEDS.find(x=>x.id===p.seed),v=Math.round(s.sell*sellMul());P.plots[i]={seed:null,start:0,dur:0};earn(v);render();toast(`${s.name} 수확! +${v} 은화`);}
 function harvestAll(){const now=Date.now();let t=0;P.plots.slice(0,P.plotCount).forEach((p,i)=>{if(p.seed&&now-p.start>=p.dur){t+=Math.round(SEEDS.find(x=>x.id===p.seed).sell*sellMul());P.plots[i]={seed:null,start:0,dur:0};}});
@@ -1596,7 +1596,7 @@ function bkOld(b){if(b.status==='rejected'||b.status==='cancelled')return true;i
 function bkHide(id){P.bkHide=[...(P.bkHide||[]),id].slice(-300);saveP();render();}
 function bkHideAll(){const me=myHo(),l=BOOKINGS.filter(b=>(b.uid===ME.uid||(b.parts||[]).includes(me))&&bkOld(b)).map(b=>b.id);P.bkHide=[...new Set([...(P.bkHide||[]),...l])].slice(-300);saveP();render();toast('지난 예약 정리 완료');}
 async function kbDel(id){try{await B.del('bookings/'+id);}catch(e){toast('실패: '+(e.code||e.message));}}
-async function kbClean(){const l=BOOKINGS.filter(bkOld);if(!l.length)return;if(!confirm(`지난 예약·처리 기록 ${l.length}개를 지울까? (스케줄러 표는 그대로)`))return;try{await Promise.all(l.map(b=>B.del('bookings/'+b.id)));toast('정리 완료');}catch(e){toast('실패: '+(e.code||e.message));}}
+async function kbClean(){const l=BOOKINGS.filter(bkOld);if(!l.length)return;if(!confirm(`지난 예약·처리 기록 ${l.length}개를 지울까요? (스케줄러 표는 그대로)`))return;try{await Promise.all(l.map(b=>B.del('bookings/'+b.id)));toast('정리 완료');}catch(e){toast('실패: '+(e.code||e.message));}}
 VIEWS.kbook=()=>{
   const pend=BOOKINGS.filter(b=>b.status==='pending'),done=BOOKINGS.filter(b=>b.status!=='pending').slice(0,25);
   const chk=b=>{if(!schedWin||!schedWin.checkBooking)return '';const e=schedWin.checkBooking(b);return e?`<div class="muted" style="color:var(--wine2)">⚠ ${esc(e)}</div>`:'<div class="muted" style="color:var(--green2)">✓ 충돌 없음</div>';};
@@ -1670,7 +1670,7 @@ VIEWS.kqueue=()=>{
    <button class="primary" style="width:100%" onclick="nextTurn()">▶ 다음 차례 호출${cur?' (현재 차례 완료 처리)':''}</button>
    ${QUEUE.filter(q=>q.status!=='done').map((q,i)=>{const us=(q.codes||[]).flatMap(usersWithHo);return `<div class="card"><div class="qitem"><div>${q.status==='current'?'<span class="badge live">진행 중</span>':`<span class="badge">${i+1}</span>`} <b>${esc(q.label)}</b><div class="muted">${(q.codes||[]).map(c=>esc(cname(c))).join(', ')} ${us.map(u=>callState(u.id)).join(' ')}</div></div>
      <div class="row" style="flex:0 0 auto"><button class="sm" onclick="callQueue('${q.id}')">호출</button><button class="sm" onclick="moveQ('${q.id}',-1)">↑</button><button class="sm" onclick="moveQ('${q.id}',1)">↓</button><button class="sm danger" onclick="B.update('queue/${q.id}',{status:'done',doneAt:Date.now()})">완료</button></div></div></div>`;}).join('')||'<p class="muted">대기열이 비어 있음.</p>'}
-   ${(()=>{const dn=QUEUE.filter(q=>q.status==='done').sort((a,b)=>(b.doneAt||0)-(a.doneAt||0));return dn.length?`<details style="margin-top:10px"><summary><b>✔ 끝난 조사 (${dn.length})</b></summary>${dn.map(q=>`<div class="item" style="margin:4px 0"><div><b>${esc(q.label)}</b><div class="muted" style="font-size:.8rem">${(q.codes||[]).map(c=>esc(cname(c))).join(', ')} · ${q.doneAt?new Date(q.doneAt).toLocaleString('ko-KR',{month:'numeric',day:'numeric',hour:'2-digit',minute:'2-digit'}):''}</div></div><button class="sm" onclick="B.update('queue/${q.id}',{status:'waiting',order:Date.now()})">되돌리기</button></div>`).join('')}<button class="sm danger" style="margin-top:6px" onclick="if(confirm('끝난 조사 기록을 모두 지울까?'))QUEUE.filter(q=>q.status==='done').forEach(q=>B.del('queue/'+q.id))">기록 지우기</button></details>`:'';})()}
+   ${(()=>{const dn=QUEUE.filter(q=>q.status==='done').sort((a,b)=>(b.doneAt||0)-(a.doneAt||0));return dn.length?`<details style="margin-top:10px"><summary><b>✔ 끝난 조사 (${dn.length})</b></summary>${dn.map(q=>`<div class="item" style="margin:4px 0"><div><b>${esc(q.label)}</b><div class="muted" style="font-size:.8rem">${(q.codes||[]).map(c=>esc(cname(c))).join(', ')} · ${q.doneAt?new Date(q.doneAt).toLocaleString('ko-KR',{month:'numeric',day:'numeric',hour:'2-digit',minute:'2-digit'}):''}</div></div><button class="sm" onclick="B.update('queue/${q.id}',{status:'waiting',order:Date.now()})">되돌리기</button></div>`).join('')}<button class="sm danger" style="margin-top:6px" onclick="if(confirm('끝난 조사 기록을 모두 지울까요?'))QUEUE.filter(q=>q.status==='done').forEach(q=>B.del('queue/'+q.id))">기록 지우기</button></details>`:'';})()}
    <h3>직접 추가</h3><input placeholder="이름 (예: 2층 서재 조사)" value="${esc(QADD.label)}" oninput="QADD.label=this.value">
    <div class="toggles" style="margin-top:6px">${HO_CODES.map(c=>`<button class="${QADD.codes.includes(c)?'on':''}" onclick="QADD.codes=QADD.codes.includes('${c}')?QADD.codes.filter(x=>x!=='${c}'):[...QADD.codes,'${c}'];render()">${esc(cname(c))}</button>`).join('')}</div>
    <button style="margin-top:6px" onclick="addQueue()">대기열에 추가</button></div>
@@ -1712,7 +1712,7 @@ VIEWS.kitems=()=>{
    <label class="muted" style="display:block;margin:6px 0"><input type="checkbox" style="width:auto" ${RCF.consume?'checked':''} onchange="RCF.consume=this.checked"> 재료는 조합하면 사라짐</label><button onclick="saveRecipe()">조합법 추가</button>`:'<p class="muted">아이템을 2개 이상 만들면 조합법을 정할 수 있음.</p>'}
    ${RECIPES.map(r=>`<div class="card"><div class="h"><div>${esc((defOf(r.a)||{}).name||'?')} + ${esc((defOf(r.b)||{}).name||'?')} → <b>${esc(r.name)}</b>${r.consume===false?' <span class="muted">(재료 유지)</span>':''}</div><button class="sm danger" onclick="B.del('recipes/${r.id}')">삭제</button></div></div>`).join('')}</div>
   <div class="panel"><h2>지급된 물건 (${ITEMS.length})</h2><table><tr><th>물건</th><th>가진 사람</th><th>상태</th><th></th></tr>
-   ${ITEMS.map(i=>`<tr><td>${esc(i.name)}${i.via?' <span class="muted">(조합)</span>':''}</td><td>${esc(i.ownerName||(userOf(i.owner)?uname(userOf(i.owner)):''))}</td><td>${i.revealed?'✦ 공개됨':i.inspectReq?'🔍 요청':''}</td><td style="white-space:nowrap">${!i.revealed?`<button class="sm" onclick="revealItem('${i.id}')">숨은 글 공개</button>`:''}<button class="sm danger" onclick="if(confirm('회수할까?'))B.del('items/${i.id}')">회수</button></td></tr>`).join('')}</table></div>`;
+   ${ITEMS.map(i=>`<tr><td>${esc(i.name)}${i.via?' <span class="muted">(조합)</span>':''}</td><td>${esc(i.ownerName||(userOf(i.owner)?uname(userOf(i.owner)):''))}</td><td>${i.revealed?'✦ 공개됨':i.inspectReq?'🔍 요청':''}</td><td style="white-space:nowrap">${!i.revealed?`<button class="sm" onclick="revealItem('${i.id}')">숨은 글 공개</button>`:''}<button class="sm danger" onclick="if(confirm('회수할까요?'))B.del('items/${i.id}')">회수</button></td></tr>`).join('')}</table></div>`;
 };
 async function itemImg(inp){const f=inp.files[0];if(!f)return;ITF.img=(typeof gifMaybe==='function'&&await gifMaybe(f,360,300000))||await compressImage(await readFile(f),480,.8);render();}
 async function saveDef(){
@@ -1724,7 +1724,7 @@ async function saveDef(){
   ITF={id:null,name:'',desc:'',hidden:'',img:''};render();toast('저장 완료');
 }
 function editDef(id){const d=defOf(id);ITF={id,name:d.name,desc:d.desc||'',hidden:d.hidden||'',img:d.img||''};render();window.scrollTo(0,0);}
-async function delDef(id){if(!confirm('아이템 정의를 삭제할까? (이미 지급된 물건은 남음)'))return;await B.del('itemDefs/'+id);for(const r of RECIPES.filter(r=>r.a===id||r.b===id||r.result===id))await B.del('recipes/'+r.id);}
+async function delDef(id){if(!confirm('아이템 정의를 삭제할까요? (이미 지급된 물건은 남음)'))return;await B.del('itemDefs/'+id);for(const r of RECIPES.filter(r=>r.a===id||r.b===id||r.result===id))await B.del('recipes/'+r.id);}
 async function giveDef(id){const d=defOf(id),uid=$('#give_'+id).value,u=userOf(uid);
   await B.add('items',clean({defId:id,owner:uid,ownerName:uname(u),name:d.name,desc:d.desc||'',img:d.img||'',revealed:false,seen:false,at:Date.now()}));toast(`${uname(u)}에게 「${d.name}」 지급`);}
 async function revealItem(id){const it=ITEMS.find(x=>x.id===id),d=defOf(it.defId);

@@ -284,7 +284,7 @@ function cancelEdit() { CH.edit = null; const ta = $('#chatText'); if (ta) ta.va
 function editMsg(id) { const m = (CH.msgs[CH.cur] || []).find(x => x.id === id); if (!m) return; CH.edit = id; CH.sel = null; const ta = $('#chatText'); if (ta) ta.value = m.text || ''; CH.draft[CH.cur] = m.text || ''; refreshInput(); renderChatLog(); const t = $('#chatText'); if (t) t.focus(); }
 async function delMsg(id) {
   const m = (CH.msgs[CH.cur] || []).find(x => x.id === id); if (!m) return;
-  if (!confirm('이 메시지를 삭제할까?')) return;
+  if (!confirm('이 메시지를 삭제할까요?')) return;
   const p = `channels/${CH.cur}/msgs/${id}`;
   try { if (m.uid === ME.uid) await B.update(p, { deleted: true, text: '', img: '' }); else await B.del(p); } catch (e) { toast('삭제 실패: ' + (e.code || e.message)); }
   CH.sel = null;
@@ -430,7 +430,7 @@ async function chanSave() {
   if (!CE.id) { CH.meta[id] = CH.meta[id] || { id, name, type: 'secret', members: CE.members, locked: CE.locked, at: Date.now() }; chanSub(id); openChan(id); }
 }
 async function chanDelete() {
-  if (!confirm('이 비밀 채널을 삭제할까? 참여자 목록에서 사라짐.')) return;
+  if (!confirm('이 비밀 채널을 삭제할까요? 참여자 목록에서 사라짐.')) return;
   await B.del('channels/' + CE.id); await syncChatIndex();
   closeModal(); if (CH.cur === CE.id) openChan('rp');
 }

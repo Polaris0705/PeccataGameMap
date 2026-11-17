@@ -27,6 +27,7 @@ const avOwns = (p, slot, id) => { if (!id) return true; if (id.startsWith('w:'))
 function avTitleWear(p) { try { return (typeof KT !== 'undefined' ? KT : []).filter(d => d.wear && ktHas(p, d.id)).map(d => 'w:' + d.wear); } catch (e) { return []; } }
 
 /* ---------- 그리기 (부위별 층 · KP가 덮어쓴 그림이 있으면 그걸로) ---------- */
+let AV_SKIP = null;   // 밑그림 만들 때 뺄 층
 let AVOV = {};   // avOv/{층 키} { pics:{0,1,2} }  층 키: body · eye:round · hairB:bob · hairF:bob · top:shirt …
 const AVC = {};
 const avView = dir => dir === 2 ? 2 : dir % 2 ? 1 : 0;
@@ -207,7 +208,7 @@ function avSprite(cfg, dir, step) {
   const key = JSON.stringify(cfg) + '|' + dir + '|' + step; if (AVC[key]) return AVC[key];
   const c = document.createElement('canvas'); c.width = AVW; c.height = AVH; const g = c.getContext('2d'), P2 = avP2(g, cfg, dir, step), vw = avView(dir);
   let pending = false;
-  const layer = lk => { const ov = AVOV[lk], src = ov && ov.pics && ov.pics[vw];
+  const layer = lk => { if (AV_SKIP && lk === AV_SKIP) return; const ov = AVOV[lk], src = ov && ov.pics && ov.pics[vw];
     if (src) { const [f, t] = avLayerCol(lk, cfg), im = avRecolor(src, f, t); if (!im) { pending = true; return; } const bob = lk === 'body' || lk.startsWith('shoes') || lk.startsWith('bottom') ? 0 : 0; g.drawImage(im, 0, bob, AVW, AVH); return; }
     avDrawLayer(P2, lk); };
   const custom = slot => { const id = cfg[slot]; if (!id || !id.startsWith('w:')) return false; const w = WEAR.find(x => 'w:' + x.id === id); if (!w) { pending = true; return true; } const pics = w.pics || {}, src = vw === 2 && pics[2] ? pics[2] : vw === 1 && pics[1] ? pics[1] : pics[0], im = cfImg(src);
@@ -312,7 +313,7 @@ function avEditDraw() {
 }
 function avPick(slot, id) {
   const it = avItemsOf(slot).find(x => x.id === id); if (!it) return;
-  if (!avOwns(P, slot, id)) { if (!confirm(`${it.name}을(를) ${it.cost} 은화에 살까?`)) return; if (!spend(it.cost)) return; P.wardrobe = [...new Set([...(P.wardrobe || []), id.startsWith('w:') ? id : slot + ':' + id])]; saveP(); sfx('ok'); }
+  if (!avOwns(P, slot, id)) { if (!confirm(`${it.name}을(를) ${it.cost} 은화에 살까요?`)) return; if (!spend(it.cost)) return; P.wardrobe = [...new Set([...(P.wardrobe || []), id.startsWith('w:') ? id : slot + ':' + id])]; saveP(); sfx('ok'); }
   AVE.cfg[slot] = id; const ck = AVCOLKEY[slot]; if (ck && id && !id.startsWith('w:') && (!AVE.cfg[ck] || slot !== 'hair' && slot !== 'eye')) AVE.cfg[ck] = (AV_ITEMS[slot][id] || [])[2] || AVE.cfg[ck];
   if (slot === 'one' && id) {} if ((slot === 'top' || slot === 'bottom') && id) AVE.cfg.one = '';
   avEditDraw();
@@ -338,12 +339,13 @@ function wfForm() {
    <div class="row" style="margin-top:10px"><button onclick="WFD=null;closeModal()">취소</button><button class="primary" onclick="wfSave()">저장</button></div>`);
 }
 function wfRead() { const n = $('#wfN'); if (!n) return; WFD.name = n.value.trim(); WFD.slot = $('#wfS').value; if (WFD.kind === 'kp') { WFD.cost = Math.max(0, +$('#wfC').value || 0); WFD.sell = $('#wfSell').checked; } }
-function wfDraw(k) {
-  wfRead(); const base = Object.assign({}, AV_DEF, { hair: '', top: '', bottom: '', shoes: '', one: '', hat: '', acc: '' }), dir = k === 1 ? 1 : k === 2 ? 2 : 0;
-  const m = document.createElement('canvas'); m.width = AVW; m.height = AVH; m.getContext('2d').drawImage(avSprite(Object.assign(base, { hair: 'short' }), dir, 0), 0, 0);
-  dotEdit({ W: AVW, H: AVH, src: WFD.pics[k] || null, key: 'wear_' + (WFD.id || 'new') + '_' + k, title: (WFD.name || '새 옷') + ' · ' + ['앞', '옆', '뒤'][k],
+async function wfDraw(k) {
+  wfRead(); const base = Object.assign({}, AV_DEF, { hair: 'short', top: '', bottom: '', shoes: '', one: '', hat: '', acc: '' }), dir = k === 1 ? 1 : k === 2 ? 2 : 0;
+  toast('밑그림 준비 중');
+  const ref = await avRefUrl(base, dir), guide = k && WFD.pics[0] ? await avRefUrl(base, 0, { extra: [WFD.pics[0]] }) : null;
+  dotEdit({ W: AVW, H: AVH, src: WFD.pics[k] || null, key: 'wear_' + (WFD.id || 'new') + '_' + k, title: (WFD.name || '새 옷') + ' · ' + ['앞', '옆', '뒤'][k], guide, guideName: '앞모습',
     onSave: url => { if (url) WFD.pics[k] = url; else delete WFD.pics[k]; wfForm(); }, onCancel: () => wfForm() });
-  const im = new Image(); im.onload = () => { if (DE) { DE.ref = { img: im, data: null, a: .5, on: true, x: 0, y: 0, s: 1, crisp: true }; deUI(); deDraw(); } }; im.src = m.toDataURL();
+  avSetRef(ref, .5);
 }
 async function wfSave() {
   wfRead(); const d = WFD; if (!d.name) return toast('이름 입력 필요'); if (!d.pics[0]) return toast('앞모습 필수');
@@ -351,7 +353,7 @@ async function wfSave() {
   if (d.kind === 'kp') Object.assign(doc, { cost: d.cost, sell: d.sell !== false });
   try { const id = d.id || ('w' + Date.now().toString(36) + Math.random().toString(36).slice(2, 5)); await B.set('wear/' + id, clean(doc)); WFD = null; closeModal(); toast('옷 저장 완료'); } catch (e) { toast('실패: ' + (e.code || e.message)); }
 }
-async function wfDel(id) { if (!confirm('옷 삭제? (착용자에게서도 삭제)')) return; try { await B.del('wear/' + id); } catch (e) { toast('실패: ' + (e.code || e.message)); } }
+async function wfDel(id) { if (!confirm('이 옷을 삭제할까요? (착용자에게서도 삭제)')) return; try { await B.del('wear/' + id); } catch (e) { toast('실패: ' + (e.code || e.message)); } }
 
 /* 선물로 보낼 수 있는 옷: 산 기본 옷 + 직접 만든 옷(복제) + 산 직접 만든 옷 */
 function avGiftables() {
@@ -387,18 +389,35 @@ function avOvEdit(key) {
       <div class="row" style="flex:0 0 auto;gap:4px"><button class="sm primary" onclick="avOvDraw('${key}',${d})">🎨 그리기</button>${AVOD.pics[d] ? `<button class="sm" onclick="delete AVOD.pics[${d}];avOvEdit('${key}')">↺</button>` : ''}</div></div>`).join('')}
     <div class="row" style="margin-top:10px"><button onclick="AVOD=null;closeModal()">취소</button><button class="primary" onclick="avOvSave('${key}')">저장</button></div>`);
 }
-function avOvDraw(key, d) {
-  const orig = avLayerPng(key, d), cfg = avOvCfg(key), m = document.createElement('canvas'); m.width = AVW; m.height = AVH; const saved = AVOV[key]; delete AVOV[key]; Object.keys(AVC).forEach(k => delete AVC[k]);
-  m.getContext('2d').drawImage(avSprite(cfg, d, 0), 0, 0); if (saved) AVOV[key] = saved; Object.keys(AVC).forEach(k => delete AVC[k]);
-  dotEdit({ W: AVW, H: AVH, src: AVOD.pics[d] || orig, orig, key: 'avov_' + key + '_' + d, title: key + ' · ' + ['앞', '옆', '뒤'][d],
+/* 밑그림: 고친 그림(저장 전 포함)을 다 불러온 뒤 그림. skip = 지금 그리는 층은 빼기 */
+const avClr = () => Object.keys(AVC).forEach(k => delete AVC[k]);
+async function avLoadUrls(urls) { const t0 = Date.now(); urls = urls.filter(Boolean); urls.forEach(u => cfImg(u)); while (urls.some(u => !cfImg(u)) && Date.now() - t0 < 4000) await new Promise(r => setTimeout(r, 40)); }
+async function avRefUrl(cfg, d, o) {
+  o = o || {}; const pend = o.pend ? Object.values(o.pend) : [];
+  await avLoadUrls(Object.values(AVOV).flatMap(v => Object.values(v.pics || {})).concat(pend, o.extra || []));
+  const had = o.key && Object.prototype.hasOwnProperty.call(AVOV, o.key), keep = had ? AVOV[o.key] : null;
+  if (o.key && o.pend) { if (pend.length) AVOV[o.key] = { key: o.key, pics: o.pend }; else delete AVOV[o.key]; }
+  AV_SKIP = o.skip || null; avClr();
+  const c = document.createElement('canvas'); c.width = AVW; c.height = AVH; const g = c.getContext('2d'); g.drawImage(avSprite(cfg, d, 0), 0, 0);
+  (o.extra || []).forEach(u => { const im = cfImg(u); if (im) g.drawImage(im, 0, 0, AVW, AVH); });
+  if (o.key && o.pend) { if (had) AVOV[o.key] = keep; else delete AVOV[o.key]; }
+  AV_SKIP = null; avClr(); return c.toDataURL();
+}
+function avSetRef(url, a) { const im = new Image(); im.onload = () => { if (DE) { DE.ref = { img: im, data: null, a, on: true, x: 0, y: 0, s: 1, crisp: true }; deUI(); deDraw(); } }; im.src = url; }
+async function avOvDraw(key, d) {
+  toast('밑그림 준비 중');
+  const orig = avLayerPng(key, d), cfg = avOvCfg(key);
+  const base = await avRefUrl(cfg, d, { key, pend: AVOD.pics, skip: key });
+  const guide = d ? await avRefUrl(cfg, 0, { key, pend: AVOD.pics }) : null;
+  dotEdit({ W: AVW, H: AVH, src: AVOD.pics[d] || orig, orig, key: 'avov_' + key + '_' + d, title: key + ' · ' + ['앞', '옆', '뒤'][d], guide, guideName: '앞모습',
     onSave: url => { if (url) AVOD.pics[d] = url; else delete AVOD.pics[d]; avOvEdit(key); }, onCancel: () => avOvEdit(key) });
-  const im = new Image(); im.onload = () => { if (DE) { DE.ref = { img: im, data: null, a: .3, on: true, x: 0, y: 0, s: 1, crisp: true }; deUI(); deDraw(); } }; im.src = m.toDataURL();
+  avSetRef(base, .45);
 }
 const avOvId = key => key.replace(':', '__');
 async function avOvSave(key) {
   const pics = AVOD.pics; try { if (!Object.keys(pics).length) await B.del('avOv/' + avOvId(key)); else await B.set('avOv/' + avOvId(key), { key, pics, at: Date.now() }); AVOD = null; closeModal(); toast(Object.keys(pics).length ? '저장 완료! 모든 토큰에 적용됨' : '원래 그림으로 돌림'); } catch (e) { toast('실패: ' + (e.code || e.message)); }
 }
-async function avOvReset(key) { if (!confirm('원래 그림으로 복구?')) return; try { await B.del('avOv/' + avOvId(key)); toast('복구 완료'); } catch (e) { toast('실패: ' + (e.code || e.message)); } }
+async function avOvReset(key) { if (!confirm('원래 그림으로 되돌릴까요?')) return; try { await B.del('avOv/' + avOvId(key)); toast('복구 완료'); } catch (e) { toast('실패: ' + (e.code || e.message)); } }
 VIEWS.kavatar = () => {
   if (!IS_ADMIN) return '<div class="panel">KP만 볼 수 있음.</div>';
   let ok = false; try { ok = sessionStorage.getItem('peccata_avpw') === '1'; } catch (e) {}
@@ -414,7 +433,7 @@ VIEWS.kavatar = () => {
    ${avOvSection()}
    ${plW.length ? `<div class="panel"><h2>🎨 PL이 만든 옷 (${plW.length})</h2>${plW.map(w => `<div class="item" style="margin:4px 0"><div style="display:flex;align-items:center;gap:8px"><img src="${(w.pics || {})[0] || ''}" style="height:40px;image-rendering:pixelated;background:#2a2420"><b>${esc(w.name)}</b> <span class="muted">${esc(w.byName || '')}</span></div><button class="sm danger" onclick="wfDel('${w.id}')">지우기</button></div>`).join('')}</div>` : ''}`;
 };
-async function avOpenToggle() { const v = !AVCFG.open; if (v && !confirm('전체 PL에게 공개?')) return; try { await B.set('settings/avatar', { open: v }, true); toast(v ? '모두에게 공개 완료' : 'KP만 보이게 함'); } catch (e) { toast('실패: ' + (e.code || e.message)); } }
+async function avOpenToggle() { const v = !AVCFG.open; if (v && !confirm('전체 PL에게 공개할까요?')) return; try { await B.set('settings/avatar', { open: v }, true); toast(v ? '모두에게 공개 완료' : 'KP만 보이게 함'); } catch (e) { toast('실패: ' + (e.code || e.message)); } }
 const AVTEST = { items: [], invc: [], wall: 'plain', floor: 'plank', cols: { frame: null }, arc: {}, ow: [], dye: 0 };
 function avTestPaint() {
   const cv = document.getElementById('avTestCv'); if (!cv) return; const room = PROF.ho ? myRoom() : hoRoom('__avtest');

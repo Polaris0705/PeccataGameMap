@@ -63,7 +63,7 @@ async function roomLeave() {
   }
   render();
 }
-function roomClose() { if (confirm('방을 닫을까?')) { B.del('rooms/' + PROOM).catch(() => {}); PROOM = null; render(); } }
+function roomClose() { if (confirm('방을 닫을까요?')) { B.del('rooms/' + PROOM).catch(() => {}); PROOM = null; render(); } }
 function roomView(r) {
   const t = PARTY_TYPES[r.type], host = r.host === ME.uid, ps = Object.entries(r.players || {}), inRoom = !!(r.players || {})[ME.uid];
   const body = !inRoom ? `<p class="muted">이 방에 참가하지 않음.</p><button class="primary" onclick="roomJoin('${r.id}')">참가</button>`

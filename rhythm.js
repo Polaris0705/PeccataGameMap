@@ -230,7 +230,7 @@ function rcTap() {
   if (Math.abs(d) < 280) RCAL.taps.push(d); sfx('tap'); const r = $('#rcRes'); if (r) r.textContent = `${RCAL.taps.length}번 두드림`;
 }
 function rcDone() {
-  const r = $('#rcRes'), t = RCAL.taps.slice(2).sort((a, b) => a - b); if (t.length < 5) { if (r) r.textContent = '두드린 횟수가 너무 적음. 다시 해 볼까?'; RCAL.on = false; RCAL.taps = []; RCAL.clicks = []; const b = $('#rcTap'); if (b) b.textContent = '다시 시작'; return; }
+  const r = $('#rcRes'), t = RCAL.taps.slice(2).sort((a, b) => a - b); if (t.length < 5) { if (r) r.textContent = '두드린 횟수가 너무 적음. 다시 해 볼까요?'; RCAL.on = false; RCAL.taps = []; RCAL.clicks = []; const b = $('#rcTap'); if (b) b.textContent = '다시 시작'; return; }
   const med = t[t.length >> 1], v = Math.max(-300, Math.min(300, -Math.round(med))); RSEL.lat = v; RSEL._latOpen = true; rSave();
   if (r) r.innerHTML = `내 손은 소리보다 평균 <b>${Math.abs(Math.round(med))}ms ${med > 0 ? '늦게' : '빨리'}</b> 두드림 → 보정 <b style="color:var(--gold2)">${v > 0 ? '+' : ''}${v}ms</b>로 맞춤`;
   const b = $('#rcTap'); if (b) { b.textContent = '다시 해 보기'; } RCAL.on = false; RCAL.taps = []; RCAL.clicks = [];
@@ -244,7 +244,7 @@ async function songsSave() { try { await B.set('settings/game', { songs: SONGS }
 function songsPanel() {
   return `<div class="panel"><h2>🎵 은식기 닦기 노래</h2><p class="muted">유튜브 주소 + BPM → 박자 생성 · 🎧 BPM 탭 · 직접 녹화 가능</p>
    ${SONGS.length ? SONGS.map((s, i) => `<div class="item" style="margin:5px 0"><div style="min-width:0"><b>${esc(s.title || '제목 없음')}</b><div class="muted" style="font-size:.78rem">${s.notes && s.notes.length ? `🎙 녹화 ${s.notes.length}개` : `BPM ${s.bpm} · 첫 박 ${s.offset || 0}초`} · ${s.start || 0}초부터 ${s.len || 60}초</div></div>
-     <div class="row" style="flex:0 0 auto;gap:4px"><button class="sm" onclick="songTool(${i})">🎧</button><button class="sm" onclick="songEdit(${i})">✏</button><button class="sm danger" onclick="if(confirm('지울까?')){SONGS.splice(${i},1);songsSave()}">×</button></div></div>`).join('') : '<p class="muted">아직 노래가 없음.</p>'}
+     <div class="row" style="flex:0 0 auto;gap:4px"><button class="sm" onclick="songTool(${i})">🎧</button><button class="sm" onclick="songEdit(${i})">✏</button><button class="sm danger" onclick="if(confirm('지울까요?')){SONGS.splice(${i},1);songsSave()}">×</button></div></div>`).join('') : '<p class="muted">아직 노래가 없음.</p>'}
    <button onclick="songEdit(-1)">+ 노래 추가</button></div>`;
 }
 function songEdit(i) {

@@ -161,7 +161,7 @@ function dropMount() {
   const loop = now => { if (GAME !== G) return; const dt = Math.min(.034, (now - last) / 1000); last = now; if (!D.paused && !D.over) dropStep(dt); dropDraw(); raf = requestAnimationFrame(loop); };
   G = lockGame(() => cancelAnimationFrame(raf)); raf = requestAnimationFrame(loop);
 }
-function dropQuit() { if (!DROP) return; if (DROP.score > 0 && !confirm('그만둘까? 지금 점수로 끝남.')) return; dropEnd(true); }
+function dropQuit() { if (!DROP) return; if (DROP.score > 0 && !confirm('그만둘까요? 지금 점수로 끝남.')) return; dropEnd(true); }
 function dropHold() { const D = DROP; if (!D || D.holdUsed) return toast('한 번 떨어뜨린 뒤 다시 보관할 수 있음'); const c = D.q.shift(); if (D.hold) D.q.unshift(D.hold); else D.q.push(dropNext()); D.hold = c; D.holdUsed = true; sfx('tap'); }
 function dropDrop() {
   const D = DROP; if (!D || D.paused || D.over || D.cd > 0) return; const c = D.q.shift(); D.q.push(dropNext()); const r = DROP_T[c.t][0];

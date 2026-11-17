@@ -57,7 +57,7 @@ async function sessSave(id) {
   try { if (id) await B.update('sessions/' + id, doc); else { await B.add('sessions', Object.assign(doc, { rsvp: {} })); sPing(allUids(), '📅 세션 일정이 잡힘', `${t} · ${dfmt(at)}`, 'sess'); }
     closeModal(); toast('저장 완료'); } catch (e) { toast('실패: ' + (e.code || e.message)); }
 }
-async function sessDel(id) { if (!confirm('이 세션 일정을 지울까?')) return; try { await B.del('sessions/' + id); } catch (e) { toast('실패: ' + (e.code || e.message)); } }
+async function sessDel(id) { if (!confirm('이 세션 일정을 지울까요?')) return; try { await B.del('sessions/' + id); } catch (e) { toast('실패: ' + (e.code || e.message)); } }
 /* 앱을 켜 두면 앱 안에서도 알려 줌 (푸시는 서버가 보냄) */
 function sessTick() {
   const now = Date.now(); SESS.forEach(s => { [['h1', s.at - 3600e3, '⏰ 1시간 뒤 세션'], ['st', s.at, '🎲 세션 시작 시간']].forEach(([k, t, msg]) => {
@@ -103,7 +103,7 @@ function avOpenAsk() {
 async function avOpen() { const ym = $('#avYm').value; if (!ym) return; const [y, m] = ym.split('-').map(Number);
   try { await B.set('availMonths/' + ym, { y, m, notice: $('#avNo').value.trim(), prenote: '', at: Date.now() }); AV_YM = ym; closeModal(); sPing(allUids(), '🗓 일정 조율이 열림', `${m}월 — 안 되는 날을 체크하기`, 'avail'); } catch (e) { toast('실패: ' + (e.code || e.message)); } }
 function avNoteEdit(ym, k) { const mo = AVM.find(m => m.id === ym); const v = prompt(k === 'notice' ? 'KP 공지' : 'KP 일정 특이사항 (프리노트)', mo[k] || ''); if (v === null) return; B.update('availMonths/' + ym, { [k]: v.trim() }).catch(e => toast('실패: ' + (e.code || e.message))); }
-async function avClose(ym) { if (!confirm(`${ym} 조율표를 지울까? 체크한 내용도 사라짐.`)) return; try { await B.del('availMonths/' + ym); await Promise.all(AVR.filter(r => r.ym === ym).map(r => B.del('availRows/' + r.id))); AV_YM = ''; } catch (e) { toast('실패: ' + (e.code || e.message)); } }
+async function avClose(ym) { if (!confirm(`${ym} 조율표를 지울까요? 체크한 내용도 사라짐.`)) return; try { await B.del('availMonths/' + ym); await Promise.all(AVR.filter(r => r.ym === ym).map(r => B.del('availRows/' + r.id))); AV_YM = ''; } catch (e) { toast('실패: ' + (e.code || e.message)); } }
 
 VIEWS.cal = () => {
   const up = SESS.filter(s => s.at > Date.now() - 3 * 3600e3), past = SESS.filter(s => s.at <= Date.now() - 3 * 3600e3).reverse();
@@ -222,8 +222,8 @@ async function newsSubmit() {
 }
 async function newsApprove(id) { const r = NEWSREQ.find(x => x.id === id); if (!r) return; try { await B.add('news', { title: r.title, body: r.body, img: r.img || '', by: r.by, byName: r.byName, at: Date.now(), reacts: {}, cmts: [], reads: [] }); await B.del('newsReq/' + id);
   sPing(allUids(), '📰 소식지 새 글', r.title, 'news'); toast('게재 완료'); } catch (e) { toast('실패: ' + (e.code || e.message)); } }
-async function newsReject(id) { const r = NEWSREQ.find(x => x.id === id); if (!r || !confirm('이 기고를 돌려보낼까? (지워짐)')) return; try { await B.del('newsReq/' + id); sPing([r.by], '✉ 소식지 기고가 반려됨', r.title, 'news'); } catch (e) { toast('실패: ' + (e.code || e.message)); } }
-async function newsDel(id) { if (!confirm('이 글을 내릴까?')) return; try { await B.del('news/' + id); } catch (e) { toast('실패: ' + (e.code || e.message)); } }
+async function newsReject(id) { const r = NEWSREQ.find(x => x.id === id); if (!r || !confirm('이 기고를 돌려보낼까요? (지워짐)')) return; try { await B.del('newsReq/' + id); sPing([r.by], '✉ 소식지 기고가 반려됨', r.title, 'news'); } catch (e) { toast('실패: ' + (e.code || e.message)); } }
+async function newsDel(id) { if (!confirm('이 글을 내릴까요?')) return; try { await B.del('news/' + id); } catch (e) { toast('실패: ' + (e.code || e.message)); } }
 async function newsReact(id, e) { const n = NEWS.find(x => x.id === id); if (!n) return; const r = JSON.parse(JSON.stringify(n.reacts || {})), l = new Set(r[e] || []); l.has(ME.uid) ? l.delete(ME.uid) : l.add(ME.uid); r[e] = [...l]; n.reacts = r; render();
   try { await B.update('news/' + id, { reacts: r }); } catch (er) { toast('실패: ' + (er.code || er.message)); } }
 async function newsCmt(id) { const n = NEWS.find(x => x.id === id), inp = $('#nc_' + id); if (!n || !inp || !inp.value.trim()) return; const c = [...(n.cmts || []), { uid: ME.uid, name: PROF.name || '', t: inp.value.trim().slice(0, 80), at: Date.now() }].slice(-60);
@@ -277,4 +277,4 @@ async function diarySave(id) {
     if (!id) sPing(who, '📔 일기를 볼 수 있게 됨', `${PROF.ho ? cname(PROF.ho) : PROF.name}의 일기 「${title}」`, 'diary');
     DYS.open = null; toast('일기 저장 완료'); diaryList(); } catch (e) { toast('실패: ' + (e.code || e.message)); }
 }
-async function diaryDel(id) { if (!confirm('이 일기를 지울까?')) return; try { await B.del('diaries/' + id); await B.del('diarySec/' + id); DYS.open = null; diaryList(); } catch (e) { toast('실패: ' + (e.code || e.message)); } }
+async function diaryDel(id) { if (!confirm('이 일기를 지울까요?')) return; try { await B.del('diaries/' + id); await B.del('diarySec/' + id); DYS.open = null; diaryList(); } catch (e) { toast('실패: ' + (e.code || e.message)); } }

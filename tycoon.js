@@ -160,7 +160,7 @@ function tyStart() {
   lockGame(() => { cancelAnimationFrame(raf); if (TY) TY.over = true; });
   sfx('ok');
 }
-function tyQuit() { if (!TY) return; if (!confirm('오늘 영업을 그만둘까? 지금까지 번 돈은 남음.')) return; tyEnd(true); }
+function tyQuit() { if (!TY) return; if (!confirm('오늘 영업을 그만둘까요? 지금까지 번 돈은 남음.')) return; tyEnd(true); }
 function tyNewGuest(i) {
   const st = TY, rec = st.recipes[rint(st.recipes.length)], vip = Math.random() < .08 + st.L.decor * .01;
   const dessert = st.desserts.length && Math.random() < .35 + st.day * .02 ? st.desserts[rint(st.desserts.length)].id : null;

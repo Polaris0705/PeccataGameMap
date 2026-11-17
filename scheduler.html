@@ -833,7 +833,7 @@ function notifyNow(){if(!S.now)return;try{const kb=parent.KPBridge;if(kb&&kb.now
 function nextNow(){
   if(!S.now)S.now={d:1,s:1};
   else{const nx=nextOf(S.now.d,S.now.s);
-    if(!nx){if(!confirm('마지막 칸. 새 Day를 추가하고 넘어갈까?'))return;addDay();S.now={d:S.days,s:1};}
+    if(!nx){if(!confirm('마지막 칸. 새 Day를 추가하고 넘어갈까요?'))return;addDay();S.now={d:S.days,s:1};}
     else S.now=nx;}
   renderSchedule();notifyNow();
 }

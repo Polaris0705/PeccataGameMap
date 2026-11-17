@@ -139,7 +139,7 @@ async function ktSave(id) {
   try { await B.set('settings/titles', { list: clean(list) }); closeModal(); toast('저장 완료'); } catch (e) { toast('저장 실패: ' + (e.code || e.message)); }
 }
 async function ktDel(id) {
-  if (!confirm('이 칭호를 지울까? 받은 사람에게서도 사라짐.')) return;
+  if (!confirm('이 칭호를 지울까요? 받은 사람에게서도 사라짐.')) return;
   try { await B.set('settings/titles', { list: clean(KT.filter(x => x.id !== id)) }); toast('삭제 완료'); } catch (e) { toast('삭제 실패: ' + (e.code || e.message)); }
 }
 async function ktPatch(uid, id, v) {
@@ -152,6 +152,6 @@ async function ktGive(id) {
   try { await ktPatch(uid, id, { at: Date.now(), by: 'kp' }); toast('수여 완료'); } catch (e) { toast('실패: ' + (e.code || e.message)); }
 }
 async function ktRevoke(id, uid) {
-  if (!confirm('이 사람에게서 칭호를 회수할까? (조건을 다시 채워도 자동으로 다시 받지 않음)')) return;
+  if (!confirm('이 사람에게서 칭호를 회수할까요? (조건을 다시 채워도 자동으로 다시 받지 않음)')) return;
   try { await ktPatch(uid, id, { at: Date.now(), by: 'kp', off: true }); toast('회수 완료'); } catch (e) { toast('실패: ' + (e.code || e.message)); }
 }

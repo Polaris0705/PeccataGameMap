@@ -136,7 +136,7 @@ async function ovSave(k) {
   try { await B.set('furnOv/' + k, { pics, picN, picMs, anim: OVD.anim !== false, at: Date.now() }); OVD = null; closeModal(); toast('그림 변경 완료! 모든 방에 적용됨'); } catch (e) { toast('저장 실패: ' + (e.code || e.message)); }
 }
 async function ovReset(k, quiet) {
-  if (!quiet && !confirm('이 가구를 원래 그림으로 되돌릴까?')) return;
+  if (!quiet && !confirm('이 가구를 원래 그림으로 되돌릴까요?')) return;
   try { await B.del('furnOv/' + k); OVD = null; closeModal(); toast('원래 그림으로 되돌림'); } catch (e) { toast('실패: ' + (e.code || e.message)); }
 }
 
@@ -191,7 +191,7 @@ async function cfSave() {
   cfFormRead(); const d = CFD; if (!d.name) return toast('이름을 넣기'); if (!d.pics[0]) return toast(d.wall ? '그림을 그리기' : '앞모습은 꼭 그리기');
   // 크기가 바뀌었으면 맞지 않는 그림은 다시 그려야 함
   const bad = []; await Promise.all(Object.keys(d.pics).map(k => new Promise(r => { const im = new Image(); im.onload = () => { const s = cfSize(+k), n = ((d.picN || {})[k] || 1); if (im.width !== s.W || im.height !== s.H * n) bad.push(+k); r(); }; im.onerror = r; im.src = d.pics[k]; })));
-  if (bad.length) { if (!confirm('크기를 바꿔서 그림 크기가 맞지 않음. 그림을 새 크기에 맞춰 늘리지 않고 아래에 맞춰 둘까?')) return; for (const k of bad) d.pics[k] = await cfRefit(d.pics[k], cfSize(k), (d.picN || {})[k] || 1); }
+  if (bad.length) { if (!confirm('크기를 바꿔서 그림 크기가 맞지 않음. 그림을 새 크기에 맞춰 늘리지 않고 아래에 맞춰 둘까요?')) return; for (const k of bad) d.pics[k] = await cfRefit(d.pics[k], cfSize(k), (d.picN || {})[k] || 1); }
   const doc = { name: d.name.slice(0, 24), kind: d.kind, by: d.by || ME.uid, byName: d.byName || PROF.name || '', wall: !!d.wall, w: d.w, d: d.wall ? 0 : d.d, H: d.H, wy: d.wy == null ? null : d.wy, pics: d.pics, picN: d.picN || {}, picMs: d.picMs || {}, at: d.at || Date.now(), upd: Date.now() };
   if (d.kind === 'kp') Object.assign(doc, { cost: d.cost, cat: d.cat, sell: d.sell !== false });
   const size = JSON.stringify(doc).length; if (size > 900000) return toast('그림이 너무 큼. 크기를 줄이기');
@@ -204,8 +204,8 @@ function cfRefit(url, s, n) { n = n || 1; return new Promise(r => { const im = n
   for (let i = 0; i < n; i++) g.drawImage(im, 0, i * fh, im.width, fh, Math.round((s.W - im.width) / 2), i * s.H + s.H - fh, im.width, fh); r(c.toDataURL('image/png')); }; im.src = url; }); }
 async function cfDelete(id) {
   const d = CFURN.find(x => x.id === id); if (!d) return;
-  if (IS_ADMIN && d.kind === 'kp') { if (!confirm('이 가구를 지울까? 이미 가진 사람의 방에서도 사라짐.')) return; try { await B.del('furn/' + id); toast('삭제 완료'); } catch (e) { toast('실패: ' + (e.code || e.message)); } return; }
-  if (!confirm('목록에서 지울까? (경매로 산 사람의 가구는 그대로 남음)')) return;
+  if (IS_ADMIN && d.kind === 'kp') { if (!confirm('이 가구를 지울까요? 이미 가진 사람의 방에서도 사라짐.')) return; try { await B.del('furn/' + id); toast('삭제 완료'); } catch (e) { toast('실패: ' + (e.code || e.message)); } return; }
+  if (!confirm('목록에서 지울까요? (경매로 산 사람의 가구는 그대로 남음)')) return;
   try { await B.set('furn/' + id, { del: true }, true); toast('삭제 완료'); openFurnShop(); } catch (e) { toast('실패: ' + (e.code || e.message)); }
 }
 function cfTake(id) { const room = myRoom(); room.invc.push({ id: rmId(), k: 'cf_' + id, col: null, rc: 0 }); saveP(); sfx('ok'); toast('보관함에 하나 더 넣음'); openFurnShop(); }
@@ -274,7 +274,7 @@ async function aucBid(id, now) {
   P.holds = P.holds || {}; LOG_W = 'auction'; P.coins -= need; logAct(-need); LOG_W = null; P.holds[id] = amt; P.holdT = P.holdT || {}; P.holdT[id] = Date.now(); saveP(); sfx('coin');
   toast(now || (a.buy && amt >= a.buy) ? '즉시 구매! 곧 보관함에 들어옴' : `${amt} 은화로 입찰 완료`); if (SHOPTAB === 'auc') openFurnShop();
 }
-async function aucCancel(id) { if (!confirm('이 경매를 치울까?')) return; try { await B.del('auctions/' + id); toast('치움'); } catch (e) { toast('실패: ' + (e.code || e.message)); } }
+async function aucCancel(id) { if (!confirm('이 경매를 치울까요?')) return; try { await B.del('auctions/' + id); toast('치움'); } catch (e) { toast('실패: ' + (e.code || e.message)); } }
 /* 내 몫 정산: 밀린 입찰 환불 · 낙찰품 받기 · 판매 대금 받기 */
 let AUC_BUSY = false;
 async function aucSync() {
@@ -305,7 +305,7 @@ VIEWS.kfurn = () => {
   const live = AUCS.filter(a => !aucEnded(a)), old = AUCS.filter(a => aucEnded(a) && (!a.bid || (a.got && a.paid)));
   return `<div class="panel"><h2>🗂 가구점 분류</h2><p class="muted" style="margin:0 0 6px">▲▼ 순서 변경 · 삭제 분류 가구 → 첫 분류</p>
     <div id="kfCats">${FCATS.map(([k, v], i) => `<div class="row" style="gap:4px;margin:3px 0"><input data-k="${k}" value="${esc(v)}" style="flex:1"><button class="sm" onclick="kfCatMove(${i},-1)">▲</button><button class="sm" onclick="kfCatMove(${i},1)">▼</button><button class="sm danger" onclick="kfCatDel(${i})">🗑</button></div>`).join('')}</div>
-    <div class="row" style="gap:6px;margin-top:6px"><button onclick="kfCatAdd()">+ 분류 추가</button><button class="primary" onclick="kfCatSave()">분류 저장</button><button onclick="if(confirm('처음 분류로 되돌릴까?'))B.set('settings/furn',{cats:null},true)">기본으로</button></div></div>
+    <div class="row" style="gap:6px;margin-top:6px"><button onclick="kfCatAdd()">+ 분류 추가</button><button class="primary" onclick="kfCatSave()">분류 저장</button><button onclick="if(confirm('처음 분류로 되돌릴까요?'))B.set('settings/furn',{cats:null},true)">기본으로</button></div></div>
    <div class="panel"><h2>🪑 가구 옮기기 · 숨기기</h2><p class="muted" style="margin:0 0 6px">숨김 = 가구점 미표시 (보유분 유지) · 🎨 기본 그림 수정</p>
     ${FCATS.map(([ck, cv]) => { const items = all.filter(([k, f]) => f.cat === ck); return `<details ${KF_OPEN === ck ? 'open' : ''} ontoggle="if(this.open)KF_OPEN='${ck}'"><summary><b>${esc(cv)}</b> <span class="muted">${items.length}</span></summary>
       ${items.map(([k, f]) => `<div class="item" style="margin:3px 0"><div style="display:flex;align-items:center;gap:6px"><span style="width:44px;text-align:center">${fprev(k, null, 40)}</span><span>${esc(f.name)}${f.custom ? ' ✏' : ''}${FOV[k] ? ' <span class="badge live">그림 바꿈</span>' : ''}</span></div>
@@ -321,7 +321,7 @@ VIEWS.kfurn = () => {
 };
 function kfCatRead() { return [...document.querySelectorAll('#kfCats input')].map(i => [i.dataset.k, i.value.trim() || i.dataset.k]); }
 function kfCatMove(i, d) { const l = kfCatRead(), j = i + d; if (j < 0 || j >= l.length) return; [l[i], l[j]] = [l[j], l[i]]; FCATS.length = 0; l.forEach(x => FCATS.push(x)); render(); }
-function kfCatDel(i) { const l = kfCatRead(); if (l.length <= 1) return toast('분류는 하나 이상 있어야 함'); if (!confirm(`「${l[i][1]}」 분류를 지울까? (저장해야 반영됨)`)) return; l.splice(i, 1); FCATS.length = 0; l.forEach(x => FCATS.push(x)); render(); }
+function kfCatDel(i) { const l = kfCatRead(); if (l.length <= 1) return toast('분류는 하나 이상 있어야 함'); if (!confirm(`「${l[i][1]}」 분류를 지울까요? (저장해야 반영됨)`)) return; l.splice(i, 1); FCATS.length = 0; l.forEach(x => FCATS.push(x)); render(); }
 function kfCatAdd() { const n = prompt('새 분류 이름'); if (!n) return; const l = kfCatRead(); l.push(['c' + Date.now().toString(36), n.trim()]); FCATS.length = 0; l.forEach(x => FCATS.push(x)); render(); }
 async function kfCatSave() {
   const cats = kfCatRead(), keys = cats.map(x => x[0]), move = Object.assign({}, FCFG.move || {});
@@ -331,8 +331,8 @@ async function kfCatSave() {
 async function kfMove(k, cat) { const move = Object.assign({}, FCFG.move || {}); const base = FURN[k].custom ? FURN[k].custom.cat : FURN[k]._cat; if (cat === base) delete move[k]; else move[k] = cat; KF_OPEN = cat;
   try { await B.set('settings/furn', { move }, true); } catch (e) { toast('실패: ' + (e.code || e.message)); } }
 async function kfHide(k) { const h = new Set(FCFG.hidden || []); h.has(k) ? h.delete(k) : h.add(k); try { await B.set('settings/furn', { hidden: [...h] }, true); } catch (e) { toast('실패: ' + (e.code || e.message)); } }
-async function kfPlDel(id) { if (!confirm('이 가구를 지울까? 만든 사람·산 사람 방에서도 사라짐.')) return; try { await B.del('furn/' + id); toast('삭제 완료'); } catch (e) { toast('실패: ' + (e.code || e.message)); } }
-async function kfAucDel(id) { if (!confirm('이 경매를 취소할까? 입찰한 사람은 은화를 돌려받음.')) return; try { await B.del('auctions/' + id); toast('취소 완료'); } catch (e) { toast('실패: ' + (e.code || e.message)); } }
+async function kfPlDel(id) { if (!confirm('이 가구를 지울까요? 만든 사람·산 사람 방에서도 사라짐.')) return; try { await B.del('furn/' + id); toast('삭제 완료'); } catch (e) { toast('실패: ' + (e.code || e.message)); } }
+async function kfAucDel(id) { if (!confirm('이 경매를 취소할까요? 입찰한 사람은 은화를 돌려받음.')) return; try { await B.del('auctions/' + id); toast('취소 완료'); } catch (e) { toast('실패: ' + (e.code || e.message)); } }
 async function kfAucClean() { const old = AUCS.filter(a => aucEnded(a) && (!a.bid || (a.got && a.paid))); try { await Promise.all(old.map(a => B.del('auctions/' + a.id))); toast('정리 완료'); } catch (e) { toast('실패: ' + (e.code || e.message)); } }
 function kfGiveAsk(id) {
   const d = CFURN.find(x => x.id === id); if (!d) return;

@@ -99,14 +99,14 @@ async function kdGiveNote(uid) {
   const r = pool[Math.floor(Math.random() * pool.length)];
   try { await B.update('progress/' + uid, { notes: (p.notes || []).concat({ id: r.id, at: Date.now() }) }); toast(`「${r.room}」 쪽지를 줌`); } catch (e) { toast('주지 못함'); }
 }
-async function kdTakeNotes(uid) { const p = progOf(uid); if (!(p.notes || []).length) return toast('가진 쪽지가 없음'); if (!confirm('이 플레이어의 쪽지를 모두 거둬들일까?')) return;
+async function kdTakeNotes(uid) { const p = progOf(uid); if (!(p.notes || []).length) return toast('가진 쪽지가 없음'); if (!confirm('이 플레이어의 쪽지를 모두 거둬들일까요?')) return;
   try { await B.update('progress/' + uid, { notes: [] }); toast('쪽지를 거둬들임'); } catch (e) { toast('실패'); } }
 function kdLog(uid) {
   const u = USERS.find(x => x.id === uid), l = (progOf(uid).log || []).slice().reverse();
   modal(`<h2 style="color:var(--gold2);margin-top:0">${esc(uname(u))}의 기록</h2>${l.length ? `<div style="max-height:360px;overflow:auto"><table>${l.map(x => `<tr><td class="muted" style="font-size:.8rem">${fmtT(x.t)}</td><td>${esc(LOG_NAME(x.w))}</td><td style="color:${x.n > 0 ? 'var(--gold2)' : '#e88'}">${x.n > 0 ? '+' : ''}${x.n}</td></tr>`).join('')}</table></div>` : '<p class="muted">기록이 없음.</p>'}<button style="margin-top:8px" onclick="closeModal()">닫기</button>`);
 }
 async function kdReset(uid) {
-  const u = USERS.find(x => x.id === uid); if (!confirm(`${uname(u)}의 은화 · 방 · 쪽지 · 수수께끼 · 게임 기록을 처음으로 되돌릴까?`)) return;
+  const u = USERS.find(x => x.id === uid); if (!confirm(`${uname(u)}의 은화 · 방 · 쪽지 · 수수께끼 · 게임 기록을 처음으로 되돌릴까요?`)) return;
   try { await B.set('progress/' + uid, { reset: Date.now() }); toast('초기화 완료'); } catch (e) { toast('초기화하지 못함'); }
 }
 async function kdResetAll() {
