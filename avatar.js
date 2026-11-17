@@ -40,8 +40,8 @@ function avP2(g, cfg, dir, step) {
     legs: side ? [[18, 6, lift], [24, 6, -lift]] : [[17, 6, lift], [25, 6, -lift]] };
 }
 /* 몸 (48×68 도트 · 큰 머리 SD) — 머리 y 4~39, 몸 40~, 발 62~65 */
-const AV_HEAD = Array.from({ length: 36 }, (_, i) => i <= 20 ? Math.round(20 * Math.sqrt(1 - Math.pow((20 - i) / 21, 2))) : Math.round(20 - 10 * Math.pow((i - 20) / 15, 1.6)));
-const AV_TOP = 4;
+const AV_HEAD = [7, 10, 12, 13, 14, 15, 15, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 15, 15, 14, 13, 12, 11, 9, 7];   // y 8~39 의 반너비
+const AV_TOP = 8;
 function AV_BODY(P2) {
   const { R, H, M, sk, side, back, legs } = P2, shirt = '#ece6da', shirtS = '#cfc6b6', pants = '#4a4048';
   legs.forEach(([x, w, l]) => { R(x, 53 + l, w, 9, sk.t); R(x + w - 1, 53 + l, 1, 9, sk.f); });
@@ -53,74 +53,73 @@ function AV_BODY(P2) {
     M(11, 42, 4, 9, sk.t); M(11, 50, 4, 3, sk.t); M(11, 50, 1, 3, sk.f);
   }
   AV_HEAD.forEach((h, i) => H(AV_TOP + i, h, sk.t));
-  if (!back) { for (let i = 31; i < 36; i++) R(24 - AV_HEAD[i], AV_TOP + i, 1, 1, sk.f), R(23 + AV_HEAD[i], AV_TOP + i, 1, 1, sk.f); }
-  H(40, 3, sk.f);
+  if (!back) { for (let i = 25; i < 32; i++) { R(24 - AV_HEAD[i], AV_TOP + i, 1, 1, sk.f); R(23 + AV_HEAD[i], AV_TOP + i, 1, 1, sk.f); } }
+  H(40, 4, sk.f);
 }
-/* 눈: 크게 · 앞머리 아래 */
+/* 눈: 6×8 · 윗줄 속눈썹 + 통짜 눈동자 + 흰 반짝임 (참고 도트 스타일) */
 function AV_EYE1(P2, eye, C, x0, flip) {
-  const { R } = P2, ey = 22, X = (x, w) => flip ? x0 + 6 - (x - x0) - (w || 1) + 1 : x;   // x0 = 눈 칸 왼쪽, 폭 7
+  const { R } = P2, ey = 25, lash = '#2a1a24', X = (x, w) => flip ? x0 + 6 - (x - x0) - (w || 1) + 1 : x;   // x0 = 눈 칸 왼쪽, 폭 7
   const r = (x, y, w, h, col) => R(X(x, w), y, w, h, col);
   if (eye === 'round') {
-    r(x0, ey, 7, 2, C.o); r(x0 + 6, ey - 1, 2, 1, C.o); r(x0 - 1, ey + 1, 1, 1, C.o);
-    r(x0, ey + 2, 7, 7, C.d); r(x0 + 1, ey + 4, 5, 5, C.t); r(x0 + 1, ey + 7, 5, 2, C.l); r(x0 + 2, ey + 8, 3, 1, C.L);
-    r(x0 + 2, ey + 3, 3, 3, C.o); r(x0 + 1, ey + 2, 2, 2, '#ffffff'); r(x0 + 5, ey + 6, 1, 1, '#ffffff');
-    r(x0, ey + 9, 7, 1, C.f);
+    r(x0, ey, 7, 2, lash); r(x0 - 1, ey + 1, 1, 1, lash); r(x0 + 7, ey, 1, 1, lash);
+    r(x0, ey + 2, 7, 7, C.t); r(x0, ey + 2, 7, 2, C.d); r(x0, ey + 7, 7, 1, C.l); r(x0 + 1, ey + 8, 5, 1, C.L);
+    r(x0 + 4, ey + 4, 2, 3, '#ffffff'); r(x0 + 1, ey + 2, 1, 1, '#ffffff'); r(x0 + 1, ey + 7, 1, 1, '#ffffff');
   } else if (eye === 'half') {
-    r(x0 + 1, ey + 4, 5, 1, C.o); r(x0, ey + 5, 1, 2, C.o); r(x0 + 6, ey + 5, 1, 2, C.o); r(x0 + 6, ey + 3, 2, 1, C.o);
+    r(x0, ey + 4, 7, 2, lash); r(x0 - 1, ey + 5, 1, 2, lash); r(x0 + 7, ey + 5, 1, 2, lash);
   } else if (eye === 'sharp') {
-    r(x0, ey + 3, 2, 1, C.o); r(x0 + 2, ey + 2, 3, 1, C.o); r(x0 + 5, ey + 1, 3, 1, C.o); r(x0, ey + 4, 7, 1, C.o);
-    r(x0 + 1, ey + 5, 6, 4, C.d); r(x0 + 2, ey + 6, 4, 3, C.t); r(x0 + 3, ey + 5, 2, 3, C.o); r(x0 + 2, ey + 5, 1, 1, '#ffffff'); r(x0 + 1, ey + 9, 6, 1, C.f);
+    r(x0, ey + 2, 3, 2, lash); r(x0 + 3, ey + 1, 4, 2, lash); r(x0 - 1, ey + 2, 1, 1, lash);
+    r(x0, ey + 4, 7, 5, C.t); r(x0, ey + 4, 7, 1, C.d); r(x0 + 1, ey + 8, 5, 1, C.l); r(x0 + 4, ey + 5, 2, 2, '#ffffff');
   } else {
-    r(x0, ey + 4, 7, 2, C.o); r(x0 + 6, ey + 3, 2, 1, C.o); r(x0 + 1, ey + 6, 5, 3, C.d); r(x0 + 2, ey + 7, 3, 2, C.t); r(x0 + 2, ey + 6, 1, 1, '#ffffff'); r(x0 + 1, ey + 9, 5, 1, C.f);
+    r(x0, ey + 4, 7, 2, lash); r(x0 - 1, ey + 4, 1, 1, lash); r(x0, ey + 6, 7, 3, C.t); r(x0, ey + 8, 7, 1, C.l); r(x0 + 4, ey + 6, 2, 1, '#ffffff');
   }
 }
 function AV_FACE(P2, eye, C) {
   const { R, M, side } = P2;
-  if (side) { AV_EYE1(P2, eye, C, 7, false); R(8, 35, 2, 1, '#a04848'); R(14, 32, 4, 2, '#f6b0b4'); R(14, 32, 1, 1, '#f08a96'); return; }
-  AV_EYE1(P2, eye, C, 11, false); AV_EYE1(P2, eye, C, 30, true);
-  R(23, 35, 2, 1, '#a04848'); M(8, 32, 4, 2, '#f6b0b4'); M(9, 32, 1, 1, '#f08a96'); M(11, 33, 1, 1, '#f08a96');
+  if (side) { AV_EYE1(P2, eye, C, 10, false); R(9, 36, 2, 1, '#b4525a'); R(15, 34, 3, 1, '#f6a8b0'); return; }
+  AV_EYE1(P2, eye, C, 14, false); AV_EYE1(P2, eye, C, 27, true);
+  R(23, 36, 2, 1, '#b4525a'); M(10, 34, 3, 1, '#f6a8b0'); M(11, 35, 1, 1, '#f6a8b0');
 }
-/* 머리카락 */
+/* 머리카락: 얼굴보다 양옆 3칸씩 풍성하게 (x 5~42) */
 function avStrand(R, x, y0, y1, w, col, edge) {   // 끝이 뾰족한 머리 가닥 (아래로)
   R(x, y0, w, y1 - y0 - 1, col); R(x + Math.floor(w / 2) - (w > 2 ? 1 : 0), y1 - 1, w > 2 ? 2 : 1, 1, col);
   if (edge) R(x + w - 1, y0 + 2, 1, y1 - y0 - 3, edge);
 }
 const AVH_HAIR = {
-  back(P2, h, C) { const { R, M, side, back } = P2, sx = side ? 10 : 0;
-    if (h === 'long' || h === 'wavy') { R(3 + sx, 16, 42 - sx, 38, C.t); R(3 + sx, 16, 2, 38, C.f); R(43, 16, 2, 38, C.f);
-      for (let x = 5 + sx; x < 43; x += 6) avStrand(R, x, 52, 57, 5, C.t);
-      if (h === 'wavy') for (let y = 24; y < 54; y += 6) { R(1 + sx, y, 2, 3, C.t); R(45, y + 3, 2, 3, C.t); R(2 + sx, y + 3, 1, 3, C.f); } }
-    if (h === 'bob') { R(3 + sx, 16, 42 - sx, 20, C.t); for (let x = 3 + sx; x < 45; x += 5) avStrand(R, x, 34, 39, 5, C.t); }
-    if (h === 'braids') { const xs = side ? [36] : [2, 40]; xs.forEach(x => { for (let y = 30; y < 54; y += 4) { R(x + 1, y, 5, 4, C.t); R(x, y + 1, 7, 2, C.t); R(x + 2, y + 1, 2, 1, C.l); R(x + 1, y + 3, 5, 1, C.f); } R(x + 1, 54, 5, 2, '#c03050'); avStrand(R, x + 1, 56, 60, 5, C.t); }); }
-    if (h === 'pony' && (back || side)) { const x = side ? 36 : 20; R(x, 10, 8, 30, C.t); R(x, 10, 2, 30, C.f); avStrand(R, x, 38, 44, 8, C.t); R(x + 3, 14, 2, 20, C.l); }
+  back(P2, h, C) { const { R, M, side, back } = P2, sx = side ? 12 : 0;
+    if (h === 'long' || h === 'wavy') { R(5 + sx, 16, 38 - sx, 36, C.t); R(5 + sx, 16, 2, 36, C.f); R(41, 16, 2, 36, C.f);
+      for (let x = 6 + sx; x < 41; x += 6) avStrand(R, x, 50, 56, 6, C.t);
+      if (h === 'wavy') for (let y = 22; y < 52; y += 6) { R(3 + sx, y, 2, 3, C.t); R(43, y + 3, 2, 3, C.t); R(4 + sx, y + 3, 1, 3, C.f); } }
+    if (h === 'bob') { R(5 + sx, 16, 38 - sx, 20, C.t); for (let x = 5 + sx; x < 43; x += 5) avStrand(R, x, 34, 40, 5, C.t); }
+    if (h === 'braids') { const xs = side ? [35] : [3, 38]; xs.forEach(x => { for (let y = 32; y < 54; y += 4) { R(x + 1, y, 5, 4, C.t); R(x, y + 1, 7, 2, C.t); R(x + 2, y + 1, 2, 1, C.l); R(x + 1, y + 3, 5, 1, C.f); } R(x + 1, 54, 5, 2, '#c03050'); avStrand(R, x + 1, 56, 60, 5, C.t); }); }
+    if (h === 'pony' && (back || side)) { const x = side ? 35 : 20; R(x, 10, 8, 30, C.t); R(x, 10, 2, 30, C.f); avStrand(R, x, 38, 44, 8, C.t); R(x + 3, 14, 2, 20, C.l); }
   },
   front(P2, h, C) { const { R, H, M, side, back } = P2, T = AV_TOP;
-    const capTo = h === 'slick' ? 12 : 15;
-    for (let i = 0; i <= capTo; i++) H(T + i, Math.min(21, AV_HEAD[i] + (i > 2 ? 1 : 0)), C.t);
-    // 천사링 하이라이트
-    if (!side) { R(12, T + 6, 4, 1, C.L); R(16, T + 5, 6, 1, C.L); R(27, T + 5, 5, 1, C.l); R(33, T + 6, 3, 1, C.l); }
-    else { R(10, T + 6, 6, 1, C.L); R(16, T + 5, 6, 1, C.l); }
+    // 정수리 덩어리: 머리 윗부분을 3칸 넓게 덮음
+    const capTo = h === 'slick' ? 13 : 12;
+    for (let i = -2; i <= capTo; i++) { const hw = i < 0 ? [8, 11][i + 2] : Math.min(19, AV_HEAD[i] + 3); H(T + i, hw, C.t); }
+    if (!side) { R(13, T + 3, 4, 1, C.L); R(17, T + 2, 6, 1, C.L); R(27, T + 2, 4, 1, C.l); R(32, T + 3, 3, 1, C.l); R(20, T - 1, 3, 2, C.f); R(23, T, 2, 3, C.f); }
+    else { R(11, T + 3, 6, 1, C.L); R(17, T + 2, 6, 1, C.l); }
+    if (h !== 'slick' && h !== 'bun' && !back) { const ax = side ? 20 : 25; R(ax, T - 4, 2, 2, C.t); R(ax + 2, T - 5, 2, 1, C.t); R(ax - 1, T - 3, 1, 1, C.t); }
     if (h === 'bun') { for (let y = 0; y < 7; y++) H(y, [5, 7, 8, 8, 8, 8, 7][y], C.t); R(20, 1, 3, 1, C.L); R(28, 4, 2, 2, C.f); }
-    if (back) { for (let i = 0; i < 34; i++) H(T + i, Math.min(21, AV_HEAD[i] + 1), C.t); R(14, T + 7, 20, 1, C.l); R(18, T + 6, 10, 1, C.L);
-      for (let x = 6; x < 42; x += 7) R(x, T + 14, 1, 18, C.f);
+    if (back) { for (let i = -2; i < 32; i++) H(T + i, i < 0 ? [8, 11][i + 2] : Math.min(19, AV_HEAD[i] + 3), C.t); R(15, T + 4, 18, 1, C.l); R(19, T + 3, 10, 1, C.L);
+      for (let x = 8; x < 40; x += 6) R(x, T + 12, 1, 18, C.f);
       if (h === 'pony') R(21, 12, 6, 3, '#c03050'); return; }
     if (side) {   // 왼쪽을 봄: 오른쪽(뒤통수)이 머리카락
-      for (let y = T + 4; y < 32; y++) R(19, y, 26, 1, C.t);
-      for (let x = 4; x < 20; x += 5) avStrand(R, x, T + 12, 22 + (x % 2), 5, C.t, C.f);
-      R(19, 20, 2, 12, C.f); avStrand(R, 19, 30, 36, 6, C.t);
-      if (['bob', 'long', 'wavy'].includes(h)) { R(25, 28, 20, 10, C.t); avStrand(R, 25, 37, 42, 6, C.t); }
-      if (h === 'pony') R(37, 14, 4, 4, '#c03050');
-      if (h === 'short' || h === 'slick') R(19, 28, 26, 4, C.t);
+      for (let y = T - 2; y < 34; y++) { const i = Math.max(0, y - T), rr = 24 + (y < T ? 8 + (y - T + 2) * 2 : AV_HEAD[i]) + 3; R(18, y, Math.min(43, rr) - 18, 1, C.t); }
+      for (let x = 6; x < 19; x += 5) avStrand(R, x, T + 8, 24 + (x % 2), 5, C.t, C.f);
+      R(18, 22, 2, 12, C.f); avStrand(R, 18, 32, 38, 6, C.t);
+      if (['bob', 'long', 'wavy'].includes(h)) { R(24, 30, 19, 9, C.t); avStrand(R, 24, 38, 43, 6, C.t); }
+      if (h === 'pony') R(36, 14, 4, 4, '#c03050');
       return; }
-    if (h === 'slick') { H(T + 13, 19, C.t); M(3, T + 13, 4, 12, C.t); avStrand(R, 3, T + 22, T + 27, 4, C.t); R(39, T + 22, 4, 4, C.t); R(14, T + 9, 10, 1, C.f); R(25, T + 10, 9, 1, C.f); return; }
-    // 앞머리: 눈 윗선을 살짝 덮는 뾰족한 가닥
-    const tips = h === 'short' ? [20, 22, 21, 23, 21, 22, 20] : [22, 24, 23, 25, 23, 24, 22];
-    for (let k = 0; k < 7; k++) avStrand(R, 6 + k * 5, T + 12, tips[k], 6, C.t, k === 3 ? null : C.f);
-    // 옆머리
-    const sideTo = h === 'bob' ? 40 : h === 'short' ? 28 : h === 'pony' || h === 'bun' ? 32 : h === 'braids' ? 30 : 44;
-    M(3, T + 12, 5, sideTo - T - 13, C.t); M(3, T + 12, 1, sideTo - T - 13, C.f);
-    avStrand(R, 3, sideTo - 2, sideTo + 2, 5, C.t); avStrand(R, 40, sideTo - 2, sideTo + 2, 5, C.t);
-    if (h === 'pony') { R(41, 12, 5, 12, C.t); R(41, 12, 2, 2, '#c03050'); }
+    if (h === 'slick') { H(T + 13, 17, C.t); M(5, T + 13, 4, 12, C.t); avStrand(R, 5, T + 23, T + 28, 4, C.t); avStrand(R, 39, T + 23, T + 28, 4, C.t); R(14, T + 7, 9, 1, C.f); R(25, T + 8, 9, 1, C.f); return; }
+    // 앞머리: 눈 윗선(속눈썹)을 살짝 덮는 뾰족한 가닥 6개
+    const tips = h === 'short' ? [23, 25, 24, 25, 24, 23] : [25, 27, 26, 27, 26, 25];
+    for (let k = 0; k < 6; k++) avStrand(R, 9 + k * 5, T + 10, tips[k], 6, C.t, k === 2 ? null : C.f);
+    // 옆머리 (얼굴 옆으로 내려옴)
+    const sideTo = h === 'bob' ? 40 : h === 'short' ? 31 : h === 'pony' || h === 'bun' ? 34 : h === 'braids' ? 32 : 44;
+    M(5, T + 10, 5, sideTo - T - 11, C.t); M(9, T + 10, 1, sideTo - T - 11, C.f);
+    avStrand(R, 5, sideTo - 2, sideTo + 2, 5, C.t); avStrand(R, 38, sideTo - 2, sideTo + 2, 5, C.t);
+    if (h === 'pony') { R(40, 12, 5, 12, C.t); R(40, 12, 2, 2, '#c03050'); }
   }
 };
 /* 옷 */
@@ -163,16 +162,16 @@ const AV_DRAW = {
     if (o === 'butler') { legs.forEach(([x, w, l]) => { R(x, 53 + l, w, 8, C.t); R(x + w - 1, 53 + l, 1, 8, C.d); }); body(C.t); arms(C.t); H(49, hw, C.t, of);
       if (!side) { R(14, 49, 4, 9, C.t); R(30, 49, 4, 9, C.t); } if (back) R(18, 49, 12, 9, C.t);
       if (front) { R(20, 40, 8, 7, '#f8f4ea'); R(21, 40, 6, 2, '#24242e'); R(23, 42, 2, 1, '#24242e'); R(23, 44, 2, 1, '#9a9a9a'); R(19, 40, 1, 8, C.l); R(28, 40, 1, 8, C.l); } } },
-  hat(P2, h, C) { const { R, H, M, side, back } = P2;
+  hat(P2, h, C) { const { side, back } = P2, R = (x, y, w, hh, c) => P2.R(x, y + 3, w, hh, c), H = (y, hw, c, o) => P2.H(y + 3, hw, c, o), M = (x, y, w, hh, c) => P2.M(x, y + 3, w, hh, c);
     if (h === 'fedora') { H(11, 23, C.t); H(12, 22, C.d); for (let y = 1; y < 11; y++) H(y, y < 3 ? 12 : 14, C.t); H(9, 14, '#24161e'); H(10, 14, '#24161e'); R(14, 3, 6, 1, C.l); R(22, 1, 4, 2, C.f); }
     if (h === 'cap') { for (let y = 2; y < 12; y++) H(y, y < 4 ? 19 : 21, C.t); H(2, 19, C.l); H(10, 21, C.d); if (!back) { if (side) R(0, 12, 12, 2, '#14141a'); else { H(12, 15, '#14141a'); H(13, 13, '#14141a'); } R(22, 4, 4, 4, '#e0b050'); R(23, 5, 2, 2, '#c89030'); } }
     if (h === 'ribbon') { const x = side ? 30 : 32; R(x - 7, 1, 6, 7, C.t); R(x + 2, 1, 6, 7, C.t); R(x - 7, 2, 2, 5, C.l); R(x - 1, 3, 3, 3, C.d); R(x + 6, 2, 2, 5, C.f); R(x - 3, 8, 2, 4, C.t); R(x + 2, 8, 2, 4, C.t); }
     if (h === 'bonnet') { H(6, 18, C.t); H(7, 19, C.t); H(8, 19, C.f); for (let x = 6; x < 42; x += 3) { R(x, 4, 2, 2, C.t); R(x + 1, 5, 1, 1, C.f); } R(20, 6, 8, 2, '#c03050'); } },
   acc(P2, a, C) { const { R, H, M, side, back } = P2; if (back && a !== 'muffler') return;
-    const ring = x => { R(x, 21, 9, 1, C.t); R(x, 31, 9, 1, C.t); R(x - 1, 22, 1, 9, C.t); R(x + 9, 22, 1, 9, C.t); R(x + 1, 22, 2, 1, C.L); };
-    if (a === 'glasses') { if (side) ring(6); else { ring(10); ring(29); R(20, 25, 8, 1, C.t); } }
-    if (a === 'monocle') { const x = side ? 6 : 29; ring(x); R(x + 9, 31, 1, 12, C.d); }
-    if (a === 'flower') { const x = side ? 30 : 9, y = 16; [[0, -2], [-2, 0], [2, 0], [0, 2], [-1, -1], [1, 1], [1, -1], [-1, 1]].forEach(([a, b]) => R(x + a, y + b, 2, 2, C.t)); R(x, y, 2, 2, '#ffe27a'); R(x - 2, y - 2, 1, 1, C.L); }
+    const ring = x => { R(x, 24, 9, 1, C.t); R(x, 34, 9, 1, C.t); R(x - 1, 25, 1, 9, C.t); R(x + 9, 25, 1, 9, C.t); R(x + 1, 25, 2, 1, C.L); };
+    if (a === 'glasses') { if (side) ring(9); else { ring(13); ring(26); R(23, 28, 2, 1, C.t); } }
+    if (a === 'monocle') { const x = side ? 9 : 26; ring(x); R(x + 9, 34, 1, 10, C.d); }
+    if (a === 'flower') { const x = side ? 30 : 8, y = 18; [[0, -2], [-2, 0], [2, 0], [0, 2], [-1, -1], [1, 1], [1, -1], [-1, 1]].forEach(([a, b]) => R(x + a, y + b, 2, 2, C.t)); R(x, y, 2, 2, '#ffe27a'); R(x - 2, y - 2, 1, 1, C.L); }
     if (a === 'muffler') { H(38, side ? 10 : 12, C.t); H(39, side ? 10 : 12, C.t); H(40, side ? 10 : 12, C.f); H(39, side ? 10 : 12, C.l); if (!back) { R(side ? 12 : 27, 41, 5, 9, C.t); R(side ? 12 : 27, 48, 5, 1, C.f); for (let x = 0; x < 5; x += 2) R((side ? 12 : 27) + x, 50, 1, 2, C.t); } } }
 };
 
@@ -219,6 +218,11 @@ function avBodyCut(vw, url) {
     cut[i] = hit; }
   return AVCUT[k] = { cut, noArms: armAll > 0 && armGone / armAll > .6 };
 }
+/* 외곽선: 붙은 부분 색을 진하게 (피부 → 진한 적갈색, 머리 → 진한 머리색) */
+const AVOUT = {};
+function avOutCol(r, g, b) { const k = (r << 16) | (g << 8) | b; if (AVOUT[k]) return AVOUT[k];
+  const [h, s, l] = hexHsl(deToHex(r, g, b)), hx = hslHex(h, Math.min(1, s < .25 ? s * .8 : Math.max(s, .45) + .1), Math.max(.1, Math.min(.34, l * .42)));
+  return AVOUT[k] = deHex(hx); }
 function avSprite(cfg, dir, step) {
   const key = JSON.stringify(cfg) + '|' + dir + '|' + step; if (AVC[key]) return AVC[key];
   const c = document.createElement('canvas'); c.width = AVW; c.height = AVH; const g = c.getContext('2d'), P2 = avP2(g, cfg, dir, step), vw = avView(dir);
@@ -248,7 +252,8 @@ function avSprite(cfg, dir, step) {
   // 외곽선 자동
   const d = g.getImageData(0, 0, AVW, AVH), p = d.data, src = p.slice();
   for (let y = 0; y < AVH; y++) for (let x = 0; x < AVW; x++) { const k = (y * AVW + x) * 4; if (src[k + 3]) continue;
-    if ([[1, 0], [-1, 0], [0, 1], [0, -1]].some(([a, b]) => { const X = x + a, Y = y + b; return X >= 0 && Y >= 0 && X < AVW && Y < AVH && src[(Y * AVW + X) * 4 + 3] > 100; })) { p[k] = 42; p[k + 1] = 24; p[k + 2] = 20; p[k + 3] = 255; } }
+    let n = -1; for (const [a, b] of [[0, -1], [1, 0], [-1, 0], [0, 1]]) { const X = x + a, Y = y + b; if (X >= 0 && Y >= 0 && X < AVW && Y < AVH && src[(Y * AVW + X) * 4 + 3] > 100) { n = (Y * AVW + X) * 4; break; } }
+    if (n >= 0) { const o = avOutCol(src[n], src[n + 1], src[n + 2]); p[k] = o[0]; p[k + 1] = o[1]; p[k + 2] = o[2]; p[k + 3] = 255; } }
   g.putImageData(d, 0, 0);
   let out = c; if (dir === 3) { const m = document.createElement('canvas'); m.width = AVW; m.height = AVH; const mg = m.getContext('2d'); mg.translate(AVW, 0); mg.scale(-1, 1); mg.drawImage(c, 0, 0); out = m; }
   if (!pending) AVC[key] = out; return out;
