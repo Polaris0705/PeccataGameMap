@@ -34,32 +34,36 @@ const avView = dir => dir === 2 ? 2 : dir % 2 ? 1 : 0;
 /* ===== 토큰 그림 — 24×34 칸 설계를 2배(48×68)로 그림. 칸 하나 = 잔도트 2×2, 방에서 1픽셀 =====
    참고 그림 비율: 머리숱 공(줄 1~18) · 얼굴 줄 12~19 · 몸 20~29(허리 26) · 다리 30~31 · 신발 31~32 · 가운데 칸 11|12 */
 const AV_TOP = 4;
-const AV_HEADG = [6, 7, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 7, 7, 6];   // 얼굴(피부) 줄 4~19 반너비
+const AV_HEADG = [6, 7, 8, 8, 8, 8, 8, 8, 8, 8, 7.5, 7, 6, 5, 4];   // 줄 4~18 (턱은 좁게)   // 얼굴(피부) 줄 4~19 반너비
 const AV_BALLG = [0, 4.5, 6, 7, 7.5, 8, 8.5, 9, 9, 9, 9, 9, 9, 9, 8.5, 8.5, 8, 7.5, 7];   // 머리숱 줄 0~18 반너비
-const AV_TWG = [3.5, 4, 4, 4, 4, 4, 4, 4, 4.5, 4.5];   // 몸통 줄 20~29 반너비
+const AV_TWG = [3.5, 4, 4, 4, 4, 4, 4, 4, 4.5, 4.5];
+const AV_ARMG = Array.from({ length: 14 }, (_, i) => [21 + i * .5, 6.5 - i * .035, 2]);   // 왼팔 줄 21~27.5: 아래로 갈수록 살짝 바깥   // 몸통 줄 20~29 반너비
 function avP2(g, cfg, dir, step) {
-  const R = (x, y, w, h, col) => { if (w <= 0 || h <= 0 || !col) return; g.fillStyle = col; const X = Math.round(x * 2), Y = Math.round(y * 2); g.fillRect(X, Y, Math.round((x + w) * 2) - X, Math.round((y + h) * 2) - Y); };
+  // 설계 좌표 → 그림: 줄 20 아래(몸)는 세로 0.72배·가로 0.85배로 작게, 전체를 3줄 아래로
+  const fy = y => (y < 20 ? y : 20 + (y - 20) * .72) + 3, fx = x => 12 + (x - 12) * .85;
+  const raw = (x0, y0, x1, y1, col) => { const X = Math.round(x0 * 2), Y = Math.round(y0 * 2), X2 = Math.round(x1 * 2), Y2 = Math.round(y1 * 2); if (X2 > X && Y2 > Y) { g.fillStyle = col; g.fillRect(X, Y, X2 - X, Y2 - Y); } };
+  const R = (x, y, w, h, col) => { if (w <= 0 || h <= 0 || !col) return; if (y >= 20) raw(fx(x), fy(y), fx(x + w), fy(y + h), col); else raw(x, fy(y), x + w, fy(y + h), col); };
+  const RH = (x, y, w, h, col) => { if (w <= 0 || h <= 0 || !col) return; raw(x, fy(y), x + w, fy(y + h), col); };
   const H = (y, half, col, off) => R(12 - half + (off || 0), y, half * 2, 1, col);
   const M = (x, y, w, h, col) => { R(x, y, w, h, col); R(24 - x - w, y, w, h, col); };
   const view = dir === 2 ? 'back' : dir % 2 ? 'side' : 'front', side = view === 'side', lift = [0, -.5, 0, .5][step] || 0, of = side ? -1 : 0;
-  const P = { R, H, M, g, cfg, view, side, back: view === 'back', lift, of, sk: ramp(cfg.skin),
+  const P = { R, H, M, RH, HH: (y, half, col, off) => RH(12 - half + (off || 0), y, half * 2, 1, col), MH: (x, y, w, h, col) => { RH(x, y, w, h, col); RH(24 - x - w, y, w, h, col); }, g, cfg, view, side, back: view === 'back', lift, of, sk: ramp(cfg.skin),
     legs: side ? [[9.5, 2.5, lift], [11, 2.5, -lift]] : [[8.5, 2.5, lift], [13, 2.5, -lift]] };
   P.tw = y => (AV_TWG[y - 20] || 5) - (side ? 1 : 0);
   P.torso = (col, y0, y1, ex) => { for (let y = y0; y <= y1; y++) H(y, P.tw(y) + (ex || 0), col, of); };
   // 소매(팔): 줄 21~25, 손은 26~27. n = 줄 수, wide = 바깥으로 더
-  P.arm = (col, n, wide) => { if (P.noArms) return; const k = Math.min(n == null ? 5 : n, 7), w0 = wide || 0, ln = avOutHex(col);
-    if (side) { R(10 - w0, 21, 2 + w0, k, col); R(11.5, 22, .5, k - 1, ln); }
-    else { M(6 - w0, 21, 2 + w0, k, col); M(7.5, 22, .5, k - 1, ln); } };
+  P.arm = (col, n, wide) => { if (P.noArms) return; const k = Math.min(n == null ? 5 : n, 7), w0 = wide || 0, sh = ramp(col).f;
+    AV_ARMG.slice(0, k * 2).forEach(([y, x, w], i) => { if (side) { R(10.5 - w0, y, 2 + w0, .5, col); if (i > 3) R(12, y, .5, .5, sh); } else { M(x - w0, y, w + w0, .5, col); if (i > 3) M(x + w - .5, y, .5, .5, sh); } }); };
   return P;
 }
 function AV_BODY(P2) {
   const { R, H, M, sk, side, back, legs } = P2, shirt = '#ece6da', pants = '#4a4048';
   legs.forEach(([x, w, l]) => R(x, 29 + l, w, 3, sk.t));
   P2.torso(shirt, 20, 25); P2.torso(pants, 26, 29);
-  if (side) { R(10, 21, 2, 6, sk.t); R(11.5, 22, .5, 4, sk.f); }
-  else { M(6, 21, 2, 6, sk.t); M(7.5, 22, .5, 4, sk.f); }
+  AV_ARMG.forEach(([y, x, w], i) => { if (side) R(10.5, y, 2, .5, sk.t); else M(x, y, w, .5, sk.t); });
+  if (side) R(10.5, 28, 2, .5, sk.t); else M(6.25, 28, 1.5, .5, sk.t);
   AV_HEADG.forEach((h, i) => H(AV_TOP + i, h, sk.t));
-  H(19, 4, sk.f);
+  H(19, 2, sk.f);
 }
 const avOutHex = hex => { const o = avOutCol(...deHex(hex)); return deToHex(o[0], o[1], o[2]); };
 /* 눈: 1칸×2줄 일자 눈 (얼굴 양끝 가까이) */
@@ -72,21 +76,21 @@ function AV_EYE1(P2, eye, C, x) {
 }
 function AV_FACE(P2, eye, C) {
   const { R, side } = P2;
-  if (side) { AV_EYE1(P2, eye, C, 5); R(4, 17.5, 1, .5, '#d89a88'); R(5, 19.5, 6, .5, avOutHex(P2.sk.t)); return; }
+  if (side) { AV_EYE1(P2, eye, C, 5); R(4, 17.5, 1, .5, '#d89a88'); return; }
   AV_EYE1(P2, eye, C, 7.5); AV_EYE1(P2, eye, C, 15.5);
-  R(11.5, 17.5, 1, .5, '#d89a88'); R(7.5, 17, 1, .5, '#f8c4bc'); R(15.5, 17, 1, .5, '#f8c4bc'); P2.H(19.5, 3.5, avOutHex(P2.sk.t));
+  R(11.5, 17.5, 1, .5, '#d89a88'); R(8, 16.5, 1, .5, '#f8c4bc'); R(15, 16.5, 1, .5, '#f8c4bc');
 }
 /* 머리숱 = 공. 앞머리 끝 줄(칸 6~17): 얼굴 창 */
 const AV_BANGG = { def: [14, 12.5, 13, 11.5, 12, 13, 12, 11.5, 13, 12, 12.5, 14], short: [13, 11.5, 12, 10.5, 11, 12, 11, 10.5, 12, 11, 11.5, 13] };
 function avStrand(R, x, y0, y1, w, col) { R(x, y0, w, y1 - y0 - .5, col); R(x + w / 2 - .5, y1 - .5, 1, .5, col); }
 const AVH_HAIR = {
-  back(P2, h, C) { const { R, H, side, back } = P2, sx = side ? 7 : 0;
+  back(P2, h, C) { const { side, back } = P2, R = P2.RH, H = P2.HH, sx = side ? 7 : 0;
     if (h === 'long' || h === 'wavy') { R(3 + sx, 10, 18 - sx, 17, C.t); R(3 + sx, 10, 1, 17, C.f); R(20, 10, 1, 17, C.f); for (let x = 3 + sx; x < 21; x += 3) avStrand(R, x, 26, 28.5, 3, C.t);
       if (h === 'wavy') for (let y = 13; y < 26; y += 3) { R(2 + sx, y, 1, 1.5, C.t); R(21, y + 1.5, 1, 1.5, C.t); } }
     if (h === 'braids') (side ? [17] : [1.5, 19.5]).forEach(x => { for (let y = 15; y < 25; y += 2) { R(x, y, 3, 2, C.t); R(x + .5, y + 1.5, 2, .5, C.f); R(x + .5, y, 1, .5, C.l); } R(x + .5, 25, 2, 1, '#c03050'); avStrand(R, x + .5, 26, 28, 2, C.t); });
     if (h === 'pony' && (back || side)) { const x = side ? 18 : 10; R(x, 5, 4, 14, C.t); R(x, 5, 1, 14, C.f); avStrand(R, x, 18, 21.5, 4, C.t); }
   },
-  front(P2, h, C) { const { R, H, M, side, back } = P2;
+  front(P2, h, C) { const { side, back } = P2, R = P2.RH, H = P2.HH, M = P2.MH;
     const bang = h === 'short' ? AV_BANGG.short : AV_BANGG.def, slick = h === 'slick';
     const lockTo = h === 'short' || slick ? 16 : h === 'bob' || h === 'long' || h === 'wavy' ? 19 : 18;
     for (let y = 1; y <= 18; y++) { const hw = AV_BALLG[y]; for (let x = 12 - hw; x < 12 + hw; x += .5) { const xi = Math.floor(x);
@@ -97,8 +101,10 @@ const AVH_HAIR = {
       } else on = y <= 17;
       if (on) R(x, y, .5, 1, C.t); } }
     // 결: 진한 점들 + 윗부분 하이라이트
-    // 결: 정수리에서 아래로 퍼지는 가닥선
-    if (!back || true) [-7, -4.5, -2, .5, 3, 5.5, 8].forEach((k, n) => { for (let y = 3.5; y < (slick && !back ? 8.5 : 11.5); y += .5) { if (side && k < -3 && y > 9) continue; const x = 11.75 + k * (.3 + .7 * (y - 3.5) / 8); if (Math.abs(x - 11.75) < AV_BALLG[Math.floor(y)] - .5 && ((y * 2 + n) % 5 !== 0)) R(Math.round(x * 2) / 2, y, .5, .5, n % 2 ? C.f : C.d); } });
+    // 결: 앞머리 가닥 사이 짧은 진한 선 + 정수리 쪽 불규칙한 그늘
+    if (!back && !side && !slick) for (let x = 7; x < 18; x++) { const t0 = bang[x - 6], t1 = bang[x - 5]; if (t1 == null) continue; R(x, Math.min(t0, t1) - 2.5, .5, 2.5, C.f); }
+    if (!back) [[5, 6], [7.5, 5], [15, 5.5], [17.5, 6.5], [10, 7.5], [13.5, 8], [4.5, 9.5], [19, 9]].forEach(([x, y], n) => { if (side && x < 9) return; if (Math.abs(x - 11.75) < AV_BALLG[Math.floor(y)] - 1 && !(slick && y > 8)) R(x, y, .5, n % 2 ? 1.5 : 1, C.f); });
+    if (back) [[6, 9], [9.5, 11], [13.5, 10], [17, 9.5], [11.5, 6]].forEach(([x, y]) => R(x, y, .5, 4, C.f));
     if (!back) { M(4, 12, .5, Math.max(0, lockTo - 12), C.f); }
     if (side) { R(5, 3, 3, .5, C.L); R(8, 2.5, 3, .5, C.l); } else { R(6, 3, 2, .5, C.L); R(8, 2.5, 3, .5, C.L); R(13, 2.5, 2, .5, C.l); }
     if (h === 'bun') { H(0, 3, C.t); H(.5, 3.5, C.t); R(10, 0, 1.5, .5, C.L); }
@@ -194,8 +200,8 @@ function avBodyCut(vw, url) {
   const c = document.createElement('canvas'); c.width = AVW; c.height = AVH; const cg = c.getContext('2d'); cg.drawImage(im, 0, 0, AVW, AVH); const b = cg.getImageData(0, 0, AVW, AVH).data;
   const N = AVW * AVH, gone = new Uint8Array(N), cut = new Uint8Array(N); let armAll = 0, armGone = 0;
   for (let i = 0; i < N; i++) { gone[i] = a[i * 4 + 3] > 0 && !b[i * 4 + 3] ? 1 : 0; const x = i % AVW, y = (i / AVW) | 0;
-    if (vw !== 1 && y >= 42 && y <= 55 && (x < 16 || x >= 32) && a[i * 4 + 3]) { armAll++; armGone += gone[i]; } }
-  for (let y = 0; y <= 55; y++) for (let x = 0; x < AVW; x++) { const i = y * AVW + x; if (b[i * 4 + 3]) continue;
+    if (vw !== 1 && y >= 46 && y <= 60 && (x < 17 || x >= 31) && a[i * 4 + 3]) { armAll++; armGone += gone[i]; } }
+  for (let y = 0; y <= 60; y++) for (let x = 0; x < AVW; x++) { const i = y * AVW + x; if (b[i * 4 + 3]) continue;
     let hit = 0; for (let dy = -2; dy <= 2 && !hit; dy++) for (let dx = -2; dx <= 2; dx++) { const X = x + dx, Y = y + dy; if (X >= 0 && Y >= 0 && X < AVW && Y < AVH && gone[Y * AVW + X]) { hit = 1; break; } }
     cut[i] = hit; }
   return AVCUT[k] = { cut, noArms: armAll > 0 && armGone / armAll > .6 };
