@@ -393,7 +393,30 @@ function avOvSection() {
   return `<div class="panel"><h2>🎨 기본 그림 고치기</h2><p class="muted" style="margin:0 0 6px;font-size:.82rem">기본 그림 수정 · 전체 토큰 적용 · 원래 색 부분은 색 바꾸기 유지</p>
     ${AV_OV_GROUPS().map(([gn, list]) => `<details ${AVOV_OPEN === gn ? 'open' : ''} ontoggle="if(this.open)AVOV_OPEN='${gn}'"><summary><b>${gn}</b> <span class="muted">${list.filter(([k]) => AVOV[k]).length ? '· 고친 것 ' + list.filter(([k]) => AVOV[k]).length : ''}</span></summary>
       ${list.map(([k, n]) => `<div class="item" style="margin:3px 0"><div style="display:flex;align-items:center;gap:8px"><canvas class="avovp" data-k="${k}" width="${AVW}" height="${AVH}" style="width:32px;image-rendering:pixelated;background:#2a2420"></canvas><span>${esc(n)}${AVOV[k] ? ' <span class="badge live">바꿈</span>' : ''}</span></div>
-        <div class="row" style="flex:0 0 auto;gap:4px"><button class="sm" onclick="avOvEdit('${k}')">✏ 고치기</button>${AVOV[k] ? `<button class="sm" onclick="avOvReset('${k}')">↺ 원래대로</button>` : ''}</div></div>`).join('')}</details>`).join('')}</div>`;
+        <div class="row" style="flex:0 0 auto;gap:4px"><button class="sm" onclick="avOvEdit('${k}')">✏ 고치기</button>${AVOV[k] ? `<button class="sm" onclick="avOvExport(['${k}'])">📤</button><button class="sm" onclick="avOvReset('${k}')">↺ 원래대로</button>` : ''}</div></div>`).join('')}</details>`).join('')}
+    ${Object.keys(AVOV).length ? `<div class="row" style="margin-top:6px"><button class="sm" onclick="avOvExport(Object.keys(AVOV))">📤 고친 그림 전체 내보내기</button></div>` : ''}</div>`;
+}
+/* 내보내기: 층별 앞·옆·뒤 원본(48×68) + 맨 아래 줄에 지금 토큰 전체 모습. 왼쪽에 이름표 */
+async function avOvExport(keys) {
+  toast('그림 준비 중');
+  await avLoadUrls(Object.values(AVOV).flatMap(v => Object.values(v.pics || {})));
+  const LW = 90, G = 4, rows = keys.length + 1, c = document.createElement('canvas');
+  c.width = LW + (AVW + G) * 3; c.height = rows * (AVH + G) + 14; const g = c.getContext('2d');
+  g.fillStyle = '#ffffff'; g.font = '9px sans-serif'; g.textBaseline = 'top';
+  ['앞', '옆', '뒤'].forEach((t, i) => g.fillText(t, LW + i * (AVW + G) + 2, 1));
+  keys.forEach((k, r) => { const y = 14 + r * (AVH + G), ov = AVOV[k] || {}, pics = ov.pics || {};
+    g.fillText(k, 2, y + 2); g.fillText(pics[0] || pics[1] || pics[2] ? '(고침)' : '(원래)', 2, y + 14);
+    [0, 1, 2].forEach(v => { const x = LW + v * (AVW + G), im = pics[v] && cfImg(pics[v]);
+      g.fillStyle = 'rgba(255,255,255,.08)'; g.fillRect(x, y, AVW, AVH); g.fillStyle = '#ffffff';
+      if (im) g.drawImage(im, x, y, AVW, AVH); else { g.globalAlpha = .35; g.drawImage(avLayerPng(k, v, true), x, y); g.globalAlpha = 1; } }); });
+  const y = 14 + keys.length * (AVH + G), cfg = keys.length === 1 ? avOvCfg(keys[0]) : Object.assign({}, AV_DEF, P.avatar || {}); g.fillText('전체 모습', 2, y + 2); avClr();
+  [0, 1, 2].forEach(v => g.drawImage(avSprite(cfg, v, 0), LW + v * (AVW + G), y));
+  // 어두운 배경 위에 투명 그림이 잘 보이게 바탕을 깔고 PNG로
+  const out = document.createElement('canvas'); out.width = c.width; out.height = c.height; const og = out.getContext('2d'); og.fillStyle = '#3a3036'; og.fillRect(0, 0, out.width, out.height); og.drawImage(c, 0, 0);
+  const name = 'token_' + (keys.length === 1 ? keys[0].replace(/[:]/g, '_') : 'all') + '.png';
+  out.toBlob(async blob => { const f = new File([blob], name, { type: 'image/png' });
+    try { if (navigator.canShare && navigator.canShare({ files: [f] })) { await navigator.share({ files: [f], title: name }); return; } } catch (e) { if (e && e.name === 'AbortError') return; }
+    const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = name; document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 4000); toast('내보내기 완료'); }, 'image/png');
 }
 function avOvCfg(key) { const [k, id] = key.split(':'), c = Object.assign({}, AV_DEF); if (k === 'eye') c.eye = id; if (k === 'hairB' || k === 'hairF') { c.hair = id; c.hairCol = AV_ITEMS.hair[id][2]; }
   if (AV_ITEMS[k] && k !== 'eye' && k !== 'hair') { if (k === 'one') { c.one = id; } else c[k] = id; const ck = { top: 'topCol', bottom: 'botCol', one: 'oneCol', shoes: 'shoeCol', hat: 'hatCol', acc: 'accCol' }[k]; c[ck] = AV_ITEMS[k][id][2]; } return c; }
