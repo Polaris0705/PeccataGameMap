@@ -40,7 +40,7 @@ const AV_TWG = [3.5, 4, 4, 4, 4, 4, 4, 4, 4.5, 4.5];
 const AV_ARMG = Array.from({ length: 14 }, (_, i) => [21 + i * .5, 6.5 - i * .035, 2]);   // 왼팔 줄 21~27.5: 아래로 갈수록 살짝 바깥   // 몸통 줄 20~29 반너비
 function avP2(g, cfg, dir, step) {
   // 설계 좌표 → 그림: 줄 20 아래(몸)는 세로 0.72배·가로 0.85배로 작게, 전체를 3줄 아래로
-  const fy = y => (y < 20 ? y : 20 + (y - 20) * .72) + 3, fx = x => 12 + (x - 12) * .85;
+  const fy = y => (y < 20 ? 20 - (20 - y) * .86 : 20 + (y - 20) * .72) + 3, fx = x => 12 + (x - 12) * .85;
   const raw = (x0, y0, x1, y1, col) => { const X = Math.round(x0 * 2), Y = Math.round(y0 * 2), X2 = Math.round(x1 * 2), Y2 = Math.round(y1 * 2); if (X2 > X && Y2 > Y) { g.fillStyle = col; g.fillRect(X, Y, X2 - X, Y2 - Y); } };
   const R = (x, y, w, h, col) => { if (w <= 0 || h <= 0 || !col) return; if (y >= 20) raw(fx(x), fy(y), fx(x + w), fy(y + h), col); else raw(x, fy(y), x + w, fy(y + h), col); };
   const RH = (x, y, w, h, col) => { if (w <= 0 || h <= 0 || !col) return; raw(x, fy(y), x + w, fy(y + h), col); };
@@ -97,7 +97,8 @@ const AVH_HAIR = {
       let on = true;
       if (!back) {
         if (side) on = !(x < 10 && y >= (slick ? 9 : [12, 12.5, 11.5, 12, 12.5, 11.5, 12, 12, 12, 12][Math.max(0, xi - 1)] || 12)) && !(y > 12 && x < 10) && !(y >= lockTo && x < 14);
-        else { const inWin = x >= 6 && x < 18, tip = slick ? 9 : bang[xi - 6]; on = !(inWin && y >= tip) && !(y >= lockTo && x >= 3 && x < 21) && !(y > lockTo - 1 && (x < 3 || x >= 21)); }
+        else { const inWin = x >= 6 && x < 18, tip = slick ? 9 : bang[xi - 6], fh = AV_HEADG[Math.floor(y) - 4] || 0, dx = Math.abs(x + .25 - 12);
+          on = !(inWin && y >= tip); if (y >= 12) on = on && dx >= fh - 1 && y < lockTo + ((xi * 3) % 2) * .5 - (dx < fh + 1 ? 0 : 0); }
       } else on = y <= 17;
       if (on) R(x, y, .5, 1, C.t); } }
     // 결: 진한 점들 + 윗부분 하이라이트
