@@ -258,6 +258,18 @@ service cloud.firestore {
       allow write: if isAdmin();
     }
 
+    // 아바타: 직접 만든 옷 · 방 안 위치
+    match /wear/{id} {
+      allow read: if signedIn();
+      allow create: if isAdmin() || (signedIn() && request.resource.data.by == request.auth.uid && request.resource.data.kind == 'pl');
+      allow update: if isAdmin() || (signedIn() && resource.data.by == request.auth.uid && resource.data.kind == 'pl' && request.resource.data.by == request.auth.uid && request.resource.data.kind == 'pl');
+      allow delete: if isAdmin() || (signedIn() && resource.data.by == request.auth.uid);
+    }
+    match /avpos/{uid} {
+      allow read: if signedIn();
+      allow write: if isMe(uid);
+    }
+
     // 경매 (PL 가구 복제품)
     match /auctions/{id} {
       allow read: if signedIn();

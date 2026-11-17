@@ -121,6 +121,7 @@ function ktEdit(id) {
     <label class="f">받을 수 있는 인원 (0 = 제한 없음)</label><input id="ktL" type="number" min="0" value="${d.limit || 0}">
     <label class="f">자동 지급 조건</label><select id="ktC" onchange="ktPrev()"><option value="">없음 (직접 수여만)</option>${Object.keys(KT_COND).map(k => `<option value="${k}" ${d.cond && d.cond.t === k ? 'selected' : ''}>${KT_COND[k].l}</option>`).join('')}</select>
     <div id="ktNw"><label class="f">기준 (이상)</label><input id="ktV" type="number" min="1" value="${(d.cond && d.cond.n) || 1}"></div>
+    ${typeof WEAR !== 'undefined' && WEAR.some(w => w.kind === 'kp') ? `<label class="f">보상 옷 (선택 · 칭호를 가진 동안 입을 수 있어요)</label><select id="ktWear"><option value="">없음</option>${WEAR.filter(w => w.kind === 'kp').map(w => `<option value="${w.id}" ${d.wear === w.id ? 'selected' : ''}>${esc(w.name)}</option>`).join('')}</select>` : ''}
     <p class="muted" style="font-size:.8rem;margin:6px 0 0">조건을 넣으면 먼저 달성한 사람부터 자동으로 받아요.</p>
     <div class="row" style="margin-top:12px"><button onclick="closeModal()">취소</button><button class="primary" onclick="ktSave('${id || ''}')">저장</button></div>`);
   ktPrev();
@@ -133,7 +134,7 @@ function ktPrev() {
 }
 async function ktSave(id) {
   const name = $('#ktN').value.trim(); if (!name) return toast('이름을 넣어 주세요');
-  const t = $('#ktC').value, d = { id: id || Date.now().toString(36), name, limit: Math.max(0, parseInt($('#ktL').value) || 0), cond: t ? { t, n: Math.max(1, parseInt($('#ktV').value) || 1) } : null, at: (ktDef(id) || {}).at || Date.now() };
+  const t = $('#ktC').value, d = { id: id || Date.now().toString(36), name, limit: Math.max(0, parseInt($('#ktL').value) || 0), cond: t ? { t, n: Math.max(1, parseInt($('#ktV').value) || 1) } : null, wear: ($('#ktWear') || {}).value || null, at: (ktDef(id) || {}).at || Date.now() };
   const list = KT.filter(x => x.id !== d.id).concat(d).sort((a, b) => a.at - b.at);
   try { await B.set('settings/titles', { list: clean(list) }); closeModal(); toast('저장했어요'); } catch (e) { toast('저장 실패: ' + (e.code || e.message)); }
 }

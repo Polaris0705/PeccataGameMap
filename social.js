@@ -141,10 +141,11 @@ let GF = null;
 function giftOpen(to) { GF = { to, kind: 'coin', amt: 10, inv: '', item: '', msg: '' }; giftForm(); }
 function giftForm() {
   const u = userOf(GF.to), room = myRoom(), myItems = ITEMS.filter(i => i.owner === ME.uid), tab = (k, t) => `<span class="chip ${GF.kind === k ? 'on' : ''}" onclick="giftRead();GF.kind='${k}';giftForm()">${t}</span>`;
-  const body = GF.kind === 'coin' ? `<label class="f">은화 (가진 은화 ${P.coins})</label><input id="gfAmt" type="number" min="1" max="${P.coins}" value="${GF.amt}">`
+  const wears = typeof avOwns === 'function' ? avGiftables() : [];
+  const body = GF.kind === 'wear' ? (wears.length ? `<label class="f">옷</label><div class="toggles">${wears.map(w => `<span class="chip ${GF.wear === w.id ? 'on' : ''}" onclick="giftRead();GF.wear='${w.id}';giftForm()">${esc(w.name)}</span>`).join('')}</div><p class="muted" style="font-size:.78rem">보내면 내 옷장에서 빠져요. (직접 만든 옷은 복제품이 가요)</p>` : '<p class="muted">보낼 수 있는 옷이 없어요. (처음부터 있는 무료 옷은 못 보내요)</p>') : GF.kind === 'coin' ? `<label class="f">은화 (가진 은화 ${P.coins})</label><input id="gfAmt" type="number" min="1" max="${P.coins}" value="${GF.amt}">`
     : GF.kind === 'furn' ? (room.invc.length ? `<label class="f">보관함 가구</label><div class="toggles" style="max-height:200px;overflow:auto">${room.invc.filter(x => FURN[x.k]).map(x => `<span class="chip ${GF.inv === x.id ? 'on' : ''}" onclick="giftRead();GF.inv='${x.id}';giftForm()">${fprev(x.k, x.col, 0, x.dir)} ${esc(FURN[x.k].name)}</span>`).join('')}</div><p class="muted" style="font-size:.78rem">방에 놓인 가구는 꾸미기에서 보관함에 넣은 뒤 보낼 수 있어요.</p>` : '<p class="muted">보관함이 비어 있어요.</p>')
     : GF.kind === 'item' ? (myItems.length ? `<label class="f">소지품</label><div class="toggles">${myItems.map(i => `<span class="chip ${GF.item === i.id ? 'on' : ''}" onclick="giftRead();GF.item='${i.id}';giftForm()">${esc(i.name)}</span>`).join('')}</div>` : '<p class="muted">가진 물건이 없어요.</p>') : '';
-  modal(`<h2 style="color:var(--gold2);margin-top:0">🎁 ${esc(uname(u))}에게 선물</h2><div class="toggles">${tab('coin', '🪙 은화')}${tab('furn', '🪑 가구')}${tab('item', '🎒 소지품')}${tab('card', '💌 카드만')}</div>${body}
+  modal(`<h2 style="color:var(--gold2);margin-top:0">🎁 ${esc(uname(u))}에게 선물</h2><div class="toggles">${tab('coin', '🪙 은화')}${tab('furn', '🪑 가구')}${tab('item', '🎒 소지품')}${typeof avOn === 'function' && avOn() ? tab('wear', '🧥 옷') : ''}${tab('card', '💌 카드만')}</div>${body}
     <label class="f">메시지 카드 (선택)</label><textarea id="gfMsg" rows="3" maxlength="200" placeholder="한마디 적어 보세요">${esc(GF.msg)}</textarea>
     <div class="row" style="margin-top:10px"><button onclick="closeModal()">취소</button><button class="primary" onclick="giftSend()">보내기</button></div>`);
   document.querySelectorAll('#mbox canvas.fprev').forEach(c => { c.style.imageRendering = 'pixelated'; paintPreview(c); });
@@ -156,6 +157,7 @@ async function giftSend() {
     if (GF.kind === 'coin') { if (P.coins < GF.amt) return toast('은화가 부족해요'); g.amt = GF.amt; await B.add(path, g); LOG_W = 'gift'; P.coins -= GF.amt; logAct(-GF.amt); LOG_W = null; saveP(); }
     else if (GF.kind === 'furn') { const x = room.invc.find(v => v.id === GF.inv); if (!x) return toast('보낼 가구를 골라 주세요'); g.furn = { k: x.k, col: x.col || null, rc: x.rc || 0, dir: x.dir || 0 }; g.name = FURN[x.k].name; await B.add(path, clean(g)); room.invc = room.invc.filter(v => v !== x); saveP(); }
     else if (GF.kind === 'item') { const it = ITEMS.find(i => i.id === GF.item); if (!it) return toast('보낼 물건을 골라 주세요'); const u = userOf(GF.to); await B.update('items/' + it.id, { owner: GF.to, ownerName: uname(u), fromName: PROF.name, seen: false }); g.name = it.name; await B.add(path, g); }
+    else if (GF.kind === 'wear') { const w = avGiftables().find(x => x.id === GF.wear); if (!w) return toast('보낼 옷을 골라 주세요'); g.wear = w.id; g.name = w.name; await B.add(path, g); if (!w.id.startsWith('w:') || w.bought) { P.wardrobe = (P.wardrobe || []).filter(x => x !== w.key); saveP(); } }
     else { if (!g.msg) return toast('카드에 한마디 적어 주세요'); await B.add(path, g); }
     sfx('ok'); closeModal(); toast('선물을 보냈어요!'); sPing([GF.to], `🎁 ${PROF.name}의 선물`, g.msg || (g.kind === 'coin' ? `은화 ${g.amt}` : g.name || '메시지 카드'), 'gift');
   } catch (e) { toast('실패: ' + (e.code || e.message)); }
@@ -166,11 +168,12 @@ async function giftSync() {
   try { P.giftDone = P.giftDone || []; const room = myRoom(); let ch = false, shown = [];
     for (const g of nw) { if (!P.giftDone.includes(g.id)) { P.giftDone.push(g.id); ch = true;
         if (g.kind === 'coin') { LOG_W = 'gift'; P.coins += g.amt || 0; logAct(g.amt || 0); LOG_W = null; }
+        if (g.kind === 'wear' && g.wear) P.wardrobe = [...new Set([...(P.wardrobe || []), g.wear.startsWith('w:') ? g.wear : g.wear])];
         if (g.kind === 'furn' && g.furn && g.furn.k) room.invc.push({ id: rmId(), k: g.furn.k, col: g.furn.col || null, rc: g.furn.rc || 0, dir: g.furn.dir || 0 });
         shown.push(g); }
       B.update('giftbox/' + ME.uid + '/in/' + g.id, { got: true }).catch(() => {}); }
     if (P.giftDone.length > 200) P.giftDone = P.giftDone.slice(-200); if (ch) saveP();
-    if (shown.length) { sfx('ok'); modal(`<h2 style="color:var(--gold2);margin-top:0">🎁 선물이 왔어요</h2>${shown.map(g => `<div class="card"><b>${esc(g.fromName || '누군가')}</b>에게서 — ${g.kind === 'coin' ? `🪙 은화 ${g.amt}` : g.kind === 'furn' ? `🪑 ${esc(g.name || '')} (보관함에 넣었어요)` : g.kind === 'item' ? `🎒 ${esc(g.name || '')} (소지품에 있어요)` : '💌 카드'}
+    if (shown.length) { sfx('ok'); modal(`<h2 style="color:var(--gold2);margin-top:0">🎁 선물이 왔어요</h2>${shown.map(g => `<div class="card"><b>${esc(g.fromName || '누군가')}</b>에게서 — ${g.kind === 'coin' ? `🪙 은화 ${g.amt}` : g.kind === 'furn' ? `🪑 ${esc(g.name || '')} (보관함에 넣었어요)` : g.kind === 'item' ? `🎒 ${esc(g.name || '')} (소지품에 있어요)` : g.kind === 'wear' ? `🧥 ${esc(g.name || '')} (옷장에 넣었어요)` : '💌 카드'}
         ${g.msg ? `<div style="margin-top:6px;padding:8px;background:#f8f0dc;color:#3a2a1a;border-radius:6px;white-space:pre-wrap;font-size:.95rem">${esc(g.msg)}</div>` : ''}</div>`).join('')}<button class="primary" style="width:100%" onclick="closeModal();render()">고마워요</button>`); }
   } finally { GIFT_BUSY = false; }
 }

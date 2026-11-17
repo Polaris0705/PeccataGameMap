@@ -1843,8 +1843,10 @@ function paintRoom(cv, room, opts) {
   if (edit) { g.fillStyle = 'rgba(255,255,255,.09)'; for (let c = 0; c <= COLS; c++) g.fillRect(OX + c * T, FY, 1, ROWS * T); for (let r = 0; r <= ROWS; r++) g.fillRect(OX, FY + r * T, COLS * T, 1);
     for (let c = 0; c <= COLS; c++) g.fillRect(OX + c * T, OY + 4, 1, WALL_H - 16); }
   const dragId = RM.drag && RM.drag.moved ? RM.drag.id : null;
+  const AVL = (typeof avRoomList === 'function' && !edit && !cv.classList.contains('rthumb')) ? avRoomList(room, AV_PAINT_OWNER || (cv.id === 'roomCv' ? (tab === 'room' ? ME.uid : RV) : null)) : [];
   drawOrder(room).forEach(i => {
     const b = itemBox(i, room); if (!b) return; const f = FURN[i.k];
+    if (AVL.length) avDrawList(g, AVL, f.wall || f.flat ? -1 : i.r + fd(i.k, i.dir) - .01);
     if (i.r >= 0 && !f.flat && !f.top) { g.fillStyle = 'rgba(30,15,5,.22)'; g.fillRect(b.x + 3, b.y + b.h - 5, b.w - 6, 6); g.fillRect(b.x + 7, b.y + b.h + 1, b.w - 14, 2); }
     HI_MS = i.imgMs || 140; drawSprite(g, i.k, b.x, b.y, t, i.id === dragId ? .35 : null, i.col, i.dir, i.img);
     if (edit && RM.sel === 'id:' + i.id) { frameRect(g, b.x, b.y, b.w, b.h, '#ffe08a'); if (b.foot) frameRect(g, b.foot.x, b.foot.y, b.foot.w, b.foot.h, 'rgba(255,224,138,.6)'); }
@@ -1855,6 +1857,7 @@ function paintRoom(cv, room, opts) {
     if (b.foot) g.fillRect(b.foot.x, b.foot.y, b.foot.w, b.foot.h); else g.fillRect(b.x, b.y, b.w, b.h);
     drawSprite(g, k, b.x, b.y, t, .65, RM.hover.col, s.dir);
   }
+  if (AVL.length) avDrawList(g, AVL, 1e9);
 }
 
 /* ---------- 화면 ---------- */
@@ -1949,7 +1952,7 @@ setInterval(() => {      // 140ms마다: 평소엔 두 번에 한 번 그리고,
   RM_HALF ^= 1; if (!RM_HALF) RM.t++;
   if (!ME || !P || (tab !== 'room' && tab !== 'visit') || document.hidden) return;
   const cv = document.getElementById('roomCv'), room = cv && hoRoom(tab === 'room' ? ME.uid : RV);
-  if (cv && (!RM_HALF || room.items.some(i => i.imgMs) || (typeof roomHasFrames === 'function' && roomHasFrames(room)))) paintRoom(cv, room, { edit: tab === 'room' && RM.edit });
+  if (cv && (!RM_HALF || room.items.some(i => i.imgMs) || (typeof roomHasFrames === 'function' && roomHasFrames(room)) || (typeof avOn === 'function' && avOn()))) paintRoom(cv, room, { edit: tab === 'room' && RM.edit });
   if (!RM_HALF && RM.t % 4 === 0) document.querySelectorAll('canvas.rthumb').forEach(c => paintRoom(c, hoRoom(c.dataset.uid)));
 }, 140);
 
@@ -1961,12 +1964,12 @@ const ROOM_TALK = { sofa: ['푹신한 벨벳 소파.'], loveseat: ['둘이 앉�
   mannequin: ['누가 입던 드레스일까.'], apron: ['어디선가 시계 소리가 들리는 것 같다.'], lectern: ['읽다 만 페이지에 책갈피가 끼워져 있다.'], rosedome: ['꽃잎이 하나 떨어졌다.'], raven: ['까악!'],
   wrath: ['불길이 거세다!'], greed: ['반짝반짝… 전부 내 거야.'], sloth: ['조금만 더 잘래…'], gluttony: ['한 입만…'], pride: ['역시 나야.'], lust: ['장미 향기가 난다.'], teddy: ['폭신폭신.'], birdcage: ['짹짹!'], globe: ['빙글빙글.'], telescope: ['별이 가까이 보인다.'] };
 function roomPoke(i) { const f = FURN[i.k]; const l = ROOM_TALK[i.k]; sfx(i.k === 'cat' || i.k === 'raven' ? 'pop' : 'tap'); toast(`${f.name} — ${l ? l[Math.floor(Math.random() * l.length)] : ''}${f.eff ? ' (' + f.eff + ')' : ''}`); }
-function bindViewCv(cv, uid) { cv.onclick = ev => { const p = cvPos(cv, ev), i = itemAt(hoRoom(uid), p.x, p.y); if (!i) return; if (i.k === 'safe' && typeof safeTry === 'function') safeTry(uid, i); else roomPoke(i); }; }
+function bindViewCv(cv, uid) { cv.onclick = ev => { const p = cvPos(cv, ev), i = itemAt(hoRoom(uid), p.x, p.y); if (!i) { if (typeof avTap === 'function') avTap(uid, p); return; } if (i.k === 'safe' && typeof safeTry === 'function') safeTry(uid, i); else roomPoke(i); }; }
 const selInvOf = room => RM.sel && RM.sel.startsWith('inv:') ? room.invc.find(x => 'inv:' + x.id === RM.sel) : null;
 function bindRoomCv(cv) {
   cv.onpointerdown = ev => {
     const p = cvPos(cv, ev), room = myRoom();
-    if (!RM.edit) { const i = itemAt(room, p.x, p.y); if (i) roomPoke(i); return; }
+    if (!RM.edit) { const i = itemAt(room, p.x, p.y); if (i) roomPoke(i); else if (typeof avTap === 'function') avTap(ME.uid, p); return; }
     const hit = itemAt(room, p.x, p.y);
     if (hit && !selInvOf(room)) { RM.drag = { id: hit.id, x0: p.x, y0: p.y, moved: false }; window.GAME_LOCK = true; try { cv.setPointerCapture(ev.pointerId); } catch (e) {} }
     else RM.drag = { id: null, x0: p.x, y0: p.y, moved: false };

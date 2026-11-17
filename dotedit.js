@@ -223,7 +223,7 @@ function deDraw() {
   const { W, H, z, ox, oy } = DE;
   g.fillStyle = '#2a2420'; g.fillRect(ox, oy, W * z, H * z); g.fillStyle = '#332c27'; const ck = Math.max(z * 4, 8);
   for (let y = 0; y < H * z; y += ck) for (let x = (Math.floor(y / ck) % 2) * ck; x < W * z; x += ck * 2) g.fillRect(ox + x, oy + y, Math.min(ck, W * z - x), Math.min(ck, H * z - y));
-  if (DE.ref && DE.ref.on && DE.ref.img) { g.save(); g.globalAlpha = DE.ref.a; g.imageSmoothingEnabled = true; g.drawImage(DE.ref.img, ox + DE.ref.x * z, oy + DE.ref.y * z, DE.ref.img.width * DE.ref.s * z, DE.ref.img.height * DE.ref.s * z); g.restore(); }
+  if (DE.ref && DE.ref.on && DE.ref.img) { g.save(); g.globalAlpha = DE.ref.a; g.imageSmoothingEnabled = !DE.ref.crisp; g.drawImage(DE.ref.img, ox + DE.ref.x * z, oy + DE.ref.y * z, DE.ref.img.width * DE.ref.s * z, DE.ref.img.height * DE.ref.s * z); g.restore(); }
   const tmp = deTmp();
   if (DE.onion && !DE.play && deN() > 1) { tmp.getContext('2d').putImageData(new ImageData(deComp((DE.fi + deN() - 1) % deN()), W, H), 0, 0); g.save(); g.globalAlpha = .3; g.imageSmoothingEnabled = false; g.drawImage(tmp, ox, oy, W * z, H * z); g.restore(); }
   const px = DE.play ? deComp(DE.showFi) : deComp(DE.fi, DE.preview || DE.px);
