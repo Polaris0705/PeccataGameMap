@@ -1,7 +1,7 @@
 /* =========================================================
    햄카타 — 서재 선반 정리 (같은 물건 3개를 한 칸에 모으기)
-   칸마다 앞줄 3자리 + 뒤에 쌓인 줄. 앞줄이 비면 뒷줄이 앞으로 나와요.
-   시간 제한 없음 · 단계가 오를수록 칸·줄·물건 종류가 늘어요
+   칸마다 앞줄 3자리 + 뒤에 쌓인 줄. 앞줄이 비면 뒷줄이 앞으로 나옴.
+   시간 제한 없음 · 단계가 오를수록 칸·줄·물건 종류가 늚
    도움: ↩ 되돌리기 3번 · 🔀 섞기 1번 · 💡 힌트 2번
    ========================================================= */
 FEATS.books = { n: '서재 선반 정리', ic: '📚', d: '같은 물건 셋을 한 칸에' };
@@ -15,11 +15,11 @@ function shCfg(lv) {
 
 VIEWS.books = () => {
   const lv = shLv(), C = shCfg(lv), S = P.shelf || {};
-  return `<div class="panel"><h2>📚 서재 선반 정리</h2><div id="shsel"><p class="muted">물건을 끌어다 빈자리에 놓아요. 한 칸에 같은 물건 셋이 모이면 정리! 앞줄이 비면 뒤에 있던 물건이 나와요 · ${capTxt('books')}</p>
+  return `<div class="panel"><h2>📚 서재 선반 정리</h2><div id="shsel"><p class="muted">물건을 끌어다 빈자리에 놓음. 한 칸에 같은 물건 셋이 모이면 정리! 앞줄이 비면 뒤에 있던 물건이 나옴 · ${capTxt('books')}</p>
    <div class="row" style="gap:12px;flex-wrap:wrap;margin:6px 0"><span>지금 <b style="color:var(--gold2)">${lv}단계</b></span><span class="muted">칸 ${C.boxes} · 줄 ${C.layers} · 물건 ${C.triples * 3}개</span><span class="muted">최고 ${S.best || 0}단계</span></div>
    <div style="display:flex;gap:6px;flex-wrap:wrap;font-size:.8rem" class="muted">↩ 되돌리기 3 · 🔀 섞기 1 · 💡 힌트 2</div></div>
    <div id="gbox"><button class="primary" style="width:100%;padding:14px;font-size:1.1rem;margin-top:8px" onclick="booksStart()">▶ ${lv}단계 시작</button></div>
-   ${lv > 1 ? `<button class="sm" style="margin-top:6px" onclick="if(confirm('1단계부터 다시 할까요?')){P.shelf.lv=1;saveP();render()}">1단계부터 다시</button>` : ''}</div>`;
+   ${lv > 1 ? `<button class="sm" style="margin-top:6px" onclick="if(confirm('1단계부터 다시 할까?')){P.shelf.lv=1;saveP();render()}">1단계부터 다시</button>` : ''}</div>`;
 };
 
 let SH = null;
@@ -27,7 +27,7 @@ function shBuild(lv) {
   const C = shCfg(lv), items = []; for (let i = 0; i < C.triples; i++) { const t = i % C.types; items.push(t, t, t); }
   for (let tries = 0; tries < 30; tries++) {
     const bag = shuffle(items.slice()), boxes = Array.from({ length: C.boxes }, () => Array.from({ length: C.layers }, () => [null, null, null]));
-    // 앞줄: 빈자리를 남기고, 나머지는 뒷줄부터 채워요
+    // 앞줄: 빈자리를 남기고, 나머지는 뒷줄부터 채움
     const frontCap = C.boxes * 3, emptyFront = Math.max(3, Math.min(frontCap - 3, Math.round(C.boxes * .9)));
     const frontSlots = shuffle(Array.from({ length: frontCap }, (_, i) => i)).slice(0, frontCap - emptyFront);
     frontSlots.forEach(i => { if (bag.length) boxes[Math.floor(i / 3)][0][i % 3] = bag.pop(); });
@@ -42,7 +42,7 @@ function shBuild(lv) {
   return null;
 }
 function booksStart() {
-  const lv = shLv(), B = shBuild(lv); if (!B) return toast('판을 만들지 못했어요. 다시 눌러 주세요');
+  const lv = shLv(), B = shBuild(lv); if (!B) return toast('판을 만들지 못함. 다시 누르기');
   const sel = $('#shsel'); if (sel) sel.style.display = 'none';
   const cols = 3, rows = Math.ceil(B.C.boxes / cols), BW = 58, BH = 40, W = cols * BW + 8, H = rows * BH + 10;
   const b = gbox(); if (!b) return;
@@ -106,7 +106,7 @@ function shResolve(touched) {
   const left = s.boxes.reduce((n, bx) => n + bx.reduce((m, l) => m + l.filter(v => v != null).length, 0), 0);
   if (!left) return setTimeout(() => shEnd(true), 500);
   if (cleared) shResolve(s.boxes.map((_, i) => i));   // 뒤에서 나온 물건이 바로 셋이 될 수도
-  if (!s.boxes.some(bx => bx[0].includes(null))) { if (s.shuf) toast('빈자리가 없어요! 🔀 섞기를 써 보세요'); else setTimeout(() => shEnd(false), 400); }
+  if (!s.boxes.some(bx => bx[0].includes(null))) { if (s.shuf) toast('빈자리가 없음! 🔀 섞기를 써 보기'); else setTimeout(() => shEnd(false), 400); }
 }
 function shUndo() { const s = SH; if (!s || !s.undo || !s.hist.length) return; s.boxes = JSON.parse(s.hist.pop()); s.undo--; s.sel = null; s.hl = null; sfx('tap'); shHud(); }
 function shShuffle() {
@@ -116,7 +116,7 @@ function shShuffle() {
   slots.forEach(([i, k], j) => s.boxes[i][0][k] = all[j]);
   s.boxes.forEach((bx, i) => { const f = bx[0]; if (f[0] != null && f[0] === f[1] && f[1] === f[2]) { const j = (i + 1) % s.boxes.length; const o = s.boxes[j][0].findIndex(v => v != null && v !== f[0]); if (o >= 0) { const t = f[2]; f[2] = s.boxes[j][0][o]; s.boxes[j][0][o] = t; } } });
   sfx('ok'); shHud();
-  if (!s.boxes.some(bx => bx[0].includes(null))) { const i = rint(s.boxes.length); s.boxes[i].unshift([null, null, null]); }   // 그래도 꽉 막히면 칸 하나를 비워 줘요
+  if (!s.boxes.some(bx => bx[0].includes(null))) { const i = rint(s.boxes.length); s.boxes[i].unshift([null, null, null]); }   // 그래도 꽉 막히면 칸 하나를 비워 줌
 }
 function shHint() {
   const s = SH; if (!s || !s.hint) return; const fr = s.boxes.map(bx => bx[0]);
@@ -124,7 +124,7 @@ function shHint() {
   fr.forEach((f, i) => { const e = f.indexOf(null); if (e < 0) return; const cnt = {}; f.forEach(v => { if (v != null) cnt[v] = (cnt[v] || 0) + 1; });
     Object.keys(cnt).forEach(t => { if (cnt[t] !== 2 && !(cnt[t] === 1 && !best)) return; t = +t;
       fr.forEach((g2, j) => { if (j === i) return; const k = g2.indexOf(t); if (k >= 0 && (!best || cnt[t] === 2 && best.n < 2)) best = { from: { i: j, k }, to: { i, k: e }, n: cnt[t] }; }); }); });
-  if (!best) return toast('지금은 마땅한 수가 없어요. 빈 칸을 만들어 보세요');
+  if (!best) return toast('지금은 마땅한 수가 없음. 빈 칸을 만들어 보기');
   s.hint--; s.hl = { ...best, until: performance.now() + 2500 }; sfx('ok'); shHud();
 }
 function shEnd(win) {
@@ -133,7 +133,7 @@ function shEnd(win) {
   if (win) { P.shelf.lv = lv + 1; P.shelf.best = Math.max(P.shelf.best || 0, lv); s.score += 50 + lv * 20 + (s.undo + s.shuf + s.hint) * 15; }
   const coins = Math.round(s.score / 25) + (win ? 2 + lv : 0);
   const r = reward('books', Math.min(25, coins), s.score);
-  finishGame(`<h2 style="color:var(--gold2);margin-top:0">📚 ${win ? `${lv}단계 정리 완료!` : '더 놓을 곳이 없어요'}</h2>
+  finishGame(`<h2 style="color:var(--gold2);margin-top:0">📚 ${win ? `${lv}단계 정리 완료!` : '더 놓을 곳이 없음'}</h2>
    <p style="font-size:1.8rem;margin:2px 0;color:var(--gold2)"><b>${s.score}</b></p><p class="muted">${r}</p>
    <p class="muted">옮긴 횟수 ${s.moves}${win ? ` · 남긴 도움 ${s.undo + s.shuf + s.hint}개 보너스` : ''}</p>
    <div class="row"><button class="primary" style="flex:1" onclick="closeModal();booksStart()">▶ ${win ? `${lv + 1}단계` : '다시'}</button><button onclick="closeModal()">닫기</button></div>`);

@@ -24,7 +24,7 @@ function playsLeft(id) { return Math.max(0, dailyCap() - (gameDay().p[id] || 0))
 function reward(id, coins) {
   const g = gameDay(); g.p[id] = (g.p[id] || 0) + 1; coins = Math.max(0, Math.round(coins));
   if (g.p[id] <= dailyCap() && coins > 0) { earn(coins); return `+${coins} 은화`; }
-  saveP(); return coins > 0 ? '오늘 보상 횟수를 다 써서 연습으로 기록됐어요' : '';
+  saveP(); return coins > 0 ? '오늘 보상 횟수를 다 써서 연습으로 기록됨' : '';
 }
 function finishGame(html) { stopGame(); render(); modal(html); sfx('win'); }
 const rint = n => Math.floor(Math.random() * n);
@@ -39,7 +39,7 @@ function teaLv() { P.tea = Object.assign({ cup: 0, menu: 0, decor: 0, best: 0 },
 VIEWS.tycoon = () => {
   const L = teaLv();
   const up = [['cup', '고급 찻잔', '팁 +1', 50 * (L.cup + 1), 5], ['menu', '메뉴 늘리기', '새 음료·디저트', [100, 200][L.menu], 2], ['decor', '실내 장식', '인내심 +2초', 80 * (L.decor + 1), 5]];
-  return `<div class="panel"><h2>🍵 티룸 타이쿤</h2><p class="muted">60초 동안 손님 주문(음료+디저트)을 맞춰 내세요. 빨리 낼수록 팁이 커요. 매출의 40%가 내 몫이에요. 오늘 보상 ${playsLeft('tycoon')}회 남음 · 최고 ${L.best}은화</p>
+  return `<div class="panel"><h2>🍵 티룸 타이쿤</h2><p class="muted">60초 동안 손님 주문(음료+디저트)을 맞춰 내기. 빨리 낼수록 팁이 큼. 매출의 40%가 내 몫. 오늘 보상 ${playsLeft('tycoon')}회 남음 · 최고 ${L.best}은화</p>
    <div id="gbox"><button class="primary" style="width:100%" onclick="teaStart()">영업 시작</button></div>
    <h3>업그레이드</h3>${up.map(([k, n, d, c, max]) => `<div class="item" style="margin:6px 0"><div><b>${n}</b> <span class="muted">Lv.${L[k]} · ${d}</span></div>${c && L[k] < max ? `<button onclick="teaUp('${k}',${c})" ${P.coins < c ? 'disabled' : ''}>${c} 은화</button>` : '<button disabled>최대</button>'}</div>`).join('')}</div>`;
 };
@@ -51,7 +51,7 @@ function teaStart() {
   const draw = () => {
     const b = gbox(); if (!b) return; const g = st.g;
     b.innerHTML = `<div class="row" style="justify-content:space-between"><b>⏱ ${st.t}초</b><b>◈ ${st.earned}</b><span class="muted">손님 ${st.served}명</span></div>
-     <div class="card" style="text-align:center"><div style="font-size:2.4rem">${g.face}</div><div>"${g.d[0]} ${g.d[1]}이랑 ${g.s[0]} ${g.s[1]} 주세요"</div><div class="prog"><i style="width:${g.pat / g.max * 100}%"></i></div></div>
+     <div class="card" style="text-align:center"><div style="font-size:2.4rem">${g.face}</div><div>"${g.d[0]} ${g.d[1]}이랑 ${g.s[0]} ${g.s[1]} 줘"</div><div class="prog"><i style="width:${g.pat / g.max * 100}%"></i></div></div>
      <div class="muted">쟁반: ${st.tray.d ? st.tray.d[1] : '·'} ${st.tray.s ? st.tray.s[1] : '·'}</div>
      <div class="toggles" style="margin:6px 0">${D.map((x, i) => `<button class="${st.tray.d === x ? 'on' : ''}" onclick="teaPick('d',${i})">${x[1]} ${x[0]}</button>`).join('')}</div>
      <div class="toggles">${S.map((x, i) => `<button class="${st.tray.s === x ? 'on' : ''}" onclick="teaPick('s',${i})">${x[1]} ${x[0]}</button>`).join('')}</div>
@@ -61,12 +61,12 @@ function teaStart() {
   window.teaServe = () => {
     const g = st.g;
     if (st.tray.d === g.d && st.tray.s === g.s) { sfx('ok'); const tip = Math.round(3 + L.cup + g.pat / g.max * 3) + (typeof roomCnt === 'function' && roomCnt('teaset') ? 1 : 0); st.earned += tip; st.served++; toast(`감사합니다! +${tip}`); newG(); }
-    else { g.pat = Math.max(0, g.pat - 3); toast('주문과 달라요…'); sfx('bad'); }
+    else { g.pat = Math.max(0, g.pat - 3); toast('주문과 다름…'); sfx('bad'); }
     draw();
   };
   const iv = setInterval(() => {
     st.t--; st.g.pat--;
-    if (st.g.pat <= 0) { toast('손님이 기다리다 떠났어요…'); newG(); }
+    if (st.g.pat <= 0) { toast('손님이 기다리다 떠남…'); newG(); }
     if (st.t <= 0) { clearInterval(iv); L.best = Math.max(L.best, st.earned); const r = reward('tycoon', Math.round(st.earned * 0.4));
       finishGame(`<h2 style="color:var(--gold2);margin-top:0">🍵 영업 종료</h2><p>손님 ${st.served}명 · 매출 ${st.earned} (내 몫 40%)</p><p class="muted">${r}</p><div class="row"><button class="primary" onclick="closeModal();teaStart()">한 번 더</button><button onclick="closeModal()">닫기</button></div>`); return; }
     draw();
@@ -90,7 +90,7 @@ function memStart() {
     if (first < 0) { first = i; draw(); return; }
     moves++; const a = cards[first];
     if (a.v === c.v) { a.done = c.done = true; a.open = c.open = false; first = -1; pairs++; draw();
-      if (pairs === 8) { const coins = Math.max(3, 18 - (moves - 8)), r = reward('memory', coins); finishGame(`<h2 style="color:var(--gold2);margin-top:0">🃏 다 찾았어요!</h2><p>${moves}번 뒤집어 완성</p><p class="muted">${r}</p><div class="row"><button class="primary" onclick="closeModal();memStart()">다시</button><button onclick="closeModal()">닫기</button></div>`); }
+      if (pairs === 8) { const coins = Math.max(3, 18 - (moves - 8)), r = reward('memory', coins); finishGame(`<h2 style="color:var(--gold2);margin-top:0">🃏 다 찾음!</h2><p>${moves}번 뒤집어 완성</p><p class="muted">${r}</p><div class="row"><button class="primary" onclick="closeModal();memStart()">다시</button><button onclick="closeModal()">닫기</button></div>`); }
     } else { lock = true; draw(); tos.push(setTimeout(() => { a.open = c.open = false; first = -1; lock = false; draw(); }, 750)); }
   };
   lockGame(() => tos.forEach(clearTimeout)); draw();
@@ -107,8 +107,8 @@ const TAROT = [
 ];
 VIEWS.tarot = () => {
   const today = kstDate(), t = P.tarot && P.tarot.date === today ? P.tarot : null;
-  if (t) { const c = TAROT[t.card]; return `<div class="panel"><h2>🔮 타로 운세</h2><div class="card" style="text-align:center;padding:20px"><div style="font-size:3rem">${t.rev ? '🙃' : '🃏'}</div><h2 style="margin:6px 0">${c[0]}${t.rev ? ' (역방향)' : ''}</h2><p class="story">${t.rev ? '조심스럽게… ' : ''}${c[1]}</p><p class="muted">오늘 받은 은화 +${t.coins}</p></div><p class="muted">내일 한국 시간 자정에 다시 뽑을 수 있어요.</p></div>`; }
-  return `<div class="panel"><h2>🔮 타로 운세</h2><p class="muted">하루 한 장. 마음이 가는 카드를 고르세요.</p><div class="mgrid" style="grid-template-columns:repeat(3,1fr)">${[0, 1, 2].map(i => `<button class="mcell cardf" style="font-size:2.4rem" onclick="tarotPick()">🂠</button>`).join('')}</div></div>`;
+  if (t) { const c = TAROT[t.card]; return `<div class="panel"><h2>🔮 타로 운세</h2><div class="card" style="text-align:center;padding:20px"><div style="font-size:3rem">${t.rev ? '🙃' : '🃏'}</div><h2 style="margin:6px 0">${c[0]}${t.rev ? ' (역방향)' : ''}</h2><p class="story">${t.rev ? '조심스럽게… ' : ''}${c[1]}</p><p class="muted">오늘 받은 은화 +${t.coins}</p></div><p class="muted">내일 한국 시간 자정에 다시 뽑을 수 있음.</p></div>`; }
+  return `<div class="panel"><h2>🔮 타로 운세</h2><p class="muted">하루 한 장. 마음이 가는 카드를 고르기.</p><div class="mgrid" style="grid-template-columns:repeat(3,1fr)">${[0, 1, 2].map(i => `<button class="mcell cardf" style="font-size:2.4rem" onclick="tarotPick()">🂠</button>`).join('')}</div></div>`;
 };
 function tarotPick() { const today = kstDate(); if (P.tarot && P.tarot.date === today) return; const card = rint(TAROT.length), rev = Math.random() < .3, coins = 2 + rint(7);
   P.tarot = { date: today, card, rev, coins }; earn(coins); render(); toast(`🔮 ${TAROT[card][0]} · +${coins} 은화`); }
@@ -132,13 +132,13 @@ function bjDealer(s) {
 }
 async function bjTx(fn) {
   try { return await B.tx('games/bj', cur => fn(cur ? JSON.parse(JSON.stringify(cur)) : bjFresh())); }
-  catch (e) { toast('잠시 후 다시 해 주세요 (' + (e.code || e.message || e) + ')'); return false; }
+  catch (e) { toast('잠시 후 다시 하기 (' + (e.code || e.message || e) + ')'); return false; }
 }
 const refund = n => { P.coins += n; saveP(); };
 async function bjJoin(bet) {
   if (!spend(bet)) return;
   const ok = await bjTx(s => { if (s.phase !== 'bet' || s.seats[ME.uid]) return undefined; s.seats[ME.uid] = { name: myHo() ? cname(myHo()) : PROF.name, bet, hand: [], st: 'wait', res: '' }; return s; });
-  if (!ok) { refund(bet); toast('지금은 앉을 수 없어요 (판이 진행 중이에요)'); }
+  if (!ok) { refund(bet); toast('지금은 앉을 수 없음 (판이 진행 중)'); }
 }
 async function bjLeave() {
   const mine = BJ && BJ.seats && BJ.seats[ME.uid]; if (!mine || BJ.phase !== 'bet') return;
@@ -172,7 +172,7 @@ function bjPayout() {
   P.bjPaid = [...P.bjPaid.slice(-30), BJ.round];
   const back = me.res === 'bj' ? Math.round(me.bet * 2.5) : me.res === 'win' ? me.bet * 2 : me.res === 'push' ? me.bet : 0;
   if (back) { P.coins += back; P.earned += Math.max(0, back - me.bet); } saveP();
-  toast(me.res === 'lose' ? `♠ 졌어요… -${me.bet}` : me.res === 'push' ? '♠ 비겼어요 (돌려받음)' : `♠ 이겼어요! +${back - me.bet}`);
+  toast(me.res === 'lose' ? `♠ 짐… -${me.bet}` : me.res === 'push' ? '♠ 무승부 (돌려받음)' : `♠ 승리! +${back - me.bet}`);
 }
 const BJ_RES = { win: '승리', bj: '블랙잭!', push: '무승부', lose: '패배' };
 VIEWS.blackjack = () => {
@@ -180,12 +180,12 @@ VIEWS.blackjack = () => {
   const dealerHtml = (s.dealer || []).map((c, i) => cardHtml(c, playing && i === 1)).join('') || '<span class="muted">-</span>';
   return `<div class="panel"><h2>♠️ 살롱 블랙잭</h2><p class="muted">딜러보다 21에 가까우면 승리(2배), 블랙잭은 2.5배.</p>
    <div class="card"><b>딜러</b> ${playing ? '' : s.dealer.length ? `<span class="muted">(${bjVal(s.dealer)})</span>` : ''}<div style="margin-top:4px">${dealerHtml}</div></div>
-   ${seats.map(([u, p]) => `<div class="card" style="${u === turnU ? 'border-color:var(--gold)' : ''}"><div class="h"><b>${esc(p.name)}${u === ME.uid ? ' (나)' : ''}</b><span class="muted">걸음 ${p.bet}${p.hand.length ? ' · ' + bjVal(p.hand) : ''}${p.st === 'bust' ? ' · 버스트' : p.st === 'bj' ? ' · 블랙잭' : ''}${s.phase === 'done' && p.res ? ' · <b>' + BJ_RES[p.res] + '</b>' : u === turnU ? ' · 차례' : ''}</span></div><div>${p.hand.map(c => cardHtml(c)).join('')}</div></div>`).join('') || '<p class="muted">아직 아무도 앉지 않았어요.</p>'}
+   ${seats.map(([u, p]) => `<div class="card" style="${u === turnU ? 'border-color:var(--gold)' : ''}"><div class="h"><b>${esc(p.name)}${u === ME.uid ? ' (나)' : ''}</b><span class="muted">걸음 ${p.bet}${p.hand.length ? ' · ' + bjVal(p.hand) : ''}${p.st === 'bust' ? ' · 버스트' : p.st === 'bj' ? ' · 블랙잭' : ''}${s.phase === 'done' && p.res ? ' · <b>' + BJ_RES[p.res] + '</b>' : u === turnU ? ' · 차례' : ''}</span></div><div>${p.hand.map(c => cardHtml(c)).join('')}</div></div>`).join('') || '<p class="muted">아직 아무도 앉지 않음.</p>'}
    <div style="margin-top:10px">
-   ${s.phase === 'bet' ? (me ? `<div class="row"><button class="primary" onclick="bjDeal()">카드 나누기</button><button onclick="bjLeave()">일어나기 (돌려받기)</button></div><p class="muted">다른 사람이 앉기를 기다렸다가 아무나 "카드 나누기"를 누르면 시작해요.</p>`
+   ${s.phase === 'bet' ? (me ? `<div class="row"><button class="primary" onclick="bjDeal()">카드 나누기</button><button onclick="bjLeave()">일어나기 (돌려받기)</button></div><p class="muted">다른 사람이 앉기를 기다렸다가 아무나 "카드 나누기"를 누르면 시작.</p>`
      : `<div class="row">${[5, 10, 20, 50].map(b => `<button onclick="bjJoin(${b})" ${P.coins < b ? 'disabled' : ''}>${b} 은화 걸고 앉기</button>`).join('')}</div>`) : ''}
    ${playing && turnU === ME.uid ? `<div class="row"><button class="primary" onclick="bjAct('hit')">히트 (한 장 더)</button><button onclick="bjAct('stand')">스탠드 (멈춤)</button>${me.hand.length === 2 ? `<button onclick="bjAct('double')" ${P.coins < me.bet ? 'disabled' : ''}>더블 (+${me.bet})</button>` : ''}</div>` : ''}
-   ${playing && turnU !== ME.uid ? `<p class="muted">${esc((s.seats[turnU] || {}).name || '')}의 차례예요.</p>${Date.now() - (s.turnAt || 0) > 45000 ? '<button class="sm" onclick="bjSkip()">⏭ 오래 기다렸어요 · 차례 넘기기</button>' : ''}` : ''}
+   ${playing && turnU !== ME.uid ? `<p class="muted">${esc((s.seats[turnU] || {}).name || '')}의 차례.</p>${Date.now() - (s.turnAt || 0) > 45000 ? '<button class="sm" onclick="bjSkip()">⏭ 오래 기다림 · 차례 넘기기</button>' : ''}` : ''}
    ${s.phase === 'done' ? `<button class="primary" onclick="bjNew()">새 판 시작</button>` : ''}
    </div></div>`;
 };

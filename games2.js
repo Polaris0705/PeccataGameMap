@@ -29,7 +29,7 @@ function pxEnd(id, title, line, coins, again) {
 }
 
 /* ================= 은식기 닦기 (리듬) ================= */
-VIEWS.silver = () => `<div class="panel"><h2>🍴 은식기 닦기</h2><p class="muted">얼룩이 금색 선에 닿을 때 그 줄을 눌러요. 40초 · ${capTxt('silver')}</p>
+VIEWS.silver = () => `<div class="panel"><h2>🍴 은식기 닦기</h2><p class="muted">얼룩이 금색 선에 닿을 때 그 줄을 누름. 40초 · ${capTxt('silver')}</p>
   <div id="gbox"><button class="primary" style="width:100%" onclick="silverStart()">시작</button></div></div>`;
 function silverStart() {
   const C = pxCanvas(120, 180, '준비…'); if (!C) return; const { px, txt } = C;
@@ -60,13 +60,13 @@ function silverStart() {
     fx.forEach(f => txt(f.s, f.x, f.y - 8 - f.t * 30, f.s === '헛손질' ? '#e88' : '#ffe08a', 7));
     px(4, 4, 112, 4, '#1a1010'); px(4, 4, 112 * shine / 100, 4, '#e8ecf4');
     C.hudSet(`⏱ ${Math.ceil(left)} · ${ITEMS[item]} · 콤보 ${combo} · 점수 ${Math.round(score)}`);
-    if (left <= 0 && !over) { over = true; stopGame(); const coins = Math.round(score / 10); pxEnd('silver', '🍴 반짝반짝 닦았어요!', `닦은 얼룩 ${hits}개 · 놓친 얼룩 ${miss}개 · 최고 콤보 ${best}`, coins, 'silverStart'); return; }
+    if (left <= 0 && !over) { over = true; stopGame(); const coins = Math.round(score / 10); pxEnd('silver', '🍴 반짝반짝 닦음!', `닦은 얼룩 ${hits}개 · 놓친 얼룩 ${miss}개 · 최고 콤보 ${best}`, coins, 'silverStart'); return; }
     raf = requestAnimationFrame(loop); };
   lockGame(() => cancelAnimationFrame(raf)); raf = requestAnimationFrame(loop);
 }
 
 /* ================= 서재 책 정리 (3개 맞추기) ================= */
-VIEWS.books = () => `<div class="panel"><h2>📚 서재 책 정리</h2><p class="muted">옆 책과 자리를 바꿔 같은 색 셋을 맞춰요. 25번 · ${capTxt('books')}</p>
+VIEWS.books = () => `<div class="panel"><h2>📚 서재 책 정리</h2><p class="muted">옆 책과 자리를 바꿔 같은 색 셋을 맞춤. 25번 · ${capTxt('books')}</p>
   <div id="gbox"><button class="primary" style="width:100%" onclick="booksStart()">시작</button></div></div>`;
 function booksStart() {
   const COLS = 6, ROWS = 7, CW = 18, CH = 21, OXB = 6, OYB = 8, W = COLS * CW + 12, H = ROWS * CH + 14;
@@ -86,7 +86,7 @@ function booksStart() {
         px(x + 3, y + CH - hh + 1, CW - 6, 1, '#e0b050'); px(x + 3, y + CH - 7, CW - 6, 1, '#e0b050');
         if (sel && sel[0] === c && sel[1] === r) { px(x + 1, y + CH - 4 - hh, CW - 2, 1, '#fff'); px(x + 1, y + CH - 4, CW - 2, 1, '#fff'); px(x + 1, y + CH - 4 - hh, 1, hh + 1, '#fff'); px(x + CW - 2, y + CH - 4 - hh, 1, hh + 1, '#fff'); } } }
     C.hudSet(`남은 움직임 ${moves} · 점수 ${score}${combo > 1 ? ` · ${combo}연쇄!` : ''}`); };
-  const settle = () => { const m = findAll(); if (!m.size) { busy = false; combo = 0; flash = []; draw(); if (moves <= 0 && !over) { over = true; stopGame(); pxEnd('books', '📚 서가를 정리했어요!', `점수 ${score} · 최고 연쇄 ${best}`, Math.round(score / 40), 'booksStart'); } return; }
+  const settle = () => { const m = findAll(); if (!m.size) { busy = false; combo = 0; flash = []; draw(); if (moves <= 0 && !over) { over = true; stopGame(); pxEnd('books', '📚 서가 정리 완료!', `점수 ${score} · 최고 연쇄 ${best}`, Math.round(score / 40), 'booksStart'); } return; }
     combo++; best = Math.max(best, combo); score += m.size * 10 * combo; flash = [...m]; draw(); sfx(combo > 1 ? 'win' : 'tap');
     setTimeout(() => { if (over || !GAME) return; m.forEach(i => grid[i] = -1);
       for (let c = 0; c < COLS; c++) { const col = []; for (let r = ROWS - 1; r >= 0; r--) if (at(c, r) >= 0) col.push(at(c, r)); for (let r = ROWS - 1, k = 0; r >= 0; r--, k++) grid[r * COLS + c] = k < col.length ? col[k] : rint(5); }
@@ -108,10 +108,10 @@ const lockLv = owner => { try { return Math.min(3, hoRoom(owner).items.filter(i 
 function safeTry(owner, it) {
   if (!ME || owner === ME.uid) return roomPoke(it);
   const key = `${kstDate()}_${it.id}_${ME.uid}`;
-  if (lpDay().done.includes(key)) { sfx('bad'); return toast('🔐 오늘은 이미 손댄 금고예요. 내일 다시 와 보세요'); }
+  if (lpDay().done.includes(key)) { sfx('bad'); return toast('🔐 오늘은 이미 손댄 금고. 내일 다시 와 보기'); }
   modal(`<h2 style="color:var(--gold2);margin-top:0">🔐 ${esc(roomTitle(owner))} 금고</h2>
-   <p>단단히 잠겨 있다… 몰래 따 볼까?</p>${lockLv(owner) ? `<p style="color:var(--gold2)">${'🔒'.repeat(lockLv(owner))} 자물쇠 ${lockLv(owner)}개로 더 단단해요 (핀이 늘고 빨라져요 · 은화도 더)</p>` : ''}
-   <p class="muted">성공하면 은화를 얻고, 주인은 그 절반을 잃어요. 금고마다 하루 한 번.</p>
+   <p>단단히 잠겨 있다… 몰래 따 볼까?</p>${lockLv(owner) ? `<p style="color:var(--gold2)">${'🔒'.repeat(lockLv(owner))} 자물쇠 ${lockLv(owner)}개로 더 단단함 (핀이 늘고 빨라짐 · 은화도 더)</p>` : ''}
+   <p class="muted">성공하면 은화를 얻고, 주인은 그 절반을 잃음. 금고마다 하루 한 번.</p>
    <div class="row"><button class="primary" onclick="safeGo('${owner}','${it.id}')">따 보기</button><button onclick="closeModal()">그만두기</button></div>`);
 }
 function safeGo(owner, id) {
@@ -124,7 +124,7 @@ function lockEnd(title, line, total) {
   if (T && amt > 0) { P.stole = (P.stole || 0) + 1; saveP(); }
   if (T && amt > 0) B.set(`thefts/${T.owner}/log/${T.key}`, { owner: T.owner, thief: ME.uid, amt, at: Date.now(), done: false }).catch(e => console.warn('theft', e));
   LP_T = null;
-  finishGame(`<h2 style="color:var(--gold2);margin-top:0">${title}</h2><p>${line}</p><p class="muted">${r || '보상 없음'}${amt > 0 ? ` · 금고 주인의 은화 ${amt}닢이 사라졌어요` : ''}</p>
+  finishGame(`<h2 style="color:var(--gold2);margin-top:0">${title}</h2><p>${line}</p><p class="muted">${r || '보상 없음'}${amt > 0 ? ` · 금고 주인의 은화 ${amt}닢이 사라짐` : ''}</p>
    <div class="row"><button class="primary" onclick="closeModal();RV=${T && T.back ? `'${T.back}'` : 'null'};go('visit')">방으로 돌아가기</button><button onclick="closeModal()">닫기</button></div>`);
 }
 /* 금고 주인: 털린 기록을 받아 은화 차감 */
@@ -137,11 +137,11 @@ function theftWatch() {
     const apply = () => { if (!P || !ME || ME.uid !== uid) return setTimeout(apply, 800);
       todo.forEach(x => { B.update(`thefts/${uid}/log/${x.id}`, { done: true }).catch(() => {});
         const n = Math.min(x.amt || 0, P.coins || 0); if (n > 0) { P.coins -= n; LOG_W = 'theft'; logAct(-n); LOG_W = null; }
-        toast(`🔐 누군가 내 방 금고를 땄어요… 은화 ${n}닢이 사라졌다`); });
+        toast(`🔐 누군가 내 방 금고를 땀… 은화 ${n}닢이 사라졌다`); });
       saveP(); if (typeof softRender === 'function') softRender(); };
     apply(); });
 }
-VIEWS.lockpick = () => !LP_T ? `<div class="panel"><h2>🔐 자물쇠 따기</h2><p class="muted">다른 손님 방의 금고를 눌러 시작해요.</p><button class="primary" onclick="RV=null;go('visit')">👀 놀러 가기</button></div>` : `<div class="panel"><h2>🔐 ${esc(roomTitle(LP_T.owner))} 금고</h2><p class="muted">빛나는 틈이 금색 선에 맞을 때 눌러요. 빗나가면 꼬챙이가 부러져요(3개) · ${capTxt('lockpick')}</p>
+VIEWS.lockpick = () => !LP_T ? `<div class="panel"><h2>🔐 자물쇠 따기</h2><p class="muted">다른 손님 방의 금고를 눌러 시작.</p><button class="primary" onclick="RV=null;go('visit')">👀 놀러 가기</button></div>` : `<div class="panel"><h2>🔐 ${esc(roomTitle(LP_T.owner))} 금고</h2><p class="muted">빛나는 틈이 금색 선에 맞을 때 누름. 빗나가면 꼬챙이가 부러짐(3개) · ${capTxt('lockpick')}</p>
   <div id="gbox"></div></div>`;
 function lockStart() {
   const C = pxCanvas(120, 150); if (!C) return; const { px, txt } = C, LV = (typeof LP_T !== 'undefined' && LP_T && LP_T.lv) || 0;
@@ -153,8 +153,8 @@ function lockStart() {
   const pinY = (i, now) => { const L = LOCKS[li]; return SHEAR + Math.sin(now / 1000 * L.sp * (1 + i * .13) + ph[i]) * 16; };
   C.cv.onpointerdown = () => { if (over || open) return; const now = performance.now(), y = pinY(cur, now), d = Math.abs(y - SHEAR);
     if (d < TOL) { set[cur] = true; cur++; sfx('tap'); msg = d < 1.2 ? '딸깍!' : '찰칵'; msgT = now;
-      if (cur >= LOCKS[li].pins) { open = now; total += LOCKS[li].prize + picks; sfx('win'); setTimeout(() => { if (over || !GAME) return; if (li >= LOCKS.length - 1) { over = true; stopGame(); lockEnd('🔐 금고를 열었어요!', `자물쇠 셋을 모두 열었다 · 남은 꼬챙이 ${picks}개`, total); return; } li++; newLock(); }, 1100); } }
-    else { picks--; sfx('bad'); msg = '뚝! 꼬챙이가 부러졌다'; msgT = now; if (picks <= 0) { over = true; stopGame(); lockEnd('🔐 꼬챙이가 다 부러졌어요', `자물쇠 ${li}개를 열었다`, total); } } };
+      if (cur >= LOCKS[li].pins) { open = now; total += LOCKS[li].prize + picks; sfx('win'); setTimeout(() => { if (over || !GAME) return; if (li >= LOCKS.length - 1) { over = true; stopGame(); lockEnd('🔐 금고를 엶!', `자물쇠 셋을 모두 열었다 · 남은 꼬챙이 ${picks}개`, total); return; } li++; newLock(); }, 1100); } }
+    else { picks--; sfx('bad'); msg = '뚝! 꼬챙이가 부러졌다'; msgT = now; if (picks <= 0) { over = true; stopGame(); lockEnd('🔐 꼬챙이가 다 부러짐', `자물쇠 ${li}개를 열었다`, total); } } };
   const loop = now => { const L = LOCKS[li], [t, l, d] = L.col, n = L.pins;
     px(0, 0, 120, 150, '#20141a'); px(10, 10, 100, 84, d); px(12, 12, 96, 80, t); px(12, 12, 96, 3, l); px(12, 12, 3, 80, l);
     const pw = n > 5 ? 9 : 12, gp = n > 5 ? 3 : 4, gx = 60 - (n * pw + (n - 1) * gp) / 2;

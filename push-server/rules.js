@@ -11,7 +11,7 @@ function decide(col, type, id, cur, prev, ctx) {
   if (col === 'calls') {
     if (cur.ack || !cur.at || cur.at < ctx.start) return out;
     if (prev && prev.at === cur.at) return out;
-    to(id, cur.pre ? '⏳ 곧 차례예요' : '🔔 KP 호출', cur.msg || '차례예요!', cur.pre ? 'call-pre' : 'call');
+    to(id, cur.pre ? '⏳ 곧 차례' : '🔔 KP 호출', cur.msg || '차례!', cur.pre ? 'call-pre' : 'call');
   }
 
   if (col === 'bookings') {
@@ -33,11 +33,11 @@ function decide(col, type, id, cur, prev, ctx) {
 
   if (col === 'items') {
     if (!prev) {
-      if ((cur.at || 0) >= ctx.start && !cur.via) to(cur.owner, '🎒 새 물건', `「${cur.name || ''}」을(를) 받았어요`, 'item');
+      if ((cur.at || 0) >= ctx.start && !cur.via) to(cur.owner, '🎒 새 물건', `「${cur.name || ''}」을(를) 받음`, 'item');
     } else {
-      if (prev.owner !== cur.owner) to(cur.owner, '🎒 물건을 받았어요', `${cur.fromName || '누군가'}에게서 「${cur.name || ''}」`, 'item');
+      if (prev.owner !== cur.owner) to(cur.owner, '🎒 물건을 받음', `${cur.fromName || '누군가'}에게서 「${cur.name || ''}」`, 'item');
       if (!prev.inspectReq && cur.inspectReq) to(ctx.admins, '🔍 살펴보기 요청', `${cur.ownerName || ''}: 「${cur.name || ''}」`, 'inspect');
-      if (!prev.revealed && cur.revealed) to(cur.owner, '✦ 무언가를 발견했어요', `「${cur.name || ''}」을(를) 자세히 살펴보세요`, 'item-' + id);
+      if (!prev.revealed && cur.revealed) to(cur.owner, '✦ 무언가를 발견', `「${cur.name || ''}」을(를) 자세히 살펴보기`, 'item-' + id);
     }
   }
   return out;

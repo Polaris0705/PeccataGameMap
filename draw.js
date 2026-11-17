@@ -65,19 +65,19 @@ function drawPush(force) {
 }
 function drawView(r, host) {
   const S = r.state || {}, ps = r.players || {};
-  if (r.status === 'lobby') return `<p class="muted">차례로 그리고, 나머지는 맞혀요. 빨리 맞힐수록 높은 점수!</p>
-    ${needMore(r, PARTY_TYPES.draw)}${host ? `<button class="primary" ${Object.keys(ps).length < 2 ? 'disabled' : ''} onclick="drawStart()">시작</button>` : '<p class="muted">방장이 시작하기를 기다려요…</p>'}`;
+  if (r.status === 'lobby') return `<p class="muted">차례로 그리고, 나머지는 맞힘. 빨리 맞힐수록 높은 점수!</p>
+    ${needMore(r, PARTY_TYPES.draw)}${host ? `<button class="primary" ${Object.keys(ps).length < 2 ? 'disabled' : ''} onclick="drawStart()">시작</button>` : '<p class="muted">방장이 시작하기를 기다리는 중…</p>'}`;
   const scores = Object.entries(S.scores || {}).sort((a, b) => b[1] - a[1]);
   const board = `<div class="toggles" style="margin-bottom:6px">${(S.order || []).map(u => `<span class="chip ${u === S.drawer ? 'on' : ''}">${u === S.drawer ? '🎨 ' : ''}${esc((ps[u] || {}).name || '?')} ${(S.scores || {})[u] || 0}</span>`).join('')}</div>`;
   if (r.status === 'done') return board + `<div class="card" style="text-align:center"><div style="font-size:2.2rem">🏆</div><h3>${scores.length ? esc((ps[scores[0][0]] || {}).name) + ' 우승!' : '끝!'}</h3>${scores.map(([u, s], i) => `<div>${i + 1}. ${esc((ps[u] || {}).name)} — ${s}점</div>`).join('')}</div>${host ? '<button class="primary" onclick="drawStart()">한 판 더</button>' : ''}`;
   const me = S.drawer === ME.uid, left = Math.max(0, Math.ceil(((S.endAt || 0) - Date.now()) / 1000));
-  if (S.phase === 'pick') return board + (me ? `<h3>그릴 단어를 골라요</h3><div class="toggles">${(S.choices || []).map(w => `<button class="primary" onclick="drawPick('${w}')">${esc(w)}</button>`).join('')}</div>` : `<p class="muted">${esc((ps[S.drawer] || {}).name)}님이 단어를 고르는 중…</p>`);
+  if (S.phase === 'pick') return board + (me ? `<h3>그릴 단어를 고름</h3><div class="toggles">${(S.choices || []).map(w => `<button class="primary" onclick="drawPick('${w}')">${esc(w)}</button>`).join('')}</div>` : `<p class="muted">${esc((ps[S.drawer] || {}).name)}님이 단어를 고르는 중…</p>`);
   const guesses = (S.guesses || []).slice(-12).map(g => `<div class="${g.ok ? 'ok' : ''}" style="font-size:.88rem">${esc(g.name)}: ${g.ok ? '<b style="color:var(--green2)">정답! 🎉</b>' : esc(g.text)}</div>`).join('');
   const mine = (S.guesses || []).some(g => g.uid === ME.uid && g.ok);
   const top = `<div class="row" style="justify-content:space-between"><b id="drawT">⏱ ${left}초</b><b>${S.phase === 'reveal' ? '정답: ' + esc(S.word) : me ? '그릴 단어: ' + esc(DRAW_SEC ? DRAW_SEC.word : '…') : '힌트: ' + esc(S.hint || '')}</b></div>`;
   if (me && S.phase === 'draw') return board + top + padHtml('dpad') + `<div class="glog">${guesses}</div>`;
   return board + top + `<div class="dpad"><canvas id="dview" class="dcanvas"></canvas></div>
-    ${S.phase === 'draw' && !mine ? `<div class="row" style="flex-wrap:nowrap;margin-top:6px"><input id="dguess" maxlength="20" placeholder="정답은?" onkeydown="if(event.key==='Enter')drawGuess()"><button class="primary" onclick="drawGuess()">맞히기</button></div>` : mine ? '<p style="color:var(--green2)">정답을 맞혔어요! 다른 사람을 기다려요.</p>' : ''}
+    ${S.phase === 'draw' && !mine ? `<div class="row" style="flex-wrap:nowrap;margin-top:6px"><input id="dguess" maxlength="20" placeholder="정답은?" onkeydown="if(event.key==='Enter')drawGuess()"><button class="primary" onclick="drawGuess()">맞히기</button></div>` : mine ? '<p style="color:var(--green2)">정답을 맞힘! 다른 사람을 기다리는 중.</p>' : ''}
     <div class="glog">${guesses}</div>${host && S.phase === 'draw' && Date.now() > (S.endAt || 0) + 8000 ? '<button class="sm" onclick="drawNext(true)">⏭ 다음 사람으로</button>' : ''}`;
 }
 function drawAfter() {
@@ -124,7 +124,7 @@ function drawSettle(r) {
   const S = r.state || {}; if (r.type !== 'draw' || r.status !== 'done' || !S.round || paidRound(S.round) || !(r.players || {})[ME.uid]) return;
   markPaid(S.round); const sc = Object.entries(S.scores || {}).sort((a, b) => b[1] - a[1]);
   const mine = (S.scores || {})[ME.uid] || 0;
-  if (sc.length && sc[0][0] === ME.uid && mine > 0) { earn(4); toast('🎨 우승! +4 은화'); } else if (mine > 0) { earn(2); toast('🎨 수고했어요! +2 은화'); } else saveP();
+  if (sc.length && sc[0][0] === ME.uid && mine > 0) { earn(4); toast('🎨 우승! +4 은화'); } else if (mine > 0) { earn(2); toast('🎨 수고했음! +2 은화'); } else saveP();
 }
 
 /* ---------- 텔레스트레이션 ---------- */
@@ -140,8 +140,8 @@ function teleWatch() {
 }
 function teleView(r, host) {
   const S = r.state || {}, ps = r.players || {}, n = Object.keys(ps).length;
-  if (r.status === 'lobby') return `<p class="muted">단어 → 그림 → 글로 옆 사람에게 넘겨요. 마지막에 펼쳐 보기! 참가 +3 은화.</p>
-    ${needMore(r, PARTY_TYPES.tele)}${host ? `<button class="primary" ${n < 3 ? 'disabled' : ''} onclick="teleStart()">시작</button>` : '<p class="muted">방장이 시작하기를 기다려요…</p>'}`;
+  if (r.status === 'lobby') return `<p class="muted">단어 → 그림 → 글 릴레이 · 참가 +3 은화</p>
+    ${needMore(r, PARTY_TYPES.tele)}${host ? `<button class="primary" ${n < 3 ? 'disabled' : ''} onclick="teleStart()">시작</button>` : '<p class="muted">방장이 시작하기를 기다리는 중…</p>'}`;
   if (S.phase === 'reveal' || r.status === 'done') {
     const c = S.order[Math.min(TELE.revealIdx, S.order.length - 1)], bk = TELE.books[c];
     const ents = (bk && bk.entries) || [];
@@ -151,12 +151,12 @@ function teleView(r, host) {
   }
   const step = S.step, kind = teleKind(step), done = (S.sub || {})[ME.uid], total = teleN(S), cnt = Object.keys(S.sub || {}).length;
   const head = `<div class="row" style="justify-content:space-between"><b>${step + 1}/${total}단계 · ${kind === 'word' ? '단어 정하기' : kind === 'draw' ? '그리기' : '맞히기'}</b><b id="teleT"></b><span class="muted">제출 ${cnt}/${total}</span></div>`;
-  if (done) return head + '<p class="muted" style="text-align:center;margin:30px 0">✓ 제출했어요. 다른 사람을 기다려요…</p>';
+  if (done) return head + '<p class="muted" style="text-align:center;margin:30px 0">✓ 제출 완료. 다른 사람을 기다리는 중…</p>';
   const chain = teleChain(S, ME.uid, step), prev = step > 0 ? ((TELE.books[chain] || {}).entries || [])[step - 1] : null;
-  if (kind === 'word') return head + `<p>책에 적을 첫 단어(또는 짧은 문장)를 정해요.</p><div class="row" style="flex-wrap:nowrap"><input id="tword" maxlength="30" placeholder="예: 비 오는 날의 집사"><button onclick="$('#tword').value=DRAW_WORDS[rint(DRAW_WORDS.length)]">🎲</button></div><button class="primary" style="width:100%;margin-top:8px" onclick="teleSubmit()">제출</button>`;
+  if (kind === 'word') return head + `<p>책에 적을 첫 단어(또는 짧은 문장)를 정함.</p><div class="row" style="flex-wrap:nowrap"><input id="tword" maxlength="30" placeholder="예: 비 오는 날의 집사"><button onclick="$('#tword').value=DRAW_WORDS[rint(DRAW_WORDS.length)]">🎲</button></div><button class="primary" style="width:100%;margin-top:8px" onclick="teleSubmit()">제출</button>`;
   if (!prev) return head + '<p class="muted">앞 사람의 책을 받는 중…</p>';
-  if (kind === 'draw') return head + `<p>이걸 그려요: <b style="font-size:1.2rem;color:var(--gold2)">${esc(prev.text)}</b></p>${padHtml('tpad')}<button class="primary" style="width:100%;margin-top:8px" onclick="teleSubmit()">제출</button>`;
-  return head + `<p>이 그림은 무엇일까요?</p><img src="${prev.img}" style="width:100%;border-radius:8px;background:#fffdf7"><div class="row" style="flex-wrap:nowrap;margin-top:8px"><input id="tguess" maxlength="30" placeholder="그림이 뜻하는 것"><button class="primary" onclick="teleSubmit()">제출</button></div>`;
+  if (kind === 'draw') return head + `<p>이걸 그림: <b style="font-size:1.2rem;color:var(--gold2)">${esc(prev.text)}</b></p>${padHtml('tpad')}<button class="primary" style="width:100%;margin-top:8px" onclick="teleSubmit()">제출</button>`;
+  return head + `<p>이 그림은 무엇일까?</p><img src="${prev.img}" style="width:100%;border-radius:8px;background:#fffdf7"><div class="row" style="flex-wrap:nowrap;margin-top:8px"><input id="tguess" maxlength="30" placeholder="그림이 뜻하는 것"><button class="primary" onclick="teleSubmit()">제출</button></div>`;
 }
 function teleAfter() {
   const r = PROOM && roomOf(PROOM); if (!r || r.type !== 'tele' || r.status !== 'play' || r.state.phase !== 'play') return;
@@ -173,7 +173,7 @@ async function teleSubmit(auto) {
   const step = S.step, kind = teleKind(step), chain = teleChain(S, ME.uid, step);
   let e = { type: kind, uid: ME.uid, name: myName() };
   if (kind === 'draw') e.img = padImage();
-  else { const v = ((kind === 'word' ? $('#tword') : $('#tguess')) || {}).value; const t = (v || '').trim(); if (!t && !auto) return toast('내용을 적어 주세요'); e.text = t || (kind === 'word' ? DRAW_WORDS[rint(DRAW_WORDS.length)] : '…모르겠다'); }
+  else { const v = ((kind === 'word' ? $('#tword') : $('#tguess')) || {}).value; const t = (v || '').trim(); if (!t && !auto) return toast('내용을 적기'); e.text = t || (kind === 'word' ? DRAW_WORDS[rint(DRAW_WORDS.length)] : '…모르겠다'); }
   const bk = 'teleBooks/' + r.id + '_' + S.round + '_' + chain;
   try { await B.tx(bk, cur => { const d = cur || { room: r.id, owner: chain, entries: [] }; if ((d.entries || []).length !== step) return undefined; d.entries = [...(d.entries || []), e]; return d; }); }
   catch (er) { return toast('제출 실패: ' + (er.code || er.message)); }
@@ -197,7 +197,7 @@ function teleSettle(r) {
   roomView = function (r) {
     if (r.type !== 'draw' && r.type !== 'tele') return baseView(r);
     const t = PARTY_TYPES[r.type], host = r.host === ME.uid, ps = Object.entries(r.players || {}), inRoom = !!(r.players || {})[ME.uid];
-    const body = !inRoom ? `<p class="muted">이 방에 참가하지 않았어요.</p><button class="primary" onclick="roomJoin('${r.id}')">참가</button>` : r.type === 'draw' ? drawView(r, host) : teleView(r, host);
+    const body = !inRoom ? `<p class="muted">이 방에 참가하지 않음.</p><button class="primary" onclick="roomJoin('${r.id}')">참가</button>` : r.type === 'draw' ? drawView(r, host) : teleView(r, host);
     setTimeout(() => { if (r.type === 'draw') drawAfter(); else teleAfter(); }, 0);
     return `<div class="panel"><div class="row" style="justify-content:space-between"><h2 style="margin:0">${t.ic} ${t.n}</h2>
       <div class="row" style="flex:0 0 auto">${host ? '<button class="sm danger" onclick="roomClose()">방 닫기</button>' : ''}<button class="sm" onclick="roomLeave()">나가기</button><button class="sm" onclick="PROOM=null;render()">목록</button></div></div>

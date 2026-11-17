@@ -311,7 +311,7 @@ html.px .slot-hcol.now{outline:2px solid var(--accent2)}
 </style>
 <style id="appThemeVars"></style>
 <script>
-/* 앱 테마 따라가기: 부모(앱)의 색·글꼴·도트 스타일을 그대로 가져와요 */
+/* 앱 테마 따라가기: 부모(앱)의 색·글꼴·도트 스타일을 그대로 가져옴 */
 (function(){
   let PD=null;try{PD=(window.parent&&window.parent!==window)?window.parent.document:null;}catch(e){}
   window.followApp=()=>{try{return localStorage.getItem('peccata_sched_follow')!=='0';}catch(e){return true;}};
@@ -381,14 +381,14 @@ html.px .slot-hcol.now{outline:2px solid var(--accent2)}
               <option value="0">전체 Day</option>
             </select>
             <button class="btn sm dng" onclick="clearRegions()">영역 초기화</button>
-            <span id="drawHint" style="font-size:11px;color:var(--text3);font-family:var(--font);">맵 이미지를 추가하세요</span>
+            <span id="drawHint" style="font-size:11px;color:var(--text3);font-family:var(--font);">맵 이미지를 추가하기</span>
           </div>
           <div class="map-tabs-row" id="mapTabsRow">
             <span style="font-size:11px;color:var(--text3);font-family:var(--font);">맵 없음</span>
           </div>
           <div class="map-body">
             <div class="map-canvas-wrap" id="mapWrap">
-              <div class="no-map-hint" id="noMapHint">맵 이미지를 추가하세요<br><span style="font-size:11px;">PNG, JPG · 여러 장 동시 업로드 가능</span></div>
+              <div class="no-map-hint" id="noMapHint">맵 이미지를 추가하기<br><span style="font-size:11px;">PNG, JPG · 여러 장 동시 업로드 가능</span></div>
               <canvas id="mapCanvas"></canvas>
               <div class="map-tooltip" id="mapTooltip"></div>
             </div>
@@ -550,7 +550,7 @@ html.px .slot-hcol.now{outline:2px solid var(--accent2)}
             <label style="font-size:11px;display:flex;gap:3px;align-items:center;"><input type="checkbox" id="plLcDef"> 기본</label><input type="color" id="plLcInput" style="width:38px;height:26px;padding:0;" oninput="document.getElementById('plLcDef').checked=false">
             <select id="plLbMode" style="font-size:11px;"><option value="">배경 기본</option><option value="none">배경 없음</option><option value="c">배경 색</option></select><input type="color" id="plLbInput" style="width:38px;height:26px;padding:0;" oninput="document.getElementById('plLbMode').value='c'">
             <button class="btn sm" onclick="resetLabelPos()">글씨 위치 처음대로</button></div>
-            <div style="font-size:10px;color:var(--text3);margin-top:3px;">위치는 ✏ 편집 모드에서 이름표를 끌어서 옮겨요.</div></div>
+            <div style="font-size:10px;color:var(--text3);margin-top:3px;">위치는 ✏ 편집 모드에서 이름표를 끌어서 옮김.</div></div>
           <div class="frow">
             <label>색상</label>
             <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;" id="plColorPicker"></div>
@@ -833,7 +833,7 @@ function notifyNow(){if(!S.now)return;try{const kb=parent.KPBridge;if(kb&&kb.now
 function nextNow(){
   if(!S.now)S.now={d:1,s:1};
   else{const nx=nextOf(S.now.d,S.now.s);
-    if(!nx){if(!confirm('마지막 칸이에요. 새 Day를 추가하고 넘어갈까요?'))return;addDay();S.now={d:S.days,s:1};}
+    if(!nx){if(!confirm('마지막 칸. 새 Day를 추가하고 넘어갈까?'))return;addDay();S.now={d:S.days,s:1};}
     else S.now=nx;}
   renderSchedule();notifyNow();
 }
@@ -844,7 +844,7 @@ function setAutoCall(v){try{localStorage.setItem('peccata_autocall',v?'1':'0');}
 function renderSchedule(){
   const wrap=document.getElementById('schWrap');
   let h='';
-  h+=`<div class="sch-nowbar"><button class="btn sm pri" onclick="nextNow()" title="지금 진행 중인 칸을 한 칸 넘겨요 (날도 넘어가요)">▶ 다음 칸으로</button><span>${S.now?`지금: <b>${S.dayNames[S.now.d-1]||'Day '+(S.now.d-1)} ${SYM10[S.now.s-1]||S.now.s}</b>`:'진행 중인 칸 없음 (칸 번호를 누르거나 ▶)'}</span><label title="진행 중인 칸이 바뀌면 그 칸 사람을 호출하고, 다음 칸 사람에게 예고를 보내요"><input type="checkbox" ${autoCallOn()?'checked':''} onchange="setAutoCall(this.checked)"> 🔔 자동 호출</label></div>`;
+  h+=`<div class="sch-nowbar"><button class="btn sm pri" onclick="nextNow()" title="지금 진행 중인 칸을 한 칸 넘김 (날도 넘어감)">▶ 다음 칸으로</button><span>${S.now?`지금: <b>${S.dayNames[S.now.d-1]||'Day '+(S.now.d-1)} ${SYM10[S.now.s-1]||S.now.s}</b>`:'진행 중인 칸 없음 (칸 번호를 누르거나 ▶)'}</span><label title="진행 중인 칸이 바뀌면 그 칸 사람을 호출하고, 다음 칸 사람에게 예고를 보냄"><input type="checkbox" ${autoCallOn()?'checked':''} onchange="setAutoCall(this.checked)"> 🔔 자동 호출</label></div>`;
   // Day headers
   h+='<div class="sch-day-hdr">';
   for(let d=1;d<=S.days;d++){
@@ -991,13 +991,13 @@ function confirmAssign(){
   const place=document.getElementById('mPlace').value;
   const action=document.getElementById('mAction').value.trim();
   const{slots,parts}=MS;
-  if(!place||place.startsWith('—')){err.textContent='장소를 선택하세요.';return;}
-  if(!slots.length){err.textContent='슬롯을 선택하세요.';return;}
+  if(!place||place.startsWith('—')){err.textContent='장소를 선택하기.';return;}
+  if(!slots.length){err.textContent='슬롯을 선택하기.';return;}
   if(MS.type==='investigate'){
-    if(parts.length<2){err.textContent='조사: 2인 이상 선택하세요.';return;}
-    if(parts.every(p=>NPCS.includes(p))){err.textContent='조사: HO를 반드시 포함하세요.';return;}
+    if(parts.length<2){err.textContent='조사: 2인 이상 선택하기.';return;}
+    if(parts.every(p=>NPCS.includes(p))){err.textContent='조사: HO를 반드시 포함하기.';return;}
   } else {
-    if(parts.length<1){err.textContent='이벤트: 참가자를 1인 이상 선택하세요.';return;}
+    if(parts.length<1){err.textContent='이벤트: 참가자를 1인 이상 선택하기.';return;}
   }
   const gid=Date.now()+Math.random();
   const stype=MS.type||'investigate';
@@ -1071,7 +1071,7 @@ function addMaps(ev){
   });
   ev.target.value='';
 }
-/* 지금 맵의 그림만 바꾸기: 장소 영역·이름표·공개 설정은 그대로 (비율로 맞춰 놓여요) */
+/* 지금 맵의 그림만 바꾸기: 장소 영역·이름표·공개 설정은 그대로 (비율로 맞춰 놓임) */
 function replaceMapImg(){
   const m=S.maps[S.curMapIdx];if(!m)return;
   const inp=document.createElement('input');inp.type='file';inp.accept='image/*';
@@ -1080,7 +1080,7 @@ function replaceMapImg(){
       const a0=m.img?m.img.width/m.img.height:0,a1=img.width/img.height;
       m.img=img;m.dataURL=e.target.result;m.ver=(m.ver||0)+1;m.uploaded=false;
       switchMapTo(S.curMapIdx);renderPlaces();
-      if(a0&&Math.abs(a0-a1)/a0>.05)alert('그림 비율이 예전과 달라요. 장소 영역은 비율 위치 그대로 옮겨 놓았으니 ✏ 편집 모드에서 확인해 주세요.');
+      if(a0&&Math.abs(a0-a1)/a0>.05)alert('그림 비율이 예전과 다름. 장소 영역은 비율 위치 그대로 옮겨 놓았으니 ✏ 편집 모드에서 확인하기.');
     };img.src=e.target.result;};r.readAsDataURL(f);};
   inp.click();
 }
@@ -1093,7 +1093,7 @@ function renderMapTabs(){
       <button class="map-tab" onclick="openMapNameEdit(${i})" title="이름 변경" style="padding:3px 6px;border-left:none;${i===S.curMapIdx?'background:var(--accent3);':''}">✏</button>
       <button class="map-tab" onclick="toggleMapReveal(${i})" title="PL에게 이 맵 공개/숨김" style="padding:3px 6px;border-left:none;${m.revealed?'color:var(--green);':'opacity:.55;'}">${m.revealed?'👁 공개':'🚫 비공개'}</button>
     </div>`).join('')
-    +`<button class="map-tab" onclick="replaceMapImg()" style="margin-left:4px;" title="영역은 그대로 두고 그림만 바꿔요">🖼 그림 바꾸기</button><button class="map-tab" onclick="deleteMap()" style="color:var(--red);border-color:#e0a0a0;margin-left:4px;">× 삭제</button>`;
+    +`<button class="map-tab" onclick="replaceMapImg()" style="margin-left:4px;" title="영역은 그대로 두고 그림만 바꿈">🖼 그림 바꾸기</button><button class="map-tab" onclick="deleteMap()" style="color:var(--red);border-color:#e0a0a0;margin-left:4px;">× 삭제</button>`;
 }
 function switchMapTo(idx){
   S.curMapIdx=idx;renderMapTabs();updateMapDaySelect();
@@ -1240,7 +1240,7 @@ function getResizeCursor(handle){
 }
 
 function toggleDraw(){
-  if(!S.maps.length){alert('먼저 맵 이미지를 추가하세요.');return;}
+  if(!S.maps.length){alert('먼저 맵 이미지를 추가하기.');return;}
   S.drawMode=!S.drawMode;
   if(S.drawMode){S.editMode=false;document.getElementById('editBtn').className='btn sm';}
   document.getElementById('drawBtn').className='btn sm'+(S.drawMode?' active-state':'');
@@ -1249,7 +1249,7 @@ function toggleDraw(){
   if(!S.drawMode)redrawMap();
 }
 function toggleEditMode(){
-  if(!S.maps.length){alert('먼저 맵 이미지를 추가하세요.');return;}
+  if(!S.maps.length){alert('먼저 맵 이미지를 추가하기.');return;}
   S.editMode=!S.editMode;
   if(S.editMode){S.drawMode=false;document.getElementById('drawBtn').className='btn sm';}
   document.getElementById('editBtn').className='btn sm'+(S.editMode?' active-state':'');
@@ -1755,7 +1755,7 @@ function renderSettings(){
   // 색상 설정
   h+=`<div class="settings-section"><div class="settings-section-title">앱 테마</div><div class="settings-body"><div class="setting-row" style="flex-wrap:wrap;gap:6px;">
     <label style="display:flex;gap:6px;align-items:center;cursor:pointer;"><input type="checkbox" ${followApp()?'checked':''} onchange="setFollowApp(this.checked)"> 앱의 테마·글꼴·도트 스타일 따라가기</label>
-    <span style="font-size:11px;color:var(--text3);">켜 두면 아래 색상·폰트 설정 대신 앱에서 고른 테마가 쓰여요.</span></div></div></div>`;
+    <span style="font-size:11px;color:var(--text3);">켜 두면 아래 색상·폰트 설정 대신 앱에서 고른 테마가 쓰임.</span></div></div></div>`;
   h+=`<div class="settings-section"><div class="settings-section-title">색상 테마</div><div class="settings-body">`;
   COLOR_KEYS.forEach(([k,label])=>{
     const val=S.theme[k]||'#888888';
@@ -2017,7 +2017,7 @@ function renderCevPanel(){
   const panel=document.getElementById('cevPanel');
   const summary=document.getElementById('cevSummary');
   if(!S.condEvents.length){
-    panel.innerHTML='<div style="color:var(--text3);font-size:13px;text-align:center;padding:30px;">등록된 조건부 이벤트가 없습니다.<br>+ 이벤트 등록 버튼으로 추가하세요.</div>';
+    panel.innerHTML='<div style="color:var(--text3);font-size:13px;text-align:center;padding:30px;">등록된 조건부 이벤트가 없습니다.<br>+ 이벤트 등록 버튼으로 추가하기.</div>';
     if(summary)summary.textContent='';
     renderCevBanner();return;
   }
@@ -2123,8 +2123,8 @@ function confirmCev(){
   const count=+document.getElementById('cevCount').value||1;
   const note=document.getElementById('cevNote').value.trim();
   const color=window._cevColor||CEV_COLORS[0];
-  if(!name){alert('이벤트 이름을 입력하세요.');return;}
-  if(!place||place==='장소 없음'){alert('장소를 선택하세요.');return;}
+  if(!name){alert('이벤트 이름을 입력하기.');return;}
+  if(!place||place==='장소 없음'){alert('장소를 선택하기.');return;}
   if(dayFrom>dayTo){alert('Day 범위가 올바르지 않습니다.');return;}
   if(_cevEditId){
     const ev=S.condEvents.find(e=>e.id===_cevEditId);
@@ -2169,12 +2169,12 @@ function normPlace(pl){const c=document.getElementById('mapCanvas');if(!c||!c.wi
 function togglePlaceReveal(ev,i){ev.stopPropagation();const p=S.places[i];p.revealed=!p.revealed;renderPlaces();}
 function toggleMapReveal(i){S.maps[i].revealed=!S.maps[i].revealed;renderMapTabs();}
 function checkBooking(b){
-  if(!S.places.find(p=>p.name===b.place))return `장소 "${b.place}"가 스케줄러에 없어요`;
+  if(!S.places.find(p=>p.name===b.place))return `장소 "${b.place}"가 스케줄러에 없음`;
   for(const s of b.slots){
-    if(b.day>S.days||s>slotsOf(b.day))return '해당 Day/슬롯이 스케줄러에 없어요';
+    if(b.day>S.days||s>slotsOf(b.day))return '해당 Day/슬롯이 스케줄러에 없음';
     for(const c of b.parts){
-      if(isDeparted(c,b.day,s))return `${S.names[c]}: 이탈 상태예요`;
-      if(getA(c,b.day,s))return `${S.names[c]}: ${S.dayNames[b.day-1]||''} ${s}슬롯에 이미 일정이 있어요`;
+      if(isDeparted(c,b.day,s))return `${S.names[c]}: 이탈 상태`;
+      if(getA(c,b.day,s))return `${S.names[c]}: ${S.dayNames[b.day-1]||''} ${s}슬롯에 이미 일정이 있음`;
     }
   }
   return '';

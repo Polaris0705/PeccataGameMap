@@ -6,9 +6,9 @@ const admin = require('firebase-admin');
 const webpush = require('web-push');
 const { decide } = require('./rules');
 
-function need(k) { const v = process.env[k]; if (!v) { console.error(`환경변수 ${k}가 없어요`); process.exit(1); } return v; }
+function need(k) { const v = process.env[k]; if (!v) { console.error(`환경변수 ${k}가 없음`); process.exit(1); } return v; }
 let sa;
-try { sa = JSON.parse(need('FIREBASE_SERVICE_ACCOUNT')); } catch (e) { console.error('FIREBASE_SERVICE_ACCOUNT가 올바른 JSON이 아니에요'); process.exit(1); }
+try { sa = JSON.parse(need('FIREBASE_SERVICE_ACCOUNT')); } catch (e) { console.error('FIREBASE_SERVICE_ACCOUNT가 올바른 JSON이 아님'); process.exit(1); }
 admin.initializeApp({ credential: admin.credential.cert(sa) });
 const db = admin.firestore();
 webpush.setVapidDetails(process.env.VAPID_SUBJECT || 'mailto:kp@example.com', need('VAPID_PUBLIC_KEY'), need('VAPID_PRIVATE_KEY'));
@@ -57,7 +57,7 @@ function watch(col) {
 }
 ['calls', 'bookings', 'items'].forEach(watch);
 
-// 채팅 언급·귓속말: 앱이 pings 문서를 남기면 보내고 지워요
+// 채팅 언급·귓속말: 앱이 pings 문서를 남기면 보내고 지움
 db.collection('pings').onSnapshot(s => {
   s.docChanges().forEach(ch => {
     if (ch.type !== 'added') return;
@@ -78,8 +78,8 @@ async function sessionTick() {
     const now = Date.now(), snap = await db.collection('sessions').where('at', '>', now - 30 * 60e3).get();
     for (const doc of snap.docs) {
       const s = doc.data(), sent = s.sent || {}, upd = {};
-      if (!sent.h1 && s.at - now <= 60 * 60e3 && s.at - now > 5 * 60e3) upd.h1 = ['⏰ 1시간 뒤 세션이에요', `${s.title || '세션'} · ${fmt(s.at)}`];
-      if (!sent.st && now >= s.at && now - s.at < 20 * 60e3) upd.st = ['🎲 세션 시작 시간이에요', `${s.title || '세션'} · ${fmt(s.at)}`];
+      if (!sent.h1 && s.at - now <= 60 * 60e3 && s.at - now > 5 * 60e3) upd.h1 = ['⏰ 1시간 뒤 세션', `${s.title || '세션'} · ${fmt(s.at)}`];
+      if (!sent.st && now >= s.at && now - s.at < 20 * 60e3) upd.st = ['🎲 세션 시작 시간', `${s.title || '세션'} · ${fmt(s.at)}`];
       if (!sent.st && now - s.at >= 20 * 60e3) await doc.ref.update({ 'sent.st': true, 'sent.h1': true });
       for (const [k, [title, body]] of Object.entries(upd)) {
         await doc.ref.update({ ['sent.' + k]: true });

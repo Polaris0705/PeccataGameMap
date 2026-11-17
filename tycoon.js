@@ -1,7 +1,7 @@
 /* =========================================================
    Ⅶ・peccata — 티룸 타이쿤 (도트 그래픽 · 조리 과정 · 하루 영업 2분 · 업그레이드)
    손님 주문 → 찻잔 → 찻잎 → 뜨거운 물(우리기 타이밍!) → 우유·꿀·레몬·휘핑 → 내놓기
-   디저트는 진열장에서 골라 오븐에 굽고, 다 구워지면 꺼내요 (너무 오래 두면 타요)
+   디저트는 진열장에서 골라 오븐에 굽고, 다 구워지면 꺼냄 (너무 오래 두면 탐)
    진행: P.tea = {v:2, day, cash(£), kettle, slots, oven, decor, menu, best, stars:{}}
    ========================================================= */
 const TY_W = 192, TY_H = 272, TY_S = 3;
@@ -18,11 +18,11 @@ const TY_RECIPES = [
 const TY_DESSERTS = [{ id: 'scone', n: '스콘', p: 4, tier: 0, bake: 5 }, { id: 'macaron', n: '마카롱', p: 6, tier: 2, bake: 6 }, { id: 'cake', n: '케이크', p: 9, tier: 3, bake: 8 }];
 const TY_ADD = { milk: '우유', honey: '꿀', lemon: '레몬', cream: '휘핑' };
 const TY_UP = {
-  kettle: { n: '은 주전자', d: '빨리 우러나고 "완벽" 구간이 넓어져요', cost: [60, 140, 260, 420] },
-  slots: { n: '작업대 확장', d: '찻잔을 동시에 더 놓을 수 있어요 (2→4)', cost: [120, 300] },
-  oven: { n: '오븐 개량', d: '디저트가 빨리 구워지고 덜 타요', cost: [80, 180, 320] },
-  decor: { n: '티룸 인테리어', d: '손님이 더 오래 기다리고 팁이 늘어요', cost: [100, 220, 400, 650, 900] },
-  menu: { n: '메뉴 연구', d: '새 차와 디저트를 배워요', cost: [90, 180, 300, 450] },
+  kettle: { n: '은 주전자', d: '빨리 우러나고 "완벽" 구간이 넓어짐', cost: [60, 140, 260, 420] },
+  slots: { n: '작업대 확장', d: '찻잔을 동시에 더 놓을 수 있음 (2→4)', cost: [120, 300] },
+  oven: { n: '오븐 개량', d: '디저트가 빨리 구워지고 덜 탐', cost: [80, 180, 320] },
+  decor: { n: '티룸 인테리어', d: '손님이 더 오래 기다리고 팁이 늚', cost: [100, 220, 400, 650, 900] },
+  menu: { n: '메뉴 연구', d: '새 차와 디저트를 배움', cost: [90, 180, 300, 450] },
 };
 function tyLv() {
   const d = { v: 2, day: 1, cash: 0, kettle: 0, slots: 0, oven: 0, decor: 0, menu: 0, best: 0, stars: {} };
@@ -160,7 +160,7 @@ function tyStart() {
   lockGame(() => { cancelAnimationFrame(raf); if (TY) TY.over = true; });
   sfx('ok');
 }
-function tyQuit() { if (!TY) return; if (!confirm('오늘 영업을 그만둘까요? 지금까지 번 돈은 남아요.')) return; tyEnd(true); }
+function tyQuit() { if (!TY) return; if (!confirm('오늘 영업을 그만둘까? 지금까지 번 돈은 남음.')) return; tyEnd(true); }
 function tyNewGuest(i) {
   const st = TY, rec = st.recipes[rint(st.recipes.length)], vip = Math.random() < .08 + st.L.decor * .01;
   const dessert = st.desserts.length && Math.random() < .35 + st.day * .02 ? st.desserts[rint(st.desserts.length)].id : null;
@@ -177,7 +177,7 @@ function tyStep(dt) {
     if (g.walk) { g.walk = Math.max(0, g.walk - dt * 90); return; }
     if (g.left) { g.leaveT -= dt; g.walkOut = (g.walkOut || 0) + dt * 80; if (g.leaveT <= 0) st.guests[i] = null; return; }
     g.pat -= dt; if (g.flash > 0) g.flash -= dt;
-    if (g.pat <= 0) { g.left = true; g.happy = false; g.leaveT = .8; st.lost++; st.combo = 0; tyFx(TY_SPOT[i], 40, '떠났어요…', '#e86a6a'); sfx('bad'); } });
+    if (g.pat <= 0) { g.left = true; g.happy = false; g.leaveT = .8; st.lost++; st.combo = 0; tyFx(TY_SPOT[i], 40, '떠남…', '#e86a6a'); sfx('bad'); } });
   // 우리기
   const brewT = Math.max(1.8, 3.4 - st.L.kettle * .35);
   st.cups.forEach(cp => { if (cp && cp.water && cp.brew && !cp.brew.done) { cp.brew.p += dt / brewT; if (cp.brew.p >= 1.35) tyStopBrew(cp, true); } });
@@ -191,7 +191,7 @@ function tyStopBrew(cp, auto) {
   const w = .1 + TY.L.kettle * .03, p = cp.brew.p;
   cp.brew.q = Math.abs(p - .85) <= w ? 'perfect' : (p >= .55 && p < 1.1) ? 'good' : p < .55 ? 'weak' : 'bitter';
   cp.brew.done = true;
-  const txt = { perfect: '완벽!', good: '좋아요', weak: '너무 연해요', bitter: '써요…' }[cp.brew.q];
+  const txt = { perfect: '완벽!', good: '좋음', weak: '너무 연함', bitter: '씀…' }[cp.brew.q];
   const i = TY.cups.indexOf(cp); tyFx(TY_SLOT_X(i) + 14, 120, txt, cp.brew.q === 'perfect' ? '#ffe27a' : cp.brew.q === 'good' ? '#bfe8a0' : '#e8a0a0');
   sfx(cp.brew.q === 'perfect' ? 'spark' : cp.brew.q === 'good' ? 'tap' : 'bad');
 }
@@ -238,7 +238,7 @@ function tyDraw(p) {
   // 오븐
   const ox = 95; o(ox, 160, 93, 34, '#3a3a42', '#141418'); c(ox + 2, 162, 89, 4, '#5a5a66');
   st.oven.forEach((ov, i) => { const x = ox + 4 + i * 45, y = 168; o(x, y, 41, 24, '#1a1214', '#000'); c(x + 1, y + 19, 39, 4, ov ? '#e05a2a' : '#3a2a26');
-    if (ov) { tyIcon(p, ov.burnt ? 'burnt' : ov.k, x + 13, y + 3, t); if (!ov.ready) { c(x + 3, y + 17, Math.round(35 * Math.min(1, ov.p)), 2, '#ffe27a'); } else if (!ov.burnt && (t >> 3) % 2) { tx('꺼내기!', x + 20, y + 1, '#ffe27a', 8, 'center', true); } else if (ov.burnt) tx('탔어요', x + 20, y + 1, '#e8a0a0', 8, 'center'); }
+    if (ov) { tyIcon(p, ov.burnt ? 'burnt' : ov.k, x + 13, y + 3, t); if (!ov.ready) { c(x + 3, y + 17, Math.round(35 * Math.min(1, ov.p)), 2, '#ffe27a'); } else if (!ov.burnt && (t >> 3) % 2) { tx('꺼내기!', x + 20, y + 1, '#ffe27a', 8, 'center', true); } else if (ov.burnt) tx('탐', x + 20, y + 1, '#e8a0a0', 8, 'center'); }
     else tx('오븐', x + 20, y + 8, '#6a5a60', 8, 'center'); });
   // 재료 버튼
   c(0, 196, TY_W, 76, '#2a1a12'); c(0, 196, TY_W, 1, '#e0b050');
@@ -264,7 +264,7 @@ function tyTap(x, y) {
   if (x >= 138 && y >= 118 && y < 158) return tyBtn('water');
   // 진열장 → 오븐에 굽기
   if (x >= 3 && x < 91 && y >= 160 && y < 194) { const i = Math.floor((x - 7) / 28), d = st.desserts[i]; if (!d) return;
-    const free = st.oven.findIndex(o => !o); if (free < 0) { sfx('bad'); return tyFx(140, 162, '오븐이 꽉 찼어요', '#e8a0a0'); }
+    const free = st.oven.findIndex(o => !o); if (free < 0) { sfx('bad'); return tyFx(140, 162, '오븐이 꽉 참', '#e8a0a0'); }
     st.oven[free] = { k: d.id, p: 0 }; sfx('tap'); return tyFx(140 + free * 45 - 20, 166, `${d.n} 굽기`, '#ffe27a'); }
   // 오븐 꺼내기
   if (x >= 95 && y >= 160 && y < 194) { const i = x < 140 ? 0 : 1, ov = st.oven[i]; if (!ov) return;
@@ -276,24 +276,24 @@ function tyTap(x, y) {
 }
 function tyBtn(k) {
   const st = TY, sel = st.selCup != null ? st.cups[st.selCup] : null;
-  if (k === 'cup') { const i = st.cups.findIndex((c, j) => !c && j < st.nSlots); if (i < 0) { sfx('bad'); return tyFx(60, 118, '작업대가 꽉 찼어요', '#e8a0a0'); } st.cups[i] = { leaf: null, water: false, brew: null, adds: [] }; st.selCup = i; return sfx('tap'); }
+  if (k === 'cup') { const i = st.cups.findIndex((c, j) => !c && j < st.nSlots); if (i < 0) { sfx('bad'); return tyFx(60, 118, '작업대가 꽉 참', '#e8a0a0'); } st.cups[i] = { leaf: null, water: false, brew: null, adds: [] }; st.selCup = i; return sfx('tap'); }
   if (k === 'trash') { if (st.selCup == null || !sel) return; st.cups[st.selCup] = null; st.selCup = null; st.combo = 0; return sfx('bad'); }
   if (k === 'serve') { const ok = st.guests.map((g, i) => g && !g.left && !g.walk && sel && tyMatch(sel, g.rec) ? i : -1).filter(i => i >= 0);
-    if (!sel || !sel.brew || !sel.brew.done) { sfx('bad'); return tyFx(60, 118, '먼저 차를 완성해요', '#e8a0a0'); }
-    if (!ok.length) { sfx('bad'); return tyFx(96, 60, '이 차를 주문한 손님이 없어요', '#e8a0a0'); }
+    if (!sel || !sel.brew || !sel.brew.done) { sfx('bad'); return tyFx(60, 118, '먼저 차를 완성', '#e8a0a0'); }
+    if (!ok.length) { sfx('bad'); return tyFx(96, 60, '이 차를 주문한 손님이 없음', '#e8a0a0'); }
     return tyServe(ok.sort((a, b) => st.guests[a].pat - st.guests[b].pat)[0]); }
-  if (!sel) { sfx('bad'); return tyFx(60, 118, '먼저 찻잔을 놓아요', '#e8a0a0'); }
-  if (TY_LEAF[k]) { if (!tyAllowed(k)) return; if (sel.leaf) { sfx('bad'); return tyFx(TY_SLOT_X(st.selCup) + 14, 118, '이미 찻잎이 있어요', '#e8a0a0'); } sel.leaf = k; return sfx('tap'); }
+  if (!sel) { sfx('bad'); return tyFx(60, 118, '먼저 찻잔을 놓음', '#e8a0a0'); }
+  if (TY_LEAF[k]) { if (!tyAllowed(k)) return; if (sel.leaf) { sfx('bad'); return tyFx(TY_SLOT_X(st.selCup) + 14, 118, '이미 찻잎이 있음', '#e8a0a0'); } sel.leaf = k; return sfx('tap'); }
   if (k === 'water') { if (!sel.leaf) { sfx('bad'); return tyFx(TY_SLOT_X(st.selCup) + 14, 118, '찻잎부터!', '#e8a0a0'); } if (sel.water) return; sel.water = true; sel.brew = { p: 0, done: false }; return sfx('pop'); }
-  if (TY_ADD[k]) { if (!tyAllowed(k)) return; if (!sel.brew || !sel.brew.done) { sfx('bad'); return tyFx(TY_SLOT_X(st.selCup) + 14, 118, '우린 다음에 넣어요', '#e8a0a0'); }
+  if (TY_ADD[k]) { if (!tyAllowed(k)) return; if (!sel.brew || !sel.brew.done) { sfx('bad'); return tyFx(TY_SLOT_X(st.selCup) + 14, 118, '우린 다음에 넣음', '#e8a0a0'); }
     if (sel.adds.includes(k)) return; sel.adds.push(k); return sfx('tap'); }
 }
 function tyMatch(cup, rec) { return cup.leaf === rec.leaf && cup.brew && cup.brew.done && cup.adds.length === rec.adds.length && rec.adds.every(a => cup.adds.includes(a)); }
 function tyServe(gi) {
   const st = TY, g = st.guests[gi], cp = st.selCup != null ? st.cups[st.selCup] : null;
-  if (!cp || !cp.brew || !cp.brew.done) { sfx('bad'); return tyFx(TY_SPOT[gi], 60, '완성된 차를 골라요', '#e8a0a0'); }
-  if (!tyMatch(cp, g.rec)) { g.pat -= 3; st.combo = 0; sfx('bad'); return tyFx(TY_SPOT[gi], 60, `${g.rec.n} 주세요!`, '#e8a0a0'); }
-  if (g.dessert && !(st.stock[g.dessert] > 0)) { sfx('bad'); return tyFx(TY_SPOT[gi], 60, `${TY_DESSERTS.find(d => d.id === g.dessert).n}도요!`, '#ffd27a'); }
+  if (!cp || !cp.brew || !cp.brew.done) { sfx('bad'); return tyFx(TY_SPOT[gi], 60, '완성된 차를 고름', '#e8a0a0'); }
+  if (!tyMatch(cp, g.rec)) { g.pat -= 3; st.combo = 0; sfx('bad'); return tyFx(TY_SPOT[gi], 60, `${g.rec.n} 줘!`, '#e8a0a0'); }
+  if (g.dessert && !(st.stock[g.dessert] > 0)) { sfx('bad'); return tyFx(TY_SPOT[gi], 60, `${TY_DESSERTS.find(d => d.id === g.dessert).n}도!`, '#ffd27a'); }
   const q = cp.brew.q, qm = { perfect: 1.3, good: 1, weak: .6, bitter: .6 }[q];
   let price = g.rec.p * qm + (g.dessert ? TY_DESSERTS.find(d => d.id === g.dessert).p : 0);
   if (g.dessert) st.stock[g.dessert]--;
@@ -317,7 +317,7 @@ function tyEnd(quit) {
    <p style="font-size:1.6rem;margin:6px 0;letter-spacing:4px">${'★'.repeat(stars)}<span style="opacity:.25">${'★'.repeat(3 - stars)}</span></p>
    <p>매출 <b>£${st.cash}</b> <span class="muted">(목표 £${g1} · £${Math.round(g1 * 1.6)} · £${Math.round(g1 * 2.3)})</span></p>
    <p class="muted">손님 ${st.served}명 · 완벽 ${st.perfect}잔 · 최고 콤보 ${st.best} · 놓친 손님 ${st.lost}명</p>
-   ${stars ? `<p>다음 날로 넘어가요! 보유 £${L.cash}</p>` : quit ? '' : '<p class="muted">별을 하나도 못 받아서 같은 날을 다시 해요.</p>'}
+   ${stars ? `<p>다음 날로 넘어감! 보유 £${L.cash}</p>` : quit ? '' : '<p class="muted">별을 하나도 못 받아서 같은 날을 다시 함.</p>'}
    <p class="muted">${r || ''}</p><div class="row"><button class="primary" onclick="closeModal();render()">티룸으로</button></div>`);
 }
 
@@ -332,7 +332,7 @@ VIEWS.tycoon = () => {
    <div class="row" style="justify-content:space-between;margin:8px 0;flex-wrap:wrap"><b>DAY ${L.day}</b><span>보유 <b style="color:var(--gold2)">£${L.cash}</b></span><span class="muted">오늘 목표 £${g1} · ${capTxt('tycoon')}</span></div>
    <button class="primary" style="width:100%;font-size:1.1rem;padding:12px" onclick="tyStart()">▶ Day ${L.day} 영업 시작 (2분)</button></div>
    <details style="margin-top:10px"><summary><b>만드는 법</b></summary><p class="muted" style="line-height:1.8">① <b>찻잔</b> → ② <b>찻잎</b>(홍차·녹차·허브) → ③ <b>뜨거운 물</b>(주전자) → ④ <b style="color:#5fc060">초록 칸</b>에서 <b>탭!</b> → ⑤ 주문대로 우유·꿀·레몬·휘핑 → ⑥ 손님에게 <b>내놓기</b>.<br>
-     디저트: 진열장 → 오븐 → 꺼내기 (오래 두면 타요).<br>연속 완벽은 <b>콤보</b>, <b>VIP</b>는 두 배!</p></details>
+     디저트: 진열장 → 오븐 → 꺼내기 (오래 두면 탐).<br>연속 완벽은 <b>콤보</b>, <b>VIP</b>는 두 배!</p></details>
    <h3>메뉴</h3><div class="toggles">${recs}</div>
    <h3>티룸 업그레이드 <span class="muted" style="font-size:.85rem">(영업으로 번 £ 사용)</span></h3>${ups}
    <p class="muted" style="font-size:.85rem">별을 받으면 다음 날로. 별당 은화 5 + 손님 4명당 1 · 최고 매출 £${L.best || 0}</p></div>`;

@@ -22,7 +22,7 @@ function ramp(hex) {
 const SWATCH = ['#a8344a', '#d8485a', '#f08ab0', '#e8a060', '#e0b050', '#f1e6cc', '#ffffff', '#79b26e', '#4f8a55', '#2e6a5a', '#5a9ad8', '#3a5a8a', '#6a4a8a', '#c4864e', '#8a5530', '#5a3a24', '#7a7a84', '#2a2a32'];
 
 /* ---------- 그리기 도구 ---------- */
-/* 화면 픽셀에 딱 맞춰 그리기: 배율이 정수가 아니어도 1px 선이 사라지지 않게 사각형 경계를 반올림해요 */
+/* 화면 픽셀에 딱 맞춰 그리기: 배율이 정수가 아니어도 1px 선이 사라지지 않게 사각형 경계를 반올림 */
 function snapCtx(g, S) {
   if (!g._fr) { g._fr = g.fillRect.bind(g); g.fillRect = (x, y, w, h) => { const s = g._S || 1, X1 = Math.round(x * s), Y1 = Math.round(y * s), X2 = Math.round((x + w) * s), Y2 = Math.round((y + h) * s); g._fr(X1, Y1, Math.max(1, X2 - X1), Math.max(1, Y2 - Y1)); }; }
   g._S = S; g.setTransform(1, 0, 0, 1, 0, 0);
@@ -124,7 +124,7 @@ const FURN = {
   teacart: { name: '티 카트', cat: 'living', cost: 65, hi: true, dims: () => ({ w: 2, d: 1, h: 54 }), parts: { c: ['metal', '#e0b050'], a: ['glass', '#f8f4ec'] }, drawHi(p, t, C) { TEACARTHI(p, t, C); } },
   lamp: { name: '스탠드', cat: 'living', cost: 25, hi: true, dims: () => ({ w: 1, d: 1, h: 80 }), parts: { a: ['light', '#f1e6cc'], c: ['metal', '#4a4a54'] }, drawHi(p, t, C) { LAMPHI(p, t, C); } },
   gclock: { name: '괘종시계', cat: 'living', cost: 300, eff: '혼자 하는 게임 하루 보상 +1회', hi: true, dims: () => ({ w: 1, d: 1, h: 92 }), parts: { b: ['wood', '#93592f'], c: ['metal', '#e0b050'] }, drawHi(p, t, C) { GCLOCKHI(p, t, C); } },
-  padlock: { name: '자물쇠', cat: 'small', cost: 60, max: 3, top: true, eff: '내 금고를 따기 어려워져요 (하나당 1단계, 최대 3)', hi: true, dims: () => ({ w: 1, d: 1, h: 30 }), parts: { a: ['metal', '#c9a036'], c: ['metal', '#b8bcc4'] }, drawHi(p, t, C) { PADLOCKHI(p, t, C); } },
+  padlock: { name: '자물쇠', cat: 'small', cost: 60, max: 3, top: true, eff: '내 금고를 따기 어려워짐 (하나당 1단계, 최대 3)', hi: true, dims: () => ({ w: 1, d: 1, h: 30 }), parts: { a: ['metal', '#c9a036'], c: ['metal', '#b8bcc4'] }, drawHi(p, t, C) { PADLOCKHI(p, t, C); } },
   safe: { name: '금고', cat: 'small', cost: 200, eff: '출석 보상 +3 (최대 2개)', max: 2, hi: true, dims: () => ({ w: 1, d: 1, h: 38 }), parts: { a: ['body', '#5a606a'], c: ['metal', '#e0b050'] }, drawHi(p, t, C) { SAFEHI(p, t, C); } },
   globe: { name: '지구본', cat: 'living', cost: 55, hi: true, dims: () => ({ w: 1, d: 1, h: 50 }), parts: { a: ['body', '#3a6a9a'], c: ['metal', '#e0b050'] }, drawHi(p, t, C) { GLOBEHI(p, t, C); } },
   telescope: { name: '망원경', cat: 'living', cost: 90, hi: true, dims: () => ({ w: 1, d: 1, h: 60 }), parts: { c: ['metal', '#e0b050'], b: ['wood', '#5a3a24'] }, drawHi(p, t, C) { TELESCOPEHI(p, t, C); } },
@@ -395,7 +395,7 @@ const ARMCHAIRHI = {
 const RTABLEHI = (p, t, C) => { const { c, el } = p, A = C.a, B = C.b, M = C.c, cx = 64, cy = 44, rx = 61, ry = 34;
   // 받침 (천 아래로 살짝)
   el(64, 122, 22, 5, B.o); el(64, 121, 20, 4, B.t); c(58, 104, 12, 18, B.o); c(59, 104, 10, 17, B.t); c(60, 104, 2, 17, B.l);
-  // 늘어진 식탁보: 상판 아래 테두리를 따라 물결치며 내려와요
+  // 늘어진 식탁보: 상판 아래 테두리를 따라 물결치며 내려옴
   for (let i = -rx; i <= rx; i++) { const yb = cy + Math.round(ry * Math.sqrt(Math.max(0, 1 - (i * i) / (rx * rx)))), drop = 26 - Math.round(Math.abs(i) / rx * 8) + Math.round(Math.sin(i / 5) * 2), x = cx + i;
     const fold = ((i + 64) % 12); c(x, yb - 2, 1, drop + 2, A.o); if (Math.abs(i) < rx) { c(x, yb - 1, 1, drop, fold < 2 ? A.d : fold < 5 ? A.f : fold < 9 ? A.t : A.l); c(x, yb + drop - 3, 1, 2, A.f); if ((i + 64) % 4 === 0) c(x, yb + drop - 1, 1, 2, A.L); } }
   // 상판 (타원 전체)
@@ -1110,7 +1110,7 @@ const GARLANDHI = (p, t, C) => { const { c } = p, M = C.c;   // 벽 · 128 × 48
   [[24, 16], [50, 22], [78, 22], [104, 16]].forEach(([x, y], i) => { c(x, y, 3, 3, (t + i) % 2 ? '#f08ab0' : '#9ad0f0'); c(x + 1, y + 1, 1, 1, '#ffffff'); }); };
 
 
-/* 인형: 모든 조각의 테두리를 먼저 그리고 그 위에 속을 칠해서, 조각끼리 맞닿는 곳엔 선이 없고 바깥 실루엣만 남게 해요 */
+/* 인형: 모든 조각의 테두리를 먼저 그리고 그 위에 속을 칠해서, 조각끼리 맞닿는 곳엔 선이 없고 바깥 실루엣만 남게 함 */
 function hblob(p, L) { const { el, c } = p;
   L.forEach(([k, a, f, o]) => { if (o === 0) return; if (k === 'e') el(a[0], a[1], a[2] + 1, a[3] + 1, o || OL); else if (k === 'r') c(a[0] - 1, a[1] - 1, a[2] + 2, a[3] + 2, o || OL); else if (k === 'l') hleaf(p, a[0], a[1], a[2], a[3], a[4] + 2, { o: o || OL, l: o || OL, t: o || OL, f: o || OL }); });
   L.forEach(([k, a, f]) => { if (k === 'e') el(a[0], a[1], a[2], a[3], f); else if (k === 'r') c(a[0], a[1], a[2], a[3], f); else if (k === 'l') hleaf(p, a[0], a[1], a[2], a[3], a[4], { o: f, l: f, t: f, f: f }); }); }
@@ -1185,8 +1185,8 @@ function hscallop(p, x, y, w, A, M) { const { c, el } = p; c(x, y, w, 8, A.o); c
 const CANOPYHI = (p, t, C) => { const { c, orr, el } = p, A = C.a, B = C.b, S = C.c, M = ramp(GOLD);   // 192 × 300
   /* 투시: 바닥 3칸 = 세로 192. 뒤 바닥선 y=108, 앞 바닥선 y=300. 지붕 높이 108.
      → 뒤 가로대 y≈0, 앞 가로대 y≈192. 기둥은 화면에서 수직선.
-     옆면 커튼은 시선과 나란한 면이라 얇은 띠로만 보이고, 뒤 커튼·머리판은 지붕 천에 가려져요.
-     지붕 앞 가장자리 아래로 침대 발치가 보이고, 앞 커튼은 앞 가로대에서 바닥까지 내려와 앞 기둥에 묶여요. */
+     옆면 커튼은 시선과 나란한 면이라 얇은 띠로만 보이고, 뒤 커튼·머리판은 지붕 천에 가려짐.
+     지붕 앞 가장자리 아래로 침대 발치가 보이고, 앞 커튼은 앞 가로대에서 바닥까지 내려와 앞 기둥에 묶임. */
   BEDHI.front(p.sub(32, 76), t, C);
   c(10, 192, 172, 26, 'rgba(20,8,20,.45)'); c(10, 218, 172, 14, 'rgba(20,8,20,.22)');   // 지붕 아래 그늘
   // 지붕 천 (가운데로 모이는 주름 + 장식 단추)
@@ -1769,7 +1769,7 @@ let ROOM_SAVE_T = 0;
 const REMOVED_FURN = { gargoyle: 120, crystalball: 85, cauldron: 95, throne: 260, coffin: 90, tapestry: 80, batmirror: 75 };
 function refundRemoved(r) { let back = 0, n = 0; const keep = i => { if (REMOVED_FURN[i.k] == null) return true; back += REMOVED_FURN[i.k]; n++; return false; };
   r.items = (r.items || []).filter(keep); r.invc = (r.invc || []).filter(keep); if (!n) return false;
-  P.coins = (P.coins || 0) + back; setTimeout(() => toast(`분위기에 맞지 않아 빠진 가구 ${n}개의 값 ${back} 은화를 돌려드렸어요`), 400); return true; }
+  P.coins = (P.coins || 0) + back; setTimeout(() => toast(`분위기에 맞지 않아 빠진 가구 ${n}개의 값 ${back} 은화를 돌려줌`), 400); return true; }
 function myRoom() {
   if (!P.room) P.room = defaultRoom(); const r = P.room; r.inv = r.inv || {}; r.items = r.items || []; r.ow = r.ow || ['plain', 'plank'];
   if (refundRemoved(r)) { ROOM_SAVE_T = 0; setTimeout(() => saveP(), 0); }
@@ -1778,7 +1778,7 @@ function myRoom() {
   if (migrateRoom(r) && Date.now() - ROOM_SAVE_T > 3000) { ROOM_SAVE_T = Date.now(); setTimeout(() => saveP(), 0); }
   return r;
 }
-/* 내 HO의 칠죄종 가구는 처음 한 번 무료로 방에 놓아 줘요 (자리가 없으면 보관함) */
+/* 내 HO의 칠죄종 가구는 처음 한 번 무료로 방에 놓아 줌 (자리가 없으면 보관함) */
 function sinGift(r, s) {
   if (!s || !FURN[s]) return false; r.gift = r.gift || []; if (r.gift.includes(s)) return false; r.gift.push(s);
   if (r.items.some(i => i.k === s) || (r.inv && r.inv[s]) || (r.invc || []).some(x => x.k === s)) return true;   // 이미 가지고 있으면 표시만
@@ -1789,7 +1789,7 @@ function roomCnt(k) { if (!P || !P.room) return 0; const items = (P.room.items |
 const wallCol = r => (r.cols.wall || {})[r.wall] || (WALLS[r.wall] || WALLS.plain).col, floorCol = r => (r.cols.floor || {})[r.floor] || (FLOORS[r.floor] || FLOORS.plank).col;
 
 const layerOf = f => f.wall ? 0 : f.flat ? 1 : f.top ? 3 : 2;
-/* 의자류는 책상·테이블 칸에 겹쳐 놓을 수 있어요 (끼워 넣은 모양) */
+/* 의자류는 책상·테이블 칸에 겹쳐 놓을 수 있음 (끼워 넣은 모양) */
 const SEATS = { chair: 1, stool: 1, armchair: 1 }, TABLES = { desk: 1, ctable: 1, rtable: 1, dtable: 1, teaset: 1, dresser: 1 };
 const canOverlap = (a, b) => (SEATS[a] && TABLES[b]) || (SEATS[b] && TABLES[a]);
 function fits(room, k, c, r, skipId, dir) {
@@ -1815,7 +1815,7 @@ function itemBox(i, room) {
 }
 function itemAt(room, x, y) { return drawOrder(room).reverse().find(i => { const b = itemBox(i, room); return b && x >= b.x && x < b.x + b.w && y >= b.y && y < b.y + b.h; }) || null; }
 function drawOrder(room) {
-  const L = i => { const f = FURN[i.k] || {}; return f.wall ? 0 : f.flat ? 1 : 2; };   // 위에 얹는 소품(top)은 같은 줄 가구 바로 뒤에 그려요
+  const L = i => { const f = FURN[i.k] || {}; return f.wall ? 0 : f.flat ? 1 : 2; };   // 위에 얹는 소품(top)은 같은 줄 가구 바로 뒤에 그림
   // 앞뒤 순서: 아래쪽(앞) 줄일수록 나중에 · 같은 줄이면 의자가 책상 앞 · 직접 고른 앞뒤(z)는 한 줄씩 당기거나 미룸
   const key = i => i.r + fd(i.k, i.dir) + (FURN[i.k].top ? .5 : 0) + (i.z || 0) * 1.01;
   // 책상에 겹쳐 놓은 의자: 앞(정면)을 보면 책상 뒤에 앉은 모습(뒤에 그림), 그 밖의 방향은 책상 앞에 끼워 넣은 모습(앞에 그림)
@@ -1869,13 +1869,13 @@ function gbHtml(owner) {
   return `<div class="panel"><h3 style="margin-top:0">📖 방명록 <span class="muted">${list.length}</span></h3>
    ${mine ? '' : `<div class="row"><input id="gbText" maxlength="300" placeholder="한마디 남기기…" onkeydown="if(event.key==='Enter'&&!event.isComposing)gbPost('${owner}')" style="flex:1"><button class="primary" onclick="gbPost('${owner}')">남기기</button></div>`}
    ${list.length ? list.map(g => `<div class="item" style="margin:6px 0"><div><b>${esc(g.code ? cname(g.code) : g.name)}</b> <span class="muted">${esc(g.name || '')} · ${ago(g.at)}</span><div class="utext" style="white-space:pre-wrap">${esc(g.text)}</div></div>
-     ${(g.uid === ME.uid || mine || IS_ADMIN) ? `<button class="sm" onclick="gbDel('${g.id}')">삭제</button>` : ''}</div>`).join('') : '<p class="muted">아직 아무도 다녀가지 않았어요.</p>'}</div>`;
+     ${(g.uid === ME.uid || mine || IS_ADMIN) ? `<button class="sm" onclick="gbDel('${g.id}')">삭제</button>` : ''}</div>`).join('') : '<p class="muted">아직 아무도 다녀가지 않음.</p>'}</div>`;
 }
 function effectsHtml(room) {
   const seen = {}, out = [];
   room.items.forEach(i => { const f = FURN[i.k]; if (!f || !f.eff) return; const key = f.plant ? 'plant' : (i.k === 'tallshelf' ? 'shelf' : i.k); seen[key] = seen[key] || { n: 0, f, name: f.plant ? '화분류' : f.name }; seen[key].n++; });
   Object.values(seen).forEach(s => out.push(`<span class="chip on" style="cursor:default">${s.name}${s.n > 1 ? ' ×' + s.n : ''} · ${s.f.eff}</span>`));
-  return out.length ? `<div class="toggles">${out.join('')}</div>` : '<p class="muted" style="margin:4px 0">✨ 가구점의 일부 가구는 놓아두기만 해도 작은 효과가 있어요.</p>';
+  return out.length ? `<div class="toggles">${out.join('')}</div>` : '<p class="muted" style="margin:4px 0">✨ 가구점의 일부 가구는 놓아두기만 해도 작은 효과가 있음.</p>';
 }
 const fprev = (k, col, fit, dir) => { const dm = dimsOf(k, dir), W = dm.w * 32 + 4, H = Math.min(160, dm.h + 14), s = fit ? Math.min(fit / W, fit / H, 2) : 0;
   return `<canvas class="fprev" data-k="${k}" ${dir ? `data-dir="${dir}"` : ''} ${col ? `data-col='${esc(JSON.stringify(col))}'` : ''} width="${W * 2}" height="${H * 2}" ${s ? `style="width:${Math.round(W * s)}px;height:${Math.round(H * s)}px"` : ''}></canvas>`; };
@@ -1899,12 +1899,12 @@ VIEWS.room = () => {
      <button onclick="diaryOpen(ME.uid)">📔 일기장</button>
      <button onclick="go('map')">🚪 저택으로 나가기</button></div>
    ${RM.edit ? `<div class="roomedit">
-     ${selItem ? `<p style="margin:6px 0"><b>${FURN[selItem.k].name}</b> 선택됨 — 옮길 칸을 누르거나 끌어서 옮겨요.</p>
+     ${selItem ? `<p style="margin:6px 0"><b>${FURN[selItem.k].name}</b> 선택됨 — 옮길 칸을 누르거나 끌어서 옮김.</p>
         <div class="row" style="flex-wrap:wrap;gap:6px">${FURN[selItem.k].dirs ? `<button class="sm" onclick="rotateItem('${selItem.id}')">↻ 돌리기 (${DIRN[selItem.dir || 0]})</button>` : ''}${Object.keys(FURN[selItem.k].parts || {}).length ? `<button class="sm" onclick="recolorItem('${selItem.id}')">${recolorLabel(selItem.rc || 0, room.dye)}</button>` : ''}${FURN[selItem.k].pic ? `<button class="sm" onclick="picPick('${selItem.id}')">🖼 그림 넣기</button>${selItem.img ? `<button class="sm" onclick="picClear('${selItem.id}')">↺ 기본 그림</button>` : ''}` : ''}<button class="sm" onclick="zItem('${selItem.id}',1)">⬆ 앞으로</button><button class="sm" onclick="zItem('${selItem.id}',-1)">⬇ 뒤로</button><button class="sm" onclick="roomStore()">📦 보관함으로</button><button class="sm" onclick="RM.sel=null;render()">선택 해제</button></div>`
-      : selInv ? `<p style="margin:6px 0"><b>${FURN[selInv.k].name}</b> — 놓을 칸을 눌러요. ${FURN[selInv.k].wall ? '(벽 장식은 위쪽 벽에)' : ''}</p><div class="row" style="flex-wrap:wrap;gap:6px">${FURN[selInv.k].dirs ? `<button class="sm" onclick="rotateItem('${selInv.id}',true)">↻ 돌리기 (${DIRN[selInv.dir || 0]})</button>` : ''}${Object.keys(FURN[selInv.k].parts || {}).length ? `<button class="sm" onclick="recolorItem('${selInv.id}',true)">${recolorLabel(selInv.rc || 0, room.dye)}</button>` : ''}<button class="sm" onclick="RM.sel=null;RM.hover=null;render()">취소</button></div>`
-      : '<p class="muted" style="margin:6px 0">가구를 눌러 고르고, 원하는 칸을 누르거나 끌어서 옮겨요.</p>'}
+      : selInv ? `<p style="margin:6px 0"><b>${FURN[selInv.k].name}</b> — 놓을 칸을 누름. ${FURN[selInv.k].wall ? '(벽 장식은 위쪽 벽에)' : ''}</p><div class="row" style="flex-wrap:wrap;gap:6px">${FURN[selInv.k].dirs ? `<button class="sm" onclick="rotateItem('${selInv.id}',true)">↻ 돌리기 (${DIRN[selInv.dir || 0]})</button>` : ''}${Object.keys(FURN[selInv.k].parts || {}).length ? `<button class="sm" onclick="recolorItem('${selInv.id}',true)">${recolorLabel(selInv.rc || 0, room.dye)}</button>` : ''}<button class="sm" onclick="RM.sel=null;RM.hover=null;render()">취소</button></div>`
+      : '<p class="muted" style="margin:6px 0">가구를 눌러 고르고, 원하는 칸을 누르거나 끌어서 옮김.</p>'}
      <h4 style="margin:10px 0 4px">📦 보관함 <span class="muted">${room.invc.length}</span></h4>
-     ${room.invc.length ? `<div class="toggles">${Object.entries(group).map(([k, list]) => list.map(x => `<span class="chip ${selInv === x ? 'on' : ''}" onclick="RM.sel='inv:${x.id}';RM.hover=null;render()">${fprev(k, x.col, 0, x.dir)} ${FURN[k].name}</span>`).join('')).join('')}</div>` : '<p class="muted">비어 있어요. 가구점에서 사 오세요.</p>'}
+     ${room.invc.length ? `<div class="toggles">${Object.entries(group).map(([k, list]) => list.map(x => `<span class="chip ${selInv === x ? 'on' : ''}" onclick="RM.sel='inv:${x.id}';RM.hover=null;render()">${fprev(k, x.col, 0, x.dir)} ${FURN[k].name}</span>`).join('')).join('')}</div>` : '<p class="muted">비어 있음. 가구점에서 사 오기.</p>'}
      <h4 style="margin:10px 0 4px">🧱 벽지 <button class="sm" onclick="recolorArea('wall')">${recolorLabel((room.arc.wall || {})[room.wall] || 0, room.dye).replace('색 바꾸기', '벽 색')}</button></h4><div class="toggles">${room.ow.filter(k => WALLS[k]).map(k => `<span class="chip ${room.wall === k ? 'on' : ''}" onclick="roomSet('wall','${k}')">${WALLS[k].name}</span>`).join('')}</div>
      <h4 style="margin:10px 0 4px">🪵 바닥 <button class="sm" onclick="recolorArea('floor')">${recolorLabel((room.arc.floor || {})[room.floor] || 0, room.dye).replace('색 바꾸기', '바닥 색')}</button></h4><div class="toggles">${room.ow.filter(k => FLOORS[k]).map(k => `<span class="chip ${room.floor === k ? 'on' : ''}" onclick="roomSet('floor','${k}')">${FLOORS[k].name}</span>`).join('')}</div>
      <h4 style="margin:10px 0 4px">🖼 방 테두리 <button class="sm" onclick="recolorArea('frame')">${recolorLabel(room.arc.frame || 0, room.dye).replace('색 바꾸기', '테두리 색')}</button></h4>
@@ -1923,11 +1923,11 @@ VIEWS.visit = () => {
   }
   const us = USERS.filter(u => u.ho).sort((a, b) => String(a.ho).localeCompare(String(b.ho)));
   return `<div style="margin:-4px 0 10px"><button class="sm" onclick="go('room')">← 내 방으로</button></div>
-   <div class="panel"><h2 style="margin-top:0">👀 놀러 가기</h2><p class="muted">다른 손님의 방을 구경하고 좋아요와 방명록을 남겨 보세요.</p>
+   <div class="panel"><h2 style="margin-top:0">👀 놀러 가기</h2><p class="muted">다른 손님 방 구경 · 좋아요 · 방명록</p>
    <div class="grid g2">${us.map(u => `<div class="item rcard" onclick="RV='${u.id}';render();window.scrollTo(0,0)" style="cursor:pointer;display:block">
      <canvas class="rthumb roomcv" data-uid="${u.id}" width="${RW * 2}" height="${RH * 2}"></canvas>
      <div class="row" style="justify-content:space-between;margin-top:4px"><b>${esc(roomTitle(u.id))}</b><span class="muted">❤ ${likesOf(u.id).length} · 📖 ${GUESTBOOK.filter(g => g.owner === u.id).length}</span></div>
-     <div class="muted">${esc(uname(u))}${u.id === ME.uid ? ' (나)' : ''}</div></div>`).join('') || '<p class="muted">아직 HO를 고른 손님이 없어요.</p>'}</div></div>`;
+     <div class="muted">${esc(uname(u))}${u.id === ME.uid ? ' (나)' : ''}</div></div>`).join('') || '<p class="muted">아직 HO를 고른 손님이 없음.</p>'}</div></div>`;
 };
 
 /* ---------- 렌더 후처리 · 애니메이션 ---------- */
@@ -1948,7 +1948,7 @@ function paintPreview(c) {
   if (FLOORS[k]) { drawFloor(tg, k, col && col.a); g.drawImage(tmp, OX + 40, FY + 40, 64, 64, 0, 0, c.width, c.height); }
 }
 let RM_HALF = 0;
-setInterval(() => {      // 140ms마다: 평소엔 두 번에 한 번 그리고, 움직이는 그림이 있으면 매번 그려요
+setInterval(() => {      // 140ms마다: 평소엔 두 번에 한 번 그리고, 움직이는 그림이 있으면 매번 그림
   RM_HALF ^= 1; if (!RM_HALF) RM.t++;
   if (!ME || !P || (tab !== 'room' && tab !== 'visit') || document.hidden) return;
   const cv = document.getElementById('roomCv'), room = cv && hoRoom(tab === 'room' ? ME.uid : RV);
@@ -1994,29 +1994,29 @@ function bindRoomCv(cv) {
   };
   cv.onpointercancel = () => { RM.drag = null; RM.hover = null; window.GAME_LOCK = false; render(); };
 }
-function moveItem(it, s) { const room = myRoom(); if (!fits(room, it.k, s.c, s.r, it.id, it.dir)) { sfx('bad'); toast('거기엔 이미 무언가 있어요'); render(); return; } it.c = s.c; it.r = s.r; sfx('tap'); saveP(); render(); }
+function moveItem(it, s) { const room = myRoom(); if (!fits(room, it.k, s.c, s.r, it.id, it.dir)) { sfx('bad'); toast('거기엔 이미 무언가 있음'); render(); return; } it.c = s.c; it.r = s.r; sfx('tap'); saveP(); render(); }
 function placeInv(x, s) {
   const room = myRoom(), f = FURN[x.k]; if (!s) return;
-  if (!fits(room, x.k, s.c, s.r, null, x.dir)) { sfx('bad'); toast('거기엔 이미 무언가 있어요'); return; }
+  if (!fits(room, x.k, s.c, s.r, null, x.dir)) { sfx('bad'); toast('거기엔 이미 무언가 있음'); return; }
   room.invc = room.invc.filter(y => y !== x); const it = { id: rmId(), k: x.k, c: s.c, r: s.r }; if (x.col) it.col = x.col; if (x.rc) it.rc = x.rc; if (x.dir) it.dir = x.dir; if (x.img) it.img = x.img; if (x.imgMs) it.imgMs = x.imgMs; room.items.push(it);
   const next = room.invc.find(y => y.k === x.k); RM.sel = next ? 'inv:' + next.id : null; RM.hover = null; sfx('pop'); saveP(); render();
-  if (f.eff && f.max && roomCnt(x.k) > f.max) toast(`효과는 ${f.max}개까지만 적용돼요`);
+  if (f.eff && f.max && roomCnt(x.k) > f.max) toast(`효과는 ${f.max}개까지만 적용됨`);
 }
 function roomStore() {
   const room = myRoom(), it = room.items.find(i => 'id:' + i.id === RM.sel); if (!it) return;
   room.items = room.items.filter(i => i !== it); const sv = { id: rmId(), k: it.k, col: it.col || null, rc: it.rc || 0, dir: it.dir || 0 }; if (it.img) sv.img = it.img; if (it.imgMs) sv.imgMs = it.imgMs; room.invc.push(sv); RM.sel = null; sfx('tap'); saveP(); render();
 }
 const DIRN = ['앞', '왼쪽', '뒤', '오른쪽'];
-function zItem(id, d) { const it = myRoom().items.find(i => i.id === id); if (!it) return; const z = Math.max(-3, Math.min(3, (it.z || 0) + d)); if (z === (it.z || 0)) { toast(d > 0 ? '더 앞으로는 못 가요' : '더 뒤로는 못 가요'); return; } it.z = z; if (!it.z) delete it.z; sfx('tap'); saveP(); render(); }
-/* 그림 넣기: 고른 사진을 액자 비율로 잘라 작은 도트 그림으로 바꿔 저장 (방 구경하는 모두에게 보여요) */
+function zItem(id, d) { const it = myRoom().items.find(i => i.id === id); if (!it) return; const z = Math.max(-3, Math.min(3, (it.z || 0) + d)); if (z === (it.z || 0)) { toast(d > 0 ? '더 앞으로는 못 감' : '더 뒤로는 못 감'); return; } it.z = z; if (!it.z) delete it.z; sfx('tap'); saveP(); render(); }
+/* 그림 넣기: 고른 사진을 액자 비율로 잘라 작은 도트 그림으로 바꿔 저장 (방 구경하는 모두에게 보임) */
 function picPick(id) {
   const it = myRoom().items.find(i => i.id === id); if (!it || !FURN[it.k].pic) return;
   const inp = document.createElement('input'); inp.type = 'file'; inp.accept = 'image/*';
   inp.onchange = async () => { const file = inp.files && inp.files[0]; if (!file) return;
-    if (typeof gifStrip === 'function') { try { const s = await gifStrip(file, FURN[it.k].pic, pixelize); if (s) { it.img = s.url; it.imgMs = s.ms; delete PIXC[it.img]; saveP(); sfx('ok'); toast(`움직이는 그림을 넣었어요! (${s.n}장면)`); render(); return; } } catch (e) {} }
+    if (typeof gifStrip === 'function') { try { const s = await gifStrip(file, FURN[it.k].pic, pixelize); if (s) { it.img = s.url; it.imgMs = s.ms; delete PIXC[it.img]; saveP(); sfx('ok'); toast(`움직이는 그림을 넣음! (${s.n}장면)`); render(); return; } } catch (e) {} }
     const url = URL.createObjectURL(file), im = new Image();
-    im.onload = () => { try { it.img = pixelize(im, FURN[it.k].pic); delete it.imgMs; delete PIXC[it.img]; saveP(); sfx('ok'); toast('그림을 넣었어요! 도트로 바꿔서 걸었어요'); render(); } catch (e) { toast('그림을 바꾸지 못했어요'); } URL.revokeObjectURL(url); };
-    im.onerror = () => { toast('이 파일은 그림으로 열 수 없어요'); URL.revokeObjectURL(url); }; im.src = url; };
+    im.onload = () => { try { it.img = pixelize(im, FURN[it.k].pic); delete it.imgMs; delete PIXC[it.img]; saveP(); sfx('ok'); toast('그림을 넣음! 도트로 바꿔서 걺'); render(); } catch (e) { toast('그림을 바꾸지 못함'); } URL.revokeObjectURL(url); };
+    im.onerror = () => { toast('이 파일은 그림으로 열 수 없음'); URL.revokeObjectURL(url); }; im.src = url; };
   inp.click();
 }
 function pixelize(im, sz) {
@@ -2037,7 +2037,7 @@ function rotateItem(id, inInv) {
     if (inInv) { it.dir = nd; sfx('tap'); saveP(); render(); return; }
     if (fits(room, it.k, it.c, it.r, it.id, nd)) { it.dir = nd; sfx('tap'); saveP(); render(); return; }
     const s = nearFree(room, it.k, it.c, it.r, nd, it.id); if (s && Math.abs(s.c - it.c) + Math.abs(s.r - it.r) <= 3) { it.dir = nd; it.c = s.c; it.r = s.r; sfx('tap'); saveP(); render(); return; } }
-  sfx('bad'); toast('돌릴 자리가 없어요');
+  sfx('bad'); toast('돌릴 자리가 없음');
 }
 function roomEdit(on) { RM.edit = on; RM.sel = null; RM.hover = null; render(); }
 function roomSet(slot, k) { const room = myRoom(); room[slot] = k; sfx('tap'); saveP(); render(); }
@@ -2063,11 +2063,11 @@ function furnColorModal(k, cols, title, okText, note, onOk, back) {
   colorModal({ title, okText, note, back, parts, defs, cols: Object.assign({}, defs, cols || {}), pw: dimsOf(k).w * 32 + 8, ph: Math.min(160, dimsOf(k).h + 16),
     preview: (g, col) => drawSprite(g, k, 4, Math.max(10, Math.min(160, dimsOf(k).h + 16) - dimsOf(k).h - 4), RM.t, null, col), onOk });
 }
-function useRecolor(rc) { const room = myRoom(); if ((rc || 0) < 1) return true; if (room.dye > 0) { room.dye--; return true; } toast('염료가 없어요. 가구점 「염료」에서 살 수 있어요'); sfx('bad'); return false; }
+function useRecolor(rc) { const room = myRoom(); if ((rc || 0) < 1) return true; if (room.dye > 0) { room.dye--; return true; } toast('염료가 없음. 가구점 「염료」에서 살 수 있음'); sfx('bad'); return false; }
 function recolorItem(id, inInv) {
   const room = myRoom(), it = inInv ? room.invc.find(x => x.id === id) : room.items.find(i => i.id === id); if (!it) return; const rc = it.rc || 0;
-  if (rc >= 1 && room.dye < 1) { toast('염료가 없어요. 가구점 「염료」에서 살 수 있어요'); sfx('bad'); return; }
-  furnColorModal(it.k, it.col, `${FURN[it.k].name} 색 바꾸기`, rc < 1 ? '무료로 바꾸기' : '염료 1개로 바꾸기', rc < 1 ? '살 때 고른 뒤 한 번은 무료로 바꿀 수 있어요. 그다음부터는 염료가 들어요.' : `염료 보유 ${room.dye}개`,
+  if (rc >= 1 && room.dye < 1) { toast('염료가 없음. 가구점 「염료」에서 살 수 있음'); sfx('bad'); return; }
+  furnColorModal(it.k, it.col, `${FURN[it.k].name} 색 바꾸기`, rc < 1 ? '무료로 바꾸기' : '염료 1개로 바꾸기', rc < 1 ? '살 때 고른 뒤 한 번은 무료로 바꿀 수 있음. 그다음부터는 염료가 듦.' : `염료 보유 ${room.dye}개`,
     cols => { if (!useRecolor(rc)) return; it.col = cols; it.rc = rc + 1; saveP(); sfx('spark'); closeModal(); render(); });
 }
 function areaPreview(slot, style) { return (g, col) => { const tmp = document.createElement('canvas'); tmp.width = RW; tmp.height = RH; const tg = tmp.getContext('2d');
@@ -2079,8 +2079,8 @@ function recolorArea(slot) {
   const cur = slot === 'wall' ? wallCol(room) : slot === 'floor' ? floorCol(room) : (room.cols.frame || '#5a3a22');
   const def = slot === 'wall' ? WALLS[style].col : slot === 'floor' ? FLOORS[style].col : '#5a3a22';
   const rc = slot === 'frame' ? (room.arc.frame || 0) : ((room.arc[slot] || {})[style] || 0);
-  if (rc >= 1 && room.dye < 1) { toast('염료가 없어요. 가구점 「염료」에서 살 수 있어요'); sfx('bad'); return; }
-  colorModal({ title: { wall: '벽 색', floor: '바닥 색', frame: '방 테두리 색' }[slot], okText: rc < 1 ? '무료로 바꾸기' : '염료 1개로 바꾸기', note: rc < 1 ? '처음 한 번은 무료예요.' : `염료 보유 ${room.dye}개`,
+  if (rc >= 1 && room.dye < 1) { toast('염료가 없음. 가구점 「염료」에서 살 수 있음'); sfx('bad'); return; }
+  colorModal({ title: { wall: '벽 색', floor: '바닥 색', frame: '방 테두리 색' }[slot], okText: rc < 1 ? '무료로 바꾸기' : '염료 1개로 바꾸기', note: rc < 1 ? '처음 한 번은 무료.' : `염료 보유 ${room.dye}개`,
     parts: [['a', '색']], defs: { a: def }, cols: { a: cur }, pw: 120, ph: 96, preview: areaPreview(slot, style),
     onOk: cols => { if (!useRecolor(rc)) return; if (slot === 'frame') { room.cols.frame = cols.a; room.arc.frame = rc + 1; } else { room.cols[slot][style] = cols.a; room.arc[slot][style] = rc + 1; } saveP(); sfx('spark'); closeModal(); render(); } });
 }
@@ -2095,7 +2095,7 @@ function openFurnShop() {
   const owned = k => room.invc.filter(x => x.k === k).length + room.items.filter(i => i.k === k).length;
   let list = '';
   if (SHOPTAB === 'dye') {
-    list = `<div class="item" style="margin:6px 0"><div style="flex:1"><b>🎨 염료</b><div class="muted" style="font-size:.85rem">색을 다시 바꿀 때 1개씩 써요 (첫 한 번은 무료).</div><div>보유 <b>${room.dye}</b>개</div></div>
+    list = `<div class="item" style="margin:6px 0"><div style="flex:1"><b>🎨 염료</b><div class="muted" style="font-size:.85rem">색을 다시 바꿀 때 1개씩 씀 (첫 한 번은 무료).</div><div>보유 <b>${room.dye}</b>개</div></div>
       <div style="display:flex;flex-direction:column;gap:4px"><button onclick="buyDye(1)" ${P.coins < price(DYE_COST) ? 'disabled' : ''}>1개 · ${price(DYE_COST)} 은화</button><button onclick="buyDye(5)" ${P.coins < price(DYE5_COST) ? 'disabled' : ''}>5개 · ${price(DYE5_COST)} 은화</button></div></div>`;
   } else if (SHOPTAB === 'wp' || SHOPTAB === 'fl') {
     const TT = SHOPTAB === 'wp' ? WALLS : FLOORS, slot = SHOPTAB === 'wp' ? 'wall' : 'floor';
@@ -2116,17 +2116,17 @@ function openFurnShop() {
   document.querySelectorAll('#mbox canvas.fprev').forEach(c => { c.style.imageRendering = 'pixelated'; paintPreview(c); });
 }
 function buyFurn(k) {
-  const f = FURN[k], c = price(f.cost); if (P.coins < c) return toast('은화가 부족해요');
-  if (!Object.keys(f.parts || {}).length) { if (!confirm(`${f.name}을(를) ${c} 은화에 살까요?`) || !spend(c)) return; const room = myRoom(); room.invc.push({ id: rmId(), k, col: null, rc: 0 }); saveP(); sfx('ok'); toast(`${f.name}을(를) 샀어요! 꾸미기에서 놓아 보세요`); openFurnShop(); return; }
-  furnColorModal(k, null, `${f.name} — 색 고르고 사기`, `${c} 은화로 사기`, '산 뒤에도 한 번은 무료로 색을 바꿀 수 있어요.', cols => {
-    if (!spend(c)) return; const room = myRoom(); room.invc.push({ id: rmId(), k, col: cols, rc: 0 }); saveP(); sfx('ok'); toast(`${f.name}을(를) 샀어요! 꾸미기에서 놓아 보세요`); openFurnShop(); }, 'openFurnShop()');
+  const f = FURN[k], c = price(f.cost); if (P.coins < c) return toast('은화가 부족');
+  if (!Object.keys(f.parts || {}).length) { if (!confirm(`${f.name}을(를) ${c} 은화에 살까?`) || !spend(c)) return; const room = myRoom(); room.invc.push({ id: rmId(), k, col: null, rc: 0 }); saveP(); sfx('ok'); toast(`${f.name} 구입 완료! 꾸미기에서 놓아 보기`); openFurnShop(); return; }
+  furnColorModal(k, null, `${f.name} — 색 고르고 사기`, `${c} 은화로 사기`, '산 뒤에도 한 번은 무료로 색을 바꿀 수 있음.', cols => {
+    if (!spend(c)) return; const room = myRoom(); room.invc.push({ id: rmId(), k, col: cols, rc: 0 }); saveP(); sfx('ok'); toast(`${f.name} 구입 완료! 꾸미기에서 놓아 보기`); openFurnShop(); }, 'openFurnShop()');
 }
 function buyDeco(slot, k) {
-  const TT = slot === 'wall' ? WALLS : FLOORS, c = price(TT[k].cost); if (P.coins < c) return toast('은화가 부족해요');
-  colorModal({ title: `${TT[k].name} — 색 고르고 사기`, okText: `${c} 은화로 사기`, note: '산 뒤에도 한 번은 무료로 색을 바꿀 수 있어요.', back: 'openFurnShop()', parts: [['a', '색']], defs: { a: TT[k].col }, cols: { a: TT[k].col }, pw: 120, ph: 96, preview: areaPreview(slot, k),
+  const TT = slot === 'wall' ? WALLS : FLOORS, c = price(TT[k].cost); if (P.coins < c) return toast('은화가 부족');
+  colorModal({ title: `${TT[k].name} — 색 고르고 사기`, okText: `${c} 은화로 사기`, note: '산 뒤에도 한 번은 무료로 색을 바꿀 수 있음.', back: 'openFurnShop()', parts: [['a', '색']], defs: { a: TT[k].col }, cols: { a: TT[k].col }, pw: 120, ph: 96, preview: areaPreview(slot, k),
     onOk: cols => { if (!spend(c)) return; const room = myRoom(); if (!room.ow.includes(k)) room.ow.push(k); room[slot] = k; room.cols[slot][k] = cols.a; room.arc[slot][k] = 0; saveP(); sfx('ok'); openFurnShop(); } });
 }
-function buyDye(n) { const c = price(n === 5 ? DYE5_COST : DYE_COST); if (!spend(c)) return; const room = myRoom(); room.dye = (room.dye || 0) + n; saveP(); sfx('ok'); toast(`염료 ${n}개를 샀어요`); openFurnShop(); }
+function buyDye(n) { const c = price(n === 5 ? DYE5_COST : DYE_COST); if (!spend(c)) return; const room = myRoom(); room.dye = (room.dye || 0) + n; saveP(); sfx('ok'); toast(`염료 ${n}개 구입 완료`); openFurnShop(); }
 
 /* ---------- 좋아요 · 방명록 ---------- */
 async function roomLike(owner) {
@@ -2139,7 +2139,7 @@ async function gbPost(owner) {
   try { await B.add('guestbook', { owner, uid: ME.uid, name: PROF.name || '', code: PROF.ho || '', text: text.slice(0, 300), at: Date.now() }); el.value = ''; el.blur(); sfx('ok'); render(); }
   catch (e) { toast('실패: ' + (e.code || e.message)); }
 }
-async function gbDel(id) { if (!confirm('이 글을 지울까요?')) return; try { await B.del('guestbook/' + id); } catch (e) { toast('실패: ' + (e.code || e.message)); } }
+async function gbDel(id) { if (!confirm('이 글을 지울까?')) return; try { await B.del('guestbook/' + id); } catch (e) { toast('실패: ' + (e.code || e.message)); } }
 
 function roomOnAuth(u) {
   roomUnsubs.forEach(f => { try { f(); } catch (e) {} }); roomUnsubs = []; ROOMLIKES = []; GUESTBOOK = []; RM = { edit: false, sel: null, drag: null, hover: null, t: RM.t }; RV = null;

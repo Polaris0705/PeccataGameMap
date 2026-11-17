@@ -1,5 +1,5 @@
 /* ================= 🔮 오늘의 운세 — 칠죄종 타로 =================
-   하루 한 장. 7장 × 정방향/역방향 = 14가지. 뽑은 날 하루 효과가 붙어요.
+   하루 한 장. 7장 × 정방향/역방향 = 14가지. 뽑은 날 하루 효과가 붙음.
    P.tarot = { v:2, date, card(0~6), rev, bonus }
    효과: coin(게임 보상 배율) · shop(상점·가구점 가격 배율) · grow(온실 성장 시간 배율) · hint(서재 선반 힌트 ±) · bonus(뽑자마자 은화)
 =================================================================== */
@@ -75,10 +75,10 @@ VIEWS.tarot = () => {
     return `<div class="panel"><h2>🔮 오늘의 운세</h2><div style="text-align:center;padding:10px 0"><div class="fortflip done">${fortCardHtml(t, 150)}</div>
       <h2 style="margin:10px 0 2px">${esc(fortName(t))}</h2><p class="story" style="margin:6px 12px">${esc(f.msg)}</p>
       <p style="color:${t.rev ? 'var(--wine2)' : 'var(--gold2)'};margin:4px 0">${t.rev ? '⚠' : '✨'} 오늘의 효과: ${esc(f.fx)}</p>${t.bonus ? `<p class="muted">받은 은화 +${t.bonus}</p>` : ''}
-      <p class="muted" style="font-size:.8rem">효과는 오늘 자정(한국 시간)까지예요. 내일 또 뽑을 수 있어요.</p></div></div>`; }
+      <p class="muted" style="font-size:.8rem">효과: 오늘 자정까지</p></div></div>`; }
   return `<style>.fortpick{display:flex;justify-content:center;gap:10px;margin:14px 0}.fortflip{perspective:600px;display:inline-block;cursor:pointer;transition:transform .2s}.fortflip:hover{transform:translateY(-6px)}
     .fortflip.go canvas{animation:fortspin .7s ease-in-out forwards}@keyframes fortspin{0%{transform:rotateY(0)}50%{transform:rotateY(90deg) scale(1.08)}100%{transform:rotateY(0) scale(1.08)}}</style>
-   <div class="panel"><h2>🔮 오늘의 운세</h2><p class="muted">칠죄종 카드 일곱 장 중 하나가 당신을 기다려요. 마음이 가는 카드를 고르세요.<br>정방향이면 좋은 효과, 역방향이면 조심해야 하지만 위로금이 있어요.</p>
+   <div class="panel"><h2>🔮 오늘의 운세</h2><p class="muted">칠죄종 카드 7장 중 1장 선택<br>정방향이면 좋은 효과, 역방향이면 조심해야 하지만 위로금이 있음.</p>
    <div class="fortpick">${[0, 1, 2].map(i => `<div class="fortflip" id="fp${i}" onclick="tarotPick(${i})">${fortCardHtml(null, 90)}</div>`).join('')}</div></div>`;
 };
 function tarotPick(i) {
@@ -89,13 +89,13 @@ function tarotPick(i) {
 }
 /* 내 정보 · 방에 붙는 작은 표시 */
 function fortBadge(p, own) {
-  const t = fortToday(p); if (!t) return own ? `<span class="chip" onclick="${typeof featOpen === 'function' && featOpen('tarot') ? "goFeat('tarot')" : "toast('점술 방을 찾으면 운세를 뽑을 수 있어요')"}" style="cursor:pointer">🔮 오늘의 운세 뽑기</span>` : '';
+  const t = fortToday(p); if (!t) return own ? `<span class="chip" onclick="${typeof featOpen === 'function' && featOpen('tarot') ? "goFeat('tarot')" : "toast('점술 방을 찾으면 운세를 뽑을 수 있음')"}" style="cursor:pointer">🔮 오늘의 운세 뽑기</span>` : '';
   const f = FORT[FORT_SINS[t.card]][t.rev ? 1 : 0];
   return `<span class="chip" title="${esc(f.msg)}" style="cursor:help;${t.rev ? 'border-color:var(--wine2)' : 'border-color:var(--gold)'}">🔮 ${esc(fortName(t))}${own ? ` · ${esc(f.fx)}` : ''}</span>`;
 }
 function fortPanel() {
   const t = fortToday(), f = t && FORT[FORT_SINS[t.card]][t.rev ? 1 : 0];
   return `<div class="panel" style="margin:0"><h2>🔮 오늘의 운세</h2>${t ? `<div style="display:flex;gap:10px;align-items:center">${fortCardHtml(t, 54)}<div><b>${esc(fortName(t))}</b><div class="muted" style="font-size:.82rem">${esc(f.msg)}</div><div style="font-size:.85rem;color:${t.rev ? 'var(--wine2)' : 'var(--gold2)'}">${esc(f.fx)}</div></div></div>`
-    : (typeof featOpen === 'function' && featOpen('tarot') ? '<p>아직 오늘의 카드를 뽑지 않았어요.</p><button onclick="goFeat(\'tarot\')">카드 뽑으러 가기</button>' : '<p class="muted">🔒 아직 점술 방을 찾지 못했어요</p>')}</div>`;
+    : (typeof featOpen === 'function' && featOpen('tarot') ? '<p>아직 오늘의 카드를 뽑지 않음.</p><button onclick="goFeat(\'tarot\')">카드 뽑으러 가기</button>' : '<p class="muted">🔒 아직 점술 방을 찾지 못함</p>')}</div>`;
 }
 (function () { const _ra = typeof roomAfter === 'function' ? roomAfter : null; if (!_ra) return; roomAfter = function () { _ra.apply(this, arguments); fortPaintAll(); }; })();

@@ -349,7 +349,7 @@ button i.pxi{margin-right:1px}
 
 <script>document.write('<script src="config.js?t='+Date.now()+'"><\/script>');</script>
 <script>
-/* 설정은 config.js에 있어요. 여기는 기본값이에요 (config.js가 없으면 데모 모드). */
+/* 설정은 config.js에 있음. 여기는 기본값 (config.js가 없으면 데모 모드). */
 const CONFIG = (()=>{
   const D={title:"햄카타",butler:"집사",firebase:{apiKey:""},adminEmails:["kp1@example.com","kp2@example.com"],
     hoSins:{HO1:'wrath',HO2:'greed',HO3:'sloth',HO4:'gluttony',HO5:'pride',HO6:'envy',HO7:'lust'},startCoins:30,cocEdition:6,vapidPublicKey:""};
@@ -383,38 +383,38 @@ const PLOT_COST = [50,120,250]; // 4,5,6번째 화단
 const RIDDLES = [
  {id:'r1',room:'현관',reward:30,type:'num',ans:7.5,unit:'초',
   q:'현관의 괘종시계는 3시를 알릴 때, 첫 번째 종부터 마지막 종이 울리기까지 3초가 걸린다.\n같은 빠르기로 6시를 알린다면, 첫 종부터 마지막 종까지 몇 초가 걸릴까?',
-  hints:['종소리 자체보다 종과 종 사이의 "간격"에 주목하세요.','3번 울릴 때 간격은 2개. 간격 하나는 1.5초예요.','6번 울리면 간격은 5개예요.']},
+  hints:['종소리 자체보다 종과 종 사이의 "간격"에 주목.','3번 울릴 때 간격은 2개. 간격 하나는 1.5초.','6번 울리면 간격은 5개.']},
  {id:'r2',room:'서재',reward:40,type:'num',ans:5,unit:'cm',
   q:'서재 책장에 서양식 백과사전 3권이 책등이 보이도록 왼쪽부터 1권, 2권, 3권 순서로 꽂혀 있다.\n각 권의 본문 두께는 3cm, 앞표지와 뒤표지는 각각 0.5cm.\n책벌레가 1권의 첫 페이지부터 3권의 마지막 페이지까지 일직선으로 갉아먹었다면, 책벌레가 지나간 거리는 몇 cm일까?',
-  hints:['책장에 꽂힌 1권의 "첫 페이지"는 실제로 책의 어느 쪽에 있을까요?','책등이 보이게 꽂으면, 1권의 첫 페이지는 오른쪽(2권 쪽)에 붙어 있어요.','1권의 앞표지 + 2권 전체 + 3권의 뒤표지만 지나가요.']},
+  hints:['책장에 꽂힌 1권의 "첫 페이지"는 실제로 책의 어느 쪽에 있을까?','책등이 보이게 꽂으면, 1권의 첫 페이지는 오른쪽(2권 쪽)에 붙어 있음.','1권의 앞표지 + 2권 전체 + 3권의 뒤표지만 지나감.']},
  {id:'r3',room:'식당',reward:30,type:'choice',ans:1,
   q:'식탁 위에 와인잔 6개가 일렬로 놓여 있다. 왼쪽 3개에는 와인이 가득, 오른쪽 3개는 비어 있다.\n잔을 단 하나만 만져서, 가득 찬 잔과 빈 잔이 번갈아 놓이게 하려면 몇 번째 잔을 만져야 할까?',
   choices:['1번째','2번째','3번째','4번째','5번째','6번째'],
-  hints:['"잔을 옮긴다"가 꼭 자리를 바꾼다는 뜻일까요?','잔의 와인을 다른 잔에 부을 수도 있어요.','2번째 잔을 들어 5번째 잔에 붓고, 제자리에 돌려놓아요.']},
+  hints:['"잔을 옮긴다"가 꼭 자리를 바꾼다는 뜻일까?','잔의 와인을 다른 잔에 부을 수도 있음.','2번째 잔을 들어 5번째 잔에 붓고, 제자리에 돌려놓음.']},
  {id:'r4',room:'응접실',reward:30,type:'num',ans:21,unit:'번',
   q:'응접실에 모인 손님은 7명.\n모두가 서로 정확히 한 번씩 악수를 나누었다면, 악수는 모두 몇 번 오갔을까?',
-  hints:['한 사람은 몇 명과 악수하나요?','각자 6명과 악수해요. 7×6=42지만, 악수 하나를 두 사람이 각각 셌어요.','42를 2로 나눠 보세요.']},
+  hints:['한 사람은 몇 명과 악수하나?','각자 6명과 악수. 7×6=42지만, 악수 하나를 두 사람이 각각 셈.','42를 2로 나눠 보기.']},
  {id:'r5',room:'온실',reward:30,type:'num',ans:29,unit:'일',
   q:'온실 연못의 수련은 하루마다 덮은 면적이 2배로 늘어난다.\n30일째에 연못이 수련으로 가득 찼다면, 연못의 절반이 덮인 날은 며칠째일까?',
-  hints:['처음부터 세지 말고 거꾸로 생각해 보세요.','하루 만에 2배가 된다면, 가득 차기 하루 전에는?','30일의 하루 전이에요.']},
+  hints:['처음부터 세지 말고 거꾸로 생각해 보기.','하루 만에 2배가 된다면, 가득 차기 하루 전에는?','30일의 하루 전.']},
  {id:'r6',room:'하인 숙소',reward:40,type:'choice',ans:2,
   q:'저택의 은촛대가 사라졌다. 범인은 세 하인 중 단 한 명이며, 세 사람 중 진실을 말하는 사람도 단 한 명뿐이다.\n\n정원사: "요리사가 범인입니다."\n요리사: "저는 범인이 아닙니다."\n하녀: "저는 범인이 아닙니다."\n\n범인은 누구일까?',
   choices:['정원사','요리사','하녀'],
-  hints:['한 명씩 "이 사람만 진실을 말한다"고 가정해 보세요.','정원사가 진실이라면 하녀의 말은 거짓, 즉 하녀도 범인… 범인이 둘이 되네요.','요리사만 진실이라면 정원사와 하녀가 거짓 → 하녀가 범인. 모순이 없어요.']},
+  hints:['한 명씩 "이 사람만 진실을 말한다"고 가정해 보기.','정원사가 진실이라면 하녀의 말은 거짓, 즉 하녀도 범인… 범인이 둘이 되네.','요리사만 진실이라면 정원사와 하녀가 거짓 → 하녀가 범인. 모순이 없음.']},
  {id:'r7',room:'와인 셀러',reward:30,type:'choice',ans:1,
   q:'셀러에 겉보기에 똑같은 와인 9병이 있다. 그중 1병만 내용물이 조금 덜 들어 있어 가볍다.\n양팔 저울을 최소 몇 번 사용하면 가벼운 병을 반드시 찾아낼 수 있을까?',
   choices:['1번','2번','3번','4번'],
-  hints:['저울에 꼭 둘로만 나눠 올릴 필요는 없어요.','3병씩 세 묶음으로 나눠 보세요.','첫 번째로 가벼운 묶음을, 두 번째로 그 묶음 안의 병을 찾아요.']},
+  hints:['저울에 꼭 둘로만 나눠 올릴 필요는 없음.','3병씩 세 묶음으로 나눠 보기.','첫 번째로 가벼운 묶음을, 두 번째로 그 묶음 안의 병을 찾음.']},
  {id:'r8',room:'다락',reward:30,type:'num',ans:13,unit:'시간',
   q:'다락의 양초는 하나에 꼭 1시간 동안 탄다.\n타고 남은 밀랍 조각 3개를 모으면 새 양초 1개를 만들 수 있다.\n양초 9개로 최대 몇 시간 동안 불을 밝힐 수 있을까?',
-  hints:['남은 밀랍 조각도 잊지 마세요.','9개를 다 태우면 조각 9개 → 새 양초 3개.','9 + 3 + 1.']},
+  hints:['남은 밀랍 조각도 잊지 말 것.','9개를 다 태우면 조각 9개 → 새 양초 3개.','9 + 3 + 1.']},
  {id:'r9',room:'숲길',reward:40,type:'choice',ans:1,
   q:'숲길 갈림길에 문지기 둘이 서 있다. 한 명은 언제나 진실만, 한 명은 언제나 거짓만 말한다. 누가 누구인지는 모른다.\n한 길은 저택으로, 다른 길은 숲 깊은 곳으로 이어진다.\n단 한 명에게, 단 한 번만 질문할 수 있다면?',
-  choices:['"당신은 진실을 말합니까?"라고 묻는다','"저쪽 문지기에게 저택 가는 길을 물으면 어느 쪽을 가리킬까요?"라고 묻고, 반대쪽 길로 간다','"저택은 왼쪽입니까?"라고 묻고, 대답대로 간다','"당신이 거짓말쟁이라면 어느 쪽을 가리키겠습니까?"라고 묻고, 반대쪽 길로 간다'],
-  hints:['두 사람의 대답을 한 질문 안에 엮을 수 있다면?','진실→거짓이든 거짓→진실이든, 다른 사람의 답을 한 번 거치면 결과는 언제나 거짓이 돼요.','"다른 문지기라면 어디를 가리킬까"를 묻고 반대로 가세요.']},
+  choices:['"당신은 진실을 말합니까?"라고 묻는다','"저쪽 문지기에게 저택 가는 길을 물으면 어느 쪽을 가리킬까?"라고 묻고, 반대쪽 길로 간다','"저택은 왼쪽입니까?"라고 묻고, 대답대로 간다','"당신이 거짓말쟁이라면 어느 쪽을 가리키겠습니까?"라고 묻고, 반대쪽 길로 간다'],
+  hints:['두 사람의 대답을 한 질문 안에 엮을 수 있다면?','진실→거짓이든 거짓→진실이든, 다른 사람의 답을 한 번 거치면 결과는 언제나 거짓이 됨.','"다른 문지기라면 어디를 가리킬까"를 묻고 반대로 가기.']},
  {id:'r10',room:'거울 복도',reward:40,type:'time',ans:'930',
   q:'거울 복도의 큰 거울에 맞은편 벽시계가 비친다. 숫자가 없는 시계다.\n거울 속 시계는 2시 30분을 가리키고 있다.\n실제 시각은 몇 시 몇 분일까? (예: 4:15)',
-  hints:['거울은 좌우를 뒤집어요.','6을 가리키는 분침은 거울 속에서도 6이에요. 그럼 시침은?','2와 3 사이를 좌우로 뒤집으면 9와 10 사이예요.']}
+  hints:['거울은 좌우를 뒤집음.','6을 가리키는 분침은 거울 속에서도 6. 그럼 시침은?','2와 3 사이를 좌우로 뒤집으면 9와 10 사이.']}
 ];
 const HINT_COST = [5,10,20];
 const SECRET_REWARD = 100;
@@ -523,7 +523,7 @@ function fmt(ms){const s=Math.max(0,Math.ceil(ms/1000));const h=Math.floor(s/360
 function ago(t){const s=Math.floor((Date.now()-t)/1000);if(s<60)return '방금';if(s<3600)return Math.floor(s/60)+'분 전';if(s<86400)return Math.floor(s/3600)+'시간 전';return new Date(t).toLocaleDateString();}
 function compressImage(dataURL,max,q){return new Promise(res=>{const img=new Image();img.onload=()=>{const sc=Math.min(1,max/Math.max(img.width,img.height));const c=document.createElement('canvas');c.width=Math.round(img.width*sc);c.height=Math.round(img.height*sc);c.getContext('2d').drawImage(img,0,0,c.width,c.height);let out=c.toDataURL('image/webp',q);if(!out.startsWith('data:image/webp'))out=c.toDataURL('image/jpeg',q);res(out);};img.onerror=()=>res('');img.src=dataURL;});}
 function readFile(f){return new Promise(r=>{const fr=new FileReader();fr.onload=e=>r(e.target.result);fr.readAsDataURL(f);});}
-const authErr=e=>({'auth/email-already-in-use':'이미 가입된 이메일이에요','auth/weak-password':'비밀번호는 6자 이상이어야 해요','auth/invalid-email':'이메일 형식이 올바르지 않아요','auth/invalid-credential':'이메일 또는 비밀번호가 틀렸어요','auth/wrong-password':'비밀번호가 틀렸어요','auth/user-not-found':'가입되지 않은 이메일이에요','auth/too-many-requests':'시도가 너무 많아요. 잠시 후 다시 해 주세요','auth/popup-closed-by-user':'로그인 창이 닫혔어요','auth/cancelled-popup-request':'로그인 창이 닫혔어요','auth/unauthorized-domain':'이 주소가 Firebase 승인된 도메인에 없어요 (README 3단계)','auth/operation-not-allowed':'Firebase 콘솔에서 Google 로그인을 켜 주세요','auth/account-exists-with-different-credential':'이 이메일은 다른 방식으로 가입돼 있어요'}[e&&e.code]||('오류: '+(e&&(e.code||e.message)||e)));
+const authErr=e=>({'auth/email-already-in-use':'이미 가입된 이메일','auth/weak-password':'비밀번호는 6자 이상이어야 함','auth/invalid-email':'이메일 형식이 올바르지 않음','auth/invalid-credential':'이메일 또는 비밀번호가 틀림','auth/wrong-password':'비밀번호가 틀림','auth/user-not-found':'가입되지 않은 이메일','auth/too-many-requests':'시도가 너무 많음. 잠시 후 다시 하기','auth/popup-closed-by-user':'로그인 창이 닫힘','auth/cancelled-popup-request':'로그인 창이 닫힘','auth/unauthorized-domain':'이 주소가 Firebase 승인된 도메인에 없음 (README 3단계)','auth/operation-not-allowed':'Firebase 콘솔에서 Google 로그인을 켜기','auth/account-exists-with-different-credential':'이 이메일은 다른 방식으로 가입돼 있음'}[e&&e.code]||('오류: '+(e&&(e.code||e.message)||e)));
 
 /* ================= 상태 ================= */
 let ME=null,PROF=null,IS_ADMIN=false,P=null,PUB=null;
@@ -559,7 +559,7 @@ const uname=u=>u?(u.name||u.email):'?';
 /* ================= 시작 ================= */
 (async function init(){
   try{B=DEMO?makeMock():await makeFirebase();}
-  catch(e){$('#app').innerHTML=`<div class="panel"><h2>연결 실패</h2><p>Firebase를 불러오지 못했어요. 설정값과 인터넷 연결을 확인해 주세요.</p><p class="muted">${esc(e.message||e)}</p></div>`;return;}
+  catch(e){$('#app').innerHTML=`<div class="panel"><h2>연결 실패</h2><p>Firebase를 불러오지 못함. 설정값과 인터넷 연결을 확인하기.</p><p class="muted">${esc(e.message||e)}</p></div>`;return;}
   B.onAuth(onAuth);
 })();
 
@@ -608,7 +608,7 @@ async function onAuth(u){
     sub(B.onCol('calls',l=>{const pv={};CALLS.forEach(c=>pv[c.id]=c);if(CALLS.length||l.length)l.forEach(c=>{const p=pv[c.id];if(p&&c.id!==ME.uid&&!p.ack&&c.ack&&c.reply&&c.reply!=='ok'){const u=userOf(c.id);toast(`🔔 ${u?(u.ho?cname(u.ho):uname(u)):'?'}: ${REPLY[c.reply]}`);try{beep();}catch(e){}}});CALLS=l;softRender();}));
     mountScheduler();
   }
-  sub(B.onDoc('calls/'+u.uid,d=>{onCall(d);}));   // KP도 HO를 맡을 수 있으니 모두 호출을 받아요
+  sub(B.onDoc('calls/'+u.uid,d=>{onCall(d);}));   // KP도 HO를 맡을 수 있으니 모두 호출을 받음
   if(typeof chatOnAuth==='function')chatOnAuth(u);
   if(typeof gamesOnAuth==='function')gamesOnAuth(u);
   if(typeof partyOnAuth==='function')partyOnAuth(u);
@@ -670,7 +670,7 @@ function headerHtml(){
      <button onclick="MENU=false;render();openTheme()">🎨 테마 · 글꼴</button>
      <button onclick="MENU=false;render();openAppModal()">📱 앱 · 알림</button>
      <button onclick="MENU=false;toggleSfx();render()">${SFX_ON?'🔇 효과음 끄기':'🔊 효과음 켜기'}</button>
-     ${IS_ADMIN?'<button onclick="MENU=false;render();openGameSettings()">⚙ 저택 설정 (KP)</button><button onclick="MENU=false;render();txToggle(true)">✏ 글자 고치기 (KP)</button><button onclick="MENU=false;go(\'kdata\')">🗂 데이터 관리 (KP)</button><button onclick="MENU=false;go(\'ktitle\')">🎖 칭호 · HO 이름 (KP)</button><button onclick="MENU=false;go(\'kfurn\')">🪑 가구 관리 (KP)</button><button onclick="MENU=false;go(\'kavatar\')">🧍 아바타 시험실 (KP)</button>':''}
+     ${IS_ADMIN?'<button onclick="MENU=false;render();openGameSettings()">⚙ 저택 설정 (KP)</button><button onclick="MENU=false;render();txToggle(true)">✏ 글자 고치기 (KP)</button><button onclick="MENU=false;go(\'kdata\')">🗂 데이터 관리 (KP)</button><button onclick="MENU=false;go(\'ktitle\')">🎖 칭호 · HO 이름 (KP)</button><button onclick="MENU=false;go(\'kfurn\')">🪑 가구 관리 (KP)</button><button onclick="MENU=false;go(\'kavatar\')">🎎 토큰 시험실 (KP)</button>':''}
      <hr><button class="danger" onclick="MENU=false;logout()">로그아웃</button></div>`:''}</div></div></header>`;
 }
 document.addEventListener('click',()=>{if(MENU){MENU=false;render();}});
@@ -687,9 +687,9 @@ function openExternal(){
   if(/Android/i.test(UA)){location.href='intent://'+url.replace(/^https?:\/\//,'')+'#Intent;scheme=https;package=com.android.chrome;end';return;}
   copyLink();
 }
-function copyLink(){try{navigator.clipboard.writeText(location.href).then(()=>toast('주소를 복사했어요. Safari나 Chrome에 붙여 넣어 주세요'),()=>toast(location.href));}catch(e){toast(location.href);}}
+function copyLink(){try{navigator.clipboard.writeText(location.href).then(()=>toast('주소 복사 완료. Safari나 Chrome에 붙여 넣기'),()=>toast(location.href));}catch(e){toast(location.href);}}
 function googleBtn(){
-  if(INAPP)return `<div class="card" style="border-color:var(--gold)"><b>앱 안의 브라우저로 열렸어요</b><p class="muted" style="margin:4px 0 8px">앱 안 브라우저에선 Google 로그인이 막혀요. 외부 브라우저나 이메일 로그인을 써 주세요.</p>
+  if(INAPP)return `<div class="card" style="border-color:var(--gold)"><b>앱 안의 브라우저로 열림</b><p class="muted" style="margin:4px 0 8px">앱 내 브라우저: Google 로그인 불가 · 외부 브라우저/이메일 로그인 사용</p>
     <div class="row"><button class="primary" onclick="openExternal()">외부 브라우저로 열기</button><button onclick="copyLink()">주소 복사</button></div></div>`;
   return `<button style="width:100%;background:#fff;color:#222;border-color:#ddd;font-weight:600;display:flex;align-items:center;justify-content:center;gap:8px" onclick="doGoogle()">
     <svg width="18" height="18" viewBox="0 0 48 48"><path fill="#EA4335" d="M24 9.5c3.5 0 6.6 1.2 9.1 3.6l6.8-6.8C35.8 2.4 30.3 0 24 0 14.6 0 6.6 5.4 2.6 13.3l7.9 6.1C12.4 13.7 17.7 9.5 24 9.5z"/><path fill="#4285F4" d="M46.1 24.5c0-1.6-.1-3.1-.4-4.5H24v9h12.4c-.5 2.9-2.2 5.3-4.6 6.9l7.4 5.7c4.3-4 6.9-9.9 6.9-17.1z"/><path fill="#FBBC05" d="M10.5 28.6c-.5-1.4-.8-3-.8-4.6s.3-3.2.8-4.6l-7.9-6.1C1 16.6 0 20.2 0 24s1 7.4 2.6 10.7l7.9-6.1z"/><path fill="#34A853" d="M24 48c6.5 0 11.9-2.1 15.9-5.8l-7.4-5.7c-2.1 1.4-4.8 2.3-8.5 2.3-6.3 0-11.6-4.2-13.5-9.9l-7.9 6.1C6.6 42.6 14.6 48 24 48z"/></svg>
@@ -697,12 +697,12 @@ function googleBtn(){
 }
 async function doGoogle(){
   const err=m=>{const el=$('#aErr');if(el)el.textContent=m;};
-  if(DEMO){modal(`<h2 style="color:var(--gold2);margin-top:0">데모: Google 로그인 흉내</h2><p class="muted">데모 모드라 실제 Google 대신 이메일만 받아요.</p><label class="f">Google 이메일</label><input id="gEmail" placeholder="name@gmail.com"><label class="f">이름</label><input id="gName"><div class="row" style="margin-top:12px"><button onclick="closeModal()">취소</button><button class="primary" onclick="(async()=>{const e=$('#gEmail').value.trim().toLowerCase();if(!e)return;await B.google(e,$('#gName').value.trim()||e.split('@')[0]);closeModal();})()">로그인</button></div>`);return;}
+  if(DEMO){modal(`<h2 style="color:var(--gold2);margin-top:0">데모: Google 로그인 흉내</h2><p class="muted">데모 모드라 실제 Google 대신 이메일만 받음.</p><label class="f">Google 이메일</label><input id="gEmail" placeholder="name@gmail.com"><label class="f">이름</label><input id="gName"><div class="row" style="margin-top:12px"><button onclick="closeModal()">취소</button><button class="primary" onclick="(async()=>{const e=$('#gEmail').value.trim().toLowerCase();if(!e)return;await B.google(e,$('#gName').value.trim()||e.split('@')[0]);closeModal();})()">로그인</button></div>`);return;}
   try{await B.google();}catch(x){err(authErr(x));}
 }
 function authView(){
   return `<div class="auth panel"><h2 style="text-align:center">${esc(CONFIG.title)}</h2>
-   ${DEMO?'<p class="muted"><span class="demo">데모 모드</span> 이 브라우저에서만 동작해요. KP는 관리자 이메일('+esc(ADMINS[0]||'')+')로 가입하세요.</p>':''}
+   ${DEMO?'<p class="muted"><span class="demo">데모 모드</span> 이 브라우저에서만 동작. KP는 관리자 이메일('+esc(ADMINS[0]||'')+')로 가입하기.</p>':''}
    ${googleBtn()}
    <div class="muted" style="text-align:center;margin:12px 0 8px">또는 이메일로</div>
    <div class="row" style="margin-bottom:6px"><button class="${AUTHMODE==='in'?'on':''}" onclick="AUTHMODE='in';render()">로그인</button><button class="${AUTHMODE==='up'?'on':''}" onclick="AUTHMODE='up';render()">회원가입</button></div>
@@ -710,25 +710,25 @@ function authView(){
    <label class="f">이메일</label><input id="aEmail" type="email" autocomplete="email">
    <label class="f">비밀번호 ${AUTHMODE==='up'?'(6자 이상)':''}</label><input id="aPw" type="password" onkeydown="if(event.key==='Enter')doAuth()">
    <button class="primary" style="width:100%;margin-top:14px" onclick="doAuth()">${AUTHMODE==='in'?'저택에 들어가기':'가입하기'}</button>
-   ${AUTHMODE==='in'&&!DEMO?'<p style="text-align:center"><a href="#" style="color:var(--muted);font-size:.85rem" onclick="event.preventDefault();doReset()">비밀번호를 잊었어요</a></p>':''}
+   ${AUTHMODE==='in'&&!DEMO?'<p style="text-align:center"><a href="#" style="color:var(--muted);font-size:.85rem" onclick="event.preventDefault();doReset()">비밀번호를 잊음</a></p>':''}
    <p class="muted" id="aErr" style="color:var(--wine2)"></p></div>`;
 }
 async function doAuth(){
   const e=$('#aEmail').value.trim().toLowerCase(),p=$('#aPw').value;
   const err=m=>$('#aErr').textContent=m;
-  if(!e||!p)return err('이메일과 비밀번호를 입력해 주세요');
+  if(!e||!p)return err('이메일과 비밀번호를 입력하기');
   try{
-    if(AUTHMODE==='up'){const n=$('#aName').value.trim();if(!n)return err('이름을 입력해 주세요');
+    if(AUTHMODE==='up'){const n=$('#aName').value.trim();if(!n)return err('이름을 입력하기');
       const uid=await B.signUp(e,p,n);await B.set('users/'+uid,{name:n,email:e,ho:'',at:Date.now()});}
     else await B.signIn(e,p);
   }catch(x){err(authErr(x));}
 }
-async function doReset(){const e=$('#aEmail').value.trim();if(!e)return $('#aErr').textContent='이메일을 먼저 입력해 주세요';try{await B.resetPw(e);toast('재설정 메일을 보냈어요');}catch(x){$('#aErr').textContent=authErr(x);}}
+async function doReset(){const e=$('#aEmail').value.trim();if(!e)return $('#aErr').textContent='이메일을 먼저 입력하기';try{await B.resetPw(e);toast('재설정 메일을 보냄');}catch(x){$('#aErr').textContent=authErr(x);}}
 function logout(){const u=ME;if(u){B.update('users/'+u.uid,{seen:Date.now(),off:true}).catch(()=>{}).finally(()=>B.signOut());}else B.signOut();}
 
 function hoView(){
   const taken=c=>usersWithHo(c).filter(u=>u.id!==ME.uid);
-  return `<div class="panel"><h2>손님 명부</h2><p class="muted">${esc(CONFIG.butler)}가 명부를 내밉니다. "어느 방의 손님이신지요?"<br>내 HO를 골라 주세요.</p>
+  return `<div class="panel"><h2>손님 명부</h2><p class="muted">${esc(CONFIG.butler)}가 명부를 내밉니다. "어느 방의 손님이신지?"<br>내 HO를 고르기.</p>
    <div class="grid g3">${HO_CODES.map(c=>{const t=taken(c),s=sinOf(c),h=HOS.find(x=>x.id===s);
      return `<button style="padding:10px;text-align:left" ${t.length?'disabled':''} onclick="pickHo('${c}')"><b>${esc(cname(c))}</b><br><small class="muted">${c}${s?' · '+sinName(s):''}</small>${h?`<br><small class="muted">${esc(h.perk)}</small>`:''}${t.length?`<br><small>(${esc(uname(t[0]))} 선택)</small>`:''}</button>`;}).join('')}</div></div>`;
 }
@@ -742,12 +742,12 @@ let titleTimer=null;
 function onCall(d){
   CALL=d;const bar=$('#callBar');
   if(d&&!d.ack){
-    $('#callMsg').textContent=(d.pre?'⏳ ':'')+(d.msg||'차례예요!');$('#callSub').textContent=`${d.by||'KP'} · ${ago(d.at)}`;bar.style.display='block';bar.classList.toggle('pre',!!d.pre);
-    $('#callBtns').innerHTML=d.pre?`<button class="primary" onclick="ackCall('ok')">알겠어요</button>`:`<button class="primary" onclick="ackCall('go')">지금 갈게요</button><button onclick="ackCall('5m')">5분만</button><button onclick="ackCall('no')">지금 어려워요</button>`;
+    $('#callMsg').textContent=(d.pre?'⏳ ':'')+(d.msg||'차례!');$('#callSub').textContent=`${d.by||'KP'} · ${ago(d.at)}`;bar.style.display='block';bar.classList.toggle('pre',!!d.pre);
+    $('#callBtns').innerHTML=d.pre?`<button class="primary" onclick="ackCall('ok')">알겠음</button>`:`<button class="primary" onclick="ackCall('go')">지금 갈게</button><button onclick="ackCall('5m')">5분만</button><button onclick="ackCall('no')">지금 어려움</button>`;
     clearInterval(window.RERING);let n=0;window.RERING=setInterval(()=>{if(!CALL||CALL.ack||n>=3)return clearInterval(window.RERING);n++;beep();try{navigator.vibrate&&navigator.vibrate([200,100,200]);}catch(e){}
-      try{if(document.hidden&&window.Notification&&Notification.permission==='granted')new Notification(CONFIG.title,{body:'(다시) '+(CALL.msg||'차례예요!')});}catch(e){}},150000);   // 확인 안 하면 2분 30초마다 다시 (3번까지)
+      try{if(document.hidden&&window.Notification&&Notification.permission==='granted')new Notification(CONFIG.title,{body:'(다시) '+(CALL.msg||'차례!')});}catch(e){}},150000);   // 확인 안 하면 2분 30초마다 다시 (3번까지)
     if(d.at!==lastCallAt){lastCallAt=d.at;beep();
-      try{if(document.hidden&&window.Notification&&Notification.permission==='granted')new Notification(CONFIG.title,{body:d.msg||'차례예요!'});}catch(e){}
+      try{if(document.hidden&&window.Notification&&Notification.permission==='granted')new Notification(CONFIG.title,{body:d.msg||'차례!'});}catch(e){}
       clearInterval(titleTimer);let f=false;titleTimer=setInterval(()=>{document.title=(f=!f)?'🔔 호출!':CONFIG.title;},900);}
   }else{bar.style.display='none';clearInterval(titleTimer);clearInterval(window.RERING);document.title=CONFIG.title;}
   callPad();if(typeof tab!=='undefined'&&tab==='map')softRender();
@@ -756,7 +756,7 @@ function callPad(){const bar=$('#callBar');document.body.style.paddingTop=bar&&b
 window.addEventListener('resize',()=>{try{callPad()}catch(e){}});
 function gatherGo(i){if(CALL&&!CALL.ack&&String(CALL.msg||'').startsWith('📣'))ackCall('go');selectPlace(i);}
 function ackCall(r){if(CALL)B.update('calls/'+ME.uid,{ack:true,reply:r||'ok',ackAt:Date.now()});}
-function askNotify(){if(!window.Notification)return toast('이 브라우저는 알림을 지원하지 않아요');Notification.requestPermission().then(p=>toast(p==='granted'?'알림을 켰어요':'알림이 허용되지 않았어요'));}
+function askNotify(){if(!window.Notification)return toast('이 브라우저는 알림을 지원하지 않음');Notification.requestPermission().then(p=>toast(p==='granted'?'알림을 켬':'알림이 허용되지 않음'));}
 
 /* ================= 앱 설치 / 푸시 ================= */
 const IS_IOS=/iPad|iPhone|iPod/.test(UA)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1);
@@ -768,12 +768,12 @@ if('serviceWorker' in navigator&&(location.protocol==='https:'||location.hostnam
 }
 function b64u(s){const p='='.repeat((4-s.length%4)%4),b=atob((s+p).replace(/-/g,'+').replace(/_/g,'/'));return Uint8Array.from([...b].map(c=>c.charCodeAt(0)));}
 async function enablePush(){
-  if(!CONFIG.vapidPublicKey)return toast('푸시 설정(vapidPublicKey)이 아직 없어요');
-  if(IS_IOS&&!STANDALONE())return toast('아이패드/아이폰은 먼저 홈 화면에 추가한 앱에서 켜 주세요');
-  if(!SWREG||!('PushManager' in window))return toast('이 브라우저는 푸시 알림을 지원하지 않아요');
+  if(!CONFIG.vapidPublicKey)return toast('푸시 설정(vapidPublicKey)이 아직 없음');
+  if(IS_IOS&&!STANDALONE())return toast('아이패드/아이폰은 먼저 홈 화면에 추가한 앱에서 켜기');
+  if(!SWREG||!('PushManager' in window))return toast('이 브라우저는 푸시 알림을 지원하지 않음');
   try{
     const perm=await Notification.requestPermission();
-    if(perm!=='granted')return toast('알림 권한이 허용되지 않았어요');
+    if(perm!=='granted')return toast('알림 권한이 허용되지 않음');
     let sub=await SWREG.pushManager.getSubscription();
     if(!sub)sub=await SWREG.pushManager.subscribe({userVisibleOnly:true,applicationServerKey:b64u(CONFIG.vapidPublicKey)});
     const j=sub.toJSON();
@@ -781,26 +781,26 @@ async function enablePush(){
     const subs=(cur.subs||[]).filter(x=>x.endpoint!==j.endpoint);
     subs.push({endpoint:j.endpoint,keys:j.keys,ua:navigator.userAgent.slice(0,120),at:Date.now()});
     await B.set('pushSubs/'+ME.uid,{subs:subs.slice(-5)});
-    PUSH_ON=true;render();toast('이 기기에서 푸시 알림을 받아요');
+    PUSH_ON=true;render();toast('이 기기에서 푸시 알림을 받음');
   }catch(e){toast('푸시 설정 실패: '+(e.message||e));}
 }
 async function disablePush(){
   try{const sub=SWREG&&await SWREG.pushManager.getSubscription();
     if(sub){const ep=sub.endpoint;await sub.unsubscribe();const cur=(await B.get('pushSubs/'+ME.uid))||{subs:[]};
       await B.set('pushSubs/'+ME.uid,{subs:(cur.subs||[]).filter(x=>x.endpoint!==ep)});}
-    PUSH_ON=false;render();toast('이 기기의 푸시 알림을 껐어요');}catch(e){toast('해제 실패: '+(e.message||e));}
+    PUSH_ON=false;render();toast('이 기기의 푸시 알림을 끔');}catch(e){toast('해제 실패: '+(e.message||e));}
 }
-async function testPush(){if(!SWREG)return;SWREG.showNotification(CONFIG.title||'햄카타',{body:'알림이 이렇게 보여요',icon:'icon-192.png',tag:'test'});}
+async function testPush(){if(!SWREG)return;SWREG.showNotification(CONFIG.title||'햄카타',{body:'알림이 이렇게 보임',icon:'icon-192.png',tag:'test'});}
 function doInstall(){if(INSTALL_EVT){INSTALL_EVT.prompt();INSTALL_EVT.userChoice.finally(()=>{INSTALL_EVT=null;render();});}}
 function appPanel(){
   let inst='';
-  if(STANDALONE())inst='<p class="muted">✓ 앱으로 실행 중이에요.</p>';
+  if(STANDALONE())inst='<p class="muted">✓ 앱으로 실행 중.</p>';
   else if(INSTALL_EVT)inst='<button class="primary" onclick="doInstall()">📲 앱으로 설치</button>';
-  else if(IS_IOS)inst='<p class="muted">Safari <b>공유 ⬆</b> → <b>홈 화면에 추가</b>. 푸시 알림은 설치한 앱에서만 돼요.</p>';
+  else if(IS_IOS)inst='<p class="muted">Safari <b>공유 ⬆</b> → <b>홈 화면에 추가</b>. 푸시 알림은 설치한 앱에서만 됨.</p>';
   else inst='<p class="muted">브라우저 메뉴(⋮) → <b>앱 설치</b> (또는 홈 화면에 추가).</p>';
   let push='';
-  if(!CONFIG.vapidPublicKey)push='<p class="muted">푸시 알림은 아직 설정 전이에요.</p>';
-  else if(PUSH_ON)push=`<p class="muted">✓ 푸시 알림을 받는 중. 화면이 꺼져도 ${IS_ADMIN?'새 예약·살펴보기 요청이':'호출·예약 결과·새 물건이'} 와요.</p><div class="row"><button class="sm" onclick="testPush()">알림 미리보기</button><button class="sm danger" onclick="disablePush()">이 기기 알림 끄기</button></div>`;
+  if(!CONFIG.vapidPublicKey)push='<p class="muted">푸시 알림은 아직 설정 전.</p>';
+  else if(PUSH_ON)push=`<p class="muted">✓ 푸시 알림을 받는 중. 화면이 꺼져도 ${IS_ADMIN?'새 예약·살펴보기 요청이':'호출·예약 결과·새 물건이'} 옴.</p><div class="row"><button class="sm" onclick="testPush()">알림 미리보기</button><button class="sm danger" onclick="disablePush()">이 기기 알림 끄기</button></div>`;
   else push=`<button onclick="enablePush()">🔔 푸시 알림 켜기</button>`;
   return `<div class="panel"><h2>📱 앱 · 알림</h2>${inst}<div style="margin-top:8px">${push}</div></div>`;
 }
@@ -814,14 +814,14 @@ function profileModal(){
   modal(`<h2 style="color:var(--gold2);margin-top:0">👤 프로필 편집</h2>
    <label class="f">이름 (닉네임)</label><input maxlength="20" value="${esc(PF.name)}" oninput="PF.name=this.value">
    <div class="grid g2" style="margin-top:12px">${box('avatar','PL 사진 (OOC · 메뉴)','🙂')}${PROF.ho?box('charImg','캐릭터 초상화 · '+esc(cname(PROF.ho)),'🎭'):''}</div>
-   <p class="muted">채팅·이름표·지도 토큰에 쓰여요. 비우면 스케줄러 그림을 써요.</p>
+   <p class="muted">채팅·이름표·지도 토큰에 쓰임. 비우면 스케줄러 그림을 씀.</p>
    <label class="muted" style="display:block;margin-top:8px"><input type="checkbox" style="width:auto" ${PROF.shareLoc?'checked':''} onchange="setShare(this.checked)"> 지도에서 내 위치를 다른 사람에게 보여주기</label>
    <div class="row" style="margin-top:8px"><button onclick="closeModal()">취소</button><button class="primary" onclick="saveProfile()">저장</button></div>`);
 }
 async function pfImg(inp,k){const f=inp.files[0];if(!f)return;PF[k]=(typeof gifMaybe==='function'&&await gifMaybe(f,k==='charImg'?220:160,k==='charImg'?160000:90000))||await compressImage(await readFile(f),k==='charImg'?220:160,.82);profileModal();}
-async function saveProfile(){const n=(PF.name||'').trim();if(!n)return toast('이름을 입력해 주세요');
+async function saveProfile(){const n=(PF.name||'').trim();if(!n)return toast('이름을 입력하기');
   try{await B.update('users/'+ME.uid,clean({name:n,avatar:PF.avatar||'',charImg:PF.charImg||''}));}catch(e){return toast('저장 실패: '+(e.code||e.message));}
-  PF=null;closeModal();toast('프로필을 저장했어요');}
+  PF=null;closeModal();toast('프로필 저장 완료');}
 function openAppModal(){modal(appPanel()+'<button style="width:100%" onclick="closeModal()">닫기</button>');}
 
 /* ================= 테마 · 글꼴 ================= */
@@ -875,12 +875,12 @@ function themeModal(){
   const mineOn=TF.mode==='mine';
   modal(`<h2 style="color:var(--gold2);margin-top:0">🎨 테마 · 글꼴</h2>
    <div class="toggles"><button class="${!mineOn?'on':''}" onclick="themeKP()">KP 기본값 따르기</button><button class="${mineOn?'on':''}" onclick="TF.mode='mine';themeModal()">내 테마 쓰기</button></div>
-   <label class="f">스타일</label><div class="toggles"><button class="sm ${TF.ui!=='classic'?'on':''}" onclick="TF.ui='px';if(TF.font!=='pixel'&&confirm('글꼴도 갈무리11(도트)로 바꿀까요?'))TF.font='pixel';themeMine();themeModal()">👾 도트</button><button class="sm ${TF.ui==='classic'?'on':''}" onclick="TF.ui='classic';if(TF.font==='pixel')TF.font='serif';themeMine();themeModal()">📜 클래식</button></div>
+   <label class="f">스타일</label><div class="toggles"><button class="sm ${TF.ui!=='classic'?'on':''}" onclick="TF.ui='px';if(TF.font!=='pixel'&&confirm('글꼴도 갈무리11(도트)로 바꿀까?'))TF.font='pixel';themeMine();themeModal()">👾 도트</button><button class="sm ${TF.ui==='classic'?'on':''}" onclick="TF.ui='classic';if(TF.font==='pixel')TF.font='serif';themeMine();themeModal()">📜 클래식</button></div>
    <label class="f">프리셋</label><div class="toggles">${Object.entries(PRESETS).map(([id,p])=>`<button class="sm" onclick="themePreset('${id}')"><span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:${p.bg};border:2px solid ${p.accent};margin-right:5px;vertical-align:-1px"></span>${p.name}</button>`).join('')}</div>
    <label class="f">색 직접 고르기</label><div class="grid g2">${keys.map(([k,l])=>`<label class="colrow"><span>${l}</span><input type="color" value="${TF[k]||(k==='frame'?mix(TF.panel,TF.text,.4):'#000000')}" oninput="TF['${k}']=this.value;themeMine()"></label>`).join('')}</div>
    <label class="f">글꼴</label><select onchange="TF.font=this.value;themeMine()">${Object.entries(FONTS).map(([id,f])=>`<option value="${id}" ${TF.font===id?'selected':''}>${f.n}</option>`).join('')}</select>
    <label class="f">글자 크기</label><div class="toggles">${[[.9,'작게'],[1,'보통'],[1.12,'크게'],[1.25,'아주 크게']].map(([v,n])=>`<button class="sm ${(+TF.scale||1)==v?'on':''}" onclick="TF.scale=${v};themeMine();themeModal()">${n}</button>`).join('')}</div>
-   <p class="muted">${mineOn?'저장하면 내 모든 기기에 적용돼요.':'KP가 정한 기본 테마를 따라요.'}</p>
+   <p class="muted">${mineOn?'저장하면 내 모든 기기에 적용됨.':'KP가 정한 기본 테마를 따름.'}</p>
    <div class="row" style="margin-top:8px"><button onclick="closeModal()">취소</button><button class="primary" onclick="saveTheme()">저장</button>${IS_ADMIN?'<button onclick="saveThemeGlobal()">모두의 기본값으로 저장</button>':''}</div>`);
   applyTheme(TF);
 }
@@ -888,9 +888,9 @@ function themeMine(){if(TF.mode!=='mine'){TF.mode='mine';const b=$('#mbox .toggl
 function themeKP(){Object.assign(TF,THEME_DEF,THEME_GLOBAL||{},{mode:'kp'});themeModal();}
 function themePreset(id){const p=PRESETS[id];['bg','panel','text','accent','point'].forEach(k=>TF[k]=p[k]);TF.frame=p.frame||'';if(p.ui)TF.ui=p.ui;if(p.font)TF.font=p.font;TF.mode='mine';themeModal();}
 const themeOf=t=>({bg:t.bg,panel:t.panel,text:t.text,accent:t.accent,point:t.point,font:t.font,scale:+t.scale||1,ui:t.ui==='classic'?'classic':'px',frame:t.frame||''});
-function saveTheme(){P.theme=TF.mode==='mine'?Object.assign({on:true},themeOf(TF)):{on:false};saveP();TF=null;closeModal();applyTheme();toast('테마를 저장했어요');}
+function saveTheme(){P.theme=TF.mode==='mine'?Object.assign({on:true},themeOf(TF)):{on:false};saveP();TF=null;closeModal();applyTheme();toast('테마 저장 완료');}
 async function saveThemeGlobal(){const t=themeOf(TF);try{await B.set('settings/theme',t);}catch(e){return toast('저장 실패: '+(e.code||e.message));}
-  THEME_GLOBAL=t;P.theme={on:false};saveP();TF=null;closeModal();applyTheme();toast('모두의 기본 테마로 저장했어요');}
+  THEME_GLOBAL=t;P.theme={on:false};saveP();TF=null;closeModal();applyTheme();toast('모두의 기본 테마로 저장 완료');}
 
 /* ================= KP: 저택 설정 ================= */
 let EGG={on:true,mode:'personal',perDay:3,coins:3,salt:''};
@@ -899,20 +899,20 @@ async function adminDiag(){
   const L=[],ok=(b,t)=>L.push(`<p style="margin:6px 0">${b?'✅':'❌'} ${t}</p>`);
   const me=String(ME.email||'').toLowerCase();ok(!!me,`로그인 이메일: <b>${esc(me||'(없음)')}</b>`);
   let doc=null,err=null;try{doc=await B.get('config/admins');}catch(e){err=e;}
-  if(err)ok(false,`config/admins 문서를 읽지 못했어요 (${esc(err.code||err.message)}). <b>규칙을 다시 게시</b>했는지 확인해 주세요.`);
-  else if(!doc)ok(false,'Firestore에 <b>config / admins</b> 문서가 없어요. Firestore › 데이터에서 컬렉션 <b>config</b>, 문서 <b>admins</b>를 만들어 주세요. (Realtime Database가 아니라 Firestore예요)');
+  if(err)ok(false,`config/admins 문서를 읽지 못함 (${esc(err.code||err.message)}). <b>규칙을 다시 게시</b>했는지 확인하기.`);
+  else if(!doc)ok(false,'Firestore에 <b>config / admins</b> 문서가 없음. Firestore › 데이터에서 컬렉션 <b>config</b>, 문서 <b>admins</b>를 만들기. (Realtime Database가 아니라 Firestore)');
   else{const em=doc.emails;
-    if(!Array.isArray(em))ok(false,`emails 필드가 <b>배열(array)</b>이 아니에요 (지금: ${esc(typeof em)}${typeof em==='string'?` "${esc(em)}"`:''}). 필드 유형을 array로 바꾸고 이메일을 한 칸에 하나씩 넣어 주세요.`);
+    if(!Array.isArray(em))ok(false,`emails 필드가 <b>배열(array)</b>이 아님 (지금: ${esc(typeof em)}${typeof em==='string'?` "${esc(em)}"`:''}). 필드 유형을 array로 바꾸고 이메일을 한 칸에 하나씩 넣기.`);
     else{ok(true,`config/admins.emails: ${em.map(x=>`<code>${esc(JSON.stringify(x))}</code>`).join(', ')||'(비어 있음)'}`);
       const exact=em.includes(me),loose=em.some(x=>String(x).trim().toLowerCase()===me);
-      if(exact)ok(true,'내 이메일이 명단과 정확히 같아요');
-      else if(loose)ok(false,'명단에 내 이메일이 있지만 <b>대문자나 앞뒤 공백</b>이 섞여 있어요. 소문자로, 공백 없이 다시 적어 주세요.');
-      else ok(false,'명단에 내 이메일이 없어요. 위 로그인 이메일을 그대로 추가해 주세요.');}}
+      if(exact)ok(true,'내 이메일이 명단과 정확히 같음');
+      else if(loose)ok(false,'명단에 내 이메일이 있지만 <b>대문자나 앞뒤 공백</b>이 섞여 있음. 소문자로, 공백 없이 다시 적기.');
+      else ok(false,'명단에 내 이메일이 없음. 위 로그인 이메일을 그대로 추가하기.');}}
   let w=null;try{await B.set('settings/_diag',{at:Date.now(),by:me});w=true;}catch(e){w=e.code||e.message;}
-  ok(w===true,w===true?'KP 전용 저장 테스트 성공 — 규칙이 나를 KP로 인정해요':`KP 전용 저장 테스트 실패 (${esc(w)}). 위의 ❌를 고친 뒤 <b>Firestore › 규칙</b>에 새 firestore.rules를 붙여넣고 <b>게시</b>했는지도 확인해 주세요.`);
-  modal(`<h2 style="color:var(--gold2);margin-top:0">🔧 KP 권한 진단</h2>${L.join('')}<p class="muted">고친 뒤 다시 열어 확인하세요 (반영까지 1분쯤).</p><div class="row"><button onclick="adminDiag()">다시 진단</button><button class="primary" onclick="closeModal()">닫기</button></div>`);
+  ok(w===true,w===true?'KP 전용 저장 테스트 성공 — 규칙이 나를 KP로 인정':`KP 전용 저장 테스트 실패 (${esc(w)}). 위의 ❌를 고친 뒤 <b>Firestore › 규칙</b>에 새 firestore.rules를 붙여넣고 <b>게시</b>했는지도 확인하기.`);
+  modal(`<h2 style="color:var(--gold2);margin-top:0">🔧 KP 권한 진단</h2>${L.join('')}<p class="muted">고친 뒤 다시 열어 확인하기 (반영까지 1분쯤).</p><div class="row"><button onclick="adminDiag()">다시 진단</button><button class="primary" onclick="closeModal()">닫기</button></div>`);
 }
-window.addEventListener('unhandledrejection',e=>{const c=e.reason&&e.reason.code;if(c==='permission-denied'){toast(IS_ADMIN?'저장 권한이 없어요 — ⚙ 저택 설정 › KP 권한 진단을 눌러 보세요':'저장 권한이 없어요');}});
+window.addEventListener('unhandledrejection',e=>{const c=e.reason&&e.reason.code;if(c==='permission-denied'){toast(IS_ADMIN?'저장 권한이 없음 — ⚙ 저택 설정 › KP 권한 진단을 눌러 보기':'저장 권한이 없음');}});
 function openGameSettings(){window._eg=Object.assign({},EGG);gsModal();}
 function gsModal(){const e=window._eg;
   modal(`<h2 style="color:var(--gold2);margin-top:0">⚙ 저택 설정</h2>${DEMO?'':'<button class="sm" style="float:right;margin-top:-6px" onclick="adminDiag()">🔧 KP 권한 진단</button>'}<h3>지도 이스터에그 은화</h3>
@@ -920,12 +920,12 @@ function gsModal(){const e=window._eg;
    <label class="f">숨기는 방식</label><div class="toggles"><button class="${e.mode==='personal'?'on':''}" onclick="_eg.mode='personal';gsModal()">사람마다 따로</button><button class="${e.mode==='shared'?'on':''}" onclick="_eg.mode='shared';gsModal()">모두 같은 자리 (먼저 찾은 사람)</button></div>
    <div class="row" style="margin-top:4px"><label class="f" style="flex:1">하루에 찾을 수 있는 횟수<input type="number" min="1" max="20" value="${e.perDay}" oninput="_eg.perDay=+this.value"></label>
    <label class="f" style="flex:1">한 번에 받는 은화<input type="number" min="1" max="500" value="${e.coins}" oninput="_eg.coins=+this.value"></label></div>
-   <button class="sm" style="margin-top:8px" onclick="_eg.salt=rid();toast('저장하면 오늘의 은화가 새 자리에 숨겨져요')">🔀 오늘 은화 다시 숨기기</button>
-   <p class="muted">지도에서 장소가 아닌 곳을 누르면 찾아요. 매일 자정에 바뀌어요.</p>
+   <button class="sm" style="margin-top:8px" onclick="_eg.salt=rid();toast('저장하면 오늘의 은화가 새 자리에 숨겨짐')">🔀 오늘 은화 다시 숨기기</button>
+   <p class="muted">지도에서 장소가 아닌 곳을 누르면 찾음. 매일 자정에 바뀜.</p>
    <h3>방</h3><button class="sm" onclick="openRoomSettings()">🗺 방 기능 · 세부 지도 설정</button>
    <div class="row"><button onclick="closeModal()">취소</button><button class="primary" onclick="saveGameSettings()">저장</button></div>`);}
 async function saveGameSettings(){const e=window._eg;e.perDay=Math.max(1,Math.min(20,e.perDay|0||3));e.coins=Math.max(1,Math.min(500,e.coins|0||5));
-  try{await B.set('settings/game',{egg:clean(e)},true);}catch(x){return toast('저장 실패: '+(x.code||x.message));}closeModal();toast('저장했어요');}
+  try{await B.set('settings/game',{egg:clean(e)},true);}catch(x){return toast('저장 실패: '+(x.code||x.message));}closeModal();toast('저장 완료');}
 
 /* ================= 효과음 ================= */
 let SFX_ON=(()=>{try{return localStorage.getItem('peccata_sfx')!=='0';}catch(e){return true;}})();
@@ -938,7 +938,7 @@ function sfx(k){
       g.gain.setValueAtTime(.0001,t+o);g.gain.exponentialRampToValueAtTime(k==='bad'?.08:.16,t+o+.01);g.gain.exponentialRampToValueAtTime(.0001,t+o+d);
       os.connect(g).connect(audioCtx.destination);os.start(t+o);os.stop(t+o+d+.03);o+=d*.8;});}catch(e){}
 }
-function toggleSfx(){SFX_ON=!SFX_ON;try{localStorage.setItem('peccata_sfx',SFX_ON?'1':'0');}catch(e){}toast(SFX_ON?'🔊 효과음을 켰어요':'🔇 효과음을 껐어요');if(SFX_ON)sfx('ok');}
+function toggleSfx(){SFX_ON=!SFX_ON;try{localStorage.setItem('peccata_sfx',SFX_ON?'1':'0');}catch(e){}toast(SFX_ON?'🔊 효과음을 켬':'🔇 효과음을 끔');if(SFX_ON)sfx('ok');}
 
 /* ================= 출석 보상 ================= */
 const ATT=[10,12,14,16,18,20,30];let attChecked=false;
@@ -950,14 +950,14 @@ function checkAtt(){
   if(modalOpen())return toast(`📅 출석 ${streak}일째 +${c} 은화`);
   modal(`<div style="text-align:center"><div style="font-size:2.6rem">📅</div><h2 style="color:var(--gold2);margin:4px 0">출석 ${streak}일째</h2><p>오늘의 출석 보상 <b>+${c} 은화</b></p>
    <div class="toggles" style="justify-content:center">${ATT.map((v,i)=>`<span class="chip ${i<streak?'on':''}">${i+1}일 · ${v}</span>`).join('')}</div>
-   <p class="muted">7일 연속이면 30 은화! 하루라도 빠지면 1일째부터 다시 시작해요.</p><button class="primary" onclick="closeModal()">받기</button></div>`);
+   <p class="muted">7일 연속이면 30 은화! 하루라도 빠지면 1일째부터 다시 시작.</p><button class="primary" onclick="closeModal()">받기</button></div>`);
 }
 
 /* ================= 진행도 ================= */
 function freshP(){return {coins:CONFIG.startCoins,earned:0,plotCount:3,plots:Array.from({length:6},()=>({seed:null,start:0,dur:0})),riddles:{},owned:['t0'],title:'t0',frame:'',secret:false,memo:''};}
 function saveP(){if(ME&&P)B.set('progress/'+ME.uid,clean(P));}
 function earn(n){P.coins+=n;P.earned+=n;if(typeof logAct==='function')logAct(n);if(n>0&&typeof noteTry==='function')noteTry();saveP();if(n>0)sfx('coin');}
-function spend(n){if(P.coins<n){toast('은화가 부족해요');return false;}P.coins-=n;if(typeof logAct==='function')logAct(-n);saveP();return true;}
+function spend(n){if(P.coins<n){toast('은화가 부족');return false;}P.coins-=n;if(typeof logAct==='function')logAct(-n);saveP();return true;}
 const RC=k=>typeof roomCnt==='function'?roomCnt(k):0;
 const growMul=()=>(mySin()==='sloth'?0.75:1)*(1-0.05*Math.min(3,RC('plant')))*(typeof fortGrow==='function'?fortGrow():1);
 const hintCost=i=>Math.round(HINT_COST[i]*(RC('shelf')?0.8:1));
@@ -989,14 +989,14 @@ VIEWS.lobby=()=>{
      <div><div class="t">「${esc(t?t.name:'')}」</div><div class="n">${esc(PROF.name)}</div><div class="muted">${esc(cname(myHo()))}${h?` · ${h.name} — ${esc(h.perk)}`:''}</div></div></div>
    <div class="grid g2" style="margin-top:14px">
     ${typeof fortPanel==='function'?fortPanel():''}
-    <div class="panel" style="margin:0"><h2>🗝 조사</h2><p>${qi||'<span class="muted">대기열에 없어요</span>'}</p><p class="muted">승인 대기 ${pend} · 승인됨 ${appr}</p><button onclick="go('book')">조사 예약</button></div>
+    <div class="panel" style="margin:0"><h2>🗝 조사</h2><p>${qi||'<span class="muted">대기열에 없음</span>'}</p><p class="muted">승인 대기 ${pend} · 승인됨 ${appr}</p><button onclick="go('book')">조사 예약</button></div>
     <div class="panel" style="margin:0"><h2>🎒 소지품</h2><p>${ITEMS.filter(i=>i.owner===ME.uid).length}개 ${newItems?`<span class="badge pending">새 물건 ${newItems}</span>`:''}</p><button onclick="go('items')">소지품 열기</button></div>
-    <div class="panel" style="margin:0"><h2>🌿 온실</h2><p>수확 가능 <b>${ready}</b></p>${featOpen('garden')?`<button onclick="goFeat('garden')">온실로</button>`:'<p class="muted">🔒 아직 온실을 찾지 못했어요</p>'}</div>
+    <div class="panel" style="margin:0"><h2>🌿 온실</h2><p>수확 가능 <b>${ready}</b></p>${featOpen('garden')?`<button onclick="goFeat('garden')">온실로</button>`:'<p class="muted">🔒 아직 온실을 찾지 못함</p>'}</div>
     <div class="panel" style="margin:0"><h2>📜 쪽지</h2><p>가진 쪽지 <b>${(P.notes||[]).length}</b>장 · 해결 ${solved} / ${RIDDLES.length}</p><button onclick="go('items')">쪽지 보기</button></div>
    </div>
    ${typeof msPanel==='function'?msPanel():''}
    ${appPanel()}
-   <div class="panel"><h2>안내</h2><p class="muted">• 차례가 되면 알림 막대와 소리가 나요 (화면을 한 번 눌러 두세요).<br>• 다른 창에서도 받으려면 → <a href="#" style="color:var(--gold2)" onclick="event.preventDefault();askNotify()">브라우저 알림 켜기</a></p></div>`;
+   <div class="panel"><h2>안내</h2><p class="muted">• 차례가 되면 알림 막대와 소리가 남 (화면을 한 번 눌러 두기).<br>• 다른 창에서도 받으려면 → <a href="#" style="color:var(--gold2)" onclick="event.preventDefault();askNotify()">브라우저 알림 켜기</a></p></div>`;
 };
 
 /* ---- 진행 시간대 ---- */
@@ -1010,7 +1010,7 @@ function clockBadge(){const c=PUB&&PUB.clock;if(!c)return '';const SY='①②③
 let mapSel=null;const MAPIMG={};
 async function loadMapData(key,ver){
   let meta=await B.get('maps/'+key);
-  for(let t=0;ver&&meta&&(meta.ver||0)<ver&&t<8;t++){await new Promise(r=>setTimeout(r,2500));meta=await B.get('maps/'+key);}   // 새 그림이 다 올라갈 때까지 기다려요
+  for(let t=0;ver&&meta&&(meta.ver||0)<ver&&t<8;t++){await new Promise(r=>setTimeout(r,2500));meta=await B.get('maps/'+key);}   // 새 그림이 다 올라갈 때까지 기다리는 중
   if(!meta||!meta.n)return null;
   const parts=await Promise.all(Array.from({length:meta.n},(_,i)=>B.get('mapchunks/'+key+'_'+i)));
   if(parts.some(p=>!p))return null;
@@ -1025,20 +1025,20 @@ function featsOf(name){const r=ROOMS.rooms&&ROOMS.rooms[name];if(r&&Array.isArra
 const subOf=name=>(ROOMS.rooms&&ROOMS.rooms[name]&&ROOMS.rooms[name].sub)||'';
 const hoRoomOf=name=>(ROOMS.rooms&&ROOMS.rooms[name]&&ROOMS.rooms[name].ho)||'';
 /* 지도 장소 → 그 HO의 방 구경 (내 HO면 내 방) */
-function enterHoRoom(code){const u=USERS.find(x=>x.ho===code);if(!u)return toast('아직 이 방의 주인이 없어요');if(ME&&u.id===ME.uid)return go('room');RV=u.id;go('visit');}
+function enterHoRoom(code){const u=USERS.find(x=>x.ho===code);if(!u)return toast('아직 이 방의 주인이 없음');if(ME&&u.id===ME.uid)return go('room');RV=u.id;go('visit');}
 const placeIdx=name=>((PUB&&PUB.places)||[]).findIndex(p=>p.name===name);
 function unassigned(){const pl=(PUB&&PUB.places)||[];return FEAT_KEYS.filter(k=>!pl.some(p=>featsOf(p.name).includes(k)));}
 const FREE_FEATS=['shop','rank'];            // 지도와 상관없이 늘 열려 있는 것
 const featAt=k=>((PUB&&PUB.places)||[]).findIndex(p=>featsOf(p.name).includes(k));
 const featOpen=k=>IS_ADMIN||FREE_FEATS.includes(k)||featAt(k)>=0||(k==='lockpick'&&typeof LP_T!=='undefined'&&!!LP_T);
-function openFeat(k){if(!featOpen(k)){sfx('bad');return toast('저택 어딘가에서 찾을 수 있을 것 같아요');}go(k);}
-function goFeat(k){const i=featAt(k);if(i<0&&!IS_ADMIN){sfx('bad');return toast('아직 찾지 못한 곳이에요');}if(i<0)return go(k);go('map');selectPlace(i);}
+function openFeat(k){if(!featOpen(k)){sfx('bad');return toast('저택 어딘가에서 찾을 수 있을 것 같음');}go(k);}
+function goFeat(k){const i=featAt(k);if(i<0&&!IS_ADMIN){sfx('bad');return toast('아직 찾지 못한 곳');}if(i<0)return go(k);go('map');selectPlace(i);}
 function lockCard(){return `<button class="room" disabled style="opacity:.55;cursor:default"><div class="rn">🔒 ？？？</div><div class="muted" style="font-size:.8rem">저택 어딘가에…</div></button>`;}
 function setLoc(p){
   LOC={map:p.mapKey||'',place:p.name,at:Date.now()};try{localStorage.setItem('peccata_loc',JSON.stringify(LOC));}catch(e){}
   if(PROF&&PROF.shareLoc)B.update('users/'+ME.uid,{loc:LOC}).catch(()=>{});
 }
-function setShare(v){B.update('users/'+ME.uid,{shareLoc:!!v,loc:v&&LOC?LOC:null}).catch(()=>{});toast(v?'내 위치를 다른 사람에게 보여줘요':'내 위치를 숨겼어요');}
+function setShare(v){B.update('users/'+ME.uid,{shareLoc:!!v,loc:v&&LOC?LOC:null}).catch(()=>{});toast(v?'내 위치를 다른 사람에게 보여 줌':'내 위치를 숨김');}
 function selectPlace(i){const p=PUB.places[i];if(!p)return;MAP_PLACE=p.name;if(p.mapKey)mapSel=p.mapKey;setLoc(p);render();
   setTimeout(()=>{const el=$('#placePanel');if(el)el.scrollIntoView({behavior:'smooth',block:'nearest'});},60);}
 function enterSub(key){mapSel=key;MAP_PLACE=null;render();window.scrollTo(0,0);}
@@ -1071,11 +1071,11 @@ VIEWS.map=()=>{
   const g=ROOMS.gather&&Date.now()-(ROOMS.gather.at||0)<3*36e5?ROOMS.gather:null;
   const cur=places.find(p=>p.name===MAP_PLACE);
   let h='';
-  if(g)h+=`<div class="panel" style="border-color:var(--gold)">📣 <b>${esc(g.by||'KP')}</b>님이 <b>${esc(g.place)}</b>(으)로 모두를 불렀어요.${g.msg?` <span class="muted">"${esc(g.msg)}"</span>`:''}
+  if(g)h+=`<div class="panel" style="border-color:var(--gold)">📣 <b>${esc(g.by||'KP')}</b>님이 <b>${esc(g.place)}</b>(으)로 모두를 부름.${g.msg?` <span class="muted">"${esc(g.msg)}"</span>`:''}
     <div class="row" style="margin-top:6px">${placeIdx(g.place)>=0?`<button class="sm primary" onclick="gatherGo(${placeIdx(g.place)})">그곳으로 이동</button>`:''}${IS_ADMIN?'<button class="sm" onclick="clearGather()">소집 해제</button>':''}</div>${gatherReply(g)}</div>`;
-  if(PROF.shareLoc===undefined)h+=`<div class="panel"><b>내 위치를 다른 사람에게 보여줄까요?</b><p class="muted" style="margin:4px 0 8px">보여주면 내 위치에 토큰이 떠요. 프로필에서 바꿀 수 있어요.</p><div class="row"><button class="primary" onclick="setShare(true)">보여주기</button><button onclick="setShare(false)">숨기기</button></div></div>`;
+  if(PROF.shareLoc===undefined)h+=`<div class="panel"><b>내 위치를 다른 사람에게 보여 줄까?</b><p class="muted" style="margin:4px 0 8px">보여주면 내 위치에 토큰이 뜸. 프로필에서 바꿀 수 있음.</p><div class="row"><button class="primary" onclick="setShare(true)">보여주기</button><button onclick="setShare(false)">숨기기</button></div></div>`;
   if(!maps.length&&!places.length){
-    h+=`<div class="panel"><h2>저택 지도</h2><p class="muted">아직 공개된 장소가 없어요.</p>${IS_ADMIN?'<button class="sm" onclick="openRoomSettings()">⚙ 방 기능 설정</button>':''}</div>`;
+    h+=`<div class="panel"><h2>저택 지도</h2><p class="muted">아직 공개된 장소가 없음.</p>${IS_ADMIN?'<button class="sm" onclick="openRoomSettings()">⚙ 방 기능 설정</button>':''}</div>`;
     h+=extraPanel();
     return h;
   }
@@ -1083,9 +1083,9 @@ VIEWS.map=()=>{
    ${parent?`<button class="sm" style="margin:8px 0" onclick="enterSub('${parent.mapKey}')">← ${esc((maps.find(m=>m.key===parent.mapKey)||{}).name||'뒤로')} (으)로</button> <b>${esc(parent.name)}</b>`:
      (topList.length>1?`<div class="toggles" style="margin-top:8px">${topList.map(m=>`<button class="${m.key===mapSel?'on':''}" onclick="mapSel='${m.key}';MAP_PLACE=null;render()">${esc(m.name)}</button>`).join('')}</div>`:'')}
    ${maps.length?`<div class="mapbox${MZ_FULL?' mzfull':''}" id="mapVP" style="margin-top:10px"><canvas id="plMap"></canvas><p class="muted" id="mapLoading">지도를 불러오는 중…</p>
-   <div class="mztools">${MZ_CROP?`<span class="mzhint">✂ 보일 범위를 끌어서 그려요</span><button onclick="mzCropSave()">저장</button><button onclick="mzCropAuto()">자동</button><button onclick="MZ_CROP=null;render()">취소</button>`
+   <div class="mztools">${MZ_CROP?`<span class="mzhint">✂ 보일 범위를 끌어서 그림</span><button onclick="mzCropSave()">저장</button><button onclick="mzCropAuto()">자동</button><button onclick="MZ_CROP=null;render()">취소</button>`
      :`<button onclick="mzZoom(1.4)" title="확대">➕</button><button onclick="mzZoom(1/1.4)" title="축소">➖</button><button onclick="mzFit()" title="맞춤">⟲</button><button onclick="mzFull()" title="전체 화면">${MZ_FULL?'✕':'⛶'}</button>${IS_ADMIN?'<button onclick="mzCropStart()" title="보일 범위 (KP)">✂</button>':''}`}</div></div>
-   <p class="muted">방을 눌러 이동해요.${myPlace()?` 지금 위치: <b>${esc(myPlace())}</b>${schedLoc(myHo())?' <span class="muted">(일정표)</span>':''}`:''}${EGG.on?' 방 밖에도… 무언가 있을지 몰라요.':''}</p>`:''}
+   <p class="muted">방을 눌러 이동.${myPlace()?` 지금 위치: <b>${esc(myPlace())}</b>${schedLoc(myHo())?' <span class="muted">(일정표)</span>':''}`:''}${EGG.on?' 방 밖에도… 무언가 있을지 모름.':''}</p>`:''}
    ${places.filter(p=>!p.mapKey).length?`<h3>그 밖의 장소</h3>${places.map((p,i)=>p.mapKey?'':`<span class="chip ${MAP_PLACE===p.name?'on':''}" style="border-color:${p.color}" onclick="selectPlace(${i})">${esc(p.name)}</span>`).join('')}`:''}</div>`;
   if(cur){const fs=featsOf(cur.name),sub=subOf(cur.name),sm=maps.find(m=>m.key===sub),ppl=whoAt(cur.name);
     h+=`<div class="panel" id="placePanel"><h2>📍 ${esc(cur.name)}</h2>${ppl.length?`<p class="muted">여기 있는 사람: ${ppl.map(u=>esc(u.ho?cname(u.ho):uname(u))).join(', ')}</p>`:''}
@@ -1093,13 +1093,13 @@ VIEWS.map=()=>{
      ${hoRoomOf(cur.name)?(()=>{const c=hoRoomOf(cur.name),mine=myHo()===c;return `<button class="room solved" onclick="enterHoRoom('${c}')"><div class="rn">🚪 ${esc(cname(c))}의 방 ${mine?'(내 방)':'들어가기'}</div><div class="muted" style="font-size:.8rem">${mine?'꾸미러 가기':'구경하기 · 방명록'}</div></button>`;})():''}
      ${fs.map(featCard).join('')}
      ${myHo()?`<button class="room" onclick="bookAt(${JSON.stringify(cur.name).replace(/"/g,'&quot;')})"><div class="rn">🗝 이곳 조사 예약</div><div class="muted" style="font-size:.8rem">일정표에서 시간 고르기</div></button>`:''}</div>
-     ${!fs.length&&!sm&&!hoRoomOf(cur.name)?'<p class="muted">이 방에서 할 수 있는 건 조사뿐인 것 같아요.</p>':''}</div>`;}
+     ${!fs.length&&!sm&&!hoRoomOf(cur.name)?'<p class="muted">이 방에서 할 수 있는 건 조사뿐인 것 같음.</p>':''}</div>`;}
   h+=extraPanel();
   return h;
 };
 function extraPanel(){
   const free=FEAT_KEYS.filter(k=>FREE_FEATS.includes(k)),hidden=FEAT_KEYS.filter(k=>!FREE_FEATS.includes(k)&&featAt(k)<0);
-  return `<div class="panel"><h2>그 밖의 즐길 거리</h2><p class="muted">놀거리는 저택의 방 안에 있어요.</p>
+  return `<div class="panel"><h2>그 밖의 즐길 거리</h2><p class="muted">놀거리는 저택의 방 안에 있음.</p>
    <div class="grid g3">${free.map(featCard).join('')}${IS_ADMIN?hidden.map(featCard).join(''):hidden.map(lockCard).join('')}</div></div>`;
 }
 const TOKIMG={};
@@ -1121,19 +1121,19 @@ function mzFit(){MZ[mapSel]={z:1,cx:.5,cy:.5};drawPlMap();}
 function mzFull(){MZ_FULL=!MZ_FULL;document.body.style.overflow=MZ_FULL?'hidden':'';render();}
 function mzCropStart(){MZ_CROP={key:mapSel,r:(ROOMS.crop||{})[mapSel]||null};MZ[mapSel]={z:1,cx:.5,cy:.5};render();}
 async function mzCropSave(){const c=MZ_CROP;if(!c)return;const crop=Object.assign({},ROOMS.crop||{});if(c.r&&c.r.w>.02&&c.r.h>.02)crop[c.key]=c.r;else delete crop[c.key];
-  try{await B.set('settings/rooms',{crop},true);}catch(e){return toast('저장 실패: '+(e.code||e.message));}ROOMS.crop=crop;MZ_CROP=null;MZ[c.key]={z:1,cx:.5,cy:.5};toast('보일 범위를 저장했어요');render();}
+  try{await B.set('settings/rooms',{crop},true);}catch(e){return toast('저장 실패: '+(e.code||e.message));}ROOMS.crop=crop;MZ_CROP=null;MZ[c.key]={z:1,cx:.5,cy:.5};toast('보일 범위 저장 완료');render();}
 function mzCropAuto(){if(MZ_CROP)MZ_CROP.r=null;mzCropSave();}
 async function drawPlMap(){
   const cv=$('#plMap');if(!cv||!mapSel)return;
   const key=mapSel,ver=(((PUB&&PUB.maps)||[]).find(m=>m.key===key)||{}).ver||0,ck=key+'@'+ver,img=MAPIMG[ck];
   if(!img){MAPIMG[ck]='loading';const data=await loadMapData(key,ver);
-    if(!data){delete MAPIMG[ck];const l=$('#mapLoading');if(l)l.textContent='지도를 불러오지 못했어요. 잠시 후 다시 열어 주세요.';return;}
+    if(!data){delete MAPIMG[ck];const l=$('#mapLoading');if(l)l.textContent='지도를 불러오지 못함. 잠시 후 다시 열기.';return;}
     const im=new Image();im.onload=()=>{MAPIMG[ck]=im;if(tab==='map')drawPlMap();};im.src=data;return;}
   if(img==='loading')return;
   const V=mzView(key,img),box=cv.parentElement,dpr=Math.min(3,window.devicePixelRatio||1),ar=(V.h*img.height)/(V.w*img.width);
   let W=box.clientWidth,H=Math.round(W*ar);
   if(MZ_FULL){W=window.innerWidth;H=Math.round(W*ar);const mh=window.innerHeight-8;if(H>mh){H=mh;W=Math.round(H/ar);}}
-  const vh=Math.min(V.h,V.w*H/W*img.width/img.height),vy=V.y+(V.h-vh)/2;   // 높이를 줄였으면 가운데 기준으로 잘라 보여요
+  const vh=Math.min(V.h,V.w*H/W*img.width/img.height),vy=V.y+(V.h-vh)/2;   // 높이를 줄였으면 가운데 기준으로 잘라 보임
   cv.style.width=W+'px';cv.style.height=H+'px';cv.width=Math.round(W*dpr);cv.height=Math.round(H*dpr);cv._ar=img.height/img.width;
   const ctx=cv.getContext('2d');ctx.imageSmoothingEnabled=!document.documentElement.classList.contains('px')||V.w*img.width<W;
   ctx.fillStyle='#0c0806';ctx.fillRect(0,0,cv.width,cv.height);
@@ -1187,31 +1187,31 @@ function openRoomSettings(){
 }
 function rsModal(){
   const places=(PUB&&PUB.places)||[],maps=(PUB&&PUB.maps)||[];
-  modal(`<h2 style="color:var(--gold2);margin-top:0">🗺 방 기능 설정</h2><p class="muted">공개된 장소만 나와요. 방마다 놀거리와 세부 지도를 정해요.</p>
+  modal(`<h2 style="color:var(--gold2);margin-top:0">🗺 방 기능 설정</h2><p class="muted">공개된 장소만 나옴. 방마다 놀거리와 세부 지도를 정함.</p>
    ${places.length?places.map((p,i)=>{const r=window._rs[p.name];return `<div class="card"><b>${esc(p.name)}</b>
      <div class="toggles" style="margin:6px 0">${FEAT_KEYS.map(k=>`<button class="sm ${r.feats.includes(k)?'on':''}" onclick="rsTog(${i},'${k}')">${FEATS[k].ic} ${FEATS[k].n}</button>`).join('')}</div>
      <label class="muted" style="font-size:.8rem">세부 지도 <select style="width:auto" onchange="window._rs[PUB.places[${i}].name].sub=this.value"><option value="">없음</option>${maps.filter(m=>m.key!==p.mapKey).map(m=>`<option value="${m.key}" ${r.sub===m.key?'selected':''}>${esc(m.name)}</option>`).join('')}</select></label>
-     <label class="muted" style="font-size:.8rem;margin-left:8px">🚪 HO 방 <select style="width:auto" onchange="window._rs[PUB.places[${i}].name].ho=this.value"><option value="">없음</option>${HO_CODES.map(c=>`<option value="${c}" ${r.ho===c?'selected':''}>${esc(cname(c))}</option>`).join('')}</select></label></div>`;}).join(''):'<p class="muted">공개된 장소가 없어요.</p>'}
+     <label class="muted" style="font-size:.8rem;margin-left:8px">🚪 HO 방 <select style="width:auto" onchange="window._rs[PUB.places[${i}].name].ho=this.value"><option value="">없음</option>${HO_CODES.map(c=>`<option value="${c}" ${r.ho===c?'selected':''}>${esc(cname(c))}</option>`).join('')}</select></label></div>`;}).join(''):'<p class="muted">공개된 장소가 없음.</p>'}
    <div class="row" style="margin-top:8px"><button onclick="closeModal()">취소</button><button class="primary" onclick="rsSave()">저장</button></div>`);
 }
 function rsTog(i,k){const r=window._rs[PUB.places[i].name];r.feats=r.feats.includes(k)?r.feats.filter(x=>x!==k):[...r.feats,k];rsModal();}
-async function rsSave(){const rooms=Object.assign({},ROOMS.rooms||{},window._rs);try{await B.set('settings/rooms',{rooms:clean(rooms)},true);}catch(e){return toast('저장 실패: '+(e.code||e.message));}closeModal();toast('방 기능을 저장했어요');}
+async function rsSave(){const rooms=Object.assign({},ROOMS.rooms||{},window._rs);try{await B.set('settings/rooms',{rooms:clean(rooms)},true);}catch(e){return toast('저장 실패: '+(e.code||e.message));}closeModal();toast('방 기능 저장 완료');}
 function gatherAsk(){
-  const places=(PUB&&PUB.places)||[];if(!places.length)return toast('먼저 장소를 PL에게 공개해 주세요');
+  const places=(PUB&&PUB.places)||[];if(!places.length)return toast('먼저 장소를 PL에게 공개하기');
   modal(`<h2 style="color:var(--gold2);margin-top:0">📣 모두 소집</h2><label class="f">모일 장소</label><select id="gPlace">${places.map(p=>`<option ${/로비|현관|홀/.test(p.name)?'selected':''}>${esc(p.name)}</option>`).join('')}</select>
    <label class="f">한마디 (선택)</label><input id="gMsg" maxlength="60" placeholder="예: 저녁 식사 시간입니다">
-   <p class="muted">모든 HO에게 알림이 가고 지도에 소집 안내가 떠요.</p>
+   <p class="muted">모든 HO에게 알림이 가고 지도에 소집 안내가 뜸.</p>
    <div class="row"><button onclick="closeModal()">취소</button><button class="primary" onclick="gatherSend()">소집</button></div>`);
 }
 async function gatherSend(){
   const place=$('#gPlace').value,msg=$('#gMsg').value.trim(),p=PUB.places.find(x=>x.name===place)||{};
   await B.set('settings/rooms',{gather:{place,map:p.mapKey||'',msg,by:PROF.name,at:Date.now()}},true);
   const uids=USERS.filter(u=>u.ho&&u.id!==ME.uid).map(u=>u.id);
-  await callUsers(uids,`📣 ${place}(으)로 모여 주세요${msg?' — '+msg:''}`);closeModal();toast('모두를 불렀어요');
+  await callUsers(uids,`📣 ${place}(으)로 모이기${msg?' — '+msg:''}`);closeModal();toast('모두를 부름');
 }
 function gatherReply(g){
   const c=CALL;if(!c||!String(c.msg||'').startsWith('📣')||(c.at||0)<(g.at||0)-60000)return '';
-  if(!c.ack)return `<div class="row" style="margin-top:8px;gap:6px"><span class="muted" style="flex:0 0 auto">응답:</span><button class="sm primary" onclick="ackCall('go')">지금 갈게요</button><button class="sm" onclick="ackCall('5m')">5분만</button><button class="sm" onclick="ackCall('no')">어려워요</button></div>`;
+  if(!c.ack)return `<div class="row" style="margin-top:8px;gap:6px"><span class="muted" style="flex:0 0 auto">응답:</span><button class="sm primary" onclick="ackCall('go')">지금 갈게</button><button class="sm" onclick="ackCall('5m')">5분만</button><button class="sm" onclick="ackCall('no')">어려움</button></div>`;
   return `<p class="muted" style="margin:6px 0 0">내 응답: <b>${REPLY[c.reply]||'확인 ✓'}</b></p>`;
 }
 function clearGather(){B.set('settings/rooms',{gather:null},true);}
@@ -1261,13 +1261,13 @@ let BK_PREV=null;
 function bookingNotify(prev,l){
   const say=(t,b)=>{toast(t+' · '+bkWhen(b)+' '+b.place);try{beep();}catch(e){}try{if(document.hidden&&window.Notification&&Notification.permission==='granted')new Notification(CONFIG.title||'햄카타',{body:t+' · '+b.place});}catch(e){}};
   const me=myHo&&myHo();
-  l.forEach(b=>{const p=prev[b.id];if(!p){if(b.status==='pending'&&b.uid!==ME.uid&&me&&(b.parts||[]).includes(me)&&(b.at||0)>Date.now()-600000)say('🙋 '+(b.name||'누군가')+'님이 같이 가자고 해요',b);return;}const mine=b.uid===ME.uid,inv=mine||(me&&(b.parts||[]).includes(me));
-    {const r0=p.resp||{},r1=b.resp||{};Object.keys(r1).forEach(c=>{if(r1[c]==='no'&&r0[c]!=='no'&&(IS_ADMIN||mine))say(`${cname(c)}: 같이 못 간대요`,b);});}
+  l.forEach(b=>{const p=prev[b.id];if(!p){if(b.status==='pending'&&b.uid!==ME.uid&&me&&(b.parts||[]).includes(me)&&(b.at||0)>Date.now()-600000)say('🙋 '+(b.name||'누군가')+'님이 같이 가자고 함',b);return;}const mine=b.uid===ME.uid,inv=mine||(me&&(b.parts||[]).includes(me));
+    {const r0=p.resp||{},r1=b.resp||{};Object.keys(r1).forEach(c=>{if(r1[c]==='no'&&r0[c]!=='no'&&(IS_ADMIN||mine))say(`${cname(c)}: 같이 못 간대`,b);});}
     if(IS_ADMIN&&!mine){if(!p.cancelReq&&b.cancelReq)say('🗝 예약 취소 요청: '+(b.name||''),b);if(b.status==='pending'&&b.editedAt&&b.editedAt!==p.editedAt)say('✏ 예약 수정: '+(b.name||''),b);}
     if(!inv)return;
-    if(p.status!==b.status){if(b.status==='approved')say('✅ 조사 예약 승인',b);else if(b.status==='rejected')say('조사 예약 거절',b);else if(b.status==='cancelled'&&p.status==='approved')say('조사 예약이 취소됐어요',b);}
-    else if(b.status==='approved'&&b.changedAt&&b.changedAt!==p.changedAt)say('📝 조사 예약이 바뀌었어요',b);
-    else if(mine&&b.status==='approved'&&b.reqNo&&b.reqNo!==p.reqNo)say('취소 요청이 거절됐어요',b);});
+    if(p.status!==b.status){if(b.status==='approved')say('✅ 조사 예약 승인',b);else if(b.status==='rejected')say('조사 예약 거절',b);else if(b.status==='cancelled'&&p.status==='approved')say('조사 예약이 취소됨',b);}
+    else if(b.status==='approved'&&b.changedAt&&b.changedAt!==p.changedAt)say('📝 조사 예약이 바뀜',b);
+    else if(mine&&b.status==='approved'&&b.reqNo&&b.reqNo!==p.reqNo)say('취소 요청이 거절됨',b);});
 }
 function busyOf(code,d,s){
   const o=PUB&&PUB.occ&&PUB.occ[code];if(o&&o['d'+d+'s'+s])return '일정 있음';
@@ -1316,20 +1316,20 @@ function bookGrid(){
   return h+'</table></div>';
 }
 function gridTap(c,d,s){
-  const me=myHo(),st=cellState(c,d,s);if(st.k==='past')return toast('이미 지난 시간이에요');
-  if(st.k==='busy'||st.k==='dep')return toast(st.k==='dep'?'이탈한 캐릭터예요':'이미 일정이 있는 칸이에요');
+  const me=myHo(),st=cellState(c,d,s);if(st.k==='past')return toast('이미 지난 시간');
+  if(st.k==='busy'||st.k==='dep')return toast(st.k==='dep'?'이탈한 캐릭터':'이미 일정이 있는 칸');
   if(c===me){
     if(BK.day!==d){BK.day=d;BK.slots=[];BK.parts=[me];}
     BK.slots=BK.slots.includes(s)?BK.slots.filter(x=>x!==s):[...BK.slots,s];
     BK.parts=BK.parts.filter(x=>x===me||!BK.slots.some(z=>busyOf(x,d,z)));
     render();return;
   }
-  if(BK.day!==d||!BK.slots.includes(s))return toast('먼저 맨 위 내 줄에서 시간을 골라 주세요');
-  if(BK.slots.some(z=>busyOf(c,d,z)))return toast('그 캐릭터는 고른 시간에 일정이 있어요');
+  if(BK.day!==d||!BK.slots.includes(s))return toast('먼저 맨 위 내 줄에서 시간을 고르기');
+  if(BK.slots.some(z=>busyOf(c,d,z)))return toast('그 캐릭터는 고른 시간에 일정이 있음');
   BK.parts=BK.parts.includes(c)?BK.parts.filter(x=>x!==c):[...BK.parts,c];render();
 }
 VIEWS.book=()=>{
-  if(!PUB)return `<div class="panel"><h2>조사 예약</h2><p class="muted">아직 KP가 일정을 열지 않았어요.</p></div>`;
+  if(!PUB)return `<div class="panel"><h2>조사 예약</h2><p class="muted">아직 KP가 일정을 열지 않음.</p></div>`;
   const me=myHo();if(!BK.parts.includes(me))BK.parts=[me,...BK.parts.filter(c=>c!==me)];
   const days=PUB.days||1;if(BK.day>days){BK.day=1;BK.slots=[];}
   const places=PUB.places||[];
@@ -1341,51 +1341,51 @@ VIEWS.book=()=>{
   const qi=queueInfo(me);
   const when=BK.slots.length?`${esc(dayName(BK.day))} ${BK.slots.slice().sort((a,b)=>a-b).map(s=>SYMS[s-1]||s).join('')}`:'';
   const inv=BOOKINGS.filter(b=>b.status==='pending'&&b.uid!==ME.uid&&(b.parts||[]).includes(me)&&!(b.resp||{})[me]);
-  return `${inv.length?`<div class="panel" style="border-color:var(--gold)"><h2>🙋 같이 가자는 신청 (${inv.length})</h2>${inv.map(b=>bookingCard(b,{actions:`<button class="sm primary" onclick="bookResp('${b.id}','ok')">같이 가요</button><button class="sm danger" onclick="bookResp('${b.id}','no')">못 가요</button>`})).join('')}</div>`:''}<div class="panel"><h2>조사 예약</h2>
+  return `${inv.length?`<div class="panel" style="border-color:var(--gold)"><h2>🙋 같이 가자는 신청 (${inv.length})</h2>${inv.map(b=>bookingCard(b,{actions:`<button class="sm primary" onclick="bookResp('${b.id}','ok')">같이 감</button><button class="sm danger" onclick="bookResp('${b.id}','no')">못 감</button>`})).join('')}</div>`:''}<div class="panel"><h2>조사 예약</h2>
    <p class="muted">① <b>내 줄</b>에서 시간 칸 → ② 함께 갈 사람 → ③ 장소 고르고 신청</p>
    ${bookGrid()}
    <div class="legend"><span><i style="background:var(--wine)"></i>선택</span><span><i style="outline:1.5px dashed var(--gold);outline-offset:-2px"></i>신청 중</span><span><i style="background:repeating-linear-gradient(45deg,var(--panel2),var(--panel2) 3px,var(--inbg) 3px,var(--inbg) 6px)"></i>일정 있음</span><span><i style="background:var(--inbg);opacity:.6"></i>이탈</span></div>
-   ${!places.length?'<p class="muted" style="margin-top:10px">아직 공개된 장소가 없어요. KP가 장소를 공개하면 신청할 수 있어요.</p>':`
-   <div class="card" style="margin-top:12px;${BK.edit?'border-color:var(--gold2)':''}">${BK.edit?'<div style="color:var(--gold2);margin-bottom:4px">✏ 예약을 고치는 중이에요</div>':''}<b>${when||'<span class="muted">시간을 골라 주세요</span>'}</b>
+   ${!places.length?'<p class="muted" style="margin-top:10px">아직 공개된 장소가 없음. KP가 장소를 공개하면 신청할 수 있음.</p>':`
+   <div class="card" style="margin-top:12px;${BK.edit?'border-color:var(--gold2)':''}">${BK.edit?'<div style="color:var(--gold2);margin-bottom:4px">✏ 예약을 고치는 중</div>':''}<b>${when||'<span class="muted">시간을 고르기</span>'}</b>
    <label class="f">장소</label><select onchange="BK.place=this.value">${places.map(p=>`<option ${p.name===BK.place?'selected':''}>${esc(p.name)}</option>`).join('')}</select>
    <label class="f">함께 갈 사람 (나 포함 2인 이상)</label><div class="toggles"><button class="on" disabled>${esc(cname(me))} (나)</button>${partBtns}</div>
    <label class="f">하고 싶은 행동 (선택)</label><input maxlength="80" value="${esc(BK.note)}" oninput="BK.note=this.value" placeholder="예: 책장 뒤를 살펴본다">
    ${BK.edit?`<div class="row" style="margin-top:12px"><button class="primary" style="flex:1" onclick="submitBooking()">수정 저장</button><button onclick="bookEditStop()">그만두기</button></div>`:'<button class="primary" style="width:100%;margin-top:12px" onclick="submitBooking()">예약 신청</button>'}</div>`}</div>
    <div class="panel"><h2>내 조사 일정</h2>${qi?`<p>${qi}</p>`:''}
-   ${(()=>{const hide=P.bkHide||[],old=mine.filter(b=>bkOld(b)&&!hide.includes(b.id));const act=mine.filter(b=>!bkOld(b));return (act.length?act.map(b=>bookingCard(b,{actions:b.uid!==ME.uid?'':b.status==='pending'?`<button class="sm" onclick="bookEdit('${b.id}')">✏ 고치기</button><button class="sm danger" onclick="cancelBooking('${b.id}')">취소</button>`:b.status==='approved'?(b.cancelReq?`<button class="sm" onclick="cancelReqUndo('${b.id}')">요청 철회</button>`:`<button class="sm danger" onclick="cancelReqAsk('${b.id}')">취소 요청</button>`):''})).join(''):'<p class="muted">다가오는 예약이 없어요.</p>')
+   ${(()=>{const hide=P.bkHide||[],old=mine.filter(b=>bkOld(b)&&!hide.includes(b.id));const act=mine.filter(b=>!bkOld(b));return (act.length?act.map(b=>bookingCard(b,{actions:b.uid!==ME.uid?'':b.status==='pending'?`<button class="sm" onclick="bookEdit('${b.id}')">✏ 고치기</button><button class="sm danger" onclick="cancelBooking('${b.id}')">취소</button>`:b.status==='approved'?(b.cancelReq?`<button class="sm" onclick="cancelReqUndo('${b.id}')">요청 철회</button>`:`<button class="sm danger" onclick="cancelReqAsk('${b.id}')">취소 요청</button>`):''})).join(''):'<p class="muted">다가오는 예약이 없음.</p>')
      +(old.length?`<details style="margin-top:8px"><summary class="muted">지난 예약 (${old.length})</summary>${old.map(b=>bookingCard(b,{actions:`<button class="sm" onclick="bkHide('${b.id}')">✕ 지우기</button>`})).join('')}<button class="sm" style="margin-top:6px" onclick="bkHideAll()">🧹 지난 예약 모두 지우기</button></details>`:'');})()}</div>`;
 };
 function togBK(k,v){BK[k]=BK[k].includes(v)?BK[k].filter(x=>x!==v):[...BK[k],v];if(k==='slots')BK.parts=BK.parts.filter(c=>c===myHo()||!BK.slots.some(s=>busyOf(c,BK.day,s)));render();}
 async function submitBooking(){
-  if(!BK.place)return toast('장소를 골라 주세요');
-  if(!BK.slots.length)return toast('슬롯을 골라 주세요');
-  if(BK.parts.length<2)return toast('조사는 2인 이상이어야 해요');
-  if(BK.edit){const id=BK.edit,o=BOOKINGS.find(b=>b.id===id);if(!o||o.status!=='pending'){BK.edit=null;render();return toast('이미 처리된 예약이라 고칠 수 없어요');}
+  if(!BK.place)return toast('장소를 고르기');
+  if(!BK.slots.length)return toast('슬롯을 고르기');
+  if(BK.parts.length<2)return toast('조사는 2인 이상이어야 함');
+  if(BK.edit){const id=BK.edit,o=BOOKINGS.find(b=>b.id===id);if(!o||o.status!=='pending'){BK.edit=null;render();return toast('이미 처리된 예약이라 고칠 수 없음');}
     try{await B.update('bookings/'+id,clean({day:BK.day,slots:BK.slots.slice().sort(),place:BK.place,parts:BK.parts,note:BK.note.trim(),editedAt:Date.now()}));}catch(e){return toast('수정 실패: '+(e.code||e.message));}
-    BK={day:BK.day,slots:[],place:BK.place,parts:[myHo()],note:'',edit:null};toast('예약을 고쳤어요');return render();}
+    BK={day:BK.day,slots:[],place:BK.place,parts:[myHo()],note:'',edit:null};toast('예약 수정 완료');return render();}
   const dup=BOOKINGS.find(b=>b.status==='pending'&&b.day===BK.day&&(b.parts||[]).some(c=>BK.parts.includes(c))&&(b.slots||[]).some(s=>BK.slots.includes(s)));
   await B.add('bookings',clean({uid:ME.uid,name:PROF.name,ho:myHo(),day:BK.day,slots:BK.slots.slice().sort(),place:BK.place,parts:BK.parts,note:BK.note.trim(),status:'pending',at:Date.now()}));
   BK.slots=[];BK.note='';BK.parts=[myHo()];
-  toast(dup?'신청했어요 (같은 슬롯에 다른 신청이 있어 KP가 조율할 수 있어요)':'예약을 신청했어요');render();
+  toast(dup?'신청 완료 (같은 슬롯에 다른 신청이 있어 KP가 조율할 수 있음)':'예약 신청 완료');render();
 }
-async function bookResp(id,r){const me=myHo(),b=BOOKINGS.find(x=>x.id===id);try{await B.update('bookings/'+id,{resp:Object.assign({},b&&b.resp,{[me]:r})});}catch(e){return toast('실패: '+(e.code||e.message));}toast(r==='ok'?'같이 간다고 알렸어요':'못 간다고 알렸어요');}
-function cancelBooking(id){if(!confirm('이 예약 신청을 취소할까요?'))return;if(BK.edit===id)BK.edit=null;B.update('bookings/'+id,{status:'cancelled'});}
+async function bookResp(id,r){const me=myHo(),b=BOOKINGS.find(x=>x.id===id);try{await B.update('bookings/'+id,{resp:Object.assign({},b&&b.resp,{[me]:r})});}catch(e){return toast('실패: '+(e.code||e.message));}toast(r==='ok'?'같이 간다고 알림':'못 간다고 알림');}
+function cancelBooking(id){if(!confirm('이 예약 신청을 취소할까?'))return;if(BK.edit===id)BK.edit=null;B.update('bookings/'+id,{status:'cancelled'});}
 /* PL: 대기 중 예약 고치기 · 승인된 예약 취소 요청 */
-function bookEdit(id){const b=BOOKINGS.find(x=>x.id===id);if(!b)return;BK={day:b.day,slots:(b.slots||[]).slice(),place:b.place,parts:(b.parts||[]).slice(),note:b.note||'',edit:id};render();window.scrollTo({top:0,behavior:'smooth'});toast('위에서 바꾼 뒤 "수정 저장"을 눌러요');}
+function bookEdit(id){const b=BOOKINGS.find(x=>x.id===id);if(!b)return;BK={day:b.day,slots:(b.slots||[]).slice(),place:b.place,parts:(b.parts||[]).slice(),note:b.note||'',edit:id};render();window.scrollTo({top:0,behavior:'smooth'});toast('위에서 바꾼 뒤 "수정 저장"을 누름');}
 function bookEditStop(){BK={day:BK.day,slots:[],place:BK.place,parts:[myHo()],note:'',edit:null};render();}
-function cancelReqAsk(id){const b=BOOKINGS.find(x=>x.id===id);if(!b)return;modal(`<h2 style="color:var(--gold2);margin-top:0">예약 취소 요청</h2>${bookingCard(b)}<label class="f">이유 (선택)</label><input id="crNote" maxlength="80" placeholder="예: 그 시간에 다른 곳을 가고 싶어요"><p class="muted">KP가 수락하면 일정표에서도 지워져요.</p>
+function cancelReqAsk(id){const b=BOOKINGS.find(x=>x.id===id);if(!b)return;modal(`<h2 style="color:var(--gold2);margin-top:0">예약 취소 요청</h2>${bookingCard(b)}<label class="f">이유 (선택)</label><input id="crNote" maxlength="80" placeholder="예: 그 시간에 다른 곳을 가고 싶음"><p class="muted">KP가 수락하면 일정표에서도 지워짐.</p>
   <div class="row"><button onclick="closeModal()">그만두기</button><button class="primary" onclick="cancelReqSend('${id}')">요청 보내기</button></div>`);}
-async function cancelReqSend(id){try{await B.update('bookings/'+id,{cancelReq:true,cancelNote:$('#crNote').value.trim(),cancelAt:Date.now()});}catch(e){return toast('실패: '+(e.code||e.message));}closeModal();toast('KP에게 취소를 요청했어요');}
-function cancelReqUndo(id){B.update('bookings/'+id,{cancelReq:false,cancelNote:'',cancelAt:Date.now()}).then(()=>toast('취소 요청을 거뒀어요')).catch(e=>toast('실패: '+(e.code||e.message)));}
+async function cancelReqSend(id){try{await B.update('bookings/'+id,{cancelReq:true,cancelNote:$('#crNote').value.trim(),cancelAt:Date.now()});}catch(e){return toast('실패: '+(e.code||e.message));}closeModal();toast('KP에게 취소 요청 완료');}
+function cancelReqUndo(id){B.update('bookings/'+id,{cancelReq:false,cancelNote:'',cancelAt:Date.now()}).then(()=>toast('취소 요청을 거둠')).catch(e=>toast('실패: '+(e.code||e.message)));}
 
 /* ================= PL: 소지품 ================= */
 let COMBINE=null;
 VIEWS.items=()=>{
   const mine=ITEMS.filter(i=>i.owner===ME.uid);
   return `${typeof notesPanel==='function'?notesPanel():''}<div class="panel"><h2>소지품</h2>
-   ${COMBINE?`<p style="color:var(--gold2)">조합할 물건을 하나 더 고르세요. <button class="sm" onclick="COMBINE=null;render()">그만두기</button></p>`:'<p class="muted">물건을 눌러 살펴보거나, 건네주거나, 다른 물건과 조합할 수 있어요.</p>'}
+   ${COMBINE?`<p style="color:var(--gold2)">조합할 물건을 하나 더 고르기. <button class="sm" onclick="COMBINE=null;render()">그만두기</button></p>`:'<p class="muted">물건을 눌러 살펴보거나, 건네주거나, 다른 물건과 조합할 수 있음.</p>'}
    ${mine.length?`<div class="inv">${mine.map(i=>`<div class="slotx ${COMBINE===i.id?'sel':''}" onclick="${COMBINE?`doCombine('${i.id}')`:`openItem('${i.id}')`}">
-     ${i.img?`<img src="${i.img}" alt="">`:'<div class="noimg">📦</div>'}<div style="font-size:.88rem">${esc(i.name)}${!i.seen?'<span class="dot"></span>':''}${i.revealed?' ✦':''}</div></div>`).join('')}</div>`:'<p class="muted">아직 가진 물건이 없어요.</p>'}</div>`;
+     ${i.img?`<img src="${i.img}" alt="">`:'<div class="noimg">📦</div>'}<div style="font-size:.88rem">${esc(i.name)}${!i.seen?'<span class="dot"></span>':''}${i.revealed?' ✦':''}</div></div>`).join('')}</div>`:'<p class="muted">아직 가진 물건이 없음.</p>'}</div>`;
 };
 function openItem(id){MODAL_ITEM=id;refreshItemModal();const it=ITEMS.find(x=>x.id===id);if(it&&!it.seen&&it.owner===ME.uid)B.update('items/'+id,{seen:true}).catch(()=>{});}
 function refreshItemModal(){
@@ -1404,9 +1404,9 @@ function refreshItemModal(){
    ${others.length?`<label class="f">건네주기</label><div class="row"><select id="giveTo">${others.map(u=>`<option value="${u.id}">${esc(uname(u))} (${esc(cname(u.ho))})</option>`).join('')}</select><button style="flex:0 0 auto" onclick="giveItem('${it.id}')">건네기</button></div>`:''}
    <button style="margin-top:12px;width:100%" onclick="closeModal()">닫기</button>`);
 }
-function inspectItem(id){B.update('items/'+id,{inspectReq:true});toast('KP에게 살펴보기를 요청했어요. 판정을 기다려 주세요');}
+function inspectItem(id){B.update('items/'+id,{inspectReq:true});toast('KP에게 살펴보기 요청 완료. 판정을 기다리기');}
 async function giveItem(id){const to=$('#giveTo').value,u=userOf(to);
-  await B.update('items/'+id,{owner:to,ownerName:uname(u),fromName:PROF.name,seen:false});closeModal();toast(`${uname(u)}에게 건넸어요`);}
+  await B.update('items/'+id,{owner:to,ownerName:uname(u),fromName:PROF.name,seen:false});closeModal();toast(`${uname(u)}에게 건넴`);}
 async function doCombine(id){
   const a=ITEMS.find(x=>x.id===COMBINE),b=ITEMS.find(x=>x.id===id);COMBINE=null;
   if(!a||!b||a.id===b.id){render();return;}
@@ -1416,18 +1416,18 @@ async function doCombine(id){
   const nid=rid(),ops=[];
   if(r.consume!==false){ops.push({op:'del',path:'items/'+a.id},{op:'del',path:'items/'+b.id});}
   ops.push({op:'set',path:'items/'+nid,data:clean({defId:r.result,owner:ME.uid,ownerName:PROF.name,name:r.name,desc:r.desc||'',img:r.img||'',via:rk,revealed:false,seen:true,at:Date.now()})});
-  try{await B.batch(ops);}catch(e){toast('조합에 실패했어요: '+(e.code||e.message));return;}
+  try{await B.batch(ops);}catch(e){toast('조합에 실패: '+(e.code||e.message));return;}
   render();modal(`<div style="text-align:center">${r.img?`<img src="${r.img}" style="max-width:100%;max-height:220px;border-radius:8px">`:''}</div><h2 style="color:var(--gold2)">⚗ 조합 성공!</h2><p>「${esc(r.name)}」을(를) 얻었다.</p><p class="story muted">${esc(r.desc||'')}</p><button onclick="closeModal()">닫기</button>`);
 }
 
 /* ================= 메모 (공용) ================= */
 let memoTimer=null;
 VIEWS.memo=()=>`
-  ${!IS_ADMIN?`<div class="panel"><h2>개인 메모</h2><p class="muted">나만 보는 메모예요. 자동으로 저장돼요.</p><textarea id="myMemo" style="min-height:160px" oninput="memoInput(this.value)">${esc(P.memo||'')}</textarea></div>`:''}
-  <div class="panel"><h2>공용 메모</h2><p class="muted">모두가 보는 메모판이에요.${IS_ADMIN?' KP가 쓴 글은 📌로 표시돼요.':''}</p>
+  ${!IS_ADMIN?`<div class="panel"><h2>개인 메모</h2><p class="muted">나만 보는 메모. 자동으로 저장됨.</p><textarea id="myMemo" style="min-height:160px" oninput="memoInput(this.value)">${esc(P.memo||'')}</textarea></div>`:''}
+  <div class="panel"><h2>공용 메모</h2><p class="muted">모두가 보는 메모판.${IS_ADMIN?' KP가 쓴 글은 📌로 표시됨.':''}</p>
    <textarea id="noteIn" maxlength="1000" placeholder="알아낸 것, 추리, 전달할 말…"></textarea>
    <button class="primary" style="margin-top:6px" onclick="addNote()">올리기</button>
-   ${NOTES.map(n=>`<div class="note ${n.kp?'kpnote':''}"><div class="m"><span>${n.kp?'📌 ':''}${esc(n.name)} · ${ago(n.at)}</span>${(n.uid===ME.uid||IS_ADMIN)?`<a href="#" style="color:var(--wine2)" onclick="event.preventDefault();delNote('${n.id}')">삭제</a>`:''}</div>${esc(n.text)}</div>`).join('')||'<p class="muted">아직 글이 없어요.</p>'}</div>`;
+   ${NOTES.map(n=>`<div class="note ${n.kp?'kpnote':''}"><div class="m"><span>${n.kp?'📌 ':''}${esc(n.name)} · ${ago(n.at)}</span>${(n.uid===ME.uid||IS_ADMIN)?`<a href="#" style="color:var(--wine2)" onclick="event.preventDefault();delNote('${n.id}')">삭제</a>`:''}</div>${esc(n.text)}</div>`).join('')||'<p class="muted">아직 글이 없음.</p>'}</div>`;
 function memoInput(v){P.memo=v;clearTimeout(memoTimer);memoTimer=setTimeout(saveP,700);}
 async function addNote(){const t=$('#noteIn').value.trim();if(!t)return;await B.add('notes',{uid:ME.uid,name:PROF.name,kp:IS_ADMIN,text:t,at:Date.now()});$('#noteIn').value='';$('#noteIn').blur();}
 function delNote(id){B.del('notes/'+id);}
@@ -1442,25 +1442,25 @@ VIEWS.garden=()=>{
     const p=P.plots[i];
     if(!p.seed){h+=`<div class="plot"><div class="icon">🟫</div><div class="muted">빈 화단</div><button onclick="seedPick(${i})">씨앗 심기</button></div>`;continue;}
     const sd=SEEDS.find(s=>s.id===p.seed),el=now-p.start,pct=Math.min(100,el/p.dur*100);
-    if(el>=p.dur)h+=`<div class="plot ready"><div class="icon">${sd.icon}</div><div><b>${sd.name}</b><div class="muted">다 자랐어요!</div></div><button class="primary" onclick="harvest(${i})">수확 +${Math.round(sd.sell*sellMul())}</button></div>`;
+    if(el>=p.dur)h+=`<div class="plot ready"><div class="icon">${sd.icon}</div><div><b>${sd.name}</b><div class="muted">다 자람!</div></div><button class="primary" onclick="harvest(${i})">수확 +${Math.round(sd.sell*sellMul())}</button></div>`;
     else h+=`<div class="plot"><div class="icon" style="filter:grayscale(.6)">🌱</div><div><b>${sd.name}</b><div class="prog"><i style="width:${pct}%"></i></div><div class="muted">${fmt(p.dur-el)} 남음</div></div><div></div></div>`;
   }
-  return `<div class="panel"><h2>온실</h2><p class="muted">씨앗을 심으면 실제 시간에 맞춰 자라요.${mySin()==='sloth'?' ('+sinName('sloth')+' 특전: 25% 빨리 자람)':''}${mySin()==='greed'?' ('+sinName('greed')+' 특전: 판매가 +15%)':''}</p>
+  return `<div class="panel"><h2>온실</h2><p class="muted">씨앗을 심으면 실제 시간에 맞춰 자람.${mySin()==='sloth'?' ('+sinName('sloth')+' 특전: 25% 빨리 자람)':''}${mySin()==='greed'?' ('+sinName('greed')+' 특전: 판매가 +15%)':''}</p>
     <div class="grid g3">${h}</div><div style="margin-top:12px"><button onclick="harvestAll()" style="width:100%">전부 수확</button></div></div>`;
 };
-function seedPick(i){modal(`<h2 style="color:var(--gold2);margin-top:0">어떤 씨앗을 심을까요?</h2>${SEEDS.map(s=>{const d=s.min*60000*growMul();return `<div class="item" style="margin:6px 0"><div>${s.icon} <b>${s.name}</b><div class="muted">${fmt(d)} · 판매 ${Math.round(s.sell*sellMul())} 은화</div></div><button onclick="plant(${i},'${s.id}')" ${P.coins<s.cost?'disabled':''}>${s.cost} 은화</button></div>`;}).join('')}<button style="width:100%;margin-top:8px" onclick="closeModal()">닫기</button>`);}
-function plant(i,id){const s=SEEDS.find(x=>x.id===id);if(!spend(s.cost))return;P.plots[i]={seed:id,start:Date.now(),dur:s.min*60000*growMul()};saveP();closeModal();render();toast(`${s.name}을(를) 심었어요`);}
+function seedPick(i){modal(`<h2 style="color:var(--gold2);margin-top:0">어떤 씨앗을 심을까?</h2>${SEEDS.map(s=>{const d=s.min*60000*growMul();return `<div class="item" style="margin:6px 0"><div>${s.icon} <b>${s.name}</b><div class="muted">${fmt(d)} · 판매 ${Math.round(s.sell*sellMul())} 은화</div></div><button onclick="plant(${i},'${s.id}')" ${P.coins<s.cost?'disabled':''}>${s.cost} 은화</button></div>`;}).join('')}<button style="width:100%;margin-top:8px" onclick="closeModal()">닫기</button>`);}
+function plant(i,id){const s=SEEDS.find(x=>x.id===id);if(!spend(s.cost))return;P.plots[i]={seed:id,start:Date.now(),dur:s.min*60000*growMul()};saveP();closeModal();render();toast(`${s.name}을(를) 심음`);}
 function harvest(i){const p=P.plots[i],s=SEEDS.find(x=>x.id===p.seed),v=Math.round(s.sell*sellMul());P.plots[i]={seed:null,start:0,dur:0};earn(v);render();toast(`${s.name} 수확! +${v} 은화`);}
 function harvestAll(){const now=Date.now();let t=0;P.plots.slice(0,P.plotCount).forEach((p,i)=>{if(p.seed&&now-p.start>=p.dur){t+=Math.round(SEEDS.find(x=>x.id===p.seed).sell*sellMul());P.plots[i]={seed:null,start:0,dur:0};}});
-  if(!t)return toast('아직 다 자란 작물이 없어요');earn(t);render();toast(`전부 수확! +${t} 은화`);}
-function buyPlot(){const c=PLOT_COST[P.plotCount-3];if(!spend(c))return;P.plotCount++;saveP();render();toast('새 화단을 개간했어요');}
+  if(!t)return toast('아직 다 자란 작물이 없음');earn(t);render();toast(`전부 수확! +${t} 은화`);}
+function buyPlot(){const c=PLOT_COST[P.plotCount-3];if(!spend(c))return;P.plotCount++;saveP();render();toast('새 화단 개간 완료');}
 
 /* ================= PL: 수수께끼 ================= */
 const rs=id=>P.riddles[id]||(P.riddles[id]={solved:false,wrong:0,hints:0,got:0});
 const curReward=r=>Math.round(Math.max(10,r.reward-5*rs(r.id).wrong)*riddleMul());
 VIEWS.riddle=()=>{
   const all=RIDDLES.every(r=>rs(r.id).solved);
-  return `<div class="panel"><h2>저택의 수수께끼</h2><p class="muted">틀릴 때마다 보상이 5은화씩 줄어요(최소 10). 힌트는 은화로 살 수 있어요.${mySin()==='pride'?' ('+sinName('pride')+' 특전: 보상 +20%)':''}</p>
+  return `<div class="panel"><h2>저택의 수수께끼</h2><p class="muted">틀릴 때마다 보상이 5은화씩 줆(최소 10). 힌트는 은화로 살 수 있음.${mySin()==='pride'?' ('+sinName('pride')+' 특전: 보상 +20%)':''}</p>
    <div class="grid g3">${RIDDLES.map((r,i)=>{const st=rs(r.id);return `<div class="room ${st.solved?'solved':''}" onclick="openRiddle('${r.id}')"><div class="no">No.${String(i+1).padStart(2,'0')} ${st.solved?'✦ 해결':''}</div><div class="rn">${r.room}</div><div class="muted">${st.solved?`+${st.got} 은화 획득`:`보상 ${curReward(r)} 은화`}</div></div>`;}).join('')}
    <div class="room ${P.secret?'solved':''}" onclick="openSecret()" style="${all?'':'opacity:.45'}"><div class="no">No.??</div><div class="rn">${all?'숨겨진 방':'???'}</div><div class="muted">${all?(P.secret?'개방됨':'문이 열렸다…'):'모든 수수께끼를 풀면'}</div></div></div></div>`;
 };
@@ -1468,7 +1468,7 @@ function openRiddle(id){
   const r=RIDDLES.find(x=>x.id===id),st=rs(id);
   let b=`<div class="muted">${r.room}</div><h2 style="color:var(--gold2);margin:4px 0 10px">${r.room}의 수수께끼</h2><p class="story">${esc(r.q)}</p>`;
   for(let i=0;i<st.hints;i++)b+=`<div class="hintbox">힌트 ${i+1}. ${esc(r.hints[i])}</div>`;
-  if(st.solved)b+=`<p style="color:var(--gold2)">✦ 해결한 수수께끼예요. (+${st.got} 은화)</p>`;
+  if(st.solved)b+=`<p style="color:var(--gold2)">✦ 해결한 수수께끼. (+${st.got} 은화)</p>`;
   else{
     if(r.type==='choice')b+=r.choices.map((c,i)=>`<button class="choice" onclick="answer('${id}',${i})">${esc(c)}</button>`).join('');
     else b+=`<div class="row" style="margin-top:8px"><input id="ans" style="flex:1" placeholder="${r.type==='time'?'예: 4:15':'숫자로 입력'+(r.unit?` (${r.unit})`:'')}" onkeydown="if(event.key==='Enter')answer('${id}')"><button class="primary" onclick="answer('${id}')">답하기</button></div>`;
@@ -1481,14 +1481,14 @@ function buyHint(id){const st=rs(id);if(st.hints>=3||!spend(hintCost(st.hints)))
 function answer(id,choice){
   const r=RIDDLES.find(x=>x.id===id),st=rs(id);let ok=false;
   if(r.type==='choice')ok=choice===r.ans;
-  else{const v=($('#ans')||{}).value||'';if(!v.trim())return toast('답을 입력해 주세요');
+  else{const v=($('#ans')||{}).value||'';if(!v.trim())return toast('답을 입력하기');
     if(r.type==='num'){const m=v.replace(/,/g,'').match(/-?\d+(\.\d+)?/);ok=!!m&&Math.abs(parseFloat(m[0])-r.ans)<1e-9;}
     else ok=v.replace(/\D/g,'').replace(/^0+/,'')===r.ans;}
-  if(ok){const g=curReward(r);st.solved=true;st.got=g;if(typeof noteRemove==='function')noteRemove(id);NOTE_SKIP=true;earn(g);NOTE_SKIP=false;render();openRiddle(id);toast(`정답! +${g} 은화 · 쪽지는 사라졌어요`);}
-  else{st.wrong++;saveP();render();openRiddle(id);toast('아쉽지만 틀렸어요…');sfx('bad');}
+  if(ok){const g=curReward(r);st.solved=true;st.got=g;if(typeof noteRemove==='function')noteRemove(id);NOTE_SKIP=true;earn(g);NOTE_SKIP=false;render();openRiddle(id);toast(`정답! +${g} 은화 · 쪽지는 사라짐`);}
+  else{st.wrong++;saveP();render();openRiddle(id);toast('아쉽지만 틀림…');sfx('bad');}
 }
 function openSecret(){
-  if(!RIDDLES.every(r=>rs(r.id).solved))return toast('아직 열리지 않는 문이에요');
+  if(!RIDDLES.every(r=>rs(r.id).solved))return toast('아직 열리지 않는 문');
   if(!P.secret){P.secret=true;if(!P.owned.includes('ts'))P.owned.push('ts');earn(SECRET_REWARD);render();}
   modal(`<h2 style="color:var(--gold2);margin-top:0">숨겨진 방</h2><p class="story">거울 복도 끝, 벽지 무늬가 어긋난 자리를 누르자 좁은 문이 열린다.\n안에는 먼지 쌓인 의자 일곱 개와, 손님 수만큼 놓인 찻잔.\n찻잔 하나에만 아직 온기가 남아 있다.</p><p style="color:var(--gold2)">+${SECRET_REWARD} 은화 · 칭호 「저택의 비밀을 푼 자」 획득</p><button onclick="closeModal()">닫기</button>`);
 }
@@ -1508,7 +1508,7 @@ function rankRows(){
   return players().map(u=>{const p=PROGS.find(x=>x.id===u.id)||{};
     return {u,earned:p.earned||0,coins:p.coins||0,title:titleTxt(p,u),solved:Object.values(p.riddles||{}).filter(r=>r.solved).length};}).sort((a,b)=>b.earned-a.earned);
 }
-VIEWS.rank=()=>`<div class="panel"><h2>오늘의 손님 랭킹</h2><p class="muted">누적 획득 은화 기준이에요.${IS_ADMIN?` ${PROF.ho?'KP도 HO가 있어서 순위에 함께 들어가요.':'KP는 HO를 배정받으면 순위에 들어가요. (지금 누적: <b>'+P.earned+'</b> 은화)'}`:''}</p><table><tr><th>#</th><th>손님</th><th>HO</th><th>누적</th></tr>
+VIEWS.rank=()=>`<div class="panel"><h2>오늘의 손님 랭킹</h2><p class="muted">누적 획득 은화 기준.${IS_ADMIN?` ${PROF.ho?'KP도 HO가 있어서 순위에 함께 들어감.':'KP는 HO를 배정받으면 순위에 들어감. (지금 누적: <b>'+P.earned+'</b> 은화)'}`:''}</p><table><tr><th>#</th><th>손님</th><th>HO</th><th>누적</th></tr>
   ${rankRows().map((r,i)=>`<tr${r.u.id===ME.uid?' style="color:var(--gold2)"':''}><td>${i+1}</td><td>${r.title?`<span class="muted">「${esc(r.title)}」</span> `:''}${esc(uname(r.u))}</td><td>${esc(r.u.ho?cname(r.u.ho):'-')}</td><td>${r.earned}</td></tr>`).join('')}</table></div>`;
 
 /* ================= KP: 스케줄러 연동 ================= */
@@ -1519,8 +1519,8 @@ window.KPBridge={
   nowChanged(cur,nx){
     try{if(localStorage.getItem('peccata_autocall')==='0')return;}catch(e){}
     const by=PROF&&PROF.name||'KP',t=Date.now(),done=new Set(),jobs=[],TI=TOD_IC[cur.tod]||'';
-    cur.ps.forEach(p=>usersWithHo(p.c).forEach(u=>{if(done.has(u.id))return;done.add(u.id);jobs.push(B.set('calls/'+u.id,{msg:`차례예요! ${cur.day} ${cur.sym}${TI} · ${p.place}`,at:t,by,ack:false,pre:false}));}));
-    let pre=0;if(nx)nx.ps.forEach(p=>usersWithHo(p.c).forEach(u=>{if(done.has(u.id))return;done.add(u.id);pre++;jobs.push(B.set('calls/'+u.id,{msg:`곧 차례예요 · 다음 ${nx.day} ${nx.sym}${TOD_IC[nx.tod]||''} · ${p.place}`,at:t,by,ack:false,pre:true}));}));
+    cur.ps.forEach(p=>usersWithHo(p.c).forEach(u=>{if(done.has(u.id))return;done.add(u.id);jobs.push(B.set('calls/'+u.id,{msg:`차례! ${cur.day} ${cur.sym}${TI} · ${p.place}`,at:t,by,ack:false,pre:false}));}));
+    let pre=0;if(nx)nx.ps.forEach(p=>usersWithHo(p.c).forEach(u=>{if(done.has(u.id))return;done.add(u.id);pre++;jobs.push(B.set('calls/'+u.id,{msg:`곧 차례 · 다음 ${nx.day} ${nx.sym}${TOD_IC[nx.tod]||''} · ${p.place}`,at:t,by,ack:false,pre:true}));}));
     Promise.all(jobs).then(()=>toast(`🔔 ${done.size-pre}명 호출${pre?` · ⏳ ${pre}명 예고`:''}`)).catch(e=>toast('호출 실패: '+(e.code||e.message)));
   },
   review:id=>reviewBooking(id),
@@ -1543,7 +1543,7 @@ window.KPBridge={
     try{const c=await compressImage(dataURL,1600,.8);const CH=700000,n=Math.ceil(c.length/CH);
       const ops=[];
       for(let i=0;i<n;i++)ops.push({op:'set',path:'mapchunks/'+key+'_'+i,data:{d:c.slice(i*CH,(i+1)*CH)}});
-      ops.push({op:'set',path:'maps/'+key,data:{name,n,ver:ver||0,at:Date.now()}});   // 조각을 다 올린 뒤에 목록을 바꿔요
+      ops.push({op:'set',path:'maps/'+key,data:{name,n,ver:ver||0,at:Date.now()}});   // 조각을 다 올린 뒤에 목록을 바꿈
       for(let i=0;i<ops.length;i+=3)await B.batch(ops.slice(i,i+3));
     }catch(e){toast('맵 업로드 실패: '+(e.code||e.message));}
   },
@@ -1574,12 +1574,12 @@ function mountScheduler(){
   w.innerHTML='<iframe src="scheduler.html" title="스케줄러"></iframe>';
 }
 VIEWS.sched=()=>{const n=BOOKINGS.filter(b=>b.status==='pending').length;
-  return `<div class="panel" style="margin-bottom:8px;padding:10px 14px"><div class="row" style="justify-content:space-between"><p class="muted schedinfo" style="margin:0;flex:1 1 300px">PL 예약은 <b style="color:var(--gold2)">점선 칸</b>으로 떠요 (눌러서 승인/거절). 장소 공개는 <b>맵/장소</b> 탭의 <b>👁 PL 공개</b>.</p>
+  return `<div class="panel" style="margin-bottom:8px;padding:10px 14px"><div class="row" style="justify-content:space-between"><p class="muted schedinfo" style="margin:0;flex:1 1 300px">PL 예약은 <b style="color:var(--gold2)">점선 칸</b>으로 뜸 (눌러서 승인/거절). 장소 공개는 <b>맵/장소</b> 탭의 <b>👁 PL 공개</b>.</p>
    <button class="sm ${n?'primary':''}" style="flex:0 0 auto" onclick="openBookList()">📋 예약 목록${n?' · 대기 '+n:''}</button></div></div>`;};
 function openBookList(){window._bookList=true;modal(VIEWS.kbook()+'<button style="width:100%" onclick="window._bookList=false;closeModal()">닫기</button>');}
 function refreshBookList(){if(window._bookList&&modalOpen())openBookList();}
 function reviewBooking(id){
-  const b=BOOKINGS.find(x=>x.id===id);if(!b)return toast('이미 처리된 신청이에요');
+  const b=BOOKINGS.find(x=>x.id===id);if(!b)return toast('이미 처리된 신청');
   window._bookList=false;
   const e=schedWin&&schedWin.checkBooking?schedWin.checkBooking(b):'';
   modal(`<h2 style="color:var(--gold2);margin-top:0">예약 신청 검토</h2>${bookingCard(b,{extra:e?`<div class="muted" style="color:var(--wine2)">⚠ ${esc(e)}</div>`:'<div class="muted" style="color:var(--green2)">✓ 충돌 없음</div>'})}
@@ -1594,30 +1594,30 @@ function pushPending(){
 /* 지난 예약: 시간이 지났거나 거절·취소된 것 */
 function bkOld(b){if(b.status==='rejected'||b.status==='cancelled')return true;if(b.status!=='approved')return false;const ck=PUB.clock;if(!ck)return false;const last=Math.max(...(b.slots||[0]));return b.day<ck.day||(b.day===ck.day&&last<ck.slot);}
 function bkHide(id){P.bkHide=[...(P.bkHide||[]),id].slice(-300);saveP();render();}
-function bkHideAll(){const me=myHo(),l=BOOKINGS.filter(b=>(b.uid===ME.uid||(b.parts||[]).includes(me))&&bkOld(b)).map(b=>b.id);P.bkHide=[...new Set([...(P.bkHide||[]),...l])].slice(-300);saveP();render();toast('지난 예약을 정리했어요');}
+function bkHideAll(){const me=myHo(),l=BOOKINGS.filter(b=>(b.uid===ME.uid||(b.parts||[]).includes(me))&&bkOld(b)).map(b=>b.id);P.bkHide=[...new Set([...(P.bkHide||[]),...l])].slice(-300);saveP();render();toast('지난 예약 정리 완료');}
 async function kbDel(id){try{await B.del('bookings/'+id);}catch(e){toast('실패: '+(e.code||e.message));}}
-async function kbClean(){const l=BOOKINGS.filter(bkOld);if(!l.length)return;if(!confirm(`지난 예약·처리 기록 ${l.length}개를 지울까요? (스케줄러 표는 그대로예요)`))return;try{await Promise.all(l.map(b=>B.del('bookings/'+b.id)));toast('정리했어요');}catch(e){toast('실패: '+(e.code||e.message));}}
+async function kbClean(){const l=BOOKINGS.filter(bkOld);if(!l.length)return;if(!confirm(`지난 예약·처리 기록 ${l.length}개를 지울까? (스케줄러 표는 그대로)`))return;try{await Promise.all(l.map(b=>B.del('bookings/'+b.id)));toast('정리 완료');}catch(e){toast('실패: '+(e.code||e.message));}}
 VIEWS.kbook=()=>{
   const pend=BOOKINGS.filter(b=>b.status==='pending'),done=BOOKINGS.filter(b=>b.status!=='pending').slice(0,25);
   const chk=b=>{if(!schedWin||!schedWin.checkBooking)return '';const e=schedWin.checkBooking(b);return e?`<div class="muted" style="color:var(--wine2)">⚠ ${esc(e)}</div>`:'<div class="muted" style="color:var(--green2)">✓ 충돌 없음</div>';};
   const reqs=BOOKINGS.filter(b=>b.status==='approved'&&b.cancelReq),appr=BOOKINGS.filter(b=>b.status==='approved'&&!bkOld(b)).sort((a,b)=>a.day-b.day||Math.min(...(a.slots||[9]))-Math.min(...(b.slots||[9])));
   return `${reqs.length?`<div class="panel" style="border-color:var(--gold)"><h2>취소 요청 (${reqs.length})</h2>${reqs.map(b=>bookingCard(b,{actions:`<button class="sm primary" onclick="kbCancel('${b.id}',true)">수락</button><button class="sm" onclick="kbReqReject('${b.id}')">거절</button>`})).join('')}</div>`:''}
    <div class="panel"><div class="row" style="justify-content:space-between;align-items:center"><h2 style="margin:0">승인 대기 (${pend.length})</h2>${pend.length>1?`<button class="sm primary" onclick="approveAll()">충돌 없는 것 모두 승인+대기열</button>`:''}</div>
-   ${pend.length?pend.map(b=>bookingCard(b,{extra:chk(b),actions:`<button class="sm primary" onclick="approve('${b.id}',true)">승인+대기열</button><button class="sm" onclick="approve('${b.id}',false)">승인</button><button class="sm danger" onclick="rejectAsk('${b.id}')">거절</button>`})).join(''):'<p class="muted">대기 중인 예약이 없어요.</p>'}</div>
+   ${pend.length?pend.map(b=>bookingCard(b,{extra:chk(b),actions:`<button class="sm primary" onclick="approve('${b.id}',true)">승인+대기열</button><button class="sm" onclick="approve('${b.id}',false)">승인</button><button class="sm danger" onclick="rejectAsk('${b.id}')">거절</button>`})).join(''):'<p class="muted">대기 중인 예약이 없음.</p>'}</div>
    <div class="panel"><h2>승인된 예약 (${appr.length})</h2>${appr.map(b=>bookingCard(b,{actions:`<button class="sm" onclick="kbEdit('${b.id}')">✏ 변경</button><button class="sm danger" onclick="kbCancel('${b.id}')">취소</button>`})).join('')||'<p class="muted">없음</p>'}</div>
    ${(()=>{const old=BOOKINGS.filter(bkOld);return `<div class="panel"><details><summary><b>지난 예약 · 처리 기록 (${old.length})</b></summary>${old.map(b=>bookingCard(b,{actions:`<button class="sm" onclick="kbDel('${b.id}')">✕ 지우기</button>`})).join('')||'<p class="muted">없음</p>'}</details>${old.length?'<button class="sm danger" style="margin-top:6px" onclick="kbClean()">🧹 전부 정리</button>':''}</div>`;})()}`;
 };
 /* KP: 승인된 예약 취소 · 변경 (일정표도 함께) */
 function kbCancel(id,fromReq){const b=BOOKINGS.find(x=>x.id===id);if(!b)return;const back=!!window._bookList;window._bookList=false;
-  modal(`<h2 style="color:var(--gold2);margin-top:0">${fromReq?'취소 요청 수락':'예약 취소'}</h2>${bookingCard(b)}<label class="f">PL에게 전할 말 (선택)</label><input id="kbNote" maxlength="80"><p class="muted">일정표의 그 칸도 함께 지워요.</p>
+  modal(`<h2 style="color:var(--gold2);margin-top:0">${fromReq?'취소 요청 수락':'예약 취소'}</h2>${bookingCard(b)}<label class="f">PL에게 전할 말 (선택)</label><input id="kbNote" maxlength="80"><p class="muted">일정표의 그 칸도 함께 지움.</p>
    <div class="row"><button onclick="closeModal();${back?'openBookList()':''}">그만두기</button><button class="danger" onclick="kbCancelGo('${id}',${back})">취소하기</button></div>`);}
-async function kbCancelGo(id,back){const b=BOOKINGS.find(x=>x.id===id);if(!b)return;if(!schedWin||!schedWin.removeBooking)return toast('스케줄러를 불러오는 중이에요. 잠시 후 다시 눌러 주세요');
+async function kbCancelGo(id,back){const b=BOOKINGS.find(x=>x.id===id);if(!b)return;if(!schedWin||!schedWin.removeBooking)return toast('스케줄러를 불러오는 중. 잠시 후 다시 누르기');
   schedWin.removeBooking(b);
   try{await B.update('bookings/'+id,{status:'cancelled',cancelReq:false,kpNote:$('#kbNote').value.trim(),by:PROF.name,cancelledAt:Date.now()});}catch(e){return toast('실패: '+(e.code||e.message));}
-  QUEUE.filter(q=>q.bookingId===id).forEach(q=>B.del('queue/'+q.id).catch(()=>{}));closeModal();toast('예약을 취소하고 일정표에서 지웠어요');if(back)setTimeout(openBookList,50);}
-function kbReqReject(id){const back=!!window._bookList;window._bookList=false;modal(`<h2 style="color:var(--gold2);margin-top:0">취소 요청 거절</h2><label class="f">PL에게 전할 말 (선택)</label><input id="kbNote" maxlength="80" placeholder="예: 이미 진행 중이라 바꿀 수 없어요">
+  QUEUE.filter(q=>q.bookingId===id).forEach(q=>B.del('queue/'+q.id).catch(()=>{}));closeModal();toast('예약을 취소하고 일정표에서 삭제 완료');if(back)setTimeout(openBookList,50);}
+function kbReqReject(id){const back=!!window._bookList;window._bookList=false;modal(`<h2 style="color:var(--gold2);margin-top:0">취소 요청 거절</h2><label class="f">PL에게 전할 말 (선택)</label><input id="kbNote" maxlength="80" placeholder="예: 이미 진행 중이라 바꿀 수 없음">
   <div class="row"><button onclick="closeModal()">그만두기</button><button class="primary" onclick="kbReqRejectGo('${id}',${back})">거절</button></div>`);}
-async function kbReqRejectGo(id,back){try{await B.update('bookings/'+id,{cancelReq:false,kpNote:$('#kbNote').value.trim(),by:PROF.name,reqNo:Date.now()});}catch(e){return toast('실패: '+(e.code||e.message));}closeModal();toast('취소 요청을 거절했어요');if(back)setTimeout(openBookList,50);}
+async function kbReqRejectGo(id,back){try{await B.update('bookings/'+id,{cancelReq:false,kpNote:$('#kbNote').value.trim(),by:PROF.name,reqNo:Date.now()});}catch(e){return toast('실패: '+(e.code||e.message));}closeModal();toast('취소 요청을 거절함');if(back)setTimeout(openBookList,50);}
 let KBE=null;
 function kbEdit(id){const b=BOOKINGS.find(x=>x.id===id);if(!b)return;KBE={id,back:!!window._bookList,day:b.day,slots:(b.slots||[]).slice(),place:b.place,parts:(b.parts||[]).slice(),note:b.note||'',kp:''};window._bookList=false;kbEditModal();}
 function kbEditModal(){const E=KBE,places=(PUB&&PUB.places)||[],days=(PUB&&PUB.days)||1;
@@ -1629,36 +1629,36 @@ function kbEditModal(){const E=KBE,places=(PUB&&PUB.places)||[],days=(PUB&&PUB.d
    <label class="f">행동</label><input value="${esc(E.note)}" oninput="KBE.note=this.value">
    <label class="f">PL에게 전할 말 (선택)</label><input value="${esc(E.kp)}" oninput="KBE.kp=this.value">
    <div class="row" style="margin-top:8px"><button onclick="closeModal();${E.back?'openBookList()':''}">그만두기</button><button class="primary" onclick="kbEditGo()">변경 저장</button></div>`);}
-async function kbEditGo(){const E=KBE,b=BOOKINGS.find(x=>x.id===E.id);if(!b)return;if(!E.slots.length)return toast('시간을 골라 주세요');if(!E.parts.length)return toast('참가자를 골라 주세요');
-  if(!schedWin||!schedWin.removeBooking)return toast('스케줄러를 불러오는 중이에요. 잠시 후 다시 눌러 주세요');
+async function kbEditGo(){const E=KBE,b=BOOKINGS.find(x=>x.id===E.id);if(!b)return;if(!E.slots.length)return toast('시간을 고르기');if(!E.parts.length)return toast('참가자를 고르기');
+  if(!schedWin||!schedWin.removeBooking)return toast('스케줄러를 불러오는 중. 잠시 후 다시 누르기');
   schedWin.removeBooking(b);const nb=Object.assign({},b,{day:E.day,slots:E.slots.slice().sort(),place:E.place,parts:E.parts,note:E.note.trim()});
-  const err=schedWin.applyBooking(nb);if(err){schedWin.applyBooking(b);return toast('바꿀 수 없어요: '+err);}
+  const err=schedWin.applyBooking(nb);if(err){schedWin.applyBooking(b);return toast('바꿀 수 없음: '+err);}
   try{await B.update('bookings/'+E.id,clean({day:nb.day,slots:nb.slots,place:nb.place,parts:nb.parts,note:nb.note,schedGid:schedWin.__lastGid||null,changedAt:Date.now(),kpNote:E.kp.trim(),by:PROF.name}));}catch(e){return toast('저장 실패: '+(e.code||e.message));}
   QUEUE.filter(q=>q.bookingId===E.id).forEach(q=>B.update('queue/'+q.id,{label:bookingLabel(nb),codes:nb.parts}).catch(()=>{}));
-  closeModal();toast('예약을 바꾸고 일정표에도 반영했어요');if(E.back)setTimeout(openBookList,50);KBE=null;}
+  closeModal();toast('예약을 바꾸고 일정표에도 반영 완료');if(E.back)setTimeout(openBookList,50);KBE=null;}
 function bookingLabel(b){return `${dayName(b.day)} ${(b.slots||[]).map(s=>SYMS[s-1]||s).join('')} · ${b.place}`;}
 async function approveAll(){
-  if(!schedWin||!schedWin.checkBooking)return toast('스케줄러를 불러오는 중이에요. 잠시 후 다시 눌러 주세요');
+  if(!schedWin||!schedWin.checkBooking)return toast('스케줄러를 불러오는 중. 잠시 후 다시 누르기');
   const L=BOOKINGS.filter(b=>b.status==='pending').sort((a,b)=>a.day-b.day||Math.min(...(a.slots||[9]))-Math.min(...(b.slots||[9]))||(a.at||0)-(b.at||0));
   let ok=0,skip=0;for(const b of L){if(schedWin.checkBooking(b)||Object.values(b.resp||{}).includes('no')){skip++;continue;}await approve(b.id,true);ok++;}
-  toast(`${ok}건 승인${skip?` · ${skip}건은 겹치거나 못 가는 사람이 있어 남겨 뒀어요`:''}`);
+  toast(`${ok}건 승인${skip?` · ${skip}건은 겹치거나 못 가는 사람이 있어 남겨 둠`:''}`);
 }
 async function approve(id,toQueue){
   const b=BOOKINGS.find(x=>x.id===id);if(!b)return;
-  if(!schedWin||!schedWin.applyBooking)return toast('스케줄러를 불러오는 중이에요. 잠시 후 다시 눌러 주세요');
+  if(!schedWin||!schedWin.applyBooking)return toast('스케줄러를 불러오는 중. 잠시 후 다시 누르기');
   const e=schedWin.applyBooking(b);if(e)return toast('반영 실패: '+e);
   await B.update('bookings/'+id,clean({status:'approved',by:PROF.name,schedGid:schedWin.__lastGid||null}));
   if(toQueue)await B.add('queue',{label:bookingLabel(b),codes:b.parts,bookingId:id,status:'waiting',order:Date.now(),at:Date.now()});
-  toast('승인하고 일정표에 반영했어요');refreshBookList();
+  toast('승인하고 일정표에 반영 완료');refreshBookList();
 }
-function rejectAsk(id){const fromList=!!window._bookList;window._bookList=false;window._bookListBack=fromList;modal(`<h2 style="color:var(--gold2);margin-top:0">예약 거절</h2><label class="f">PL에게 전할 말 (선택)</label><input id="rjNote" placeholder="예: 그 시간엔 문이 잠겨 있어요"><div class="row" style="margin-top:12px"><button onclick="closeModal()">취소</button><button class="primary" onclick="reject('${id}')">거절</button></div>`);}
+function rejectAsk(id){const fromList=!!window._bookList;window._bookList=false;window._bookListBack=fromList;modal(`<h2 style="color:var(--gold2);margin-top:0">예약 거절</h2><label class="f">PL에게 전할 말 (선택)</label><input id="rjNote" placeholder="예: 그 시간엔 문이 잠겨 있음"><div class="row" style="margin-top:12px"><button onclick="closeModal()">취소</button><button class="primary" onclick="reject('${id}')">거절</button></div>`);}
 async function reject(id){window._bookList=!!window._bookListBack;await B.update('bookings/'+id,{status:'rejected',kpNote:$('#rjNote').value.trim(),by:PROF.name});closeModal();if(window._bookList)setTimeout(openBookList,50);}
 
 /* ================= KP: 호출·대기열 ================= */
 let QADD={label:'',codes:[]};
 const callOf=uid=>CALLS.find(c=>c.id===uid);
-const REPLY={go:'✓ 갈게요',ok:'확인 ✓','5m':'⏳ 5분만',no:'✕ 어려워요'};
-function callState(uid){const c=callOf(uid),u=userOf(uid),pf=u&&u.push===false?' <span title="푸시 알림이 꺼져 있어요 (앱을 열어 둬야 호출을 받아요)">🔕</span>':'';if(!c)return pf;
+const REPLY={go:'✓ 갈게',ok:'확인 ✓','5m':'⏳ 5분만',no:'✕ 어려움'};
+function callState(uid){const c=callOf(uid),u=userOf(uid),pf=u&&u.push===false?' <span title="푸시 알림이 꺼져 있음 (앱을 열어 둬야 호출을 받음)">🔕</span>':'';if(!c)return pf;
   if(c.ack)return `<span class="badge ${c.reply==='no'?'rejected':c.reply==='5m'?'pending':'approved'}">${REPLY[c.reply]||'확인 ✓'}</span>${pf}`;
   const m=Math.floor((Date.now()-(c.at||0))/60000);return `<span class="badge ${m>=3?'rejected':'pending'}">${c.pre?'예고':'호출'} ${m>=3?`⚠ ${m}분째 미확인`:'중…'}</span>${pf}`;}
 VIEWS.kqueue=()=>{
@@ -1669,25 +1669,25 @@ VIEWS.kqueue=()=>{
    <div class="panel"><h2>대기열</h2>
    <button class="primary" style="width:100%" onclick="nextTurn()">▶ 다음 차례 호출${cur?' (현재 차례 완료 처리)':''}</button>
    ${QUEUE.filter(q=>q.status!=='done').map((q,i)=>{const us=(q.codes||[]).flatMap(usersWithHo);return `<div class="card"><div class="qitem"><div>${q.status==='current'?'<span class="badge live">진행 중</span>':`<span class="badge">${i+1}</span>`} <b>${esc(q.label)}</b><div class="muted">${(q.codes||[]).map(c=>esc(cname(c))).join(', ')} ${us.map(u=>callState(u.id)).join(' ')}</div></div>
-     <div class="row" style="flex:0 0 auto"><button class="sm" onclick="callQueue('${q.id}')">호출</button><button class="sm" onclick="moveQ('${q.id}',-1)">↑</button><button class="sm" onclick="moveQ('${q.id}',1)">↓</button><button class="sm danger" onclick="B.update('queue/${q.id}',{status:'done',doneAt:Date.now()})">완료</button></div></div></div>`;}).join('')||'<p class="muted">대기열이 비어 있어요.</p>'}
-   ${(()=>{const dn=QUEUE.filter(q=>q.status==='done').sort((a,b)=>(b.doneAt||0)-(a.doneAt||0));return dn.length?`<details style="margin-top:10px"><summary><b>✔ 끝난 조사 (${dn.length})</b></summary>${dn.map(q=>`<div class="item" style="margin:4px 0"><div><b>${esc(q.label)}</b><div class="muted" style="font-size:.8rem">${(q.codes||[]).map(c=>esc(cname(c))).join(', ')} · ${q.doneAt?new Date(q.doneAt).toLocaleString('ko-KR',{month:'numeric',day:'numeric',hour:'2-digit',minute:'2-digit'}):''}</div></div><button class="sm" onclick="B.update('queue/${q.id}',{status:'waiting',order:Date.now()})">되돌리기</button></div>`).join('')}<button class="sm danger" style="margin-top:6px" onclick="if(confirm('끝난 조사 기록을 모두 지울까요?'))QUEUE.filter(q=>q.status==='done').forEach(q=>B.del('queue/'+q.id))">기록 지우기</button></details>`:'';})()}
+     <div class="row" style="flex:0 0 auto"><button class="sm" onclick="callQueue('${q.id}')">호출</button><button class="sm" onclick="moveQ('${q.id}',-1)">↑</button><button class="sm" onclick="moveQ('${q.id}',1)">↓</button><button class="sm danger" onclick="B.update('queue/${q.id}',{status:'done',doneAt:Date.now()})">완료</button></div></div></div>`;}).join('')||'<p class="muted">대기열이 비어 있음.</p>'}
+   ${(()=>{const dn=QUEUE.filter(q=>q.status==='done').sort((a,b)=>(b.doneAt||0)-(a.doneAt||0));return dn.length?`<details style="margin-top:10px"><summary><b>✔ 끝난 조사 (${dn.length})</b></summary>${dn.map(q=>`<div class="item" style="margin:4px 0"><div><b>${esc(q.label)}</b><div class="muted" style="font-size:.8rem">${(q.codes||[]).map(c=>esc(cname(c))).join(', ')} · ${q.doneAt?new Date(q.doneAt).toLocaleString('ko-KR',{month:'numeric',day:'numeric',hour:'2-digit',minute:'2-digit'}):''}</div></div><button class="sm" onclick="B.update('queue/${q.id}',{status:'waiting',order:Date.now()})">되돌리기</button></div>`).join('')}<button class="sm danger" style="margin-top:6px" onclick="if(confirm('끝난 조사 기록을 모두 지울까?'))QUEUE.filter(q=>q.status==='done').forEach(q=>B.del('queue/'+q.id))">기록 지우기</button></details>`:'';})()}
    <h3>직접 추가</h3><input placeholder="이름 (예: 2층 서재 조사)" value="${esc(QADD.label)}" oninput="QADD.label=this.value">
    <div class="toggles" style="margin-top:6px">${HO_CODES.map(c=>`<button class="${QADD.codes.includes(c)?'on':''}" onclick="QADD.codes=QADD.codes.includes('${c}')?QADD.codes.filter(x=>x!=='${c}'):[...QADD.codes,'${c}'];render()">${esc(cname(c))}</button>`).join('')}</div>
    <button style="margin-top:6px" onclick="addQueue()">대기열에 추가</button></div>
-  <div class="panel"><h2>개별 호출</h2><div class="grid g3">${ps.map(u=>`<div class="card" style="margin:0"><b>${esc(uname(u))}</b><div class="muted">${esc(u.ho?cname(u.ho):'HO 미선택')}</div><div>${callState(u.id)}</div><button class="sm" style="margin-top:6px" onclick="callAsk('${u.id}')">🔔 호출</button></div>`).join('')||'<p class="muted">가입한 PL이 없어요.</p>'}</div></div>`;
+  <div class="panel"><h2>개별 호출</h2><div class="grid g3">${ps.map(u=>`<div class="card" style="margin:0"><b>${esc(uname(u))}</b><div class="muted">${esc(u.ho?cname(u.ho):'HO 미선택')}</div><div>${callState(u.id)}</div><button class="sm" style="margin-top:6px" onclick="callAsk('${u.id}')">🔔 호출</button></div>`).join('')||'<p class="muted">가입한 PL이 없음.</p>'}</div></div>`;
 };
 async function callUsers(uids,msg){await Promise.all(uids.map(uid=>B.set('calls/'+uid,{msg,at:Date.now(),by:PROF.name,ack:false})));}
-function callAsk(uid){const u=userOf(uid);modal(`<h2 style="color:var(--gold2);margin-top:0">${esc(uname(u))} 호출</h2><label class="f">메시지</label><input id="callIn" value="차례예요! 준비해 주세요."><div class="row" style="margin-top:12px"><button onclick="closeModal()">취소</button><button class="primary" onclick="callUsers(['${uid}'],$('#callIn').value||'차례예요!');closeModal();toast('호출했어요')">호출</button></div>`);}
+function callAsk(uid){const u=userOf(uid);modal(`<h2 style="color:var(--gold2);margin-top:0">${esc(uname(u))} 호출</h2><label class="f">메시지</label><input id="callIn" value="차례! 준비하기."><div class="row" style="margin-top:12px"><button onclick="closeModal()">취소</button><button class="primary" onclick="callUsers(['${uid}'],$('#callIn').value||'차례!');closeModal();toast('호출 완료')">호출</button></div>`);}
 async function callQueue(id){const q=QUEUE.find(x=>x.id===id);if(!q)return;const uids=(q.codes||[]).flatMap(usersWithHo).map(u=>u.id);
-  if(!uids.length)return toast('이 HO로 가입한 PL이 없어요');await callUsers(uids,`차례예요! ${q.label}`);toast('호출했어요');}
+  if(!uids.length)return toast('이 HO로 가입한 PL이 없음');await callUsers(uids,`차례! ${q.label}`);toast('호출 완료');}
 async function nextTurn(){
   const cur=QUEUE.filter(q=>q.status==='current');for(const q of cur)await B.update('queue/'+q.id,{status:'done',doneAt:Date.now()});
-  const nx=QUEUE.find(q=>q.status!=='current'&&q.status!=='done');if(!nx)return toast('대기열이 비었어요');
+  const nx=QUEUE.find(q=>q.status!=='current'&&q.status!=='done');if(!nx)return toast('대기열이 비었음');
   await B.update('queue/'+nx.id,{status:'current'});await callQueue(nx.id);
 }
 async function moveQ(id,d){const L=QUEUE.filter(q=>q.status!=='done'),i=L.findIndex(q=>q.id===id),j=i+d;if(j<0||j>=L.length)return;const a=L[i],b=L[j];
   await B.batch([{op:'update',path:'queue/'+a.id,data:{order:b.order}},{op:'update',path:'queue/'+b.id,data:{order:a.order}}]);}
-async function addQueue(){if(!QADD.label.trim()||!QADD.codes.length)return toast('이름과 참가자를 정해 주세요');
+async function addQueue(){if(!QADD.label.trim()||!QADD.codes.length)return toast('이름과 참가자를 정하기');
   await B.add('queue',{label:QADD.label.trim(),codes:QADD.codes,status:'waiting',order:Date.now(),at:Date.now()});QADD={label:'',codes:[]};render();}
 
 /* ================= KP: 아이템 ================= */
@@ -1697,7 +1697,7 @@ VIEWS.kitems=()=>{
   const ps=players().filter(u=>u.ho);
   const req=ITEMS.filter(i=>i.inspectReq);
   const opt=sel=>DEFS.map(d=>`<option value="${d.id}" ${d.id===sel?'selected':''}>${esc(d.name)}</option>`).join('');
-  return `${req.length?`<div class="panel" style="border-color:var(--gold)"><h2>🔍 살펴보기 요청 (${req.length})</h2>${req.map(i=>`<div class="card"><div class="h"><div><b>${esc(i.name)}</b> <span class="muted">· ${esc(i.ownerName||'')}</span></div><div class="row" style="flex:0 0 auto"><button class="sm primary" onclick="revealItem('${i.id}')">숨은 글 공개</button><button class="sm" onclick="B.update('items/${i.id}',{inspectReq:false})">실패 처리</button></div></div>${defOf(i.defId)&&defOf(i.defId).hidden?`<div class="muted">숨은 글: ${esc(defOf(i.defId).hidden)}</div>`:'<div class="muted">숨은 글이 없는 아이템이에요</div>'}</div>`).join('')}</div>`:''}
+  return `${req.length?`<div class="panel" style="border-color:var(--gold)"><h2>🔍 살펴보기 요청 (${req.length})</h2>${req.map(i=>`<div class="card"><div class="h"><div><b>${esc(i.name)}</b> <span class="muted">· ${esc(i.ownerName||'')}</span></div><div class="row" style="flex:0 0 auto"><button class="sm primary" onclick="revealItem('${i.id}')">숨은 글 공개</button><button class="sm" onclick="B.update('items/${i.id}',{inspectReq:false})">실패 처리</button></div></div>${defOf(i.defId)&&defOf(i.defId).hidden?`<div class="muted">숨은 글: ${esc(defOf(i.defId).hidden)}</div>`:'<div class="muted">숨은 글이 없는 아이템</div>'}</div>`).join('')}</div>`:''}
   <div class="panel"><h2>${ITF.id?'아이템 수정':'아이템 만들기'}</h2>
    <div class="row" style="align-items:flex-start"><div style="flex:0 0 90px;text-align:center">${ITF.img?`<img class="thumb" src="${ITF.img}">`:'<div class="noimg">📦</div>'}<label class="sm" style="display:block;margin-top:4px;cursor:pointer;color:var(--gold2);font-size:.8rem">이미지<input type="file" accept="image/*" style="display:none" onchange="itemImg(this)"></label></div>
    <div style="flex:1;min-width:200px"><label class="f">이름</label><input value="${esc(ITF.name)}" oninput="ITF.name=this.value">
@@ -1706,44 +1706,44 @@ VIEWS.kitems=()=>{
    <div class="row" style="margin-top:8px"><button class="primary" onclick="saveDef()">${ITF.id?'수정 저장':'만들기'}</button>${ITF.id?'<button onclick="ITF={id:null,name:\'\',desc:\'\',hidden:\'\',img:\'\'};render()">새로 만들기로</button>':''}</div></div>
   <div class="panel"><h2>아이템 목록 (${DEFS.length})</h2>
    ${DEFS.map(d=>`<div class="card"><div class="h"><div class="row" style="flex-wrap:nowrap">${d.img?`<img class="thumb" style="width:44px;height:44px" src="${d.img}">`:''}<div><b>${esc(d.name)}</b><div class="muted">${esc((d.desc||'').slice(0,50))}${d.hidden?' · 숨은 글 있음':''}</div></div></div>
-     <div class="row" style="flex:0 0 auto"><select id="give_${d.id}" style="width:auto">${ps.map(u=>`<option value="${u.id}">${esc(cname(u.ho))} · ${esc(uname(u))}</option>`).join('')}</select><button class="sm primary" onclick="giveDef('${d.id}')" ${ps.length?'':'disabled'}>지급</button><button class="sm" onclick="editDef('${d.id}')">수정</button><button class="sm danger" onclick="delDef('${d.id}')">삭제</button></div></div></div>`).join('')||'<p class="muted">아직 만든 아이템이 없어요.</p>'}</div>
-  <div class="panel"><h2>조합법</h2><p class="muted">PL이 두 물건을 조합하면 결과 아이템이 생겨요.</p>
+     <div class="row" style="flex:0 0 auto"><select id="give_${d.id}" style="width:auto">${ps.map(u=>`<option value="${u.id}">${esc(cname(u.ho))} · ${esc(uname(u))}</option>`).join('')}</select><button class="sm primary" onclick="giveDef('${d.id}')" ${ps.length?'':'disabled'}>지급</button><button class="sm" onclick="editDef('${d.id}')">수정</button><button class="sm danger" onclick="delDef('${d.id}')">삭제</button></div></div></div>`).join('')||'<p class="muted">아직 만든 아이템이 없음.</p>'}</div>
+  <div class="panel"><h2>조합법</h2><p class="muted">PL이 두 물건을 조합하면 결과 아이템이 생김.</p>
    ${DEFS.length>=2?`<div class="row"><select onchange="RCF.a=this.value"><option value="">재료 A</option>${opt(RCF.a)}</select><span>+</span><select onchange="RCF.b=this.value"><option value="">재료 B</option>${opt(RCF.b)}</select><span>→</span><select onchange="RCF.r=this.value"><option value="">결과</option>${opt(RCF.r)}</select></div>
-   <label class="muted" style="display:block;margin:6px 0"><input type="checkbox" style="width:auto" ${RCF.consume?'checked':''} onchange="RCF.consume=this.checked"> 재료는 조합하면 사라짐</label><button onclick="saveRecipe()">조합법 추가</button>`:'<p class="muted">아이템을 2개 이상 만들면 조합법을 정할 수 있어요.</p>'}
+   <label class="muted" style="display:block;margin:6px 0"><input type="checkbox" style="width:auto" ${RCF.consume?'checked':''} onchange="RCF.consume=this.checked"> 재료는 조합하면 사라짐</label><button onclick="saveRecipe()">조합법 추가</button>`:'<p class="muted">아이템을 2개 이상 만들면 조합법을 정할 수 있음.</p>'}
    ${RECIPES.map(r=>`<div class="card"><div class="h"><div>${esc((defOf(r.a)||{}).name||'?')} + ${esc((defOf(r.b)||{}).name||'?')} → <b>${esc(r.name)}</b>${r.consume===false?' <span class="muted">(재료 유지)</span>':''}</div><button class="sm danger" onclick="B.del('recipes/${r.id}')">삭제</button></div></div>`).join('')}</div>
   <div class="panel"><h2>지급된 물건 (${ITEMS.length})</h2><table><tr><th>물건</th><th>가진 사람</th><th>상태</th><th></th></tr>
-   ${ITEMS.map(i=>`<tr><td>${esc(i.name)}${i.via?' <span class="muted">(조합)</span>':''}</td><td>${esc(i.ownerName||(userOf(i.owner)?uname(userOf(i.owner)):''))}</td><td>${i.revealed?'✦ 공개됨':i.inspectReq?'🔍 요청':''}</td><td style="white-space:nowrap">${!i.revealed?`<button class="sm" onclick="revealItem('${i.id}')">숨은 글 공개</button>`:''}<button class="sm danger" onclick="if(confirm('회수할까요?'))B.del('items/${i.id}')">회수</button></td></tr>`).join('')}</table></div>`;
+   ${ITEMS.map(i=>`<tr><td>${esc(i.name)}${i.via?' <span class="muted">(조합)</span>':''}</td><td>${esc(i.ownerName||(userOf(i.owner)?uname(userOf(i.owner)):''))}</td><td>${i.revealed?'✦ 공개됨':i.inspectReq?'🔍 요청':''}</td><td style="white-space:nowrap">${!i.revealed?`<button class="sm" onclick="revealItem('${i.id}')">숨은 글 공개</button>`:''}<button class="sm danger" onclick="if(confirm('회수할까?'))B.del('items/${i.id}')">회수</button></td></tr>`).join('')}</table></div>`;
 };
 async function itemImg(inp){const f=inp.files[0];if(!f)return;ITF.img=(typeof gifMaybe==='function'&&await gifMaybe(f,360,300000))||await compressImage(await readFile(f),480,.8);render();}
 async function saveDef(){
-  if(!ITF.name.trim())return toast('이름을 입력해 주세요');
+  if(!ITF.name.trim())return toast('이름을 입력하기');
   const d=clean({name:ITF.name.trim(),desc:ITF.desc.trim(),hidden:ITF.hidden.trim(),img:ITF.img||''});
   if(ITF.id){await B.update('itemDefs/'+ITF.id,d);
     const rs=RECIPES.filter(r=>r.result===ITF.id);for(const r of rs)await B.update('recipes/'+r.id,{name:d.name,desc:d.desc,img:d.img});}
   else await B.add('itemDefs',{...d,at:Date.now()});
-  ITF={id:null,name:'',desc:'',hidden:'',img:''};render();toast('저장했어요');
+  ITF={id:null,name:'',desc:'',hidden:'',img:''};render();toast('저장 완료');
 }
 function editDef(id){const d=defOf(id);ITF={id,name:d.name,desc:d.desc||'',hidden:d.hidden||'',img:d.img||''};render();window.scrollTo(0,0);}
-async function delDef(id){if(!confirm('아이템 정의를 삭제할까요? (이미 지급된 물건은 남아요)'))return;await B.del('itemDefs/'+id);for(const r of RECIPES.filter(r=>r.a===id||r.b===id||r.result===id))await B.del('recipes/'+r.id);}
+async function delDef(id){if(!confirm('아이템 정의를 삭제할까? (이미 지급된 물건은 남음)'))return;await B.del('itemDefs/'+id);for(const r of RECIPES.filter(r=>r.a===id||r.b===id||r.result===id))await B.del('recipes/'+r.id);}
 async function giveDef(id){const d=defOf(id),uid=$('#give_'+id).value,u=userOf(uid);
   await B.add('items',clean({defId:id,owner:uid,ownerName:uname(u),name:d.name,desc:d.desc||'',img:d.img||'',revealed:false,seen:false,at:Date.now()}));toast(`${uname(u)}에게 「${d.name}」 지급`);}
 async function revealItem(id){const it=ITEMS.find(x=>x.id===id),d=defOf(it.defId);
-  if(!d||!d.hidden){toast('숨은 글이 없는 아이템이에요');await B.update('items/'+id,{inspectReq:false});return;}
-  await B.update('items/'+id,{revealed:true,hiddenText:d.hidden,inspectReq:false});toast('숨은 글을 공개했어요');}
-async function saveRecipe(){const {a,b,r,consume}=RCF;if(!a||!b||!r)return toast('재료 2개와 결과를 골라 주세요');if(a===b)return toast('서로 다른 재료를 골라 주세요');
+  if(!d||!d.hidden){toast('숨은 글이 없는 아이템');await B.update('items/'+id,{inspectReq:false});return;}
+  await B.update('items/'+id,{revealed:true,hiddenText:d.hidden,inspectReq:false});toast('숨은 글 공개 완료');}
+async function saveRecipe(){const {a,b,r,consume}=RCF;if(!a||!b||!r)return toast('재료 2개와 결과를 고르기');if(a===b)return toast('서로 다른 재료를 고르기');
   const d=defOf(r),k=[a,b].sort().join('__');
-  await B.set('recipes/'+k,clean({a,b,result:r,name:d.name,desc:d.desc||'',img:d.img||'',consume}));RCF={a:'',b:'',r:'',consume:true};render();toast('조합법을 추가했어요');}
+  await B.set('recipes/'+k,clean({a,b,result:r,name:d.name,desc:d.desc||'',img:d.img||'',consume}));RCF={a:'',b:'',r:'',consume:true};render();toast('조합법 추가 완료');}
 
 /* ================= KP: 플레이어 ================= */
 VIEWS.players=()=>{
   const rows=rankRows();
-  return `<div class="panel"><h2>플레이어 · 랭킹</h2><p class="muted">HO를 바꾸면 바로 반영돼요.</p>
+  return `<div class="panel"><h2>플레이어 · 랭킹</h2><p class="muted">HO를 바꾸면 바로 반영됨.</p>
   <div style="overflow-x:auto"><table><tr><th>#</th><th>이름</th><th>HO</th><th>보유</th><th>누적</th><th>수수께끼</th><th>접속</th><th></th></tr>
   ${rows.map((r,i)=>`<tr><td>${i+1}</td><td>${esc(uname(r.u))}<div class="muted" style="font-size:.75rem">${esc(r.u.email||'')}</div></td>
    <td><select style="width:auto" onchange="B.update('users/${r.u.id}',{ho:this.value})"><option value="">-</option>${HO_CODES.map(c=>{const t=usersWithHo(c).find(x=>x.id!==r.u.id);return `<option value="${c}" ${r.u.ho===c?'selected':''} ${t?'disabled':''}>${esc(cname(c))}</option>`;}).join('')}</select>${isAdminEmail(r.u.email)?' <span class="badge">KP</span>':''}</td>
    <td>${r.coins}</td><td><b>${r.earned}</b></td><td>${r.solved}/${RIDDLES.length}</td><td style="white-space:nowrap;font-size:.8rem">${isOnline(r.u)?'<span class="odot"></span>접속 중':`<span class="muted">${seenTxt(r.u)}</span>`}</td><td><button class="sm" onclick="callAsk('${r.u.id}')">🔔</button></td></tr>`).join('')}</table></div></div>
   ${appPanel()}
-  <div class="panel"><h2>KP 계정</h2><p class="muted">KP도 HO가 있으면 PL처럼 함께 참여해요.</p>
+  <div class="panel"><h2>KP 계정</h2><p class="muted">KP도 HO가 있으면 PL처럼 함께 참여.</p>
    ${USERS.filter(u=>isAdminEmail(u.email)).map(u=>`<div class="row" style="margin:6px 0"><span style="flex:1">${esc(uname(u))} <span class="muted">${esc(u.email)}</span></span>
    <select style="width:auto" onchange="B.update('users/${u.id}',{ho:this.value})"><option value="">HO 없음</option>${HO_CODES.map(c=>{const t=usersWithHo(c).find(x=>x.id!==u.id);return `<option value="${c}" ${u.ho===c?'selected':''} ${t?'disabled':''}>${esc(cname(c))}${t?' ('+esc(uname(t))+')':''}</option>`;}).join('')}</select></div>`).join('')}</div>`;
 };

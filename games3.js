@@ -10,7 +10,7 @@ const STAR_SC = { sins: [800, 2000, 4000] };                                    
 let MS_SKIP = false;
 function gameDay() { const t = kstDate(); if (!P.gd || P.gd.date !== t) P.gd = { date: t, p: {}, c: {} }; if (!P.gd.c) P.gd.c = {}; return P.gd; }
 function playsLeft(id) { return Math.max(0, COIN_CAP() - (gameDay().c[id] || 0)); }
-function capTxt(id) { const l = playsLeft(id); return l > 0 ? `오늘 은화 ${l}닢 더 받을 수 있어요` : '오늘 은화는 다 받았어요 (기록·미션은 계속 쌓여요)'; }
+function capTxt(id) { const l = playsLeft(id); return l > 0 ? `오늘 은화 ${l}닢 더 받을 수 있음` : '오늘 은화는 다 받음 (기록·미션은 계속 쌓임)'; }
 function starsOf(id, coins, score) {
   if (STAR_SC[id]) { const t = STAR_SC[id]; return score >= t[2] ? 3 : score >= t[1] ? 2 : score >= t[0] ? 1 : 0; }
   const mx = STAR_MAX[id] == null ? 25 : STAR_MAX[id]; if (!mx) return -1;
@@ -24,7 +24,7 @@ function reward(id, coins, score) {
   P.stars = P.stars || {}; if (st > (P.stars[id] || 0)) P.stars[id] = st;
   msEv('play', id, 1); if (st > 0) msEv('star', id, st);
   const left = playsLeft(id), give = Math.min(coins, left);
-  let txt = give > 0 ? `+${give} 은화${give < coins ? ' (오늘 상한까지)' : ''}` : coins > 0 ? '오늘 은화는 다 받았어요 · 연습 기록으로 남아요' : '';
+  let txt = give > 0 ? `+${give} 은화${give < coins ? ' (오늘 상한까지)' : ''}` : coins > 0 ? '오늘 은화는 다 받음 · 연습 기록으로 남음' : '';
   if (give > 0) { g.c[id] = (g.c[id] || 0) + give; earn(give); } else saveP();
   const bt = st < 0 ? '' : nb ? (prev ? ' · 🏆 <b style="color:var(--gold2)">새 최고 기록!</b>' : '') : prev && sc > 0 ? ` · 최고 기록까지 ${prev - sc}` : '';
   if (nb && prev || st === 3) JUICE.party = true;
@@ -80,7 +80,7 @@ function msClaim(i) {
   const d = msDay(), m = d.list[i]; if (!m || !m.done || m.ok) return; m.ok = true; MS_SKIP = true; LOG_W = 'mission'; earn(5); LOG_W = null; MS_SKIP = false; toast('📋 +5 은화'); buzz();
   if (d.list.every(x => x.ok) && !d.all) { d.all = true; const y = new Date(Date.now() + 9 * 36e5 - 864e5).toISOString().slice(0, 10);
     d.streak = d.lastAll === y ? (d.streak || 0) + 1 : 1; d.lastAll = d.date; MS_SKIP = true; LOG_W = 'mission'; earn(10); LOG_W = null; MS_SKIP = false;
-    modal(`<h2 style="color:var(--gold2);margin-top:0">📋 오늘의 미션 완주!</h2><p>보너스 <b>+10 은화</b></p><p>연속 완주 <b>${d.streak}일</b>째</p>${titleUnlock()}<button class="primary" onclick="closeModal()">좋아요</button>`); setTimeout(confetti, 60); }
+    modal(`<h2 style="color:var(--gold2);margin-top:0">📋 오늘의 미션 완주!</h2><p>보너스 <b>+10 은화</b></p><p>연속 완주 <b>${d.streak}일</b>째</p>${titleUnlock()}<button class="primary" onclick="closeModal()">확인</button>`); setTimeout(confetti, 60); }
   saveP(); render();
 }
 function msPanel() {
@@ -95,7 +95,7 @@ function msPanel() {
 /* ---------- 비밀 칭호 ---------- */
 [{ id: 't_ms3', kind: 'title', name: '부지런한 손님', cost: -1 }, { id: 't_ms7', kind: 'title', name: '저택의 단골', cost: -1 }, { id: 't_week', kind: 'title', name: '지난주의 귀빈', cost: -1 }]
   .forEach(t => { if (!SHOP.some(x => x.id === t.id)) SHOP.push(t); });
-function grantTitle(id) { if (P.owned.includes(id)) return ''; P.owned.push(id); const t = SHOP.find(x => x.id === id); saveP(); return `<p>🎖 비밀 칭호 <b style="color:var(--gold2)">「${esc(t.name)}」</b>를 얻었어요! 상점에서 착용할 수 있어요.</p>`; }
+function grantTitle(id) { if (P.owned.includes(id)) return ''; P.owned.push(id); const t = SHOP.find(x => x.id === id); saveP(); return `<p>🎖 비밀 칭호 <b style="color:var(--gold2)">「${esc(t.name)}」</b>를 얻음! 상점에서 착용할 수 있음.</p>`; }
 function titleUnlock() { const s = (P.ms && P.ms.streak) || 0; return (s >= 3 ? grantTitle('t_ms3') : '') + (s >= 7 ? grantTitle('t_ms7') : ''); }
 
 /* ---------- 주간 랭킹 ---------- */
@@ -118,14 +118,14 @@ VIEWS.rank = () => {
 setInterval(() => {      // 지난주 1위 칭호
   if (!P || !ME || !PROGS.length) return; const lw = weekId(1); if (P.wkWin === lw) return;
   const top = players().map(u => ({ id: u.id, e: wkOf(PROGS.find(x => x.id === u.id) || {}, lw) })).sort((a, b) => b.e - a.e)[0];
-  if (!top || !top.e) return; P.wkWin = lw; if (top.id === ME.uid) { const h = grantTitle('t_week'); if (h) modal(`<h2 style="color:var(--gold2);margin-top:0">👑 지난주 1위!</h2>${h}<button class="primary" onclick="closeModal()">좋아요</button>`); } else saveP();
+  if (!top || !top.e) return; P.wkWin = lw; if (top.id === ME.uid) { const h = grantTitle('t_week'); if (h) modal(`<h2 style="color:var(--gold2);margin-top:0">👑 지난주 1위!</h2>${h}<button class="primary" onclick="closeModal()">확인</button>`); } else saveP();
 }, 20000);
 
 /* ================= 찻잔 떨어뜨리기 (합치기 + 오늘의 죄 + 죄의 문) ================= */
 const DROP_T = [[7, '🍬', '별사탕', '#f2a8c8', 1], [10, '🍡', '경단', '#efd2dc', 3], [13, '🍪', '쿠키', '#cf9a5c', 6], [16, '🍵', '찻잔', '#8fbf86', 10], [20, '🧁', '컵케이크', '#e898b2', 16], [24, '🥧', '파이', '#cf9048', 25], [28, '🍮', '푸딩', '#e8c058', 40], [33, '🍰', '조각 케이크', '#f4e4d2', 60], [38, '🎂', '홀케이크', '#f0cce0', 100]];
 const SIN_RULE = {
-  wrath: '상자가 가끔 들썩여요', greed: '황금 다과가 나와요 (2배 + 은화)', sloth: '다과가 천천히 떨어져요', gluttony: '가끔 작은 다과가 먹혀요',
-  pride: '점수 ×1.3, 대신 금방 끝나요', envy: '「보관」으로 하나를 맡아 둬요', lust: '통통 튀고, 다음 셋이 보여요'
+  wrath: '상자가 가끔 들썩임', greed: '황금 다과가 나옴 (2배 + 은화)', sloth: '다과가 천천히 떨어짐', gluttony: '가끔 작은 다과가 먹힘',
+  pride: '점수 ×1.3, 대신 금방 끝남', envy: '「보관」으로 하나를 맡아 둠', lust: '통통 튀고, 다음 셋이 보임'
 };
 const todaySin = () => { const n = Math.floor((Date.now() + 9 * 36e5) / 864e5); return HOS[n % HOS.length].id; };
 let DROP = null;
@@ -133,7 +133,7 @@ VIEWS.sins = () => {
   const s = todaySin(), mine = mySin() === s;
   return `<div class="panel"><h2>🍵 찻잔 떨어뜨리기</h2>
    <div class="item" style="margin:6px 0 10px;border-color:var(--gold)"><div><b>오늘의 죄 · ${SIN_EMB[s]} ${sinName(s)}</b><div class="muted" style="font-size:.85rem">${SIN_RULE[s]}${mine ? ' · <b style="color:var(--gold2)">내 죄의 날! 은화 ×1.5</b>' : ''}</div></div></div>
-   <p class="muted">같은 다과끼리 합쳐요. 연달아 합치면 <b>콤보</b>, 6콤보는 <b>피버</b>(2배). 🎂 둘은 +500! 빨간 선을 넘으면 끝.</p>
+   <p class="muted">같은 다과끼리 합침. 연달아 합치면 <b>콤보</b>, 6콤보는 <b>피버</b>(2배). 🎂 둘은 +500! 빨간 선을 넘으면 끝.</p>
    <div style="display:flex;flex-wrap:wrap;gap:2px;align-items:center;font-size:1.25rem;margin:6px 0">${DROP_T.map(t => t[1]).join('<span class="muted" style="font-size:.7rem">›</span>')}<span class="muted" style="font-size:.7rem">›</span>💥</div>
    <div class="row" style="flex-wrap:wrap;gap:10px;margin:6px 0"><span>최고 점수 <b style="color:var(--gold2)">${(P.best || {}).sins || 0}</b></span><span class="muted">${capTxt('sins')}</span></div>
    <div id="gbox"><button class="primary" style="width:100%;font-size:1.15rem;padding:14px" onclick="dropStart()">▶ 시작</button></div>
@@ -161,8 +161,8 @@ function dropMount() {
   const loop = now => { if (GAME !== G) return; const dt = Math.min(.034, (now - last) / 1000); last = now; if (!D.paused && !D.over) dropStep(dt); dropDraw(); raf = requestAnimationFrame(loop); };
   G = lockGame(() => cancelAnimationFrame(raf)); raf = requestAnimationFrame(loop);
 }
-function dropQuit() { if (!DROP) return; if (DROP.score > 0 && !confirm('그만둘까요? 지금 점수로 끝나요.')) return; dropEnd(true); }
-function dropHold() { const D = DROP; if (!D || D.holdUsed) return toast('한 번 떨어뜨린 뒤 다시 보관할 수 있어요'); const c = D.q.shift(); if (D.hold) D.q.unshift(D.hold); else D.q.push(dropNext()); D.hold = c; D.holdUsed = true; sfx('tap'); }
+function dropQuit() { if (!DROP) return; if (DROP.score > 0 && !confirm('그만둘까? 지금 점수로 끝남.')) return; dropEnd(true); }
+function dropHold() { const D = DROP; if (!D || D.holdUsed) return toast('한 번 떨어뜨린 뒤 다시 보관할 수 있음'); const c = D.q.shift(); if (D.hold) D.q.unshift(D.hold); else D.q.push(dropNext()); D.hold = c; D.holdUsed = true; sfx('tap'); }
 function dropDrop() {
   const D = DROP; if (!D || D.paused || D.over || D.cd > 0) return; const c = D.q.shift(); D.q.push(dropNext()); const r = DROP_T[c.t][0];
   const x = Math.max(DL + r, Math.min(DR - r, D.aim));
@@ -255,7 +255,7 @@ function dropEnd(quit) {
   P.drop = P.drop || {}; P.drop.games = (P.drop.games || 0) + 1;
   const mine = mySin() === D.s, base = Math.floor(D.score / 150) + Math.min(5, D.gold), coins = Math.min(25, Math.round(base * (mine ? 1.5 : 1)));
   const r = reward('sins', coins, D.score); DROP = null;
-  finishGame(`<h2 style="color:var(--gold2);margin-top:0">🍵 ${quit ? '여기까지!' : '다과가 넘쳤어요!'}</h2>
+  finishGame(`<h2 style="color:var(--gold2);margin-top:0">🍵 ${quit ? '여기까지!' : '다과가 넘침!'}</h2>
    <p style="font-size:2rem;margin:4px 0;color:var(--gold2)"><b>${D.score}</b></p><p class="muted">${r}</p>
    <p class="muted">최고 단계 ${DROP_T[D.maxT][1]} ${DROP_T[D.maxT][2]} · 최대 콤보 ${D.best} · 홀케이크 펑 ${D.pops}번${D.gold ? ` · 황금 합치기 ${D.gold}` : ''}${mine ? ' · 내 죄 ×1.5' : ''}</p>
    <div class="row"><button class="primary" style="flex:1;padding:12px" onclick="closeModal();dropStart()">▶ 한 판 더</button><button onclick="closeModal()">닫기</button></div>`);
@@ -287,7 +287,7 @@ function kmOrder() {
 }
 function kmHas(need) { const b = P.km.b.slice(); return need.every(k => { const i = b.indexOf(k); if (i < 0) return false; b[i] = 0; return true; }); }
 function kmSpawn() {
-  const K = kmLv(), empty = K.b.map((x, i) => x ? -1 : i).filter(i => i >= 0); if (!empty.length) { sfx('bad'); shakeEl($('#kmGrid'), 4); return toast('부엌이 꽉 찼어요! 합치거나 🗑에 버려요'); }
+  const K = kmLv(), empty = K.b.map((x, i) => x ? -1 : i).filter(i => i >= 0); if (!empty.length) { sfx('bad'); shakeEl($('#kmGrid'), 4); return toast('부엌이 꽉 참! 합치거나 🗑에 버림'); }
   const i = empty[rint(empty.length)], t = K.lv >= 3 && Math.random() < .15 ? 1 : 0, k = Object.keys(KM_CH)[rint(3)] + t; K.b[i] = k; kmDex(k); saveP(); sfx('tap'); kmRefresh(i);
 }
 function kmDex(k) { const K = P.km; if (K.dex.includes(k)) return; K.dex.push(k); const it = kmItem(k); if (it.t > 0) { tyLv().cash += 2; toast(`📖 도감 등록! ${it.e} ${it.n} (+£2)`); } }
@@ -296,7 +296,7 @@ function kmAct(a, b) {
   if (b === 'trash') { K.b[a] = null; sfx('bad'); saveP(); return kmRefresh(); }
   if (a === b) return; const B = K.b[b];
   if (!B) { K.b[b] = A; K.b[a] = null; sfx('tap'); }
-  else if (A === B) { const it = kmItem(A); if (it.t >= 4) { toast('최고 단계예요'); return kmRefresh(); } const nk = it.ch + (it.t + 1); K.b[b] = nk; K.b[a] = null; kmDex(nk); sfx(it.t >= 2 ? 'coin' : 'pop'); buzz(it.t >= 2 ? 25 : 10); saveP(); return kmRefresh(b); }
+  else if (A === B) { const it = kmItem(A); if (it.t >= 4) { toast('최고 단계'); return kmRefresh(); } const nk = it.ch + (it.t + 1); K.b[b] = nk; K.b[a] = null; kmDex(nk); sfx(it.t >= 2 ? 'coin' : 'pop'); buzz(it.t >= 2 ? 25 : 10); saveP(); return kmRefresh(b); }
   else { K.b[b] = A; K.b[a] = B; sfx('tap'); }
   saveP(); kmRefresh();
 }
@@ -323,7 +323,7 @@ function kmInner(pop) {
    <div class="grid g3" style="gap:6px;margin-bottom:8px">${orders}</div>
    <div id="kmGrid" class="kmgrid">${cells}</div>
    <div class="row" style="gap:6px;margin-top:8px"><button class="primary" style="flex:1;padding:12px;font-size:1.1rem" onclick="kmSpawn()">🧺 장바구니에서 꺼내기</button><div data-trash="1" class="kmc kmtrash">🗑</div></div>
-   <p class="muted" style="font-size:.82rem;margin:6px 0">같은 재료를 겹쳐 합치고, 주문을 채워 £와 은화를 받아요.</p>
+   <p class="muted" style="font-size:.82rem;margin:6px 0">같은 재료를 겹쳐 합치고, 주문을 채워 £와 은화를 받음.</p>
    <details><summary><b>📖 부엌 도감</b> <span class="muted">${K.dex.length}/15</span></summary>${dex}</details>`;
 }
 function kmRefresh(pop) { const el = $('#kmBox'); if (el) el.innerHTML = kmInner(pop); }

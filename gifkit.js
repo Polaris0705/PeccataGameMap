@@ -1,12 +1,12 @@
 /* =========================================================
    햄카타 — 움직이는 GIF 넣기
-   GIF를 풀어서(디코드) 크기·프레임을 줄인 뒤 다시 GIF로 묶어요(인코드).
-   저장 한도(문서 하나 약 1MB)에 맞게 자동으로 줄여요.
+   GIF를 풀어서(디코드) 크기·프레임을 줄인 뒤 다시 GIF로 묶음(인코드).
+   저장 한도(문서 하나 약 1MB)에 맞게 자동으로 줄임.
    ========================================================= */
 function gifDecode(buf) {
   const b = new Uint8Array(buf); let p = 0;
   const u8 = () => b[p++], u16 = () => { const v = b[p] | (b[p + 1] << 8); p += 2; return v; };
-  if (b[0] !== 0x47 || b[1] !== 0x49 || b[2] !== 0x46) throw new Error('GIF가 아니에요');
+  if (b[0] !== 0x47 || b[1] !== 0x49 || b[2] !== 0x46) throw new Error('GIF가 아님');
   p = 6; const W = u16(), H = u16(), pf = u8(); p += 2;
   let gct = null; if (pf & 0x80) { const n = 2 << (pf & 7); gct = b.subarray(p, p + n * 3); p += n * 3; }
   const cvs = new Uint8ClampedArray(W * H * 4), frames = []; let gce = { delay: 100, trans: -1, disp: 0 };
@@ -136,7 +136,7 @@ async function gifMaybe(file, maxSide, maxBytes) {
     if (t % 2) step++; else sc *= .78;
     await new Promise(r => setTimeout(r, 0));
   }
-  if (typeof toast === 'function') toast('움직이는 그림이 너무 커서 멈춘 그림으로 넣었어요');
+  if (typeof toast === 'function') toast('움직이는 그림이 너무 커서 멈춘 그림으로 넣음');
   return null;
 }
 /* 방 액자용: 프레임을 140ms 간격으로 골라 도트로 바꾼 뒤 세로로 이어 붙인 PNG (최대 24장) */

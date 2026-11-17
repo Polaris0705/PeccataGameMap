@@ -1,6 +1,6 @@
 /* =========================================================
    숲속 저택 — 채팅 (RP · OOC · 비밀 채널 · 귓속말)
-   index.html의 전역(B, ME, PROF, USERS, IS_ADMIN ...)을 사용해요.
+   index.html의 전역(B, ME, PROF, USERS, IS_ADMIN ...)을 사용.
    ========================================================= */
 const CHAT_LIMIT = 150;
 const CH = {};
@@ -113,7 +113,7 @@ function chanListHtml(L) {
 function chatHeadHtml() {
   const id = CH.cur, m = CH.meta[id];
   let info = '';
-  if (id.startsWith('dm_')) info = '둘만 보는 귓속말이에요';
+  if (id.startsWith('dm_')) info = '둘만 보는 귓속말';
   else if (m && m.type === 'secret') info = '참여: ' + (m.members || []).map(cname).join(', ') + ' · KP';
   else if (id === 'ooc') info = '캐릭터 밖 잡담 채널';
   else info = '모두가 함께하는 RP 채널';
@@ -235,7 +235,7 @@ function renderChatLog() {
   const l = CH.msgs[CH.cur] || [];
   const fresh = !el.dataset.init; el.dataset.init = '1';
   const wasBottom = fresh ? CH.atBottom !== false : (el.scrollHeight - el.scrollTop - el.clientHeight < 80);
-  el.innerHTML = l.length ? l.map((m, i) => msgHtml(m, l[i - 1])).join('') : '<p class="muted" style="text-align:center;margin-top:30px">아직 대화가 없어요.</p>';
+  el.innerHTML = l.length ? l.map((m, i) => msgHtml(m, l[i - 1])).join('') : '<p class="muted" style="text-align:center;margin-top:30px">아직 대화가 없음.</p>';
   const toBottom = () => { el.scrollTop = el.scrollHeight; };
   if (wasBottom || CH.stick) { toBottom(); el.querySelectorAll('img').forEach(i => i.addEventListener('load', () => { if (CH.atBottom) toBottom(); }, { once: true })); }
   else if (fresh) el.scrollTop = CH.scroll || 0;
@@ -250,7 +250,7 @@ function viewImg(id) { const m = (CH.msgs[CH.cur] || []).find(x => x.id === id);
 
 /* ---------- 입력 ---------- */
 function chatInputHtml() {
-  if (isLocked() && !IS_ADMIN) return `<p class="muted" style="text-align:center;margin:8px 0">🔒 KP가 이 채널을 잠갔어요</p>`;
+  if (isLocked() && !IS_ADMIN) return `<p class="muted" style="text-align:center;margin:8px 0">🔒 KP가 이 채널을 잠금</p>`;
   const npcOpts = NPC_CODES.map(c => `<option value="${c}" ${CH.speaker === c ? 'selected' : ''}>${esc(cname(c))}</option>`).join('');
   const speaker = IS_ADMIN
     ? `<select class="spk" onchange="CH.speaker=this.value"><option value="narr" ${CH.speaker === 'narr' ? 'selected' : ''}>KP 나레이션</option><option value="ooc" ${CH.speaker === 'ooc' ? 'selected' : ''}>KP (OOC)</option>${myHo() ? `<option value="${myHo()}" ${CH.speaker === myHo() ? 'selected' : ''}>${esc(cname(myHo()))} (내 HO)</option>` : ''}${npcOpts}</select>`
@@ -262,7 +262,7 @@ function chatInputHtml() {
    ${dice}
    <div class="inrow">
     <div class="spkw">${speaker}</div>
-    <textarea id="chatText" rows="1" placeholder="${IS_ADMIN && CH.speaker === 'narr' ? '묘사를 적어 주세요' : '메시지 · (괄호)·*별표*는 회색 · /r 2d6 · /cc 65'}" oninput="CH.draft[CH.cur]=this.value;autoGrow(this)" onkeydown="chatKey(event)">${esc(CH.draft[CH.cur] || '')}</textarea>
+    <textarea id="chatText" rows="1" placeholder="${IS_ADMIN && CH.speaker === 'narr' ? '묘사를 적기' : '메시지 · (괄호)·*별표*는 회색 · /r 2d6 · /cc 65'}" oninput="CH.draft[CH.cur]=this.value;autoGrow(this)" onkeydown="chatKey(event)">${esc(CH.draft[CH.cur] || '')}</textarea>
     <label class="iconbtn" title="이미지">📷<input type="file" accept="image/*" style="display:none" onchange="chatImg(this)"></label>
     <button class="iconbtn" title="주사위" onclick="CH.diceOpen=!CH.diceOpen;refreshInput()">🎲</button>
     <button class="primary" style="flex:0 0 auto" onclick="chatSend()">${CH.edit ? '수정' : '전송'}</button>
@@ -276,15 +276,15 @@ function mentionInsert(name) { const t = $('#chatText'); if (!t) return; t.value
 async function chatImg(inp) {
   const f = inp.files[0]; if (!f) return;
   const d = (typeof gifMaybe === 'function' && await gifMaybe(f, 480, 560000)) || await compressImage(await readFile(f), 1000, .72);
-  if (!d) return toast('이미지를 읽지 못했어요');
-  if (d.length > 900000) return toast('이미지가 너무 커요');
+  if (!d) return toast('이미지를 읽지 못함');
+  if (d.length > 900000) return toast('이미지가 너무 큼');
   CH.pendingImg = d; refreshInput();
 }
 function cancelEdit() { CH.edit = null; const ta = $('#chatText'); if (ta) ta.value = ''; CH.draft[CH.cur] = ''; refreshInput(); }
 function editMsg(id) { const m = (CH.msgs[CH.cur] || []).find(x => x.id === id); if (!m) return; CH.edit = id; CH.sel = null; const ta = $('#chatText'); if (ta) ta.value = m.text || ''; CH.draft[CH.cur] = m.text || ''; refreshInput(); renderChatLog(); const t = $('#chatText'); if (t) t.focus(); }
 async function delMsg(id) {
   const m = (CH.msgs[CH.cur] || []).find(x => x.id === id); if (!m) return;
-  if (!confirm('이 메시지를 삭제할까요?')) return;
+  if (!confirm('이 메시지를 삭제할까?')) return;
   const p = `channels/${CH.cur}/msgs/${id}`;
   try { if (m.uid === ME.uid) await B.update(p, { deleted: true, text: '', img: '' }); else await B.del(p); } catch (e) { toast('삭제 실패: ' + (e.code || e.message)); }
   CH.sel = null;
@@ -323,7 +323,7 @@ function rollDice(expr) {
   return d;
 }
 function quickRoll(expr) { sendMsg({ dice: rollDice(expr), text: '' }); }
-function skillRoll() { const v = +(($('#skillIn') || {}).value || 0); if (!v || v < 1 || v > 200) return toast('기능치를 입력해 주세요'); const t = $('#chatText'); const note = t ? t.value.trim() : ''; if (t) t.value = ''; CH.draft[CH.cur] = ''; sendMsg({ dice: rollDice('1d100<=' + v), text: note }); }
+function skillRoll() { const v = +(($('#skillIn') || {}).value || 0); if (!v || v < 1 || v > 200) return toast('기능치를 입력하기'); const t = $('#chatText'); const note = t ? t.value.trim() : ''; if (t) t.value = ''; CH.draft[CH.cur] = ''; sendMsg({ dice: rollDice('1d100<=' + v), text: note }); }
 
 /* ---------- 보내기 ---------- */
 function baseMsg() {
@@ -347,7 +347,7 @@ function computeMentions(text, id) {
 }
 async function sendMsg(extra) {
   const ch = CH.cur;
-  if (isLocked(ch) && !IS_ADMIN) return toast('잠긴 채널이에요');
+  if (isLocked(ch) && !IS_ADMIN) return toast('잠긴 채널');
   const msg = Object.assign(baseMsg(), extra);
   if (CH.pendingImg) { msg.img = CH.pendingImg; CH.pendingImg = ''; }
   if (!msg.text && !msg.img && !msg.dice) return;
@@ -369,13 +369,13 @@ async function chatSend() {
   const ta = $('#chatText'); const t = ta ? ta.value.trim() : '';
   const ch = CH.cur;
   if (CH.edit) {
-    if (!t) return toast('내용을 입력해 주세요');
+    if (!t) return toast('내용을 입력하기');
     try { await B.update(`channels/${ch}/msgs/${CH.edit}`, { text: t, edited: true }); } catch (e) { return toast('수정 실패: ' + (e.code || e.message)); }
     CH.edit = null; CH.draft[ch] = ''; if (ta) ta.value = ''; refreshInput(); return;
   }
   if (!t && !CH.pendingImg) return;
   let m, extra = { text: t };
-  if ((m = t.match(/^\/(?:r|roll|굴림)\s+(\S+)\s*([\s\S]*)$/i))) { const d = rollDice(m[1]); if (!d) return toast('주사위 식을 확인해 주세요 (예: 2d6+1, 1d100<=65)'); extra = { dice: d, text: m[2].trim() }; }
+  if ((m = t.match(/^\/(?:r|roll|굴림)\s+(\S+)\s*([\s\S]*)$/i))) { const d = rollDice(m[1]); if (!d) return toast('주사위 식을 확인하기 (예: 2d6+1, 1d100<=65)'); extra = { dice: d, text: m[2].trim() }; }
   else if ((m = t.match(/^\/(?:cc|판정)\s+(\d+)\s*([\s\S]*)$/i))) extra = { dice: rollDice('1d100<=' + m[1]), text: m[2].trim() };
   else if ((m = t.match(/^\/ooc\s+([\s\S]+)$/i))) extra = { text: m[1].trim(), kind: 'ooc', code: '' };
   CH.draft[ch] = ''; if (ta) { ta.value = ''; autoGrow(ta); }
@@ -400,7 +400,7 @@ async function exportLog() {
    <textarea readonly style="min-height:260px;font-size:.8rem">${esc(window._logTxt)}</textarea>
    <div class="row" style="margin-top:8px"><button onclick="copyLog()">복사</button><button onclick="saveLog()">파일로 저장</button><button onclick="closeModal()">닫기</button></div>`);
 }
-function copyLog() { try { navigator.clipboard.writeText(window._logTxt).then(() => toast('복사했어요'), () => toast('복사가 막혀 있어요. 위 글을 길게 눌러 복사해 주세요')); } catch (e) { toast('복사가 막혀 있어요'); } }
+function copyLog() { try { navigator.clipboard.writeText(window._logTxt).then(() => toast('복사 완료'), () => toast('복사가 막혀 있음. 위 글을 길게 눌러 복사하기')); } catch (e) { toast('복사가 막혀 있음'); } }
 function saveLog() { const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([window._logTxt], { type: 'text/plain;charset=utf-8' })); a.download = window._logName; document.body.appendChild(a); a.click(); setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 500); }
 
 /* ---------- KP: 채널 관리 ---------- */
@@ -418,19 +418,19 @@ async function syncChatIndex() {
   await Promise.all(HO_CODES.map(ho => B.set('chatIndex/' + ho, { ids: l.filter(c => (c.members || []).includes(ho)).map(c => c.id) })));
 }
 async function chanSave() {
-  const name = (CE.name || '').trim(); if (!name) return toast('채널 이름을 적어 주세요');
-  if (!CE.members.length) return toast('참여할 HO를 골라 주세요');
+  const name = (CE.name || '').trim(); if (!name) return toast('채널 이름을 적기');
+  if (!CE.members.length) return toast('참여할 HO를 고르기');
   let id = CE.id;
   try {
     if (id) await B.set('channels/' + id, { name, members: CE.members, locked: CE.locked }, true);
     else id = await B.add('channels', { name, type: 'secret', members: CE.members, locked: CE.locked, at: Date.now() });
     await syncChatIndex();
   } catch (e) { return toast('저장 실패: ' + (e.code || e.message)); }
-  closeModal(); toast('저장했어요');
+  closeModal(); toast('저장 완료');
   if (!CE.id) { CH.meta[id] = CH.meta[id] || { id, name, type: 'secret', members: CE.members, locked: CE.locked, at: Date.now() }; chanSub(id); openChan(id); }
 }
 async function chanDelete() {
-  if (!confirm('이 비밀 채널을 삭제할까요? 참여자 목록에서 사라져요.')) return;
+  if (!confirm('이 비밀 채널을 삭제할까? 참여자 목록에서 사라짐.')) return;
   await B.del('channels/' + CE.id); await syncChatIndex();
   closeModal(); if (CH.cur === CE.id) openChan('rp');
 }

@@ -51,17 +51,17 @@ function dotEdit(o) {
   document.body.appendChild(root); document.body.style.overflow = 'hidden';
   if (o.orig) deDecode(o.orig, 1).then(fr => { if (DE && fr) { DE.origPx = fr[0]; deUI(); } });
   const dr = deDraftGet();
-  if (dr && confirm(`그리다 만 그림이 임시저장돼 있어요 (${new Date(dr.at).toLocaleString('ko-KR', { month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit' })}). 이어서 그릴까요?`)) deDraftLoad(dr);
+  if (dr && confirm(`그리다 만 그림이 임시저장돼 있음 (${new Date(dr.at).toLocaleString('ko-KR', { month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit' })}). 이어서 그릴까?`)) deDraftLoad(dr);
   else { if (dr) deDraftDel(); if (o.src) deLoadSrc(o.src); }
   deUI(); deFit(); deBind(); deDraw();
   DE.saveT = setInterval(deDraftSave, 4000);
 }
 function deClose(save) {
   if (!DE) return; const o = DE.o;
-  if (!save && DE.dirty && !confirm('그린 것을 저장하지 않고 닫을까요?')) return;
+  if (!save && DE.dirty && !confirm('그린 것을 저장하지 않고 닫을까?')) return;
   let url = null, meta = null;
   if (save) { if (DE.float) deCommitFloat(); deStop(); meta = { n: deN(), ms: DE.ms };
-    if (deIsEmpty()) url = null; else if (DE.origPx && deN() === 1 && deSame(deComp(0), DE.origPx)) { url = null; toast('원래 그림과 같아서 원래대로 돌려 뒀어요'); } else url = dePng(); }
+    if (deIsEmpty()) url = null; else if (DE.origPx && deN() === 1 && deSame(deComp(0), DE.origPx)) { url = null; toast('원래 그림과 같아서 원래대로 돌려 둠'); } else url = dePng(); }
   clearInterval(DE.saveT); clearInterval(DE.roomT); deDraftDel(); deStop(); window.removeEventListener('keydown', deKey);
   const r = document.getElementById('dotEd'); if (r) r.remove(); document.body.style.overflow = ''; DE = null;
   if (save) o.onSave && o.onSave(url, meta); else o.onCancel && o.onCancel();
@@ -96,9 +96,9 @@ function deDecode(src, n) { return new Promise(res => { const im = new Image(); 
   res(fr); }; im.onerror = () => res(null); im.src = src; }); }
 function deLoadSrc(src) { deDecode(src, DE.o.n).then(fr => { if (!DE || !fr) return; DE.layers = [{ name: '레이어 1', vis: true, lock: false, op: 1, frames: fr }]; DE.li = 0; DE.fi = 0; deSync(); deUI(); deDraw(); }); }
 function deToOrig() {
-  if (!DE.origPx) return toast('원래 그림을 불러오는 중이에요'); if (!confirm('원래 가구 도트로 되돌릴까요? 레이어와 장면이 하나로 정리돼요.')) return;
+  if (!DE.origPx) return toast('원래 그림을 불러오는 중'); if (!confirm('원래 가구 도트로 되돌릴까? 레이어와 장면이 하나로 정리됨.')) return;
   deStop(); DE.float = null; DE.sel = null; DE.layers = [{ name: '원래 그림', vis: true, lock: false, op: 1, frames: [DE.origPx.slice()] }]; DE.li = 0; DE.fi = 0; deSync(); deStruct(); deUI(); deDraw(); deCols();
-  toast('원래 도트로 되돌렸어요. 이대로 저장하면 「바꿈」 표시가 사라져요');
+  toast('원래 도트로 되돌림. 이대로 저장하면 「바꿈」 표시가 사라짐');
 }
 
 /* ---------- 자동 임시저장 ---------- */
@@ -112,27 +112,27 @@ function deDraftSave() {
 async function deDraftLoad(d) {
   const ls = []; for (const L of d.layers) { const fr = await deDecode(L.png, d.n); if (!DE) return; ls.push({ name: L.name, vis: L.vis !== false, lock: !!L.lock, op: L.op == null ? 1 : L.op, frames: fr || [deNF()] }); }
   const n = Math.max(1, ...ls.map(L => L.frames.length)); ls.forEach(L => { while (L.frames.length < n) L.frames.push(deNF()); });
-  DE.layers = ls.length ? ls : [deNewLayer('레이어 1', 1)]; DE.li = Math.min(d.li || 0, DE.layers.length - 1); DE.fi = 0; DE.ms = d.ms || DE.ms; DE.dirty = true; deSync(); deUI(); deDraw(); deCols(); toast('임시저장한 그림을 불러왔어요');
+  DE.layers = ls.length ? ls : [deNewLayer('레이어 1', 1)]; DE.li = Math.min(d.li || 0, DE.layers.length - 1); DE.fi = 0; DE.ms = d.ms || DE.ms; DE.dirty = true; deSync(); deUI(); deDraw(); deCols(); toast('임시저장한 그림을 불러옴');
 }
 
 /* ---------- 장면 (모든 레이어가 같이) ---------- */
 function deStruct() { DE.undo = []; DE.redo = []; DE.dirty = true; DE.editAt = Date.now(); }
 function deFrameGo(i) { if (DE.float) deCommitFloat(); deStop(); DE.fi = i; deSync(); deUI(); deDraw(); if (DE.sheet === 'lay') deSheetBody(); }
-function deFrameAdd(copy) { if (deN() >= DE_MAXF) return toast(`장면은 ${DE_MAXF}장까지예요`); deStop(); DE.layers.forEach(L => L.frames.splice(DE.fi + 1, 0, copy ? L.frames[DE.fi].slice() : deNF())); deStruct(); deFrameGo(DE.fi + 1); }
-function deFrameDel() { if (deN() <= 1) return; if (!confirm(`${DE.fi + 1}번 장면을 지울까요?`)) return; deStop(); DE.layers.forEach(L => L.frames.splice(DE.fi, 1)); deStruct(); DE.fi = Math.min(DE.fi, deN() - 1); deSync(); deUI(); deDraw(); }
+function deFrameAdd(copy) { if (deN() >= DE_MAXF) return toast(`장면은 ${DE_MAXF}장까지`); deStop(); DE.layers.forEach(L => L.frames.splice(DE.fi + 1, 0, copy ? L.frames[DE.fi].slice() : deNF())); deStruct(); deFrameGo(DE.fi + 1); }
+function deFrameDel() { if (deN() <= 1) return; if (!confirm(`${DE.fi + 1}번 장면을 지울까?`)) return; deStop(); DE.layers.forEach(L => L.frames.splice(DE.fi, 1)); deStruct(); DE.fi = Math.min(DE.fi, deN() - 1); deSync(); deUI(); deDraw(); }
 function deFrameMove(d) { const j = DE.fi + d; if (j < 0 || j >= deN()) return; deStop(); DE.layers.forEach(L => { [L.frames[DE.fi], L.frames[j]] = [L.frames[j], L.frames[DE.fi]]; }); deStruct(); DE.fi = j; deSync(); deUI(); deDraw(); }
-function dePlay() { if (DE.play) return deStop(); if (deN() < 2) return toast('장면이 2장 이상이어야 움직여요'); DE.showFi = DE.fi;
+function dePlay() { if (DE.play) return deStop(); if (deN() < 2) return toast('장면이 2장 이상이어야 움직임'); DE.showFi = DE.fi;
   DE.play = setInterval(() => { if (!DE) return; DE.showFi = (DE.showFi + 1) % deN(); deDraw(); }, DE.ms); deUI(); }
 function deStop() { if (DE && DE.play) { clearInterval(DE.play); DE.play = null; DE.showFi = -1; deUI(); deDraw(); } }
 
 /* ---------- 레이어 ---------- */
 function deLayerGo(i) { if (DE.float) deCommitFloat(); DE.li = i; deSync(); deUI(); deDraw(); if (DE.sheet === 'lay') deSheetBody(); }
-function deLayerAdd(copy) { if (DE.layers.length >= DE_MAXL) return toast(`레이어는 ${DE_MAXL}장까지예요`); const L = copy ? { name: deL().name + ' 복사', vis: true, lock: false, op: deL().op, frames: deL().frames.map(f => f.slice()) } : deNewLayer('레이어 ' + (DE.layers.length + 1));
+function deLayerAdd(copy) { if (DE.layers.length >= DE_MAXL) return toast(`레이어는 ${DE_MAXL}장까지`); const L = copy ? { name: deL().name + ' 복사', vis: true, lock: false, op: deL().op, frames: deL().frames.map(f => f.slice()) } : deNewLayer('레이어 ' + (DE.layers.length + 1));
   DE.layers.splice(DE.li + 1, 0, L); deStruct(); deLayerGo(DE.li + 1); }
-function deLayerDel() { if (DE.layers.length <= 1) return toast('레이어는 하나 이상 있어야 해요'); if (!confirm(`「${deL().name}」 레이어를 지울까요?`)) return; DE.layers.splice(DE.li, 1); deStruct(); deLayerGo(Math.max(0, DE.li - 1)); }
+function deLayerDel() { if (DE.layers.length <= 1) return toast('레이어는 하나 이상 있어야 함'); if (!confirm(`「${deL().name}」 레이어를 지울까?`)) return; DE.layers.splice(DE.li, 1); deStruct(); deLayerGo(Math.max(0, DE.li - 1)); }
 function deLayerMove(d) { const j = DE.li + d; if (j < 0 || j >= DE.layers.length) return; [DE.layers[DE.li], DE.layers[j]] = [DE.layers[j], DE.layers[DE.li]]; deStruct(); deLayerGo(j); }
 function deLayerMerge() {
-  if (DE.li === 0) return toast('맨 아래 레이어예요'); const up = deL(), dn = DE.layers[DE.li - 1]; if (!confirm(`「${up.name}」을(를) 「${dn.name}」에 합칠까요?`)) return;
+  if (DE.li === 0) return toast('맨 아래 레이어'); const up = deL(), dn = DE.layers[DE.li - 1]; if (!confirm(`「${up.name}」을(를) 「${dn.name}」에 합칠까?`)) return;
   const keep = DE.layers, li0 = DE.li; DE.layers = [Object.assign({}, dn, { vis: true }), Object.assign({}, up, { vis: true })]; DE.li = 1;
   const merged = dn.frames.map((_, f) => deComp(f)); DE.layers = keep; DE.li = li0; dn.frames = merged; dn.op = 1; DE.layers.splice(li0, 1); deStruct(); deLayerGo(li0 - 1);
 }
@@ -145,7 +145,7 @@ function deUI() {
     <button onclick="deFrameAdd(true)" ${n >= DE_MAXF ? 'disabled' : ''}>⧉ 복제</button><button onclick="deFrameAdd(false)" ${n >= DE_MAXF ? 'disabled' : ''}>＋ 빈 장면</button>
     ${n > 1 ? `<button onclick="deFrameMove(-1)">◀</button><button onclick="deFrameMove(1)">▶</button><button onclick="deFrameDel()">🗑</button>
     <button class="${DE.onion ? 'on' : ''}" onclick="DE.onion=!DE.onion;deUI();deDraw()">🧅 앞 장면 비치기</button><button class="${DE.play ? 'on' : ''}" onclick="dePlay()">${DE.play ? '⏸ 멈춤' : '▶ 미리보기'}</button>
-    <select onchange="DE.ms=+this.value;DE.editAt=Date.now();if(DE.play){deStop();dePlay()}">${[[120, '빠름'], [220, '보통'], [400, '느림'], [700, '아주 느림']].map(([v, tt]) => `<option value="${v}" ${DE.ms === v ? 'selected' : ''}>${tt}</option>`).join('')}</select>` : '<span class="muted" style="font-size:.78rem">장면을 늘리면 움직이는 가구가 돼요</span>'}`;
+    <select onchange="DE.ms=+this.value;DE.editAt=Date.now();if(DE.play){deStop();dePlay()}">${[[120, '빠름'], [220, '보통'], [400, '느림'], [700, '아주 느림']].map(([v, tt]) => `<option value="${v}" ${DE.ms === v ? 'selected' : ''}>${tt}</option>`).join('')}</select>` : '<span class="muted" style="font-size:.78rem">장면 추가 = 움직임</span>'}`;
   $('#deTools').innerHTML = DE_TOOLS.map(([k, ic, nm]) => `<button class="${t === k ? 'on' : ''}" onclick="deTool('${k}')" title="${nm}">${ic} ${nm}</button>`).join('');
   const sz = ['pen', 'erase', 'dith'].includes(t) ? `<span class="muted">굵기</span>${[1, 2, 3, 5].map(v => `<button class="${DE.size === v ? 'on' : ''}" onclick="DE.size=${v};deUI()">${v}</button>`).join('')}` : '';
   const dith = t === 'dith' ? `<span class="muted">무늬</span>${[['체크', 0], ['성글게', 1], ['가로줄', 2]].map(([nm, v]) => `<button class="${DE.dith === v ? 'on' : ''}" onclick="DE.dith=${v};deUI()">${nm}</button>`).join('')}<span class="muted" style="font-size:.78rem">주색+보조색 (보조색 없으면 주색만 띄엄띄엄)</span>` : '';
@@ -181,7 +181,7 @@ function deSheetBody() {
   const sh = $('#deSheet'), k = DE.sheet; if (!sh || !k) return; clearInterval(DE.roomT);
   const close = `<button onclick="deSheet('')">닫기</button>`;
   if (k === 'lay') {
-    sh.innerHTML = `<div class="row" style="justify-content:space-between;align-items:center"><b>🗂 레이어</b><span class="muted" style="font-size:.78rem">위가 앞쪽 · 모든 장면이 같이 써요</span></div>
+    sh.innerHTML = `<div class="row" style="justify-content:space-between;align-items:center"><b>🗂 레이어</b><span class="muted" style="font-size:.78rem">위가 앞쪽 · 모든 장면이 같이 씀</span></div>
       ${DE.layers.map((L, i) => ({ L, i })).reverse().map(({ L, i }) => `<div class="lrow ${i === DE.li ? 'on' : ''}" onclick="deLayerGo(${i})"><canvas width="${DE.W}" height="${DE.H}" data-li="${i}"></canvas>
         <div style="flex:1;min-width:0"><b style="font-size:.9rem">${esc(L.name)}</b>${i === DE.li ? `<div class="row" style="gap:4px;align-items:center" onclick="event.stopPropagation()"><span class="muted" style="font-size:.75rem">투명도</span><input type="range" min="0" max="100" value="${Math.round((L.op == null ? 1 : L.op) * 100)}" oninput="deL().op=this.value/100;DE.dirty=true;DE.editAt=Date.now();deDraw()" style="flex:1;width:auto"></div>` : `<div class="muted" style="font-size:.72rem">${Math.round((L.op == null ? 1 : L.op) * 100)}%</div>`}</div>
         <button class="sm ${L.vis ? '' : 'on'}" onclick="event.stopPropagation();DE.layers[${i}].vis=!DE.layers[${i}].vis;DE.editAt=Date.now();deSheetBody();deUI();deDraw()">${L.vis ? '👁' : '🙈'}</button>
@@ -192,25 +192,25 @@ function deSheetBody() {
   }
   if (k === 'pal') {
     const pals = dePals();
-    sh.innerHTML = `<b>🎨 내 팔레트</b><p class="muted" style="margin:4px 0;font-size:.8rem">고른 팔레트 색이 아래 색 줄에 나와요. 색을 길게 누르면 보조색이 돼요. 다른 가구에서도 불러올 수 있어요.</p>
+    sh.innerHTML = `<b>🎨 내 팔레트</b><p class="muted" style="margin:4px 0;font-size:.8rem">길게 누르기 → 보조색 · 다른 가구에서도 사용</p>
       <div class="lrow ${DE.pal < 0 ? 'on' : ''}" onclick="DE.pal=-1;deSheetBody();deCols()"><b style="flex:1">기본 (최근·그림에 쓴 색)</b></div>
       ${pals.map((p, i) => `<div class="lrow ${DE.pal === i ? 'on' : ''}" onclick="DE.pal=${i};deSheetBody();deCols()"><div style="flex:1;min-width:0"><b>${esc(p.name)}</b><div style="display:flex;flex-wrap:wrap;gap:2px;margin-top:2px">${p.cols.slice(0, 32).map(c => `<span style="width:12px;height:12px;display:inline-block;background:${c};border:1px solid #0006"></span>`).join('')}</div></div>
         <button class="sm" onclick="event.stopPropagation();dePalAdd(${i})">＋ 주색</button><button class="sm danger" onclick="event.stopPropagation();dePalDel(${i})">🗑</button></div>`).join('')}
       <div class="row" style="gap:4px;margin-top:6px"><button class="primary" onclick="dePalNew()">＋ 지금 그림 색으로 새 팔레트</button>${close}</div>`;
   }
   if (k === 'fx') sh.innerHTML = `<b>✨ 외곽선 · 그림자</b>
-    <p class="muted" style="margin:6px 0 2px;font-size:.82rem"><b>외곽선</b> — 지금 레이어 그림 바깥에 주색으로 1도트 테두리를 둘러요.</p>
+    <p class="muted" style="margin:6px 0 2px;font-size:.82rem"><b>외곽선</b> — 지금 레이어 그림 바깥에 주색으로 1도트 테두리를 두름.</p>
     <div class="row" style="gap:4px;flex-wrap:wrap;align-items:center"><button onclick="deOutline(false)">✒ 바깥 테두리</button><button onclick="deOutline(true)">✒ 대각선까지</button>${deN() > 1 ? `<label class="muted"><input type="checkbox" ${DE.scopeF ? 'checked' : ''} onchange="DE.scopeF=this.checked">모든 장면</label>` : ''}</div>
-    <p class="muted" style="margin:10px 0 2px;font-size:.82rem"><b>그림자</b> — 맨 아래에 반투명 그림자 레이어를 새로 만들어요 (투명도는 레이어에서 조절).</p>
+    <p class="muted" style="margin:10px 0 2px;font-size:.82rem"><b>그림자</b> — 맨 아래에 반투명 그림자 레이어를 새로 만듦 (투명도는 레이어에서 조절).</p>
     <div class="row" style="gap:4px;flex-wrap:wrap"><button onclick="deShadow('floor')">🌑 바닥 타원 그림자</button><button onclick="deShadow('drop')">🌘 오른쪽 아래 그림자</button>${close}</div>`;
   if (k === 'room') { sh.innerHTML = `<div class="row" style="justify-content:space-between;align-items:center"><b>🏠 방에 놓인 모습</b>${close}</div><div style="display:flex;gap:10px;align-items:flex-end;overflow-x:auto;margin-top:6px"><div style="text-align:center"><canvas id="deRm1" style="image-rendering:pixelated"></canvas><div class="muted" style="font-size:.75rem">실제 크기</div></div><div style="text-align:center"><canvas id="deRm2" style="image-rendering:pixelated"></canvas><div class="muted" style="font-size:.75rem">2배</div></div></div>`;
     deRoomPrev(); DE.roomT = setInterval(deRoomPrev, Math.max(120, DE.ms)); }
-  if (k === 'conv') sh.innerHTML = `<b>🧩 밑그림을 도트로 바꾸기</b><p class="muted" style="margin:4px 0">밑그림 위치·크기 그대로 칸에 맞춰 도트로 바꿔요. 지금 레이어를 덮어써요(되돌리기 가능).</p>
+  if (k === 'conv') sh.innerHTML = `<b>🧩 밑그림을 도트로 바꾸기</b><p class="muted" style="margin:4px 0">밑그림 → 도트 변환 · 현재 레이어 덮어씀</p>
     <div class="row" style="align-items:center;gap:6px;flex-wrap:wrap"><span>색 수</span><select id="deCn">${[4, 8, 12, 16, 24, 32].map(n => `<option ${n === 16 ? 'selected' : ''}>${n}</option>`).join('')}</select>
     <label><input type="checkbox" id="deBg" checked> 배경 지우기</label><label><input type="checkbox" id="deOl"> 테두리 진하게</label></div>
     <div class="row" style="margin-top:8px">${close}<button class="primary" onclick="deConvert()">바꾸기</button></div>`;
   if (k === 'imp') { const ks = Object.keys(FURN).filter(x => FURN[x].hi || FURN[x].custom);
-    sh.innerHTML = `<b>🪑 가구 불러오기</b><p class="muted" style="margin:4px 0">불러온 그림은 옮긴 뒤 「여기에 붙이기」로 확정해요. 다른 방향 그림을 복사해 올 때도 써요.</p>
+    sh.innerHTML = `<b>🪑 가구 불러오기</b><p class="muted" style="margin:4px 0">위치 조정 후 「여기에 붙이기」</p>
       <select id="deImpK" style="width:100%">${ks.map(x => `<option value="${x}">${esc(FURN[x].name)}${FURN[x].custom ? ' ✏' : ''}</option>`).join('')}</select>
       <div class="row" style="margin-top:6px;gap:6px"><select id="deImpD"><option value="0">앞</option><option value="1">왼쪽</option><option value="2">뒤</option><option value="3">오른쪽</option></select>${close}<button class="primary" onclick="deImport()">불러오기</button></div>`; }
 }
@@ -253,7 +253,7 @@ function deRoomPrev() {
 }
 
 /* ---------- 도트 쓰기 ---------- */
-function deEditable() { const L = deL(); if (L.lock) { toast('🔒 잠긴 레이어예요'); return false; } if (!L.vis) { toast('🙈 숨긴 레이어에는 그릴 수 없어요'); return false; } return true; }
+function deEditable() { const L = deL(); if (L.lock) { toast('🔒 잠긴 레이어'); return false; } if (!L.vis) { toast('🙈 숨긴 레이어에는 그릴 수 없음'); return false; } return true; }
 function dePatt(X, Y) { const d = DE.dith; return d === 1 ? (X % 2 === 0 && Y % 2 === 0) : d === 2 ? Y % 2 === 0 : (X + Y) % 2 === 0; }
 function deSet(px, x, y, rgb, mir) {
   const { W, H } = DE, s = DE.size || 1, o = Math.floor((s - 1) / 2);
@@ -289,27 +289,27 @@ function deGradient(a, b) {
 /* 범위: 지금 레이어·장면, 또는 모든 레이어/장면 (잠긴 레이어 빼고) */
 function deTargets(allL, allF) { const out = []; DE.layers.forEach((L, li) => { if (!allL && li !== DE.li) return; if (L.lock) return; L.frames.forEach((_, fi) => { if (!allF && fi !== DE.fi) return; out.push({ li, fi }); }); }); return out; }
 function deSwap(x, y) {
-  const k = (y * DE.W + x) * 4, p = DE.scopeL ? deComp(DE.fi) : DE.px; if (!p[k + 3]) return toast('빈 칸이에요'); const from = [p[k], p[k + 1], p[k + 2]], to = deHex(DE.col);
-  const tg = deTargets(DE.scopeL, DE.scopeF); if (!tg.length) return toast('🔒 잠긴 레이어예요'); dePush(tg); let n = 0;
+  const k = (y * DE.W + x) * 4, p = DE.scopeL ? deComp(DE.fi) : DE.px; if (!p[k + 3]) return toast('빈 칸'); const from = [p[k], p[k + 1], p[k + 2]], to = deHex(DE.col);
+  const tg = deTargets(DE.scopeL, DE.scopeF); if (!tg.length) return toast('🔒 잠긴 레이어'); dePush(tg); let n = 0;
   tg.forEach(({ li, fi }) => { const a = DE.layers[li].frames[fi]; for (let i = 0; i < a.length; i += 4) if (a[i + 3] && a[i] === from[0] && a[i + 1] === from[1] && a[i + 2] === from[2]) { a[i] = to[0]; a[i + 1] = to[1]; a[i + 2] = to[2]; n++; } });
-  deDraw(); deCols(); toast(n ? `${n}도트를 바꿨어요` : '바꿀 도트가 없어요');
+  deDraw(); deCols(); toast(n ? `${n}도트 변경 완료` : '바꿀 도트가 없음');
 }
 function deOutline(diag) {
   if (!deEditable()) return; const tg = deTargets(false, DE.scopeF), c = deHex(DE.col), { W, H } = DE; dePush(tg);
   const nb = diag ? [[1, 0], [-1, 0], [0, 1], [0, -1], [1, 1], [-1, -1], [1, -1], [-1, 1]] : [[1, 0], [-1, 0], [0, 1], [0, -1]];
   tg.forEach(({ li, fi }) => { const a = DE.layers[li].frames[fi], src = a.slice(); for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) { const k = (y * W + x) * 4; if (src[k + 3]) continue;
     if (nb.some(([dx, dy]) => { const X = x + dx, Y = y + dy; return X >= 0 && Y >= 0 && X < W && Y < H && src[(Y * W + X) * 4 + 3]; })) { a[k] = c[0]; a[k + 1] = c[1]; a[k + 2] = c[2]; a[k + 3] = 255; } } });
-  deSync(); deSheet(''); deDraw(); deCols(); toast('외곽선을 그렸어요');
+  deSync(); deSheet(''); deDraw(); deCols(); toast('외곽선을 그림');
 }
 function deShadow(kind) {
-  if (DE.layers.length >= DE_MAXL) return toast(`레이어는 ${DE_MAXL}장까지예요`); const { W, H } = DE, n = deN(), L = deNewLayer(kind === 'floor' ? '바닥 그림자' : '그림자', n); L.op = kind === 'floor' ? .35 : .3;
+  if (DE.layers.length >= DE_MAXL) return toast(`레이어는 ${DE_MAXL}장까지`); const { W, H } = DE, n = deN(), L = deNewLayer(kind === 'floor' ? '바닥 그림자' : '그림자', n); L.op = kind === 'floor' ? .35 : .3;
   for (let f = 0; f < n; f++) { const comp = deComp(f), a = L.frames[f];
     if (kind === 'floor') { let x0 = W, x1 = -1, y1 = -1; for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) if (comp[(y * W + x) * 4 + 3]) { x0 = Math.min(x0, x); x1 = Math.max(x1, x); y1 = Math.max(y1, y); } if (x1 < 0) continue;
       const cx = (x0 + x1) / 2, rx = (x1 - x0) / 2 + 3, ry = Math.max(3, Math.round((DE.o.foot || 24) / 5)), cy = Math.min(H - 1 - ry, y1 - Math.round(ry / 2));
       for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) if (((x - cx) / rx) ** 2 + ((y - cy) / ry) ** 2 <= 1) a[(y * W + x) * 4 + 3] = 255; }
     else { for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) { const X = x - 2, Y = y - 2; if (X >= 0 && Y >= 0 && comp[(Y * W + X) * 4 + 3]) a[(y * W + x) * 4 + 3] = 255; } }
     for (let i = 0; i < a.length; i += 4) if (a[i + 3]) { a[i] = 20; a[i + 1] = 12; a[i + 2] = 8; } }
-  DE.layers.unshift(L); DE.li++; deStruct(); deSync(); deSheet(''); deUI(); deDraw(); toast('맨 아래에 그림자 레이어를 만들었어요');
+  DE.layers.unshift(L); DE.li++; deStruct(); deSync(); deSheet(''); deUI(); deDraw(); toast('맨 아래에 그림자 레이어를 만듦');
 }
 
 /* ---------- 되돌리기 (여러 레이어·장면 한꺼번에) ---------- */
@@ -327,7 +327,7 @@ function dePickAt(x, y) {
 
 /* ---------- 선택 · 붙여넣기 · 변형 ---------- */
 function deCut(s) { const { W, px } = DE, d = new Uint8ClampedArray(s.w * s.h * 4); for (let y = 0; y < s.h; y++) for (let x = 0; x < s.w; x++) { const a = ((s.y + y) * W + s.x + x) * 4, b = (y * s.w + x) * 4; for (let k = 0; k < 4; k++) d[b + k] = px[a + k]; } return { w: s.w, h: s.h, d }; }
-function deCopy(cut) { if (!DE.sel) return; if (cut && !deEditable()) return; DECLIP = deCut(DE.sel); if (cut) { dePush(); deClearRect(DE.sel); } toast(cut ? '잘라냈어요' : '복사했어요'); deUI(); deDraw(); }
+function deCopy(cut) { if (!DE.sel) return; if (cut && !deEditable()) return; DECLIP = deCut(DE.sel); if (cut) { dePush(); deClearRect(DE.sel); } toast(cut ? '잘라냄' : '복사 완료'); deUI(); deDraw(); }
 function deLift() { if (!DE.sel || !deEditable()) return; const c = deCut(DE.sel); dePush(); deClearRect(DE.sel); DE.float = { w: c.w, h: c.h, d: c.d, x: DE.sel.x, y: DE.sel.y }; DE.sel = null; deUI(); deDraw(); }
 function deClearRect(s) { for (let y = s.y; y < s.y + s.h; y++) for (let x = s.x; x < s.x + s.w; x++) { const k = (y * DE.W + x) * 4; DE.px[k] = DE.px[k + 1] = DE.px[k + 2] = DE.px[k + 3] = 0; } }
 function deClearSel() { if (!DE.sel || !deEditable()) return; dePush(); deClearRect(DE.sel); deDraw(); }
@@ -337,14 +337,14 @@ function deFloatX(m) {
   const get = (x, y) => (y * f.w + x) * 4;
   if (m === 'h' || m === 'v') { d = new Uint8ClampedArray(f.d.length); for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) { const a = get(x, y), b = m === 'h' ? get(w - 1 - x, y) : get(x, h - 1 - y); for (let k = 0; k < 4; k++) d[b + k] = f.d[a + k]; } }
   else if (m === 'r') { w = f.h; h = f.w; d = new Uint8ClampedArray(f.d.length); for (let y = 0; y < f.h; y++) for (let x = 0; x < f.w; x++) { const a = get(x, y), b = (x * w + (f.h - 1 - y)) * 4; for (let k = 0; k < 4; k++) d[b + k] = f.d[a + k]; } }
-  else if (m === '2') { if (f.w * 2 > 512 || f.h * 2 > 512) return toast('너무 커요'); w = f.w * 2; h = f.h * 2; d = new Uint8ClampedArray(w * h * 4); for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) { const a = get(x >> 1, y >> 1), b = (y * w + x) * 4; for (let k = 0; k < 4; k++) d[b + k] = f.d[a + k]; } }
+  else if (m === '2') { if (f.w * 2 > 512 || f.h * 2 > 512) return toast('너무 큼'); w = f.w * 2; h = f.h * 2; d = new Uint8ClampedArray(w * h * 4); for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) { const a = get(x >> 1, y >> 1), b = (y * w + x) * 4; for (let k = 0; k < 4; k++) d[b + k] = f.d[a + k]; } }
   else if (m === 'h2') { if (f.w < 2 || f.h < 2) return; w = f.w >> 1; h = f.h >> 1; d = new Uint8ClampedArray(w * h * 4); for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) { const a = get(x * 2, y * 2), b = (y * w + x) * 4; for (let k = 0; k < 4; k++) d[b + k] = f.d[a + k]; } }
   const cx = f.x + f.w / 2, cy = f.y + f.h / 2; Object.assign(f, { w, h, d, x: Math.round(cx - w / 2), y: Math.round(cy - h / 2) }); deDraw();
 }
-function deCommitFloat() { const f = DE.float; if (!f) return; if (deL().lock) { toast('🔒 잠긴 레이어라 붙일 수 없어요'); return; } dePush(); for (let y = 0; y < f.h; y++) for (let x = 0; x < f.w; x++) { const X = f.x + x, Y = f.y + y; if (X < 0 || Y < 0 || X >= DE.W || Y >= DE.H) continue; const a = (y * f.w + x) * 4; if (!f.d[a + 3]) continue; const b = (Y * DE.W + X) * 4; for (let k = 0; k < 3; k++) DE.px[b + k] = f.d[a + k]; DE.px[b + 3] = 255; }
+function deCommitFloat() { const f = DE.float; if (!f) return; if (deL().lock) { toast('🔒 잠긴 레이어라 붙일 수 없음'); return; } dePush(); for (let y = 0; y < f.h; y++) for (let x = 0; x < f.w; x++) { const X = f.x + x, Y = f.y + y; if (X < 0 || Y < 0 || X >= DE.W || Y >= DE.H) continue; const a = (y * f.w + x) * 4; if (!f.d[a + 3]) continue; const b = (Y * DE.W + X) * 4; for (let k = 0; k < 3; k++) DE.px[b + k] = f.d[a + k]; DE.px[b + 3] = 255; }
   DE.float = null; deUI(); deDraw(); deCols(); }
 function deFlipAll() { const tg = deTargets(true, false); if (!tg.length) return; dePush(tg); const { W, H } = DE; tg.forEach(({ li, fi }) => { const a = DE.layers[li].frames[fi], d = a.slice(); for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) { const s = (y * W + x) * 4, t = (y * W + W - 1 - x) * 4; for (let k = 0; k < 4; k++) a[t + k] = d[s + k]; } }); deDraw(); }
-function deClearAll() { if (!deEditable()) return; if (!confirm(`「${deL().name}」 레이어의 이 장면을 전부 지울까요? (되돌리기 가능)`)) return; dePush(); DE.px.fill(0); deDraw(); deCols(); }
+function deClearAll() { if (!deEditable()) return; if (!confirm(`「${deL().name}」 레이어의 이 장면을 전부 지울까? (되돌리기 가능)`)) return; dePush(); DE.px.fill(0); deDraw(); deCols(); }
 function deImport() {
   const k = $('#deImpK').value, dir = +$('#deImpD').value, f = FURN[k]; if (!f) return; const dm = dimsOf(k, dir), w = dm.w * 64, h = Math.round(dm.h * 2);
   const c = document.createElement('canvas'); c.width = w; c.height = h; const g = c.getContext('2d'); g.imageSmoothingEnabled = false; snapCtx(g, 2);
@@ -357,16 +357,16 @@ function deImport() {
 /* ---------- 내 팔레트 (내 기록에 저장 · 다른 기기·다른 가구에서도) ---------- */
 function dePals() { try { if (typeof P !== 'undefined' && P && P.pals) return P.pals; return JSON.parse(localStorage.getItem('peccata_pals') || '[]'); } catch (e) { return []; } }
 function dePalsSave(l) { l = l.slice(0, 12); if (typeof P !== 'undefined' && P && typeof saveP === 'function') { P.pals = l; saveP(); } else try { localStorage.setItem('peccata_pals', JSON.stringify(l)); } catch (e) {} }
-function dePalNew() { const cols = deUsed().slice(0, 32); if (!cols.length) return toast('아직 쓴 색이 없어요'); const l = dePals().slice(); if (l.length >= 12) return toast('팔레트는 12개까지예요'); const nm = prompt('팔레트 이름', '팔레트 ' + (l.length + 1)); if (!nm) return; l.push({ name: nm.trim().slice(0, 16), cols }); dePalsSave(l); DE.pal = l.length - 1; deSheetBody(); deCols(); }
-function dePalAdd(i) { const l = dePals().slice(), p = l[i]; if (!p) return; if (p.cols.includes(DE.col)) return toast('이미 있는 색이에요'); if (p.cols.length >= 32) return toast('32색까지예요'); l[i] = { name: p.name, cols: [...p.cols, DE.col] }; dePalsSave(l); deSheetBody(); deCols(); }
-function dePalDel(i) { const l = dePals().slice(); if (!confirm(`「${l[i].name}」 팔레트를 지울까요?`)) return; l.splice(i, 1); dePalsSave(l); DE.pal = -1; deSheetBody(); deCols(); }
+function dePalNew() { const cols = deUsed().slice(0, 32); if (!cols.length) return toast('아직 쓴 색이 없음'); const l = dePals().slice(); if (l.length >= 12) return toast('팔레트는 12개까지'); const nm = prompt('팔레트 이름', '팔레트 ' + (l.length + 1)); if (!nm) return; l.push({ name: nm.trim().slice(0, 16), cols }); dePalsSave(l); DE.pal = l.length - 1; deSheetBody(); deCols(); }
+function dePalAdd(i) { const l = dePals().slice(), p = l[i]; if (!p) return; if (p.cols.includes(DE.col)) return toast('이미 있는 색'); if (p.cols.length >= 32) return toast('32색까지'); l[i] = { name: p.name, cols: [...p.cols, DE.col] }; dePalsSave(l); deSheetBody(); deCols(); }
+function dePalDel(i) { const l = dePals().slice(); if (!confirm(`「${l[i].name}」 팔레트를 지울까?`)) return; l.splice(i, 1); dePalsSave(l); DE.pal = -1; deSheetBody(); deCols(); }
 
 /* ---------- 밑그림 ---------- */
 function deRefPick() {
   const inp = document.createElement('input'); inp.type = 'file'; inp.accept = 'image/*';
   inp.onchange = () => { const f = inp.files[0]; if (!f) return; const rd = new FileReader(); rd.onload = () => { const im = new Image(); im.onload = () => {
     const c = document.createElement('canvas'); c.width = im.width; c.height = im.height; const g = c.getContext('2d'); g.drawImage(im, 0, 0); let data = null; try { data = g.getImageData(0, 0, im.width, im.height).data; } catch (e) {}
-    DE.ref = { img: im, data, a: .45, on: true, x: 0, y: 0, s: 1 }; deRefFit(); DE.tool = 'ref'; deUI(); toast('밑그림을 깔았어요. 「밑그림 옮기기」로 위치를 맞춰요'); }; im.src = rd.result; }; rd.readAsDataURL(f); };
+    DE.ref = { img: im, data, a: .45, on: true, x: 0, y: 0, s: 1 }; deRefFit(); DE.tool = 'ref'; deUI(); toast('밑그림을 깖. 「밑그림 옮기기」로 위치를 맞춤'); }; im.src = rd.result; }; rd.readAsDataURL(f); };
   inp.click();
 }
 function deRefFit() { const R = DE.ref; if (!R) return; R.s = Math.min(DE.W / R.img.width, DE.H / R.img.height); R.x = (DE.W - R.img.width * R.s) / 2; R.y = DE.H - R.img.height * R.s; deUI(); deDraw(); }
@@ -379,7 +379,7 @@ function deConvert() {
     for (let x = 0; x < W; x++) st.push([x, 0], [x, H - 1]); for (let y = 0; y < H; y++) st.push([0, y], [W - 1, y]);
     while (st.length) { const [x, y] = st.pop(); if (x < 0 || y < 0 || x >= W || y >= H) continue; const i = y * W + x; if (seen[i]) continue; seen[i] = 1; const j = i * 4; if (d[j + 3] < 128 || near(j)) { d[j + 3] = 0; st.push([x + 1, y], [x - 1, y], [x, y + 1], [x, y - 1]); } } }
   const pts = []; for (let i = 0; i < d.length; i += 4) if (d[i + 3] >= 128) pts.push(i);
-  if (!pts.length) return toast('바꿀 그림이 없어요 (밑그림이 칸 밖에 있어요)');
+  if (!pts.length) return toast('바꿀 그림이 없음 (밑그림이 칸 밖에 있음)');
   let cen = []; const step = Math.max(1, Math.floor(pts.length / n)); for (let k = 0; k < n; k++) { const i = pts[Math.min(pts.length - 1, k * step + (step >> 1))]; cen.push([d[i], d[i + 1], d[i + 2]]); }
   const lab = new Int16Array(pts.length);
   for (let it = 0; it < 8; it++) { const sum = cen.map(() => [0, 0, 0, 0]);
@@ -388,7 +388,7 @@ function deConvert() {
   dePush(); DE.px.fill(0); pts.forEach((i, pi) => { const c = cen[lab[pi]]; DE.px[i] = c[0]; DE.px[i + 1] = c[1]; DE.px[i + 2] = c[2]; DE.px[i + 3] = 255; });
   if (ol) { const src = DE.px.slice(); for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) { const k = (y * W + x) * 4; if (!src[k + 3]) continue; const edge = [[1, 0], [-1, 0], [0, 1], [0, -1]].some(([a, b]) => { const X = x + a, Y = y + b; return X < 0 || Y < 0 || X >= W || Y >= H || !src[(Y * W + X) * 4 + 3]; });
     if (edge) { DE.px[k] = Math.round(src[k] * .35); DE.px[k + 1] = Math.round(src[k + 1] * .3); DE.px[k + 2] = Math.round(src[k + 2] * .3); } } }
-  R.on = false; deSheet(''); deUI(); deDraw(); toast('도트로 바꿨어요! 마음에 안 들면 ↶');
+  R.on = false; deSheet(''); deUI(); deDraw(); toast('도트로 변경 완료! 마음에 안 들면 ↶');
 }
 
 /* ---------- 입력 ---------- */
@@ -416,8 +416,8 @@ function deBind() {
     if (DE.ptr.size > 2) return;
     const p = deAt(e), t = (e.button === 1 || e.button === 2) ? 'hand' : DE.tool;
     if (t === 'hand') { DE.drag = { pan: true, sx: e.clientX, sy: e.clientY, ox: DE.ox, oy: DE.oy }; return; }
-    if (t === 'ref') { if (!DE.ref) return toast('먼저 밑그림을 올려 주세요'); DE.drag = { ref: true, fx: p.fx, fy: p.fy, rx: DE.ref.x, ry: DE.ref.y }; return; }
-    if (t === 'pick') { if (!deIn(p)) return; const c = dePickAt(p.x, p.y); if (c) { DE.col = c; DE.recent = [c, ...DE.recent.filter(x => x !== c)].slice(0, 8); DE.tool = 'pen'; deUI(); toast('색을 골랐어요'); } return; }
+    if (t === 'ref') { if (!DE.ref) return toast('먼저 밑그림을 올리기'); DE.drag = { ref: true, fx: p.fx, fy: p.fy, rx: DE.ref.x, ry: DE.ref.y }; return; }
+    if (t === 'pick') { if (!deIn(p)) return; const c = dePickAt(p.x, p.y); if (c) { DE.col = c; DE.recent = [c, ...DE.recent.filter(x => x !== c)].slice(0, 8); DE.tool = 'pen'; deUI(); toast('색 선택 완료'); } return; }
     if (t === 'sel') { const f = DE.float; if (f && p.fx >= f.x && p.fy >= f.y && p.fx < f.x + f.w && p.fy < f.y + f.h) { DE.drag = { flt: true, fx: p.fx, fy: p.fy, x: f.x, y: f.y }; return; }
       if (f) deCommitFloat(); DE.drag = { sel: true, a: deClamp(p) }; DE.sel = null; return; }
     if (!deIn(p) && ['fill', 'swap', 'grad'].includes(t)) return;
