@@ -1757,6 +1757,9 @@ let ROOMLIKES = [], GUESTBOOK = [], roomUnsubs = [];
 /* 커튼 치기: 창문 3종 · 천개 침대 — 방문자도 누를 수 있고, 친 상태는 curt/{주인}에 저장 */
 let CURT = {};   // {주인 uid: {가구 id: 1}}
 const CURT_K = { window: 1, archwin: 1, tallwin: 1, canopy: 1 };
+const CURT_SHUT = {   // 그림을 바꾼 가구용: 친 커튼만 따로 그림 (원래 그림과 같은 자리)
+  window: (p, C) => hcurtainShut(p, 6, 148, C.a), archwin: (p, C) => hcurtainShut(p, 8, 178, C.a), tallwin: (p, C) => hcurtainShut(p, 6, 150, C.a, { lace: true }),
+  canopy: (p, C) => { hcurtain(p, 10, false, 194, 298, 252, 87, 87, 87, C.a, { noTie: true }); hcurtain(p, 181, true, 194, 298, 252, 86, 86, 86, C.a, { noTie: true }); } };
 const curtOn = (owner, i) => !!(owner && CURT[owner] && CURT[owner][i.id || i.k]);
 function curtTap(owner, i, room, p) {
   if (!owner || !i || !CURT_K[i.k]) return false;

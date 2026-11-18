@@ -57,7 +57,8 @@ let ORIG_DS = null;
   const f = FURN[k]; if (!f) return; const ov = !f.custom && ovPic(k, dir);
   if (!f.custom && !ov) return _ds(g, k, x, y, t, alpha, col, dir, img);
   g.save(); if (alpha != null) g.globalAlpha = alpha; if (!g._fr || g._S == null) snapCtx(g, g.getTransform().a || 1);
-  if (f.custom) cfDraw(g, f, x, y, dir); else ovDraw(g, k, ov, x, y, col, dir, t); g.restore(); }; })();
+  if (f.custom) cfDraw(g, f, x, y, dir); else { ovDraw(g, k, ov, x, y, col, dir, t); if (window.HI_CLOSED && typeof CURT_SHUT !== 'undefined' && CURT_SHUT[k]) CURT_SHUT[k](pen(g, x, y, 0, .5), colsOf({ k, col })); }   // 바꾼 그림이어도 친 커튼은 위에 덮어 그림
+  g.restore(); }; })();
 
 /* ================= 기본 가구 그림 덮어쓰기 (KP) =================
    furnOv/{가구} : { pics:{0:앞,1:옆(왼쪽),2:뒤}, at }   안 그린 방향은 원래 그림
