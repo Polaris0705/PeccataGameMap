@@ -363,23 +363,31 @@ const avMoving = list => list.some(a => a.step);
 /* 가구별 앉는 자리 (가구 그림을 재서 맞춤) · hip = 상자 바닥에서 엉덩이까지 높이 · fx = 상자 왼쪽에서 비율
    mode: sit 앉기 · sleep 이불 덮고 누움(머리·어깨) · rot 옆으로 누움(rl: 머리 방향 -1 왼쪽 / 1 오른쪽) · behind = 가구 뒤에 그림 */
 const AV_SEAT = {
-  sofa: d => [{ m: 'sit', fx: .5, hip: 26 }, { m: 'sit', fx: .42, hip: 56, dir: 1 }, { m: 'sit', fx: .5, hip: 42, dir: 2, behind: 1 }, { m: 'sit', fx: .58, hip: 56, dir: 3 }][d],
-  loveseat: d => [{ m: 'sit', fx: .5, hip: 25 }, { m: 'sit', fx: .42, hip: 45, dir: 1 }, { m: 'sit', fx: .5, hip: 40, dir: 2, behind: 1 }, { m: 'sit', fx: .58, hip: 45, dir: 3 }][d],
+  sofa: d => [[.22, .5, .78].map(fx => ({ m: 'sit', fx, hip: 26 })), [82, 34].map(hip => ({ m: 'sit', fx: .42, hip, dir: 1 })), [.22, .5, .78].map(fx => ({ m: 'sit', fx, hip: 42, dir: 2, behind: 1 })), [82, 34].map(hip => ({ m: 'sit', fx: .58, hip, dir: 3 }))][d],
+  loveseat: d => [[.3, .7].map(fx => ({ m: 'sit', fx, hip: 25 })), [60, 32].map(hip => ({ m: 'sit', fx: .42, hip, dir: 1 })), [.3, .7].map(fx => ({ m: 'sit', fx, hip: 40, dir: 2, behind: 1 })), [60, 32].map(hip => ({ m: 'sit', fx: .58, hip, dir: 3 }))][d],
   armchair: d => [{ m: 'sit', fx: .5, hip: 24 }, { m: 'sit', fx: .42, hip: 26, dir: 1 }, { m: 'sit', fx: .5, hip: 34, dir: 2, behind: 1 }, { m: 'sit', fx: .58, hip: 26, dir: 3 }][d],
   chair: d => [{ m: 'sit', fx: .5, hip: 18 }, { m: 'sit', fx: .45, hip: 18, dir: 1 }, { m: 'sit', fx: .5, hip: 24, dir: 2, behind: 1 }, { m: 'sit', fx: .55, hip: 18, dir: 3 }][d],
   stool: () => ({ m: 'sit', fx: .5, hip: 26 }), ottoman: () => ({ m: 'sit', fx: .5, hip: 15 }), cushion: () => ({ m: 'sit', fx: .5, hip: 12 }),
   sloth: () => ({ m: 'sit', fx: .33, hip: 15 }),
-  bed: d => [{ m: 'sleep', fx: .5, chin: 66 }, { m: 'rot', fx: .25, cy: 40, rl: -1 }, { m: 'hide', fx: .5, chin: 64 }, { m: 'rot', fx: .75, cy: 40, rl: 1 }][d],
-  sbed: () => ({ m: 'sleep', fx: .5, chin: 64 }), canopy: () => ({ m: 'hide', fx: .5, chin: 38 }),
+  bed: d => [[.3, .7].map(fx => ({ m: 'sleep', fx, chin: 66 })), [54, 26].map(cy => ({ m: 'rot', fx: .25, cy, rl: -1 })), [.3, .7].map(fx => ({ m: 'hide', fx, chin: 64 })), [54, 26].map(cy => ({ m: 'rot', fx: .75, cy, rl: 1 }))][d],
+  sbed: () => ({ m: 'sleep', fx: .5, chin: 64 }), canopy: () => [.3, .7].map(fx => ({ m: 'hide', fx, chin: 38 })),
   lust: () => ({ m: 'rot', fx: .25, cy: 24, rl: -1 })
 };
-function avSeatTap(owner, it, room) {
+/* 자리 여러 개(큰 소파·침대): 다른 사람이 쓰는 자리는 비켜서, 누른 곳에서 가까운 빈자리 */
+function avSeatTaken(owner, it) { const now = Date.now(), id = it.id || it.k, t = new Set();
+  AVPOS.filter(a => a.room === owner && a.id !== ME.uid && now - (a.seen || 0) < 70000 && a.pose && a.pose.item === id).forEach(a => t.add(a.pose.slot || 0));
+  AVFAKE.forEach(a => { if (owner === AVTEST_ROOM && a.pose && a.pose.item === id) t.add(a.pose.slot || 0); }); return t; }
+function avSeatTap(owner, it, room, tap) {
   if ((!avOn() && owner !== AVTEST_ROOM) || !avCfgOf(P)) return false; const fn = AV_SEAT[it.k]; if (!fn) return false;
-  const b = itemBox(it, room); if (!b || !b.foot) return false; const f = b.foot, sp = fn(it.dir || 0); if (!sp) return false;
-  const bot = b.y + b.h, px = b.x + b.w * sp.fx, k = sp.m === 'sit' ? 'sit' : 'lie';
+  const b = itemBox(it, room); if (!b || !b.foot) return false; const f = b.foot, slots = [].concat(fn(it.dir || 0) || []); if (!slots.length) return false;
+  const bot = b.y + b.h, taken = avSeatTaken(owner, it), mine = AVLOCAL[ME.uid] && AVLOCAL[ME.uid].pose && AVLOCAL[ME.uid].pose.item === (it.id || it.k) ? AVLOCAL[ME.uid].pose.slot : -1;
+  const spot = q => ({ x: b.x + b.w * q.fx, y: q.m === 'sit' ? bot - q.hip : q.m === 'rot' ? bot - q.cy : bot - (q.chin || 0) });
+  const free = slots.map((q, i) => i).filter(i => !taken.has(i)); if (!free.length) { toast('자리 없음'); return true; }
+  const si = tap ? free.sort((a, c) => { const A = spot(slots[a]), C = spot(slots[c]); return Math.hypot(A.x - tap.x, A.y - tap.y) - Math.hypot(C.x - tap.x, C.y - tap.y); })[0] : free.includes(mine) ? mine : free[0], sp = slots[si];
+  const px = b.x + b.w * sp.fx, k = sp.m === 'sit' ? 'sit' : 'lie';
   avWalkTo(owner, Math.max(f.x + 4, Math.min(f.x + f.w - 4, px)), Math.min(f.y + f.h - 2, bot)); const s = AVLOCAL[ME.uid]; if (!s) return true;
   s.pose = { k, m: sp.m, dir: sp.dir || 0, px, py: sp.m === 'sit' ? bot - sp.hip : sp.m === 'sleep' || sp.m === 'hide' ? bot - sp.chin : bot - sp.cy, rl: sp.rl || -1,
-    dy: sp.behind ? f.y + .01 : f.y + f.h + .5, item: it.id || it.k };
+    dy: sp.behind ? f.y + .01 + si * .001 : f.y + f.h + .5 + (200 - (sp.hip || sp.cy || sp.chin || 0)) / 1000, item: it.id || it.k, slot: si };
   if (owner !== AVTEST_ROOM) avPush(owner);
   toast(k === 'lie' ? '눕기' : '앉기'); return true;
 }
@@ -640,7 +648,7 @@ const AVTEST = { items: [], invc: [], wall: 'plain', floor: 'plank', cols: { fra
 function avTestPaint() {
   const cv = document.getElementById('avTestCv'); if (!cv) return; const room = PROF.ho ? myRoom() : hoRoom('__avtest');
   AV_PAINT_OWNER = AVTEST_ROOM; paintRoom(cv, room, {}); AV_PAINT_OWNER = null;
-  cv.onclick = ev => { if (!avCfgOf(P)) return toast('토큰 먼저 만들기'); const p = cvPos(cv, ev), it = itemAt(room, p.x, p.y); if (it && avHangTap(AVTEST_ROOM, it)) return; if (it && avSeatTap(AVTEST_ROOM, it, room)) return; avWalkTo(AVTEST_ROOM, p.x, p.y); };
+  cv.onclick = ev => { if (!avCfgOf(P)) return toast('토큰 먼저 만들기'); const p = cvPos(cv, ev), it = itemAt(room, p.x, p.y); if (it && avHangTap(AVTEST_ROOM, it)) return; if (it && avSeatTap(AVTEST_ROOM, it, room, p)) return; avWalkTo(AVTEST_ROOM, p.x, p.y); };
 }
 let AV_PAINT_OWNER = null;
 setInterval(() => { if (tab === 'kavatar' && !document.hidden) { avTestPaint(); document.querySelectorAll('canvas.avovp:not([data-done])').forEach(c => { c.dataset.done = 1; const k = c.dataset.k, cfg = avOvCfg(k), g = c.getContext('2d'); g.clearRect(0, 0, AVW, AVH); g.drawImage(avSprite(cfg, 0, 0), 0, 0); }); } }, 140);
