@@ -371,7 +371,7 @@ const AV_SEAT = {
   sloth: () => ({ m: 'sit', fx: .33, hip: 15 }),
   bed: d => [[.27, .5, .73].map(fx => ({ m: 'sleep', fx, chin: 64, fold: 64 })), [44, 26].map(cy => ({ m: 'rot', fx: .21, cy, rl: -1, foldX: 31 })), [.27, .5, .73].map(fx => ({ m: 'hide', fx, chin: 64 })), [44, 26].map(cy => ({ m: 'rot', fx: .81, cy, rl: 1, foldX: 67 }))][d],
   sbed: () => ({ m: 'sleep', fx: .5, chin: 68, fold: 69 }), canopy: () => [.3, .7].map(fx => ({ m: 'hide', fx, chin: 38 })),
-  lust: () => ({ m: 'rot', fx: .25, cy: 24, rl: -1, nocov: 1 })
+  lust: () => ({ m: 'rot', fx: .39, cy: 24, rl: -1, nocov: 1, hug: [38, 57, 16, 36] })   // 토끼 인형을 안고 잠
 };
 /* 자리 여러 개(큰 소파·침대): 다른 사람이 쓰는 자리는 비켜서, 누른 곳에서 가까운 빈자리 */
 function avSeatTaken(owner, it) { const now = Date.now(), id = it.id || it.k, t = new Set();
@@ -391,6 +391,7 @@ function avSeatTap(owner, it, room, tap) {
   const px = b.x + b.w * sp.fx, k = sp.m === 'sit' ? 'sit' : 'lie';
   avWalkTo(owner, Math.max(f.x + 4, Math.min(f.x + f.w - 4, px)), Math.min(f.y + f.h - 2, bot)); const s = AVLOCAL[ME.uid]; if (!s) return true;
   s.pose = { k, m: sp.m, cov: k === 'lie' && !sp.nocov ? 1 : 0, dir: sp.dir || 0, px, py: sp.m === 'sit' ? bot - sp.hip : sp.m === 'sleep' || sp.m === 'hide' ? bot - sp.chin : bot - sp.cy, rl: sp.rl || -1,
+    hug: sp.hug ? [b.x + sp.hug[0], b.x + sp.hug[1], bot - sp.hug[3], bot - sp.hug[2]] : null,
     fold: sp.fold != null ? bot - sp.fold : null, foldX: sp.foldX != null ? b.x + sp.foldX : null,
     dy: sp.behind ? f.y + .01 + si * .001 : f.y + f.h + .5 + (200 - (sp.hip || sp.cy || sp.chin || 0)) / 1000, item: it.id || it.k, slot: si };
   if (owner !== AVTEST_ROOM) avPush(owner);
@@ -418,6 +419,7 @@ function avTuck(g, a, p, ax) {
   const b = itemBox(it, room); if (!b) return; const S = g._S || 1;
   g.save(); g.setTransform(1, 0, 0, 1, 0, 0); g.beginPath();
   if (ax === 'y' && p.fold != null) g.rect(Math.round((b.x - 4) * S), Math.round(p.fold * S), Math.round((b.w + 8) * S), Math.round((b.y + b.h + 4 - p.fold) * S));
+  else if (ax === 'hug' && p.hug) { const [x0, x1, y0, y1] = p.hug; g.rect(Math.round(x0 * S), Math.round(y0 * S), Math.round((x1 - x0) * S), Math.round((y1 - y0) * S)); }
   else if (ax === 'x' && p.foldX != null) { if (p.rl < 0) g.rect(Math.round(p.foldX * S), Math.round((b.y - 4) * S), Math.round((b.x + b.w + 4 - p.foldX) * S), Math.round((b.h + 8) * S)); else g.rect(Math.round((b.x - 4) * S), Math.round((b.y - 4) * S), Math.round((p.foldX - b.x + 4) * S), Math.round((b.h + 8) * S)); }
   else { g.restore(); return; }
   g.clip(); drawSprite(g, it.k, b.x, b.y, (typeof RM !== 'undefined' && RM.t) || 0, null, it.col, it.dir, it.img); g.restore();
@@ -437,7 +439,7 @@ function avDrawPose(g, a) {
     lg.translate(AVH / 2, AVW / 2); lg.rotate(p.rl < 0 ? -Math.PI / 2 : Math.PI / 2); lg.drawImage(b, -AVW / 2, -AVH / 2);
     const R = AV_RS, w = AVH * R, h = AVW * R, x = p.rl < 0 ? p.px - 30 * R : p.px + 30 * R - w;
     put(c, 0, 0, c.width, c.height, x, p.py - h / 2, w, h);
-    if (p.cov) avTuck(g, a, p, 'x');
+    if (p.cov) avTuck(g, a, p, 'x'); if (p.hug) avTuck(g, a, p, 'hug');
     return; }
   const sp = avPoseSprite(avBlinkCfg(a.cfg, a.uid), p.dir, 'sit');   // 앉기: 엉덩이(캔버스 61줄)를 자리 높이에
   put(sp, 0, 0, sp.width, sp.height, p.px - AVW * AV_RS / 2, p.py - 61 * AV_RS, AVW * AV_RS, AVH * AV_RS);
