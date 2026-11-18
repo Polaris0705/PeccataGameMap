@@ -306,6 +306,12 @@ service cloud.firestore {
       allow write: if false;
     }
 
+    // 방 커튼 (창문 · 천개 침대): 방문자도 치고 걷을 수 있음
+    match /curt/{owner} {
+      allow read: if signedIn();
+      allow write: if signedIn() && request.resource.data.by == request.auth.uid
+        && request.resource.data.keys().hasOnly(['c', 'by', 'at']) && request.resource.data.c is map && request.resource.data.c.size() <= 60;
+    }
     match /roomLikes/{id} {
       allow read: if signedIn();
       allow create: if signedIn() && request.resource.data.uid == request.auth.uid

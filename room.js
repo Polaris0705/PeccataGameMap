@@ -476,6 +476,8 @@ function hcurtain(p, ox, mir, y0, y1, tie, wTop, wTie, wBot, A, o) { const { c }
       else c(X(i), y, 1, 1, edge ? (y === y1 - 1 ? A.d : A.o) : y < y0 + 8 ? (i % 3 ? A.t : A.f) : k === 0 ? A.f : k === 1 ? A.t : k === 2 ? A.l : A.t); } }
   if (o.rings) for (let k = 0; k < 6; k++) { const x = X(2 + Math.round(k * (W0 - 5) / 5)); c(x - 2, y0 - 5, 5, 1, GOLDD); c(x - 2, y0 - 4, 1, 6, GOLDD); c(x + 2, y0 - 4, 1, 6, GOLDD); c(x - 1, y0 - 5, 3, 1, GOLD2); c(x - 1, y0 + 2, 3, 1, GOLDD); c(x, y0 + 2, 1, 2, o.lace ? 'rgba(255,255,255,.8)' : A.o); }
   const tx = mir ? ox - 15 : ox; if (!o.noTie) { c(tx, tie - 2, 16, 5, GOLDD); c(tx + 1, tie - 1, 14, 3, GOLD); c(tx + 1, tie - 1, 14, 1, GOLD2); } }
+/* 친 커튼 (창문 128폭): 양쪽 커튼을 가운데까지 펼침 */
+function hcurtainShut(p, y0, y1, A, o) { const mid = Math.round((y0 + y1) / 2); hcurtain(p, 0, false, y0, y1, mid, 65, 65, 65, A, Object.assign({ rings: true, noTie: true }, o)); hcurtain(p, 127, true, y0, y1, mid, 64, 64, 64, A, Object.assign({ rings: true, noTie: true }, o)); }
 function WINDOWHI(p, t, C) { const { c } = p, A = C.a, F = C.b;
   // 창틀
   c(14, 8, 100, 124, F.o); c(16, 10, 96, 120, F.t); c(16, 10, 96, 3, F.L); c(16, 126, 96, 2, F.d);
@@ -485,7 +487,7 @@ function WINDOWHI(p, t, C) { const { c } = p, A = C.a, F = C.b;
   // 창턱
   c(8, 130, 112, 10, F.o); c(9, 131, 110, 7, F.t); c(9, 131, 110, 2, F.L); c(10, 138, 108, 3, 'rgba(0,0,0,.25)');
   // 커튼 (공통 모양 · 봉 고리에 매달림)
-  hcurtain(p, 0, false, 6, 148, 92, 42, 18, 33, A, { rings: true, noRingDraw: true }); hcurtain(p, 127, true, 6, 148, 92, 42, 18, 33, A, { rings: true });
+  if (window.HI_CLOSED) hcurtainShut(p, 6, 148, A); else { hcurtain(p, 0, false, 6, 148, 92, 42, 18, 33, A, { rings: true, noRingDraw: true }); hcurtain(p, 127, true, 6, 148, 92, 42, 18, 33, A, { rings: true }); }
   // 커튼 봉 (고리 위로)
   c(0, 2, 128, 6, '#3a2418'); c(1, 3, 126, 3, GOLD); c(1, 3, 126, 1, GOLD2); [[0, 2], [122, 2]].forEach(([x, y]) => { c(x, y - 2, 6, 10, GOLDD); c(x + 1, y - 1, 4, 8, GOLD); });
   [[0, false], [127, true]].forEach(([ox, mir]) => { for (let k = 0; k < 6; k++) { const x = mir ? ox - (2 + Math.round(k * 37 / 5)) : ox + 2 + Math.round(k * 37 / 5); c(x - 2, 1, 5, 1, GOLDD); c(x - 2, 2, 1, 6, GOLDD); c(x + 2, 2, 1, 6, GOLDD); c(x - 1, 1, 3, 1, GOLD2); } });
@@ -1080,7 +1082,7 @@ const ARCHWINHI = (p, t, C) => { const { c } = p, A = C.a, F = C.b;   // 벽 · 
   c(14, 60, 6, 106, F.t); c(108, 60, 6, 106, F.t); c(15, 60, 2, 106, F.L); c(112, 60, 1, 106, F.d);
   c(8, 160, 112, 10, F.o); c(9, 161, 110, 7, F.t); c(9, 161, 110, 2, F.L); c(10, 168, 108, 3, 'rgba(0,0,0,.25)');
   // 커튼 (기본 창문과 같은 모양 · 봉 고리에 매달림)
-  hcurtain(p, 0, false, 8, 178, 118, 46, 18, 34, A, { rings: true }); hcurtain(p, 127, true, 8, 178, 118, 46, 18, 34, A, { rings: true });
+  if (window.HI_CLOSED) hcurtainShut(p, 8, 178, A); else { hcurtain(p, 0, false, 8, 178, 118, 46, 18, 34, A, { rings: true }); hcurtain(p, 127, true, 8, 178, 118, 46, 18, 34, A, { rings: true }); }
   c(0, 2, 128, 4, '#3a2418'); c(1, 2, 126, 3, GOLD); c(1, 2, 126, 1, GOLD2); [[0, 1], [122, 1]].forEach(([x, y]) => { c(x - 1, y - 2, 7, 8, GOLDD); c(x, y - 1, 5, 6, GOLD); c(x + 1, y, 2, 2, GOLD2); }); };
 const ROUNDWINHI = (p, t, C) => { const { c, el } = p, F = C.b;   // 벽 · 64 × 72
   el(32, 36, 31, 31, F.o); el(32, 36, 30, 30, F.t); el(30, 34, 27, 27, F.L); el(32, 36, 27, 27, F.t); el(32, 36, 24, 24, F.o);
@@ -1103,7 +1105,7 @@ const TALLWINHI = (p, t, C) => { const { c } = p, A = C.a, F = C.b;   // 벽 · 
   c(62, 14, 4, 136, F.t); c(62, 14, 1, 136, F.L); [58, 104].forEach(y => { c(22, y, 84, 4, F.t); c(22, y, 84, 1, F.L); }); c(28, 20, 3, 22, 'rgba(255,255,255,.3)');
   c(8, 152, 112, 10, F.o); c(9, 153, 110, 7, F.t); c(9, 153, 110, 2, F.L); c(10, 160, 108, 3, 'rgba(0,0,0,.25)');
   // 레이스 커튼 (기본 창문과 같은 모양 · 반투명 · 봉 고리에 매달림)
-  hcurtain(p, 0, false, 6, 150, 100, 46, 18, 34, A, { rings: true, lace: true }); hcurtain(p, 127, true, 6, 150, 100, 46, 18, 34, A, { rings: true, lace: true });
+  if (window.HI_CLOSED) hcurtainShut(p, 6, 150, A, { lace: true }); else { hcurtain(p, 0, false, 6, 150, 100, 46, 18, 34, A, { rings: true, lace: true }); hcurtain(p, 127, true, 6, 150, 100, 46, 18, 34, A, { rings: true, lace: true }); }
   c(0, 0, 128, 5, '#3a2418'); c(1, 1, 126, 3, GOLD); c(1, 1, 126, 1, GOLD2); [[0, 0], [122, 0]].forEach(([x, y]) => { c(x, y - 2, 6, 9, GOLDD); c(x + 1, y - 1, 4, 7, GOLD); }); };
 const GARLANDHI = (p, t, C) => { const { c } = p, M = C.c;   // 벽 · 128 × 48
   for (let x = 0; x < 128; x++) { const y = 4 + Math.round(12 * Math.sin(Math.PI * x / 127)); c(x, y, 1, 2, '#8a7a5a'); c(x, y, 1, 1, '#b0a080'); }
@@ -1198,8 +1200,9 @@ const CANOPYHI = (p, t, C) => { const { c, orr, el } = p, A = C.a, B = C.b, S = 
   // 옆면 커튼 (옆 틀에서 바닥까지, 시선과 나란해서 얇은 띠 + 주름 볼록)
   [[8, 1], [176, -1]].forEach(([x0, d]) => { for (let y = 10; y < 298; y++) { const w = 6 + Math.round((Math.sin(y / 9) + 1) * 2); for (let i = 0; i < w; i++) { const xx = d > 0 ? x0 + i : x0 + 7 - i + 1; c(xx, y, 1, 1, i === w - 1 ? A.o : i < 2 ? A.f : (i + (y >> 3)) % 3 ? A.t : A.l); } } });
   // 앞 커튼 (기본 창문과 같은 모양): 앞 가로대에서 바닥까지, 앞 기둥 쪽으로 묶임
-  hcurtain(p, 10, false, 194, 298, 252, 56, 14, 26, A, { noTie: true }); hcurtain(p, 181, true, 194, 298, 252, 56, 14, 26, A, { noTie: true });
-  [[10, false], [181, true]].forEach(([ox, mir]) => { const x = mir ? ox - 13 : ox + 1; c(x, 249, 12, 6, M.o); c(x + 1, 250, 10, 4, M.t); c(x + 1, 250, 10, 1, M.L); c(x + 4, 255, 4, 9, M.t); c(x + 3, 263, 6, 3, M.f); });
+  if (window.HI_CLOSED) { hcurtain(p, 10, false, 194, 298, 252, 87, 87, 87, A, { noTie: true }); hcurtain(p, 181, true, 194, 298, 252, 86, 86, 86, A, { noTie: true }); }
+  else { hcurtain(p, 10, false, 194, 298, 252, 56, 14, 26, A, { noTie: true }); hcurtain(p, 181, true, 194, 298, 252, 56, 14, 26, A, { noTie: true }); }
+  if (!window.HI_CLOSED) [[10, false], [181, true]].forEach(([ox, mir]) => { const x = mir ? ox - 13 : ox + 1; c(x, 249, 12, 6, M.o); c(x + 1, 250, 10, 4, M.t); c(x + 1, 250, 10, 1, M.L); c(x + 4, 255, 4, 9, M.t); c(x + 3, 263, 6, 3, M.f); });
   // 기둥 (가늘게) · 뒤 가로대 · 앞 가로대 + 주름 장식
   [4, 182].forEach(x => { orr(x, 4, 6, 296, B.t, B.o, 1); c(x + 1, 6, 1, 292, B.L); c(x + 4, 6, 1, 292, B.d); el(x + 3, 3, 4, 4, B.o); el(x + 3, 3, 3, 3, B.t); c(x + 2, -3, 2, 4, M.t); });
   orr(0, 4, 192, 7, B.t, B.o, 2); c(3, 5, 186, 1, B.L); hscallop(p, 6, 10, 180, A, M);
@@ -1751,6 +1754,18 @@ function drawFrame(g, col) {
 let RM = { edit: false, sel: null, drag: null, hover: null, t: 0 };
 let RV = null;                 // 놀러 간 방 주인 uid
 let ROOMLIKES = [], GUESTBOOK = [], roomUnsubs = [];
+/* 커튼 치기: 창문 3종 · 천개 침대 — 방문자도 누를 수 있고, 친 상태는 curt/{주인}에 저장 */
+let CURT = {};   // {주인 uid: {가구 id: 1}}
+const CURT_K = { window: 1, archwin: 1, tallwin: 1, canopy: 1 };
+const curtOn = (owner, i) => !!(owner && CURT[owner] && CURT[owner][i.id || i.k]);
+function curtTap(owner, i, room, p) {
+  if (!owner || !i || !CURT_K[i.k]) return false;
+  if (i.k === 'canopy') { const b = itemBox(i, room); if (!b || !p) return false; const fx = (p.x - b.x) / b.w; if (fx > .22 && fx < .78) return false; }   // 천개 침대: 양쪽 기둥·커튼 쪽을 누르면 커튼, 가운데는 눕기
+  const id = i.id || i.k, m = Object.assign({}, CURT[owner] || {}); if (m[id]) delete m[id]; else m[id] = 1;
+  CURT[owner] = m; sfx('tap'); toast(m[id] ? '커튼 닫힘' : '커튼 열림');
+  if (owner !== (typeof AVTEST_ROOM !== 'undefined' && AVTEST_ROOM)) B.set('curt/' + owner, { c: m, by: ME.uid, at: Date.now() }).catch(e => toast('실패: ' + (e.code || e.message)));
+  return true;
+}
 const rmId = () => Math.random().toString(36).slice(2, 9);
 const DYE_COST = 8, DYE5_COST = 35;
 function defCol(k) { const f = FURN[k], o = {}; if (f && f.parts) Object.entries(f.parts).forEach(([s, [, hex]]) => o[s] = hex); return o; }
@@ -1870,13 +1885,14 @@ function paintRoom(cv, room, opts) {
   if (edit) { g.fillStyle = 'rgba(255,255,255,.09)'; for (let c = 0; c <= COLS; c++) g.fillRect(OX + c * T, FY, 1, ROWS * T); for (let r = 0; r <= ROWS; r++) g.fillRect(OX, FY + r * T, COLS * T, 1);
     for (let c = 0; c <= COLS; c++) g.fillRect(OX + c * T, OY + 4, 1, WALL_H - 16); }
   const dragId = RM.drag && RM.drag.moved ? RM.drag.id : null;
-  const AVL = (typeof avRoomList === 'function' && !edit && !cv.classList.contains('rthumb')) ? avRoomList(room, AV_PAINT_OWNER || (cv.id === 'roomCv' ? (tab === 'room' ? ME.uid : RV) : null)) : [];
+  const OWN = AV_PAINT_OWNER || (cv.id === 'roomCv' ? (tab === 'room' ? ME.uid : RV) : null), CUO = !edit && !cv.classList.contains('rthumb') ? OWN : null;
+  const AVL = (typeof avRoomList === 'function' && !edit && !cv.classList.contains('rthumb')) ? avRoomList(room, OWN) : [];
   drawOrder(room).forEach(i => {
     const b = itemBox(i, room); if (!b) return; const f = FURN[i.k];
     if (AVL.length) avDrawList(g, AVL, f.wall || f.flat ? -1 : i.r + fd(i.k, i.dir) - .01);
     if (i.r >= 0 && !f.flat && !f.top) { g.fillStyle = 'rgba(30,15,5,.22)'; g.fillRect(b.x + 3, b.y + b.h - 5, b.w - 6, 6); g.fillRect(b.x + 7, b.y + b.h + 1, b.w - 14, 2); }
-    HI_MS = i.imgMs || 140; window.HI_NOBUNNY = AVL.some(a => a.pose && a.pose.hug && a.pose.item === (i.id || i.k));
-    drawSprite(g, i.k, b.x, b.y, t, i.id === dragId ? .35 : null, i.col, i.dir, i.img); window.HI_NOBUNNY = false;
+    HI_MS = i.imgMs || 140; window.HI_NOBUNNY = AVL.some(a => a.pose && a.pose.hug && a.pose.item === (i.id || i.k)); window.HI_CLOSED = curtOn(CUO, i);
+    drawSprite(g, i.k, b.x, b.y, t, i.id === dragId ? .35 : null, i.col, i.dir, i.img); window.HI_NOBUNNY = false; window.HI_CLOSED = false;
     if (i.wear && f.hang && typeof avDrawHung === 'function') avDrawHung(g, i, b, f.hang);
     if (edit && RM.sel === 'id:' + i.id) { frameRect(g, b.x, b.y, b.w, b.h, '#ffe08a'); if (b.foot) frameRect(g, b.foot.x, b.foot.y, b.foot.w, b.foot.h, 'rgba(255,224,138,.6)'); }
   });
@@ -1887,6 +1903,8 @@ function paintRoom(cv, room, opts) {
     drawSprite(g, k, b.x, b.y, t, .65, RM.hover.col, s.dir);
   }
   if (AVL.length) avDrawList(g, AVL, 1e9);
+  if (CUO) { const ws = room.items.filter(i => CURT_K[i.k] && i.k !== 'canopy'), n = ws.filter(i => curtOn(CUO, i)).length;   // 창문 커튼을 친 만큼 방이 살짝 어두워짐
+    if (n) { g.fillStyle = `rgba(14,8,24,${(.24 * n / ws.length).toFixed(3)})`; g.fillRect(0, 0, RW, RH); } }
 }
 
 /* ---------- 화면 ---------- */
@@ -1993,12 +2011,12 @@ const ROOM_TALK = { sofa: ['푹신한 벨벳 소파.'], loveseat: ['둘이 앉�
   mannequin: ['누가 입던 드레스일까.'], apron: ['어디선가 시계 소리가 들리는 것 같다.'], lectern: ['읽다 만 페이지에 책갈피가 끼워져 있다.'], rosedome: ['꽃잎이 하나 떨어졌다.'], raven: ['까악!'],
   wrath: ['불길이 거세다!'], greed: ['반짝반짝… 전부 내 거야.'], sloth: ['조금만 더 잘래…'], gluttony: ['한 입만…'], pride: ['역시 나야.'], lust: ['장미 향기가 난다.'], teddy: ['폭신폭신.'], birdcage: ['짹짹!'], globe: ['빙글빙글.'], telescope: ['별이 가까이 보인다.'] };
 function roomPoke(i) { const f = FURN[i.k]; const l = ROOM_TALK[i.k]; sfx(i.k === 'cat' || i.k === 'raven' ? 'pop' : 'tap'); toast(`${f.name} — ${l ? l[Math.floor(Math.random() * l.length)] : ''}${f.eff ? ' (' + f.eff + ')' : ''}`); }
-function bindViewCv(cv, uid) { cv.onclick = ev => { const p = cvPos(cv, ev), i = itemAt(hoRoom(uid), p.x, p.y); if (i && typeof avSeatTap === 'function' && avSeatTap(uid, i, hoRoom(uid), p)) return; if (!i) { if (typeof avTap === 'function') avTap(uid, p); return; } if (i.k === 'safe' && typeof safeTry === 'function') safeTry(uid, i); else roomPoke(i); }; }
+function bindViewCv(cv, uid) { cv.onclick = ev => { const p = cvPos(cv, ev), i = itemAt(hoRoom(uid), p.x, p.y); if (i && curtTap(uid, i, hoRoom(uid), p)) return; if (i && typeof avSeatTap === 'function' && avSeatTap(uid, i, hoRoom(uid), p)) return; if (!i) { if (typeof avTap === 'function') avTap(uid, p); return; } if (i.k === 'safe' && typeof safeTry === 'function') safeTry(uid, i); else roomPoke(i); }; }
 const selInvOf = room => RM.sel && RM.sel.startsWith('inv:') ? room.invc.find(x => 'inv:' + x.id === RM.sel) : null;
 function bindRoomCv(cv) {
   cv.onpointerdown = ev => {
     const p = cvPos(cv, ev), room = myRoom();
-    if (!RM.edit) { const i = itemAt(room, p.x, p.y); if (i && typeof avHangTap === 'function' && avHangTap(ME.uid, i)) return; if (i && typeof avSeatTap === 'function' && avSeatTap(ME.uid, i, room, p)) return; if (i) roomPoke(i); else if (typeof avTap === 'function') avTap(ME.uid, p); return; }
+    if (!RM.edit) { const i = itemAt(room, p.x, p.y); if (i && curtTap(ME.uid, i, room, p)) return; if (i && typeof avHangTap === 'function' && avHangTap(ME.uid, i)) return; if (i && typeof avSeatTap === 'function' && avSeatTap(ME.uid, i, room, p)) return; if (i) roomPoke(i); else if (typeof avTap === 'function') avTap(ME.uid, p); return; }
     const hit = itemAt(room, p.x, p.y);
     if (hit && !selInvOf(room)) { RM.drag = { id: hit.id, x0: p.x, y0: p.y, moved: false }; window.GAME_LOCK = true; try { cv.setPointerCapture(ev.pointerId); } catch (e) {} }
     else RM.drag = { id: null, x0: p.x, y0: p.y, moved: false };
@@ -2175,5 +2193,6 @@ function roomOnAuth(u) {
   if (!u) return;
   roomUnsubs.push(B.onCol('roomLikes', l => { ROOMLIKES = l; if (tab === 'room' || tab === 'visit') softRender(); }));
   if (typeof theftWatch === 'function') theftWatch();
+  roomUnsubs.push(B.onCol('curt', l => { CURT = {}; l.forEach(d => { CURT[d.id] = d.c || {}; }); }));
   roomUnsubs.push(B.onCol('guestbook', l => { GUESTBOOK = l; if (tab === 'room' || tab === 'visit') softRender(); }));
 }
