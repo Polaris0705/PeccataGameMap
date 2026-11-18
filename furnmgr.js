@@ -38,8 +38,8 @@ function cfRegister(list) {
 }
 /* 장면 그림(세로로 이어 붙인 PNG)에서 지금 장면 하나를 칸 크기에 맞춰 그림 */
 const picKey = (pics, dir) => { dir = dir || 0; return dir === 2 && pics[2] ? 2 : dir % 2 && pics[1] ? 1 : 0; };
-function stripDraw(g, im, n, ms, x, y, w, h, mirror) {
-  n = Math.max(1, n || 1); const fh = im.height / n, fi = n > 1 ? Math.floor(Date.now() / (ms || 220)) % n : 0, S = g._S || 1;
+function stripDraw(g, im, n, ms, x, y, w, h, mirror, fms) {
+  n = Math.max(1, n || 1); const fh = im.height / n, fi = animFrame(n, ms, fms), S = g._S || 1;
   const X = Math.round(x * S), Y = Math.round(y * S), Wd = Math.round(w * S), Hd = Math.round(h * S);
   g.save(); g.setTransform(1, 0, 0, 1, 0, 0); g.imageSmoothingEnabled = false;
   if (mirror) { g.translate(X + Wd, Y); g.scale(-1, 1); g.drawImage(im, 0, fi * fh, im.width, fh, 0, 0, Wd, Hd); } else g.drawImage(im, 0, fi * fh, im.width, fh, X, Y, Wd, Hd);
@@ -48,7 +48,7 @@ function stripDraw(g, im, n, ms, x, y, w, h, mirror) {
 /* drawSprite가 직접 만든 가구를 만나면 여기서 그림 */
 function cfDraw(g, f, x, y, dir) {
   const d = f.custom, pics = d.pics || {}; dir = dir || 0; const pk = picKey(pics, dir), im = cfImg(pics[pk]); if (!im) return;
-  const dm = dimsOf('cf_' + d.id, dir); stripDraw(g, im, (d.picN || {})[pk], (d.picMs || {})[pk], x, y, dm.w * T, dm.h, dir === 3);
+  const dm = dimsOf('cf_' + d.id, dir); stripDraw(g, im, (d.picN || {})[pk], (d.picMs || {})[pk], x, y, dm.w * T, dm.h, dir === 3, (d.picFms || {})[pk]);
 }
 /* 방에 움직이는 장면 그림이 있으면 매번 다시 그림 */
 function roomHasFrames(room) { return (room.items || []).some(i => { const f = FURN[i.k]; if (!f) return false; const o = f.custom || FOV[i.k]; return o && Object.values(o.picN || {}).some(n => n > 1); }); }
@@ -77,7 +77,7 @@ function ovRecolored(k, url, col) {
 }
 function ovDraw(g, k, pk1, x, y, col, dir, t) {
   const o = FOV[k], pk = pk1 - 1, im = ovRecolored(k, o.pics[pk], col); if (!im) return; const dm = dimsOf(k, dir);
-  stripDraw(g, im, (o.picN || {})[pk], (o.picMs || {})[pk], x, y, dm.w * T, dm.h, dir === 3);
+  stripDraw(g, im, (o.picN || {})[pk], (o.picMs || {})[pk], x, y, dm.w * T, dm.h, dir === 3, (o.picFms || {})[pk]);
   if (o.anim !== false) ovMotion(g, k, x, y, col, dir, t);
 }
 /* 원래 가구에서 움직이는 부분(불꽃·김 등)만 찾아서 겹쳐 그림 */
@@ -113,12 +113,12 @@ function ovOrigPng(k, dir) {
 let OVD = null;
 const ovDirs = k => { const f = FURN[k]; return f.wall || !f.dirs ? [[0, '그림']] : [[0, '앞모습'], [1, '옆모습 (왼쪽 보기)'], [2, '뒷모습']]; };
 function ovEdit(k) {
-  const f = FURN[k]; if (!f || f.custom) return; if (!OVD || OVD.k !== k) { const o = FOV[k] || {}; OVD = { k, pics: Object.assign({}, o.pics || {}), picN: Object.assign({}, o.picN || {}), picMs: Object.assign({}, o.picMs || {}), anim: o.anim !== false }; }
+  const f = FURN[k]; if (!f || f.custom) return; if (!OVD || OVD.k !== k) { const o = FOV[k] || {}; OVD = { k, pics: Object.assign({}, o.pics || {}), picN: Object.assign({}, o.picN || {}), picMs: Object.assign({}, o.picMs || {}), picFms: Object.assign({}, o.picFms || {}), anim: o.anim !== false }; }
   const hasAnim = ovHasAnim(k);
   modal(`<h2 style="color:var(--gold2);margin-top:0">🎨 ${esc(f.name)} 그림 바꾸기</h2>
    <p class="muted" style="font-size:.85rem;margin:0 0 6px">원래 그림을 불러와서 고침. 저장하면 이미 놓인 것까지 모든 방에서 바뀜. 안 그린 방향은 원래 그림.${Object.keys(f.parts || {}).length ? '<br>PL이 바꾼 색도 유지됨. 원래 색(명암 그대로)으로 칠한 부분이 바뀜.' : ''}${f.pic ? '<br>⚠ 이 가구는 PL이 넣은 그림 대신 이 그림이 보임.' : ''}</p>
    ${ovDirs(k).map(([d, n]) => { const s = dimsOf(k, d); return `<div class="item" style="margin:4px 0"><div style="display:flex;align-items:center;gap:8px">${OVD.pics[d] ? stripThumb(OVD.pics[d], OVD.picN[d], 56) : `<span style="width:56px;text-align:center">${fprev(k, null, 56, d === 1 ? 1 : d)}</span>`}<div><b>${n}</b> ${OVD.pics[d] ? '<span class="badge live">바꿈</span>' : '<span class="muted">원래 그림</span>'}<div class="muted" style="font-size:.75rem">${s.w * 64}×${Math.round(s.h * 2)}${(OVD.picN[d] || 1) > 1 ? ` · 장면 ${OVD.picN[d]}장` : ''}</div></div></div>
-     <div class="row" style="flex:0 0 auto;gap:4px"><button class="sm primary" onclick="ovDraw1('${k}',${d})">🎨 그리기</button>${OVD.pics[d] ? `<button class="sm" onclick="delete OVD.pics[${d}];delete OVD.picN[${d}];delete OVD.picMs[${d}];ovEdit('${k}')">↺</button>` : ''}</div></div>`; }).join('')}
+     <div class="row" style="flex:0 0 auto;gap:4px"><button class="sm primary" onclick="ovDraw1('${k}',${d})">🎨 그리기</button>${OVD.pics[d] ? `<button class="sm" onclick="delete OVD.pics[${d}];delete OVD.picN[${d}];delete OVD.picMs[${d}];delete OVD.picFms[${d}];ovEdit('${k}')">↺</button>` : ''}</div></div>`; }).join('')}
    ${hasAnim ? `<label style="display:block;margin-top:8px"><input type="checkbox" style="width:auto;margin:0 6px 0 0;vertical-align:middle" ${OVD.anim ? 'checked' : ''} onchange="OVD.anim=this.checked"> ✨ 원래 움직임(불꽃·김 등) 겹치기</label><p class="muted" style="font-size:.75rem;margin:2px 0 0">원래 움직임 겹치기 · 모양이 많이 다르면 끄기</p>` : ''}
    <div class="row" style="margin-top:10px"><button onclick="OVD=null;closeModal()">취소</button>${FOV[k] ? `<button class="danger" onclick="ovReset('${k}')">전부 원래대로</button>` : ''}<button class="primary" onclick="ovSave('${k}')">저장</button></div>`);
   document.querySelectorAll('#mbox canvas.fprev').forEach(c => { c.style.imageRendering = 'pixelated'; paintPreview(c); });
@@ -126,14 +126,14 @@ function ovEdit(k) {
 function ovDraw1(k, d) {
   const s = dimsOf(k, d), f = FURN[k];
   const orig = ovOrigPng(k, d);
-  dotEdit({ W: s.w * 64, H: Math.round(s.h * 2), src: OVD.pics[d] || orig, orig, key: 'ov_' + k + '_' + d, n: OVD.pics[d] ? OVD.picN[d] || 1 : 1, ms: OVD.picMs[d], foot: f.wall ? 0 : s.d * 32 + 8, title: f.name + ' · ' + ovDirs(k).find(x => x[0] === d)[1],
-    onSave: (url, m) => { if (url) { OVD.pics[d] = url; OVD.picN[d] = m.n; OVD.picMs[d] = m.ms; } else { delete OVD.pics[d]; delete OVD.picN[d]; delete OVD.picMs[d]; } ovEdit(k); }, onCancel: () => ovEdit(k) });
+  dotEdit({ W: s.w * 64, H: Math.round(s.h * 2), src: OVD.pics[d] || orig, orig, key: 'ov_' + k + '_' + d, n: OVD.pics[d] ? OVD.picN[d] || 1 : 1, ms: OVD.picMs[d], fms: OVD.picFms[d], foot: f.wall ? 0 : s.d * 32 + 8, title: f.name + ' · ' + ovDirs(k).find(x => x[0] === d)[1],
+    onSave: (url, m) => { if (url) { OVD.pics[d] = url; OVD.picN[d] = m.n; OVD.picMs[d] = m.ms; if (m.fms) OVD.picFms[d] = m.fms; else delete OVD.picFms[d]; } else { delete OVD.pics[d]; delete OVD.picN[d]; delete OVD.picMs[d]; delete OVD.picFms[d]; } ovEdit(k); }, onCancel: () => ovEdit(k) });
 }
 async function ovSave(k) {
   const pics = OVD.pics; if (!Object.keys(pics).length) return ovReset(k, true);
   if (JSON.stringify(pics).length > 900000) return toast('그림이 너무 큼');
-  const picN = {}, picMs = {}; Object.keys(pics).forEach(d => { picN[d] = OVD.picN[d] || 1; picMs[d] = OVD.picMs[d] || 220; });
-  try { await B.set('furnOv/' + k, { pics, picN, picMs, anim: OVD.anim !== false, at: Date.now() }); OVD = null; closeModal(); toast('그림 변경 완료! 모든 방에 적용됨'); } catch (e) { toast('저장 실패: ' + (e.code || e.message)); }
+  const picN = {}, picMs = {}, picFms = {}; Object.keys(pics).forEach(d => { picN[d] = OVD.picN[d] || 1; picMs[d] = OVD.picMs[d] || 220; if (OVD.picFms && OVD.picFms[d]) picFms[d] = OVD.picFms[d]; });
+  try { await B.set('furnOv/' + k, { pics, picN, picMs, picFms, anim: OVD.anim !== false, at: Date.now() }); OVD = null; closeModal(); toast('그림 변경 완료! 모든 방에 적용됨'); } catch (e) { toast('저장 실패: ' + (e.code || e.message)); }
 }
 async function ovReset(k, quiet) {
   if (!quiet && !confirm('이 가구를 원래 그림으로 되돌릴까요?')) return;
@@ -183,16 +183,16 @@ function cfForm() {
 }
 function cfDraw1(k) {
   cfFormRead(); const s = cfSize(k);
-  CFD.picN = CFD.picN || {}; CFD.picMs = CFD.picMs || {};
-  dotEdit({ W: s.W, H: s.H, src: CFD.pics[k] || null, key: 'cf_' + (CFD.id || 'new') + '_' + k, n: CFD.picN[k] || 1, ms: CFD.picMs[k], foot: CFD.wall ? 0 : (k === 1 ? CFD.w : CFD.d) * 64 / 2 + 8, title: (CFD.name || '새 가구') + ' · ' + cfDirs().find(x => x[0] === k)[1],
-    onSave: (url, m) => { if (url) { CFD.pics[k] = url; CFD.picN[k] = m.n; CFD.picMs[k] = m.ms; } else { delete CFD.pics[k]; delete CFD.picN[k]; delete CFD.picMs[k]; } cfForm(); }, onCancel: () => cfForm() });
+  CFD.picN = CFD.picN || {}; CFD.picMs = CFD.picMs || {}; CFD.picFms = CFD.picFms || {};
+  dotEdit({ W: s.W, H: s.H, src: CFD.pics[k] || null, key: 'cf_' + (CFD.id || 'new') + '_' + k, n: CFD.picN[k] || 1, ms: CFD.picMs[k], fms: CFD.picFms[k], foot: CFD.wall ? 0 : (k === 1 ? CFD.w : CFD.d) * 64 / 2 + 8, title: (CFD.name || '새 가구') + ' · ' + cfDirs().find(x => x[0] === k)[1],
+    onSave: (url, m) => { if (url) { CFD.pics[k] = url; CFD.picN[k] = m.n; CFD.picMs[k] = m.ms; if (m.fms) CFD.picFms[k] = m.fms; else delete CFD.picFms[k]; } else { delete CFD.pics[k]; delete CFD.picN[k]; delete CFD.picMs[k]; delete CFD.picFms[k]; } cfForm(); }, onCancel: () => cfForm() });
 }
 async function cfSave() {
   cfFormRead(); const d = CFD; if (!d.name) return toast('이름을 넣기'); if (!d.pics[0]) return toast(d.wall ? '그림을 그리기' : '앞모습은 꼭 그리기');
   // 크기가 바뀌었으면 맞지 않는 그림은 다시 그려야 함
   const bad = []; await Promise.all(Object.keys(d.pics).map(k => new Promise(r => { const im = new Image(); im.onload = () => { const s = cfSize(+k), n = ((d.picN || {})[k] || 1); if (im.width !== s.W || im.height !== s.H * n) bad.push(+k); r(); }; im.onerror = r; im.src = d.pics[k]; })));
   if (bad.length) { if (!confirm('크기를 바꿔서 그림 크기가 맞지 않음. 그림을 새 크기에 맞춰 늘리지 않고 아래에 맞춰 둘까요?')) return; for (const k of bad) d.pics[k] = await cfRefit(d.pics[k], cfSize(k), (d.picN || {})[k] || 1); }
-  const doc = { name: d.name.slice(0, 24), kind: d.kind, by: d.by || ME.uid, byName: d.byName || PROF.name || '', wall: !!d.wall, w: d.w, d: d.wall ? 0 : d.d, H: d.H, wy: d.wy == null ? null : d.wy, pics: d.pics, picN: d.picN || {}, picMs: d.picMs || {}, at: d.at || Date.now(), upd: Date.now() };
+  const doc = { name: d.name.slice(0, 24), kind: d.kind, by: d.by || ME.uid, byName: d.byName || PROF.name || '', wall: !!d.wall, w: d.w, d: d.wall ? 0 : d.d, H: d.H, wy: d.wy == null ? null : d.wy, pics: d.pics, picN: d.picN || {}, picMs: d.picMs || {}, picFms: d.picFms || {}, at: d.at || Date.now(), upd: Date.now() };
   if (d.kind === 'kp') Object.assign(doc, { cost: d.cost, cat: d.cat, sell: d.sell !== false });
   const size = JSON.stringify(doc).length; if (size > 900000) return toast('그림이 너무 큼. 크기를 줄이기');
   try { const id = d.id || ('f' + Date.now().toString(36) + Math.random().toString(36).slice(2, 5)); await B.set('furn/' + id, clean(doc));

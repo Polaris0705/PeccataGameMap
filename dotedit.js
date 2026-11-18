@@ -13,11 +13,14 @@ const DE_TOOLS = [['pen', '✏', '펜'], ['erase', '🧽', '지우개'], ['fill'
 const DE_PAL = ['#24160e', '#5a3a24', '#8a5530', '#c4864e', '#e8c8a0', '#f8f4ea', '#ffffff', '#7a7a84', '#3a3a44', '#a8344a', '#d8485a', '#f08ab0', '#e8a060', '#e0b050', '#ffe27a', '#79b26e', '#4f8a55', '#2e6a5a', '#9ad0e4', '#5a9ad8', '#3a5a8a', '#6a4a8a', '#c8a8e0', '#2a2a32'];
 const DE_BAYER = [[0, 8, 2, 10], [12, 4, 14, 6], [3, 11, 1, 9], [15, 7, 13, 5]];
 const deHex = h => { h = String(h || '#000000').replace('#', ''); return [parseInt(h.substr(0, 2), 16), parseInt(h.substr(2, 2), 16), parseInt(h.substr(4, 2), 16)]; };
+/* 장면 번호: 장면별 시간(fms)이 있으면 그 시간대로, 없으면 ms 간격 */
+function animFrame(n, ms, fms, t) { n = Math.max(1, n || 1); if (n < 2) return 0; t = t == null ? Date.now() : t; ms = ms || 220;
+  if (!fms || !fms.some(v => v)) return Math.floor(t / ms) % n; let tot = 0; for (let i = 0; i < n; i++) tot += fms[i] || ms; let r = t % tot; for (let i = 0; i < n; i++) { r -= fms[i] || ms; if (r < 0) return i; } return 0; }
 const deToHex = (r, g, b) => '#' + [r, g, b].map(v => v.toString(16).padStart(2, '0')).join('');
 
 function dotEdit(o) {
   const W = Math.max(8, Math.min(512, o.W | 0)), H = Math.max(8, Math.min(512, o.H | 0));
-  DE = { W, H, o, layers: [], li: 0, fi: 0, px: null, ms: o.ms || 220, onion: true, play: null, showFi: -1,
+  DE = { W, H, o, layers: [], li: 0, fi: 0, px: null, ms: o.ms || 220, fms: (o.fms || []).slice(), onion: true, play: null, showFi: -1,
     tool: 'pen', col: '#24160e', col2: null, size: 1, fillShape: false, mirror: false, grid: true, dith: 0, scopeF: false, scopeL: false,
     z: 4, ox: 0, oy: 0, undo: [], redo: [], ref: null, sel: null, float: null, drag: null, ptr: new Map(), recent: [], sheet: '', dirty: false, pal: -1, origPx: null };
   DE.layers = [deNewLayer('레이어 1', 1)]; DE.px = DE.layers[0].frames[0];
@@ -63,7 +66,7 @@ function deClose(save) {
   if (!DE) return; const o = DE.o;
   if (!save && DE.dirty && !confirm('그린 것을 저장하지 않고 닫을까요?')) return;
   let url = null, meta = null;
-  if (save) { if (DE.float) deCommitFloat(); deStop(); meta = { n: deN(), ms: DE.ms };
+  if (save) { if (DE.float) deCommitFloat(); deStop(); meta = { n: deN(), ms: DE.ms, fms: deFms() };
     if (deIsEmpty()) url = null; else if (DE.origPx && deN() === 1 && deSame(deComp(0), DE.origPx)) { url = null; toast('원래 그림과 같아서 원래대로 돌려 둠'); } else url = dePng(); }
   clearInterval(DE.saveT); clearInterval(DE.roomT); deDraftDel(); deStop(); window.removeEventListener('keydown', deKey);
   const r = document.getElementById('dotEd'); if (r) r.remove(); document.body.style.overflow = ''; DE = null;
@@ -121,12 +124,14 @@ async function deDraftLoad(d) {
 /* ---------- 장면 (모든 레이어가 같이) ---------- */
 function deStruct() { DE.undo = []; DE.redo = []; DE.dirty = true; DE.editAt = Date.now(); }
 function deFrameGo(i) { if (DE.float) deCommitFloat(); deStop(); DE.fi = i; deSync(); deUI(); deDraw(); if (DE.sheet === 'lay') deSheetBody(); }
-function deFrameAdd(copy) { if (deN() >= DE_MAXF) return toast(`장면은 ${DE_MAXF}장까지`); deStop(); DE.layers.forEach(L => L.frames.splice(DE.fi + 1, 0, copy ? L.frames[DE.fi].slice() : deNF())); deStruct(); deFrameGo(DE.fi + 1); }
-function deFrameDel() { if (deN() <= 1) return; if (!confirm(`${DE.fi + 1}번 장면을 지울까요?`)) return; deStop(); DE.layers.forEach(L => L.frames.splice(DE.fi, 1)); deStruct(); DE.fi = Math.min(DE.fi, deN() - 1); deSync(); deUI(); deDraw(); }
-function deFrameMove(d) { const j = DE.fi + d; if (j < 0 || j >= deN()) return; deStop(); DE.layers.forEach(L => { [L.frames[DE.fi], L.frames[j]] = [L.frames[j], L.frames[DE.fi]]; }); deStruct(); DE.fi = j; deSync(); deUI(); deDraw(); }
+function deFrameAdd(copy) { if (deN() >= DE_MAXF) return toast(`장면은 ${DE_MAXF}장까지`); deStop(); DE.fms.splice(DE.fi + 1, 0, copy ? DE.fms[DE.fi] || 0 : 0); DE.layers.forEach(L => L.frames.splice(DE.fi + 1, 0, copy ? L.frames[DE.fi].slice() : deNF())); deStruct(); deFrameGo(DE.fi + 1); }
+function deFrameDel() { if (deN() <= 1) return; if (!confirm(`${DE.fi + 1}번 장면을 지울까요?`)) return; deStop(); DE.fms.splice(DE.fi, 1); DE.layers.forEach(L => L.frames.splice(DE.fi, 1)); deStruct(); DE.fi = Math.min(DE.fi, deN() - 1); deSync(); deUI(); deDraw(); }
+function deFrameMove(d) { const j = DE.fi + d; if (j < 0 || j >= deN()) return; deStop(); [DE.fms[DE.fi], DE.fms[j]] = [DE.fms[j] || 0, DE.fms[DE.fi] || 0]; DE.layers.forEach(L => { [L.frames[DE.fi], L.frames[j]] = [L.frames[j], L.frames[DE.fi]]; }); deStruct(); DE.fi = j; deSync(); deUI(); deDraw(); }
 function dePlay() { if (DE.play) return deStop(); if (deN() < 2) return toast('장면이 2장 이상이어야 움직임'); DE.showFi = DE.fi;
-  DE.play = setInterval(() => { if (!DE) return; DE.showFi = (DE.showFi + 1) % deN(); deDraw(); }, DE.ms); deUI(); }
-function deStop() { if (DE && DE.play) { clearInterval(DE.play); DE.play = null; DE.showFi = -1; deUI(); deDraw(); } }
+  const step = () => { if (!DE || !DE.play) return; DE.showFi = (DE.showFi + 1) % deN(); deDraw(); DE.play = setTimeout(step, DE.fms[DE.showFi] || DE.ms); };
+  DE.play = setTimeout(step, DE.fms[DE.showFi] || DE.ms); deUI(); }
+const deFms = () => { const n = deN(), a = []; for (let i = 0; i < n; i++) a.push(DE.fms[i] || 0); return a.some(v => v) ? a : null; };
+function deStop() { if (DE && DE.play) { clearTimeout(DE.play); DE.play = null; DE.showFi = -1; deUI(); deDraw(); } }
 
 /* ---------- 레이어 ---------- */
 function deLayerGo(i) { if (DE.float) deCommitFloat(); DE.li = i; deSync(); deUI(); deDraw(); if (DE.sheet === 'lay') deSheetBody(); }
@@ -148,7 +153,8 @@ function deUI() {
     <button onclick="deFrameAdd(true)" ${n >= DE_MAXF ? 'disabled' : ''}>⧉ 복제</button><button onclick="deFrameAdd(false)" ${n >= DE_MAXF ? 'disabled' : ''}>＋ 빈 장면</button>
     ${n > 1 ? `<button onclick="deFrameMove(-1)">◀</button><button onclick="deFrameMove(1)">▶</button><button onclick="deFrameDel()">🗑</button>
     <button class="${DE.onion ? 'on' : ''}" onclick="DE.onion=!DE.onion;deUI();deDraw()">🧅 앞 장면 비치기</button><button class="${DE.play ? 'on' : ''}" onclick="dePlay()">${DE.play ? '⏸ 멈춤' : '▶ 미리보기'}</button>
-    <select onchange="DE.ms=+this.value;DE.editAt=Date.now();if(DE.play){deStop();dePlay()}">${[[120, '빠름'], [220, '보통'], [400, '느림'], [700, '아주 느림']].map(([v, tt]) => `<option value="${v}" ${DE.ms === v ? 'selected' : ''}>${tt}</option>`).join('')}</select>` : '<span class="muted" style="font-size:.78rem">장면 추가 = 움직임</span>'}`;
+    <select onchange="DE.ms=+this.value;DE.editAt=Date.now();if(DE.play){deStop();dePlay()}">${[[120, '빠름'], [220, '보통'], [400, '느림'], [700, '아주 느림']].map(([v, tt]) => `<option value="${v}" ${DE.ms === v ? 'selected' : ''}>${tt}</option>`).join('')}</select>
+    <span class="muted">${DE.fi + 1}번 시간</span><select onchange="DE.fms[DE.fi]=+this.value;DE.editAt=Date.now();if(DE.play){deStop();dePlay()}">${[[0, '기본'], [80, '0.08초'], [150, '0.15초'], [300, '0.3초'], [500, '0.5초'], [1000, '1초'], [2000, '2초'], [3000, '3초'], [5000, '5초']].map(([v, tt]) => `<option value="${v}" ${(DE.fms[DE.fi] || 0) === v ? 'selected' : ''}>${tt}</option>`).join('')}</select>` : '<span class="muted" style="font-size:.78rem">장면 추가 = 움직임</span>'}`;
   $('#deTools').innerHTML = DE_TOOLS.map(([k, ic, nm]) => `<button class="${t === k ? 'on' : ''}" onclick="deTool('${k}')" title="${nm}">${ic} ${nm}</button>`).join('');
   const sz = ['pen', 'erase', 'dith'].includes(t) ? `<span class="muted">굵기</span>${[1, 2, 3, 5].map(v => `<button class="${DE.size === v ? 'on' : ''}" onclick="DE.size=${v};deUI()">${v}</button>`).join('')}` : '';
   const dith = t === 'dith' ? `<span class="muted">무늬</span>${[['체크', 0], ['성글게', 1], ['가로줄', 2]].map(([nm, v]) => `<button class="${DE.dith === v ? 'on' : ''}" onclick="DE.dith=${v};deUI()">${nm}</button>`).join('')}<span class="muted" style="font-size:.78rem">주색+보조색 (보조색 없으면 주색만 띄엄띄엄)</span>` : '';

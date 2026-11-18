@@ -57,9 +57,9 @@ async function roomJoin(id) {
 async function roomLeave() {
   const id = PROOM, r = roomOf(id); PROOM = null; PSECRET = null; if (PSEC_UNSUB) { PSEC_UNSUB(); PSEC_UNSUB = null; }
   if (r) {
-    if (r.host === ME.uid && Object.keys(r.players || {}).length <= 1) await B.del('rooms/' + id).catch(() => {});
+    if (r.host === ME.uid && Object.keys(r.players || {}).filter(u => !u.startsWith('bot_')).length <= 1) await B.del('rooms/' + id).catch(() => {});
     else await rtx(id, x => { if (!x.players || !x.players[ME.uid]) return undefined; delete x.players[ME.uid];
-      if (x.host === ME.uid) { const nx = Object.entries(x.players)[0]; if (nx) { x.host = nx[0]; x.hostName = nx[1].name; } } return x; });
+      if (x.host === ME.uid) { const nx = Object.entries(x.players).find(([u]) => !u.startsWith('bot_')); if (nx) { x.host = nx[0]; x.hostName = nx[1].name; } } return x; });
   }
   render();
 }
@@ -70,7 +70,7 @@ function roomView(r) {
     : r.type === 'nunchi' ? nunchiView(r, host) : r.type === 'auction' ? auctionView(r, host) : r.type === 'werewolf' && typeof wwView === 'function' ? wwView(r, host) : liarView(r, host);
   return `<div class="panel"><div class="row" style="justify-content:space-between"><h2 style="margin:0">${t.ic} ${t.n}</h2>
     <div class="row" style="flex:0 0 auto">${host ? '<button class="sm danger" onclick="roomClose()">방 닫기</button>' : ''}<button class="sm" onclick="roomLeave()">나가기</button><button class="sm" onclick="PROOM=null;render()">목록</button></div></div>
-    <div class="toggles" style="margin:8px 0">${ps.map(([u, p]) => `<span class="chip ptchip ${u === ME.uid ? 'on' : ''}">${pxAva(u)}${u === r.host ? '👑 ' : ''}${esc(p.name)}</span>`).join('')}</div>
+    <div class="toggles" style="margin:8px 0">${ps.map(([u, p]) => `<span class="chip ptchip ${u === ME.uid ? 'on' : ''}">${pxAva(u)}${u === r.host ? '👑 ' : ''}${esc(p.name)}</span>`).join('')}</div>${typeof botBar === 'function' ? botBar(r) : ''}
     <div class="pxstage">${body}</div></div>`;
 }
 const needMore = (r, t) => Object.keys(r.players || {}).length < t.min ? `<p class="muted">${t.min}명 이상 모이면 시작할 수 있음.</p>` : '';
@@ -156,7 +156,8 @@ function auctionSettle(r) {
   if (b && b.uid === ME.uid) { P.coins = Math.max(0, P.coins - b.amt); markPaid(S.round); saveP(); toast(`🔨 「${S.lot.title}」 낙찰! -${b.amt} 은화`); }
   else if (S.seller === ME.uid) {
     markPaid(S.round);
-    if (b) { if (!S.sellerAdmin) { P.coins += b.amt; P.earned += b.amt; }
+    if (b && b.bot) toast(`🤖 ${b.name} 낙찰 (봇이라 거래 없음)`);
+    else if (b) { if (!S.sellerAdmin) { P.coins += b.amt; P.earned += b.amt; }
       if (S.lot.itemId) { const w = userOf(b.uid); B.update('items/' + S.lot.itemId, { owner: b.uid, ownerName: w ? uname(w) : b.name, fromName: PROF.name, seen: false }).catch(() => {}); }
       toast(`🔨 ${b.name}님에게 판매 완료${S.sellerAdmin ? '' : ' +' + b.amt + ' 은화'}`); }
     saveP();

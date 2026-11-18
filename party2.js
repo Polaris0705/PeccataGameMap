@@ -121,7 +121,7 @@ async function wwHost() {
   WW_BUSY = true;
   try {
     if (S.phase === 'night' && (timeUp || alive.every(u => (S.done || {})[u]))) {
-      const acts = {}; await Promise.all(alive.map(async u => { if (!['wolf', 'seer', 'knight'].includes(R[u])) return; const d = await B.get(`wwActs/${r.id}_${S.round}_${S.n}_${u}`).catch(() => null); if (d && d.target) acts[u] = d.target; }));
+      const acts = {}; await Promise.all(alive.map(async u => { if (!['wolf', 'seer', 'knight'].includes(R[u])) return; const d = await B.get(`wwActs/${r.id}_${S.round}_${S.n}_${u}`).catch(() => null); if (d && d.target) acts[u] = d.target; })); if (typeof botWWActs === 'function') Object.assign(acts, botWWActs(S.round, S.n, alive));
       let victim = null;
       if (S.n > 1) {
         const picks = alive.filter(u => R[u] === 'wolf').map(u => acts[u]).filter(t => t && alive.includes(t) && R[t] !== 'wolf');

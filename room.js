@@ -163,6 +163,8 @@ const FURN = {
   sewing: { name: '재봉틀', cat: 'hobby', cost: 90, hi: true, dims: () => ({ w: 1, d: 1, h: 54 }), parts: { a: ['thread', '#a8344a'], b: ['wood', '#93592f'] }, drawHi(p, t, C) { SEWINGHI(p, t, C); } },
   dollhouse: { name: '인형의 집', cat: 'hobby', cost: 110, hi: true, dims: () => ({ w: 1, d: 1, h: 58 }), parts: { a: ['body', '#f1d6c0'], b: ['wood', '#3a5a8a'] }, drawHi(p, t, C) { DOLLHOUSEHI(p, t, C); } },
   rockhorse: { name: '흔들 목마', cat: 'hobby', cost: 85, hi: true, dims: () => ({ w: 1, d: 1, h: 46 }), parts: { a: ['body', '#f4ece0'], b: ['cloth', '#a8344a'], c: ['wood', '#93592f'] }, drawHi(p, t, C) { ROCKHORSEHI(p, t, C); } },
+  wrack: { name: '옷 걸이대', cat: 'hobby', cost: 45, hi: true, hang: 'rack', dims: () => ({ w: 1, d: 1, h: 82 }), parts: { b: ['metal', '#6a6a74'], a: ['wood', '#8a5530'] }, drawHi(p, t, C) { WRACKHI(p, t, C); } },
+  wform: { name: '옷 마네킹', cat: 'hobby', cost: 60, hi: true, hang: 'form', dims: () => ({ w: 1, d: 1, h: 84 }), parts: { a: ['cloth', '#e8dcc4'], b: ['wood', '#5a3a24'] }, drawHi(p, t, C) { WFORMHI(p, t, C); } },
   hatstand: { name: '모자·코트 걸이', cat: 'hobby', cost: 55, hi: true, dims: () => ({ w: 1, d: 1, h: 70 }), parts: { a: ['cloth', '#3a4a6a'], b: ['wood', '#5a3a24'] }, drawHi(p, t, C) { HATSTANDHI(p, t, C); } },
   byobu: { name: '금박 병풍', cat: 'gothic', cost: 140, hi: true, dims: () => ({ w: 2, d: 1, h: 56 }), parts: { a: ['gold', '#e0b850'], b: ['frame', '#3a1a14'] }, drawHi(p, t, C) { BYOBUHI(p, t, C); } },
   hibachi: { name: '화로와 쇠주전자', cat: 'gothic', cost: 75, hi: true, dims: () => ({ w: 1, d: 1, h: 30 }), parts: { a: ['pot', '#3a5a8a'], c: ['metal', '#e0b050'] }, drawHi(p, t, C) { HIBACHIHI(p, t, C); } },
@@ -1617,6 +1619,18 @@ const ROCKHORSEHI = (p, t, C) => { const { c, el, ln } = p, A = C.a, B = C.b, W 
   cc(30, 40, 2, 7, B.o); cc(29, 46, 4, 2, GOLD);
   ll(58, 26, 46, 34, B.t, 1); ll(55, 22, 58, 26, GOLD, 1); };
 // 모자 · 코트 걸이 64 × 140
+/* 옷 걸이대: 기둥 두 개 + 가로대 + 옷걸이 (걸린 옷은 토큰 그림으로 위에 그림) */
+const WRACKHI = (p, t, C) => { const { c, el, ln } = p, B = C.b, A = C.a;
+  el(32, 160, 26, 3, 'rgba(0,0,0,.2)');
+  [8, 54].forEach(x => { c(x - 1, 18, 4, 140, B.o); c(x, 18, 2, 140, B.t); c(x, 18, 1, 140, B.L); c(x - 5, 156, 12, 4, B.o); c(x - 4, 156, 10, 2, B.d); });
+  c(6, 16, 52, 5, B.o); c(7, 17, 50, 3, B.t); c(7, 17, 50, 1, B.L);
+  ln(32, 20, 32, 27, A.o, 2); ln(32, 27, 16, 35, A.o, 2); ln(32, 27, 48, 35, A.o, 2); c(15, 34, 34, 2, A.o); c(16, 34, 32, 1, A.l); };
+/* 옷 마네킹: 몸통 모양 + 받침 */
+const WFORMHI = (p, t, C) => { const { c, el, ln } = p, B = C.b, A = C.a;
+  el(32, 164, 18, 3, 'rgba(0,0,0,.2)');
+  c(30, 100, 4, 60, B.o); c(31, 100, 2, 60, B.t); [[-1], [1]].forEach(([s]) => { ln(32, 152, 32 + s * 16, 162, B.o, 3); ln(32, 152, 32 + s * 16, 162, B.t, 1); });
+  el(32, 22, 5, 4, B.o); el(32, 21, 4, 3, B.l);
+  for (let y = 26; y < 104; y++) { const u = (y - 26) / 78, w = Math.round(y < 40 ? 18 + (y - 26) * .9 : y < 66 ? 30 - (y - 40) * .25 : 24 + (y - 66) * .2); c(32 - (w >> 1) - 1, y, w + 2, 1, A.o); c(32 - (w >> 1), y, w, 1, y % 9 ? A.t : A.f); c(32 - (w >> 1), y, 2, 1, A.l); c(32 + (w >> 1) - 2, y, 2, 1, A.d); } };
 const HATSTANDHI = (p, t, C) => { const { c, el, ln } = p, B = C.b, A = C.a;
   el(32, 136, 22, 3, 'rgba(0,0,0,.2)');
   [[-1], [1]].forEach(([s]) => { ln(32, 124, 32 + s * 20, 134, B.o, 3); ln(32, 124, 32 + s * 20, 134, B.t, 1); }); ln(32, 124, 32, 136, B.o, 3);
@@ -1849,6 +1863,7 @@ function paintRoom(cv, room, opts) {
     if (AVL.length) avDrawList(g, AVL, f.wall || f.flat ? -1 : i.r + fd(i.k, i.dir) - .01);
     if (i.r >= 0 && !f.flat && !f.top) { g.fillStyle = 'rgba(30,15,5,.22)'; g.fillRect(b.x + 3, b.y + b.h - 5, b.w - 6, 6); g.fillRect(b.x + 7, b.y + b.h + 1, b.w - 14, 2); }
     HI_MS = i.imgMs || 140; drawSprite(g, i.k, b.x, b.y, t, i.id === dragId ? .35 : null, i.col, i.dir, i.img);
+    if (i.wear && f.hang && typeof avDrawHung === 'function') avDrawHung(g, i, b, f.hang);
     if (edit && RM.sel === 'id:' + i.id) { frameRect(g, b.x, b.y, b.w, b.h, '#ffe08a'); if (b.foot) frameRect(g, b.foot.x, b.foot.y, b.foot.w, b.foot.h, 'rgba(255,224,138,.6)'); }
   });
   if (edit && RM.hover) {
@@ -1964,12 +1979,12 @@ const ROOM_TALK = { sofa: ['푹신한 벨벳 소파.'], loveseat: ['둘이 앉�
   mannequin: ['누가 입던 드레스일까.'], apron: ['어디선가 시계 소리가 들리는 것 같다.'], lectern: ['읽다 만 페이지에 책갈피가 끼워져 있다.'], rosedome: ['꽃잎이 하나 떨어졌다.'], raven: ['까악!'],
   wrath: ['불길이 거세다!'], greed: ['반짝반짝… 전부 내 거야.'], sloth: ['조금만 더 잘래…'], gluttony: ['한 입만…'], pride: ['역시 나야.'], lust: ['장미 향기가 난다.'], teddy: ['폭신폭신.'], birdcage: ['짹짹!'], globe: ['빙글빙글.'], telescope: ['별이 가까이 보인다.'] };
 function roomPoke(i) { const f = FURN[i.k]; const l = ROOM_TALK[i.k]; sfx(i.k === 'cat' || i.k === 'raven' ? 'pop' : 'tap'); toast(`${f.name} — ${l ? l[Math.floor(Math.random() * l.length)] : ''}${f.eff ? ' (' + f.eff + ')' : ''}`); }
-function bindViewCv(cv, uid) { cv.onclick = ev => { const p = cvPos(cv, ev), i = itemAt(hoRoom(uid), p.x, p.y); if (!i) { if (typeof avTap === 'function') avTap(uid, p); return; } if (i.k === 'safe' && typeof safeTry === 'function') safeTry(uid, i); else roomPoke(i); }; }
+function bindViewCv(cv, uid) { cv.onclick = ev => { const p = cvPos(cv, ev), i = itemAt(hoRoom(uid), p.x, p.y); if (i && typeof avSeatTap === 'function' && avSeatTap(uid, i, hoRoom(uid))) return; if (!i) { if (typeof avTap === 'function') avTap(uid, p); return; } if (i.k === 'safe' && typeof safeTry === 'function') safeTry(uid, i); else roomPoke(i); }; }
 const selInvOf = room => RM.sel && RM.sel.startsWith('inv:') ? room.invc.find(x => 'inv:' + x.id === RM.sel) : null;
 function bindRoomCv(cv) {
   cv.onpointerdown = ev => {
     const p = cvPos(cv, ev), room = myRoom();
-    if (!RM.edit) { const i = itemAt(room, p.x, p.y); if (i) roomPoke(i); else if (typeof avTap === 'function') avTap(ME.uid, p); return; }
+    if (!RM.edit) { const i = itemAt(room, p.x, p.y); if (i && typeof avHangTap === 'function' && avHangTap(ME.uid, i)) return; if (i && typeof avSeatTap === 'function' && avSeatTap(ME.uid, i, room)) return; if (i) roomPoke(i); else if (typeof avTap === 'function') avTap(ME.uid, p); return; }
     const hit = itemAt(room, p.x, p.y);
     if (hit && !selInvOf(room)) { RM.drag = { id: hit.id, x0: p.x, y0: p.y, moved: false }; window.GAME_LOCK = true; try { cv.setPointerCapture(ev.pointerId); } catch (e) {} }
     else RM.drag = { id: null, x0: p.x, y0: p.y, moved: false };
