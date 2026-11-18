@@ -1858,13 +1858,14 @@ function drawOrder(room) {
   const pair = (a, b) => { if (L(a) !== L(b) || a.z || b.z) return 0; if (SEATS[a.k] && TABLES[b.k] && ov(a, b)) return behind(a) ? -1 : 1; if (SEATS[b.k] && TABLES[a.k] && ov(a, b)) return behind(b) ? 1 : -1; return 0; };
   return room.items.filter(i => FURN[i.k]).slice().sort((a, b) => L(a) - L(b) || pair(a, b) || key(a) - key(b) || (a.r + fd(a.k, a.dir)) - (b.r + fd(b.k, b.dir)) || a.c - b.c);
 }
+let GROW_OFF = null;
 function drawSprite(g, k, x, y, t, alpha, col, dir, img) {
   const f = FURN[k]; if (!f) return; dir = dir || 0; HI_IMG = (f.pic && img) || null; HI_PH = f.pic ? f.pic.h : 0;
   g.save(); if (alpha != null) g.globalAlpha = alpha; const C = colsOf({ k, col });
   if (!g._fr || g._S == null) snapCtx(g, g.getTransform().a || 1);
   if (f.hi && f.grow && f.grow[dir]) {   // 넓힌 가구: 원래 크기로 그린 뒤 가운데를 늘림
-    const dm = dimsOf(k, dir), S = g._S || 1, ow = (dm.w - f.grow[dir]) * T, W = dm.w * T, M = 8, off = document.createElement('canvas');
-    off.width = Math.ceil((ow + M * 2) * S); off.height = Math.ceil((dm.h + M * 2) * S); const og = off.getContext('2d'); og.imageSmoothingEnabled = false; snapCtx(og, S);
+    const dm = dimsOf(k, dir), S = g._S || 1, ow = (dm.w - f.grow[dir]) * T, W = dm.w * T, M = 8, off = GROW_OFF || (GROW_OFF = document.createElement('canvas')), OW = Math.ceil((ow + M * 2) * S), OH = Math.ceil((dm.h + M * 2) * S);   // 밑그림 캔버스는 하나를 계속 씀 (매번 새로 만들면 아이폰에서 캔버스 메모리가 차서 화면이 검게 깜빡임)
+    if (off.width !== OW || off.height !== OH) { off.width = OW; off.height = OH; } const og = off.getContext('2d'); og.setTransform(1, 0, 0, 1, 0, 0); og.clearRect(0, 0, OW, OH); og.imageSmoothingEnabled = false; snapCtx(og, S);
     f.drawHi(pen(og, M, M, 0, .5), t || 0, C, dir);
     const half = Math.floor(ow / 4), slice = 6, ex = W - ow, px = v => Math.round(v * S), sx0 = px(M + half - slice / 2), sw = px(slice);
     g.drawImage(off, 0, 0, px(M + half), off.height, px(x - M), px(y - M), px(M + half), off.height);
@@ -1978,9 +1979,12 @@ VIEWS.visit = () => {
 };
 
 /* ---------- 렌더 후처리 · 애니메이션 ---------- */
+let ROOM_CV = null;
 function roomAfter() {
   if (tab !== 'room' && tab !== 'visit') { document.querySelectorAll('#view canvas.fprev').forEach(c => { c.style.imageRendering = 'pixelated'; paintPreview(c); }); return; }
-  const cv = document.getElementById('roomCv');
+  let cv = document.getElementById('roomCv');
+  if (cv && ROOM_CV && ROOM_CV !== cv && ROOM_CV.dataset.tab === tab) { ROOM_CV.className = cv.className; cv.replaceWith(ROOM_CV); cv = ROOM_CV; }   // 다시 그릴 때 방 캔버스를 그대로 옮겨 씀 (빈 캔버스가 잠깐 보이며 깜빡이지 않게)
+  if (cv) { ROOM_CV = cv; cv.dataset.tab = tab; }
   if (cv) { const uid = tab === 'room' ? ME.uid : RV; paintRoom(cv, hoRoom(uid), { edit: tab === 'room' && RM.edit }); if (tab === 'room') bindRoomCv(cv); else bindViewCv(cv, uid); }
   document.querySelectorAll('canvas.rthumb').forEach(c => paintRoom(c, hoRoom(c.dataset.uid)));
   document.querySelectorAll('canvas.fprev').forEach(paintPreview);

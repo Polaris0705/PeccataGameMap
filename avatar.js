@@ -423,6 +423,7 @@ function avTuck(g, a, p, ax) {
   else { g.restore(); return; }
   g.clip(); drawSprite(g, it.k, b.x, b.y, (typeof RM !== 'undefined' && RM.t) || 0, null, it.col, it.dir, it.img); g.restore();
 }
+const AV_ROTC = new WeakMap();
 const AV_HUG = { x: 47, y: 4, x2: 46, y2: -9, k: .35, arm: [55, 59, 36, 41] };   // 안은 토끼 위치 (돌린 토큰 그림 왼쪽 기준, 방 좌표) · arm: 돌린 그림에서 앞팔 [x0,x1,y0,y1]
 function avDrawPose(g, a) {
   const FR = (x, y, w, h) => (g._fr || g.fillRect.bind(g))(x, y, w, h);   // 기기 픽셀 그대로 (방 캔버스는 fillRect가 배율을 또 곱함)
@@ -435,8 +436,9 @@ function avDrawPose(g, a) {
     const sp = avSprite(Object.assign({}, a.cfg, { blink: 1 }), 0, 0), R = AV_RS; put(sp, 0, 0, AVW, AVH, p.px - AVW * R / 2, p.py - 46 * R, AVW * R, AVH * R);
     avTuck(g, a, p, 'y'); return; }
   if (p.m === 'rot') {   // 옆으로 누움: 머리 중심이 돌린 그림 왼쪽(또는 오른쪽)에서 14칸
-    const b = avSprite(Object.assign({}, a.cfg, { blink: 1 }), 0, 0), c = document.createElement('canvas'); c.width = AVH; c.height = AVW; const lg = c.getContext('2d');
-    lg.translate(AVH / 2, AVW / 2); lg.rotate(p.rl < 0 ? -Math.PI / 2 : Math.PI / 2); lg.drawImage(b, -AVW / 2, -AVH / 2);
+    const b = avSprite(Object.assign({}, a.cfg, { blink: 1 }), 0, 0), rk = p.rl < 0 ? 'l' : 'r', rc = AV_ROTC.get(b) || {}; let c = rc[rk];   // 돌린 그림은 한 번만 만들어 둠
+    if (!c) { c = rc[rk] = document.createElement('canvas'); c.width = AVH; c.height = AVW; const lg = c.getContext('2d');
+      lg.translate(AVH / 2, AVW / 2); lg.rotate(p.rl < 0 ? -Math.PI / 2 : Math.PI / 2); lg.drawImage(b, -AVW / 2, -AVH / 2); AV_ROTC.set(b, rc); }
     const R = AV_RS, w = AVH * R, h = AVW * R, x = p.rl < 0 ? p.px - 30 * R : p.px + 30 * R - w, H = AV_HUG, hb = typeof drawLyingBunny === 'function' && p.hug, fx = v => x + (p.rl < 0 ? v : w - v);
     if (hb) drawLyingBunny(g, fx(H.x2), p.py + H.y2, 1, p.rl, H.k);   // 한 마리는 뒤(등받이 쪽)에 나란히
     put(c, 0, 0, c.width, c.height, x, p.py - h / 2, w, h);
