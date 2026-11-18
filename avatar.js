@@ -13,7 +13,7 @@ const SKINS = ['#fbe3cf', '#f6d2b4', '#ecc29e', '#d9a47c', '#b07a52', '#7a4e32']
 const AV_SLOTS = [['hair', '머리'], ['eye', '눈'], ['top', '상의'], ['bottom', '하의'], ['one', '한 벌'], ['shoes', '신발'], ['hat', '모자'], ['acc', '액세서리']];
 const AV_ITEMS = {
   hair: { bob: ['단발', 0, '#3a2418'], long: ['긴 생머리', 0, '#24160e'], braids: ['양갈래 땋기', 0, '#5a3a24'], short: ['짧은 머리', 0, '#2a1e18'], pony: ['포니테일', 0, '#8a5530'], bun: ['올림머리', 0, '#3a2418'], wavy: ['웨이브', 0, '#c89a5a'] },
-  eye: { round: ['동그란 눈', 0, '#3a2a20'], half: ['반눈', 0, '#3a2a20'], sharp: ['날카로운 눈', 0, '#5a2a2a'], sleepy: ['졸린 눈', 0, '#3a2a20'] },
+  eye: { round: ['눈', 0, '#3a2a20'] },   // 눈은 한 가지 + 자동 깜빡임
   top: { shirt: ['셔츠', 0, '#f4f0e6'], blouse: ['리본 블라우스', 0, '#f8f4ea'], vest: ['셔츠와 조끼', 40, '#5a3a2a'], yagasuri: ['화살깃 기모노', 60, '#8a3a6a'], gakuran: ['학생복 상의', 50, '#24242e'], knit: ['니트', 40, '#8a6a4a'] },
   bottom: { pants: ['바지', 0, '#3a3a44'], skirt: ['스커트', 0, '#3a4a6a'], hakama: ['하카마', 60, '#6a2a3a'], shorts: ['반바지', 30, '#6a5a4a'], long: ['롱스커트', 50, '#2e2a3a'] },
   one: { maid: ['메이드복', 90, '#2a2a34'], kimono: ['기모노', 120, '#a83a4a'], dress: ['드레스', 110, '#5a2a6a'], coat: ['인버네스 코트', 100, '#5a4a3a'], butler: ['연미복', 100, '#1e1e28'] },
@@ -286,7 +286,17 @@ function avSprite(cfg, dir, step) {
   layer('body');
   item('shoes');
   if (cfg.one) item('one'); else { item('bottom'); item('top'); }
-  if (vw !== 2) layer('eye:' + (cfg.eye || 'round'));
+  if (vw !== 2) { const ek = 'eye:round', eo = AVOV[ek], anim = eo && eo.n && eo.n[vw] > 1;
+    if (cfg.blink && !anim) {   // 깜빡임: 눈 그림을 세로 한 줄(아래에서 둘째 칸)로 눌러 감은 눈으로
+      const t = document.createElement('canvas'); t.width = AVW; t.height = AVH; const tg = t.getContext('2d'), sg = G; G = tg; PP = avP2(tg, cfg, dir, step); layer(ek); G = sg; PP = P2;
+      const d = tg.getImageData(0, 0, AVW, AVH), q = d.data, o = new Uint8ClampedArray(q.length);
+      for (let x = 0; x < AVW; x++) { let a = -1, b = -1; for (let y = 0; y < AVH; y++) if (q[(y * AVW + x) * 4 + 3]) { if (a < 0) a = y; b = y; }
+        if (a < 0) continue; if (a === b) { const k = (a * AVW + x) * 4; for (let i = 0; i < 4; i++) o[k + i] = q[k + i]; continue; }   // 한 줄짜리(입)는 그대로
+        // 세로로 이어진 덩어리(눈)마다: 맨 위 색으로 아래에서 둘째 줄에 한 칸
+        let y = a; while (y <= b) { if (!q[(y * AVW + x) * 4 + 3]) { y++; continue; } let e = y; while (e + 1 <= b && q[((e + 1) * AVW + x) * 4 + 3]) e++;
+          const src = (y * AVW + x) * 4, dst = (Math.max(y, e - 1) * AVW + x) * 4; if (e > y) for (let i = 0; i < 4; i++) o[dst + i] = q[src + i]; else for (let i = 0; i < 4; i++) o[src + i] = q[src + i]; y = e + 1; } }
+      tg.putImageData(new ImageData(o, AVW, AVH), 0, 0); g.drawImage(t, 0, 0);
+    } else layer(ek); }
   if (cfg.hair) layer('hairF:' + cfg.hair);
   item('acc'); item('hat');
   // 외곽선 자동
@@ -320,7 +330,7 @@ function avRoomList(room, owner) {
 function avDrawList(g, list, maxDepth) {
   list.forEach(a => { if (a.done) return; const depth = ((a.pose ? a.pose.dy : a.y) - FY) / T; if (depth >= maxDepth) return; a.done = true;
     if (!a.cfg) return; if (a.pose) return avDrawPose(g, a);
-    const sp = avSprite(a.cfg, a.dir, a.step), S = g._S || 1, w = AVW / 2, h = AVH / 2, x = a.x - w / 2, y = a.y - h + 2 + (a.step % 2 ? -1 : 0);
+    const sp = avSprite(avBlinkCfg(a.cfg, a.uid), a.dir, a.step), S = g._S || 1, w = AVW / 2, h = AVH / 2, x = a.x - w / 2, y = a.y - h + 2 + (a.step % 2 ? -1 : 0);
     g.save(); g.setTransform(1, 0, 0, 1, 0, 0); g.imageSmoothingEnabled = S < 2; g.fillStyle = 'rgba(20,10,5,.28)'; g.fillRect(Math.round((a.x - 7) * S), Math.round((a.y - 1) * S), Math.round(14 * S), Math.round(2 * S));
     g.drawImage(sp, Math.round(x * S), Math.round(y * S), Math.round(w * S), Math.round(h * S));
     g.restore(); });
@@ -369,12 +379,14 @@ function avPoseSprite(cfg, dir, k) {
   if (dir === 3) { const m = document.createElement('canvas'); m.width = AVW; m.height = AVH; const mg = m.getContext('2d'); mg.translate(AVW, 0); mg.scale(-1, 1); mg.drawImage(c, 0, 0); return AVPOSEC[ck] = m; }
   return AVPOSEC[ck] = c;
 }
+/* 자동 깜빡임: 토큰마다 3~4.5초에 한 번, 0.15초 */
+function avBlinkCfg(cfg, uid) { let h = 0; for (const ch of String(uid || '')) h = (h * 31 + ch.charCodeAt(0)) >>> 0; const per = 3000 + h % 1500; return (Date.now() + h) % per < 150 ? Object.assign({}, cfg, { blink: 1 }) : cfg; }
 function avDrawPose(g, a) {
   const S = g._S || 1, p = a.pose;
   if (p.k === 'lie' && p.v) {   // 세로 침대: 이불 덮고 누운 모습 (머리·어깨만, 베개 쪽)
-    const sp = avSprite(Object.assign({}, a.cfg, { eye: 'sleepy' }), 0, 0), cut = 50, w = AVW / 2, h = cut / 2, x = a.x - w / 2, y = p.top + 24 - h;
+    const sp = avSprite(Object.assign({}, a.cfg, { blink: 1 }), 0, 0), cut = 50, w = AVW / 2, h = cut / 2, x = a.x - w / 2, y = p.top + 24 - h;
     g.save(); g.setTransform(1, 0, 0, 1, 0, 0); g.imageSmoothingEnabled = S < 2; g.drawImage(sp, 0, 0, AVW, cut, Math.round(x * S), Math.round(y * S), Math.round(w * S), Math.round(h * S)); g.restore(); return; }
-  const sp = avPoseSprite(a.cfg, a.dir, p.k), lie = p.k === 'lie', w = (lie ? AVH : AVW) / 2, h = (lie ? AVW : AVH) / 2;
+  const sp = avPoseSprite(avBlinkCfg(a.cfg, a.uid), a.dir, p.k), lie = p.k === 'lie', w = (lie ? AVH : AVW) / 2, h = (lie ? AVW : AVH) / 2;
   const x = a.x - w / 2, y = lie ? a.y - h / 2 - p.h : a.y - h + 2 - p.h;
   g.save(); g.setTransform(1, 0, 0, 1, 0, 0); g.imageSmoothingEnabled = S < 2; g.drawImage(sp, 0, 0, sp.width, sp.height, Math.round(x * S), Math.round(y * S), Math.round(w * S), Math.round(h * S)); g.restore();
 }
