@@ -371,7 +371,7 @@ const AV_SEAT = {
   sloth: () => ({ m: 'sit', fx: .33, hip: 15 }),
   bed: d => [[.27, .5, .73].map(fx => ({ m: 'sleep', fx, chin: 64, fold: 64 })), [44, 26].map(cy => ({ m: 'rot', fx: .21, cy, rl: -1, foldX: 31 })), [.27, .5, .73].map(fx => ({ m: 'hide', fx, chin: 64 })), [44, 26].map(cy => ({ m: 'rot', fx: .81, cy, rl: 1, foldX: 67 }))][d],
   sbed: () => ({ m: 'sleep', fx: .5, chin: 68, fold: 69 }), canopy: () => [.3, .7].map(fx => ({ m: 'hide', fx, chin: 38 })),
-  lust: () => ({ m: 'rot', fx: .39, cy: 24, rl: -1, nocov: 1, hug: 1 })   // 토끼 인형을 떼어 품에 안고 나란히 누움
+  lust: () => [.3, .5].map(fx => ({ m: 'sit', fx, hip: 23 }))   // 앉기 (오른쪽은 토끼 인형 자리)
 };
 /* 자리 여러 개(큰 소파·침대): 다른 사람이 쓰는 자리는 비켜서, 누른 곳에서 가까운 빈자리 */
 function avSeatTaken(owner, it) { const now = Date.now(), id = it.id || it.k, t = new Set();
