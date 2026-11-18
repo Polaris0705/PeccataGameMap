@@ -25,8 +25,9 @@ function dotEdit(o) {
     z: 4, ox: 0, oy: 0, undo: [], redo: [], ref: null, sel: null, float: null, drag: null, ptr: new Map(), recent: [], sheet: '', dirty: false, pal: -1, origPx: null };
   DE.layers = [deNewLayer('레이어 1', 1)]; DE.px = DE.layers[0].frames[0];
   if (o.guide) { const gi = new Image(); gi.onload = () => { if (!DE || DE.o !== o) return; const c = document.createElement('canvas'); c.width = gi.width; c.height = gi.height; const g = c.getContext('2d'); g.drawImage(gi, 0, 0);
-    const d = g.getImageData(0, 0, c.width, c.height), q = d.data; for (let i = 0; i < q.length; i += 4) { if (!q[i + 3]) continue; const v = (q[i] * .3 + q[i + 1] * .59 + q[i + 2] * .11) / 255; q[i] = 40 + v * 90; q[i + 1] = 150 + v * 90; q[i + 2] = 230; } g.putImageData(d, 0, 0);
-    DE.guide = { img: c, on: true, a: .25, name: o.guideName || '참고' }; deUI(); deDraw(); }; gi.src = o.guide; }
+    const d = g.getImageData(0, 0, c.width, c.height), q = d.data, orig = new Uint8ClampedArray(q); for (let i = 0; i < q.length; i += 4) { if (!q[i + 3]) continue; const v = (q[i] * .3 + q[i + 1] * .59 + q[i + 2] * .11) / 255; q[i] = 40 + v * 90; q[i + 1] = 150 + v * 90; q[i + 2] = 230; } g.putImageData(d, 0, 0);
+    const cs = {}; for (let i = 0; i < orig.length; i += 4) if (orig[i + 3] > 100) { const h = deToHex(orig[i], orig[i + 1], orig[i + 2]); cs[h] = (cs[h] || 0) + 1; }
+    DE.guide = { img: c, on: true, a: .25, name: o.guideName || '참고', orig, w: gi.width, h: gi.height, cols: Object.keys(cs).sort((a, b) => cs[b] - cs[a]).slice(0, 32) }; deUI(); deCols(); deDraw(); }; gi.src = o.guide; }
   const root = document.createElement('div'); root.id = 'dotEd';
   root.innerHTML = `<style>
     #dotEd{position:fixed;inset:0;z-index:38;background:#15100c;display:flex;flex-direction:column;color:var(--text);touch-action:none;user-select:none;-webkit-user-select:none}
@@ -178,6 +179,7 @@ function deCols() {
     <label class="sw ${DE.col2 ? '' : 'none'}" style="${DE.col2 ? 'background:' + DE.col2 + ';' : ''}position:relative;flex-basis:22px;width:22px;height:22px" title="보조색"><input type="color" value="${DE.col2 || '#ffffff'}" style="opacity:0;position:absolute;inset:0;width:100%;height:100%" oninput="DE.col2=this.value.toLowerCase();deCols()"></label>
     <button onclick="[DE.col,DE.col2]=[DE.col2||DE.col,DE.col];deCols()" title="주색↔보조색">⇄</button><button onclick="DE.col2=null;deCols()" title="보조색 없애기">⌀</button>
     <button class="${DE.sheet === 'pal' ? 'on' : ''}" onclick="deSheet('pal')">🎨 ${pal ? esc(pal.name) : '팔레트'}</button>
+    ${DE.guide && DE.guide.cols && DE.guide.cols.length ? `<span class="muted" style="font-size:.72rem;white-space:nowrap">${esc(DE.guide.name)} 색</span>${DE.guide.cols.map(c => `<span class="sw ${c === DE.col ? 'on' : ''}" style="background:${c}" onclick="deSetCol('${c}')" oncontextmenu="event.preventDefault();DE.col2='${c}';deCols()"></span>`).join('')}<span class="muted">|</span>` : ''}
     ${all.map(c => `<span class="sw ${c === DE.col ? 'on' : ''}" style="background:${c}" onclick="deSetCol('${c}')" oncontextmenu="event.preventDefault();DE.col2='${c}';deCols()"></span>`).join('')}`;
 }
 function deUsed() { const s = new Map(); DE.layers.forEach(L => L.frames.forEach(p => { for (let i = 0; i < p.length; i += 4) if (p[i + 3]) { const h = deToHex(p[i], p[i + 1], p[i + 2]); s.set(h, (s.get(h) || 0) + 1); } })); return [...s.entries()].sort((a, b) => b[1] - a[1]).slice(0, 32).map(x => x[0]); }
@@ -332,7 +334,9 @@ function deRedo() { DE && deUndoStep(DE.redo, DE.undo); }
 function dePickAt(x, y) {
   const k = (y * DE.W + x) * 4, p = deComp(DE.fi);
   if (p[k + 3]) return deToHex(p[k], p[k + 1], p[k + 2]);
-  const R = DE.ref; if (R && R.on && R.data) { const rx = Math.floor((x + .5 - R.x) / R.s), ry = Math.floor((y + .5 - R.y) / R.s); if (rx >= 0 && ry >= 0 && rx < R.img.width && ry < R.img.height) { const j = (ry * R.img.width + rx) * 4, d = R.data; if (d[j + 3] > 20) return deToHex(d[j], d[j + 1], d[j + 2]); } }
+  const G = DE.guide; if (G && G.on && x < G.w && y < G.h) { const j = (y * G.w + x) * 4; if (G.orig[j + 3] > 100) return deToHex(G.orig[j], G.orig[j + 1], G.orig[j + 2]); }   // 비친 앞모습 색
+  const R = DE.ref; if (R && R.on && !R.data && R.img) { try { const c = document.createElement('canvas'); c.width = R.img.width; c.height = R.img.height; const g = c.getContext('2d'); g.drawImage(R.img, 0, 0); R.data = g.getImageData(0, 0, c.width, c.height).data; } catch (e) {} }
+  if (R && R.on && R.data) { const rx = Math.floor((x + .5 - R.x) / R.s), ry = Math.floor((y + .5 - R.y) / R.s); if (rx >= 0 && ry >= 0 && rx < R.img.width && ry < R.img.height) { const j = (ry * R.img.width + rx) * 4, d = R.data; if (d[j + 3] > 20) return deToHex(d[j], d[j + 1], d[j + 2]); } }
   return null;
 }
 
