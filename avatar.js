@@ -289,12 +289,15 @@ function avSprite(cfg, dir, step) {
   if (vw !== 2) { const ek = 'eye:round', eo = AVOV[ek], anim = eo && eo.n && eo.n[vw] > 1;
     if (cfg.blink && !anim) {   // 깜빡임: 눈 그림을 세로 한 줄(아래에서 둘째 칸)로 눌러 감은 눈으로
       const t = document.createElement('canvas'); t.width = AVW; t.height = AVH; const tg = t.getContext('2d'), sg = G; G = tg; PP = avP2(tg, cfg, dir, step); layer(ek); G = sg; PP = P2;
-      const d = tg.getImageData(0, 0, AVW, AVH), q = d.data, o = new Uint8ClampedArray(q.length);
+      const d = tg.getImageData(0, 0, AVW, AVH), q = d.data, o = new Uint8ClampedArray(q.length); avBlinkMark.fill(0);
       for (let x = 0; x < AVW; x++) { let a = -1, b = -1; for (let y = 0; y < AVH; y++) if (q[(y * AVW + x) * 4 + 3]) { if (a < 0) a = y; b = y; }
         if (a < 0) continue; if (a === b) { const k = (a * AVW + x) * 4; for (let i = 0; i < 4; i++) o[k + i] = q[k + i]; continue; }   // 한 줄짜리(입)는 그대로
         // 세로로 이어진 덩어리(눈)마다: 맨 위 색으로 아래에서 둘째 줄에 한 칸
         let y = a; while (y <= b) { if (!q[(y * AVW + x) * 4 + 3]) { y++; continue; } let e = y; while (e + 1 <= b && q[((e + 1) * AVW + x) * 4 + 3]) e++;
-          const src = (y * AVW + x) * 4, dst = (Math.max(y, e - 1) * AVW + x) * 4; if (e > y) for (let i = 0; i < 4; i++) o[dst + i] = q[src + i]; else for (let i = 0; i < 4; i++) o[src + i] = q[src + i]; y = e + 1; } }
+          const src = (y * AVW + x) * 4, dst = (Math.max(y, e - 1) * AVW + x) * 4; if (e > y) { for (let i = 0; i < 4; i++) o[dst + i] = q[src + i]; avBlinkMark[dst / 4] = 1; } else for (let i = 0; i < 4; i++) o[src + i] = q[src + i]; y = e + 1; } }
+      // 감은 눈 선을 바깥쪽으로 1칸씩 (앞·뒤: 왼눈은 왼쪽, 오른눈은 오른쪽 · 옆: 귀 쪽)
+      for (let y = 0; y < AVH; y++) { let x = 0; while (x < AVW) { const i = y * AVW + x; if (!o[i * 4 + 3] || !avBlinkMark[i]) { x++; continue; } let e = x; while (e + 1 < AVW && o[(y * AVW + e + 1) * 4 + 3] && avBlinkMark[y * AVW + e + 1]) e++;
+        const nx = vw === 1 ? e + 1 : (x + e) / 2 < AVW / 2 ? x - 1 : e + 1, src = (y * AVW + (nx < x ? x : e)) * 4, dst = (y * AVW + nx) * 4; if (nx >= 0 && nx < AVW && !o[dst + 3]) for (let k = 0; k < 4; k++) o[dst + k] = o[src + k]; x = e + 1; } }
       tg.putImageData(new ImageData(o, AVW, AVH), 0, 0); g.drawImage(t, 0, 0);
     } else layer(ek); }
   if (cfg.hair) layer('hairF:' + cfg.hair);
@@ -327,11 +330,13 @@ function avRoomList(room, owner) {
   if (owner === AVTEST_ROOM) { add(ME.uid, avCfgOf(P), AVLOCAL[ME.uid]); AVFAKE.forEach(f => add(f.id, f.cfg, f, true)); }
   return out;
 }
+const AV_RS = .75;
+const avBlinkMark = new Uint8Array(64 * 72);   // 방에서 토큰 크기 (캔버스 1칸 = 방 0.75픽셀)
 function avDrawList(g, list, maxDepth) {
   list.forEach(a => { if (a.done) return; const depth = ((a.pose ? a.pose.dy : a.y) - FY) / T; if (depth >= maxDepth) return; a.done = true;
     if (!a.cfg) return; if (a.pose) return avDrawPose(g, a);
-    const sp = avSprite(avBlinkCfg(a.cfg, a.uid), a.dir, a.step), S = g._S || 1, w = AVW / 2, h = AVH / 2, x = a.x - w / 2, y = a.y - h + 2 + (a.step % 2 ? -1 : 0);
-    g.save(); g.setTransform(1, 0, 0, 1, 0, 0); g.imageSmoothingEnabled = S < 2; g.fillStyle = 'rgba(20,10,5,.28)'; g.fillRect(Math.round((a.x - 7) * S), Math.round((a.y - 1) * S), Math.round(14 * S), Math.round(2 * S));
+    const sp = avSprite(avBlinkCfg(a.cfg, a.uid), a.dir, a.step), S = g._S || 1, w = AVW * AV_RS, h = AVH * AV_RS, x = a.x - w / 2, y = a.y - 66 * AV_RS + 1 + (a.step % 2 ? -1 : 0);
+    g.save(); g.setTransform(1, 0, 0, 1, 0, 0); g.imageSmoothingEnabled = S < 2; g.fillStyle = 'rgba(20,10,5,.28)'; g.fillRect(Math.round((a.x - 9) * S), Math.round((a.y - 1) * S), Math.round(18 * S), Math.round(2 * S));
     g.drawImage(sp, Math.round(x * S), Math.round(y * S), Math.round(w * S), Math.round(h * S));
     g.restore(); });
 }
@@ -364,8 +369,8 @@ const AV_SEAT = {
   chair: d => [{ m: 'sit', fx: .5, hip: 18 }, { m: 'sit', fx: .45, hip: 18, dir: 1 }, { m: 'sit', fx: .5, hip: 24, dir: 2, behind: 1 }, { m: 'sit', fx: .55, hip: 18, dir: 3 }][d],
   stool: () => ({ m: 'sit', fx: .5, hip: 26 }), ottoman: () => ({ m: 'sit', fx: .5, hip: 15 }), cushion: () => ({ m: 'sit', fx: .5, hip: 12 }),
   sloth: () => ({ m: 'sit', fx: .33, hip: 15 }),
-  bed: d => [{ m: 'sleep', fx: .5, chin: 66 }, { m: 'rot', fx: .25, cy: 40, rl: -1 }, { m: 'sleep', fx: .5, chin: 64 }, { m: 'rot', fx: .75, cy: 40, rl: 1 }][d],
-  sbed: () => ({ m: 'sleep', fx: .5, chin: 64 }), canopy: () => ({ m: 'sleep', fx: .5, chin: 38 }),
+  bed: d => [{ m: 'sleep', fx: .5, chin: 66 }, { m: 'rot', fx: .25, cy: 40, rl: -1 }, { m: 'hide', fx: .5, chin: 64 }, { m: 'rot', fx: .75, cy: 40, rl: 1 }][d],
+  sbed: () => ({ m: 'sleep', fx: .5, chin: 64 }), canopy: () => ({ m: 'hide', fx: .5, chin: 38 }),
   lust: () => ({ m: 'rot', fx: .25, cy: 24, rl: -1 })
 };
 function avSeatTap(owner, it, room) {
@@ -373,7 +378,7 @@ function avSeatTap(owner, it, room) {
   const b = itemBox(it, room); if (!b || !b.foot) return false; const f = b.foot, sp = fn(it.dir || 0); if (!sp) return false;
   const bot = b.y + b.h, px = b.x + b.w * sp.fx, k = sp.m === 'sit' ? 'sit' : 'lie';
   avWalkTo(owner, Math.max(f.x + 4, Math.min(f.x + f.w - 4, px)), Math.min(f.y + f.h - 2, bot)); const s = AVLOCAL[ME.uid]; if (!s) return true;
-  s.pose = { k, m: sp.m, dir: sp.dir || 0, px, py: sp.m === 'sit' ? bot - sp.hip : sp.m === 'sleep' ? bot - sp.chin : bot - sp.cy, rl: sp.rl || -1,
+  s.pose = { k, m: sp.m, dir: sp.dir || 0, px, py: sp.m === 'sit' ? bot - sp.hip : sp.m === 'sleep' || sp.m === 'hide' ? bot - sp.chin : bot - sp.cy, rl: sp.rl || -1,
     dy: sp.behind ? f.y + .01 : f.y + f.h + .5, item: it.id || it.k };
   if (owner !== AVTEST_ROOM) avPush(owner);
   toast(k === 'lie' ? '눕기' : '앉기'); return true;
@@ -397,14 +402,21 @@ function avBlinkCfg(cfg, uid) { let h = 0; for (const ch of String(uid || '')) h
 function avDrawPose(g, a) {
   const S = g._S || 1, p = a.pose, put = (sp, sx, sy, sw, sh, x, y, w, h) => { g.save(); g.setTransform(1, 0, 0, 1, 0, 0); g.imageSmoothingEnabled = S < 2; g.drawImage(sp, sx, sy, sw, sh, Math.round(x * S), Math.round(y * S), Math.round(w * S), Math.round(h * S)); g.restore(); };
   if (p.px == null) return;   // 예전 형식
-  if (p.m === 'sleep') {   // 이불 덮고 누움: 머리·어깨만 (턱 = 캔버스 46줄)
-    const sp = avSprite(Object.assign({}, a.cfg, { blink: 1 }), 0, 0), cut = 50; put(sp, 0, 0, AVW, cut, p.px - AVW / 4, p.py - 23, AVW / 2, cut / 2); return; }
+  if (p.m === 'hide') return;   // 얼굴이 안 보이는 침대: 안 그림
+  if (p.m === 'sleep') {   // 이불 덮고 누움: 얼굴~어깨, 어깨 아래는 이불로 덮음 (턱 = 캔버스 46줄)
+    const pick = (x, y) => { try { const d = g.getImageData(Math.round(x * S), Math.round(y * S), 1, 1).data; return `rgb(${d[0]},${d[1]},${d[2]})`; } catch (e) { return null; } };
+    const fold = pick(p.px, p.py + 1), quilt = pick(p.px, p.py + 9);
+    const sp = avSprite(Object.assign({}, a.cfg, { blink: 1 }), 0, 0), cut = 56, R = AV_RS, y0 = p.py - 46 * R; put(sp, 0, 0, AVW, cut, p.px - AVW * R / 2, y0, AVW * R, cut * R);
+    if (fold && quilt) { const bw = 20 * R, by = y0 + 50 * R; g.save(); g.setTransform(1, 0, 0, 1, 0, 0);
+      g.fillStyle = quilt; g.fillRect(Math.round((p.px - bw / 2) * S), Math.round(by * S), Math.round(bw * S), Math.round((cut * R - 50 * R + 3) * S));
+      g.fillStyle = fold; g.fillRect(Math.round((p.px - bw / 2 - 1) * S), Math.round(by * S), Math.round((bw + 2) * S), Math.round(2 * S)); g.restore(); }
+    return; }
   if (p.m === 'rot') {   // 옆으로 누움: 머리 중심이 돌린 그림 왼쪽(또는 오른쪽)에서 14칸
     const b = avSprite(Object.assign({}, a.cfg, { blink: 1 }), 0, 0), c = document.createElement('canvas'); c.width = AVH; c.height = AVW; const lg = c.getContext('2d');
     lg.translate(AVH / 2, AVW / 2); lg.rotate(p.rl < 0 ? -Math.PI / 2 : Math.PI / 2); lg.drawImage(b, -AVW / 2, -AVH / 2);
-    const w = AVH / 2, h = AVW / 2, x = p.rl < 0 ? p.px - 14 : p.px + 14 - w; put(c, 0, 0, c.width, c.height, x, p.py - h / 2, w, h); return; }
+    const w = AVH * AV_RS, h = AVW * AV_RS, x = p.rl < 0 ? p.px - 28 * AV_RS : p.px + 28 * AV_RS - w; put(c, 0, 0, c.width, c.height, x, p.py - h / 2, w, h); return; }
   const sp = avPoseSprite(avBlinkCfg(a.cfg, a.uid), p.dir, 'sit');   // 앉기: 엉덩이(캔버스 61줄)를 자리 높이에
-  put(sp, 0, 0, sp.width, sp.height, p.px - AVW / 4, p.py - 30.5, AVW / 2, AVH / 2);
+  put(sp, 0, 0, sp.width, sp.height, p.px - AVW * AV_RS / 2, p.py - 61 * AV_RS, AVW * AV_RS, AVH * AV_RS);
 }
 /* ---------- 옷 걸어 두기 (옷 걸이대 · 옷 마네킹) ---------- */
 const AV_HANG_SLOTS = ['top', 'one', 'bottom', 'hat', 'acc', 'shoes'];
