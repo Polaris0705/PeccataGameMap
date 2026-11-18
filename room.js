@@ -79,7 +79,7 @@ function todSky(p, t, x, y, w, h) {
 const PN = { cushion: '쿠션', sheet: '시트', pattern: '무늬', border: '테두리', rose: '장미', runner: '러너', cloth: '천', wood: '나무', metal: '장식', stone: '돌', leaf: '잎', pot: '화분', glass: '유리', curtain: '커튼', frame: '틀', body: '몸', fur: '털', paper: '종이', light: '불빛', hair: '머리카락', face: '얼굴', gold: '금박', thread: '실' };
 const FURN = {
   /* ===== 침실 ===== */
-  bed: { name: '침대', cat: 'bed', cost: 60, hi: true, dirs: [0, 1, 2, 3], dims: d => d % 2 ? { w: 3, d: 2, h: 75 } : { w: 2, d: 3, h: 110 },
+  bed: { name: '침대', cat: 'bed', cost: 60, hi: true, dirs: [0, 1, 2, 3], grow: { 0: 1, 2: 1 }, dims: d => d % 2 ? { w: 3, d: 2, h: 75 } : { w: 3, d: 3, h: 110 },
     parts: { a: ['cloth', '#a8344a'], b: ['wood', '#8a5530'], c: ['sheet', '#f1e6cc'] }, drawHi(p, t, C, dir) { if (dir % 2) BEDHI.side(p, t, C); else BEDHI.front(p, t, C, dir === 2); } },
   canopy: { name: '천개 침대', cat: 'bed', cost: 220, hi: true, dims: () => ({ w: 3, d: 3, h: 150 }), parts: { a: ['curtain', '#6a2a5a'], b: ['wood', '#5a3a24'], c: ['sheet', '#f1e6cc'] }, drawHi(p, t, C) { CANOPYHI(p, t, C); } },
   sbed: { name: '작은 침대', cat: 'bed', cost: 40, hi: true, dims: () => ({ w: 1, d: 3, h: 104 }), parts: { a: ['cloth', '#3a5a8a'], b: ['wood', '#c4864e'], c: ['sheet', '#f1e6cc'] }, drawHi(p, t, C) { SBEDHI(p, t, C); } },
@@ -1842,7 +1842,15 @@ function drawSprite(g, k, x, y, t, alpha, col, dir, img) {
   const f = FURN[k]; if (!f) return; dir = dir || 0; HI_IMG = (f.pic && img) || null; HI_PH = f.pic ? f.pic.h : 0;
   g.save(); if (alpha != null) g.globalAlpha = alpha; const C = colsOf({ k, col });
   if (!g._fr || g._S == null) snapCtx(g, g.getTransform().a || 1);
-  if (f.hi) { const dm = dimsOf(k, dir); f.drawHi(pen(g, x, y, dir === 3 ? dm.w * 64 : 0, .5), t || 0, C, dir); }
+  if (f.hi && f.grow && f.grow[dir]) {   // 넓힌 가구: 원래 크기로 그린 뒤 가운데를 늘림
+    const dm = dimsOf(k, dir), S = g._S || 1, ow = (dm.w - f.grow[dir]) * T, W = dm.w * T, M = 8, off = document.createElement('canvas');
+    off.width = Math.ceil((ow + M * 2) * S); off.height = Math.ceil((dm.h + M * 2) * S); const og = off.getContext('2d'); og.imageSmoothingEnabled = false; snapCtx(og, S);
+    f.drawHi(pen(og, M, M, 0, .5), t || 0, C, dir);
+    const half = Math.floor(ow / 4), slice = 6, ex = W - ow, px = v => Math.round(v * S), sx0 = px(M + half - slice / 2), sw = px(slice);
+    g.drawImage(off, 0, 0, px(M + half), off.height, px(x - M), px(y - M), px(M + half), off.height);
+    for (let d = 0; d < ex; d += slice) { const w = Math.min(slice, ex - d); g.drawImage(off, sx0, 0, px(w), off.height, px(x + half + d), px(y - M), px(w), off.height); }
+    g.drawImage(off, px(M + half), 0, off.width - px(M + half), off.height, px(x + half + ex), px(y - M), off.width - px(M + half), off.height);
+  } else if (f.hi) { const dm = dimsOf(k, dir); f.drawHi(pen(g, x, y, dir === 3 ? dm.w * 64 : 0, .5), t || 0, C, dir); }
   else f.draw(pen(g, x, y), t || 0, C);
   g.restore();
 }
