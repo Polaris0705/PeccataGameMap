@@ -321,7 +321,7 @@ const avHome = () => ({ x: OX + COLS * T / 2, y: FY + ROWS * T * .62 });
 /* 이 방에 그릴 토큰들 */
 function avRoomList(room, owner) {
   if (!owner || (!avOn() && owner !== AVTEST_ROOM)) return []; const out = [], now = Date.now();
-  const add = (uid, cfg, st, fake) => { if (!cfg) return; const p = avPosNow(st) || Object.assign({ moving: false, dir: 0 }, avHome()); out.push({ uid, cfg, x: p.x, y: p.y, dir: p.dir, step: p.moving ? (Math.floor(now / 160) % 4) : 0, fake, pose: p.pose }); };
+  const add = (uid, cfg, st, fake) => { if (!cfg) return; const p = avPosNow(st) || Object.assign({ moving: false, dir: 0 }, avHome()); out.push({ uid, cfg, x: p.x, y: p.y, dir: p.dir, step: p.moving ? (Math.floor(now / 160) % 4) : 0, fake, pose: p.pose, room }); };
   const here = AVPOS.filter(a => a.room === owner && now - (a.seen || 0) < 70000);
   const ownerProg = owner === ME.uid ? P : PROGS.find(p => p.id === owner);
   const ownerSt = AVLOCAL[owner] && (owner === ME.uid) ? AVLOCAL[owner] : here.find(a => a.id === owner);
@@ -369,8 +369,8 @@ const AV_SEAT = {
   chair: d => [{ m: 'sit', fx: .5, hip: 18 }, { m: 'sit', fx: .45, hip: 18, dir: 1 }, { m: 'sit', fx: .5, hip: 24, dir: 2, behind: 1 }, { m: 'sit', fx: .55, hip: 18, dir: 3 }][d],
   stool: () => ({ m: 'sit', fx: .5, hip: 26 }), ottoman: () => ({ m: 'sit', fx: .5, hip: 15 }), cushion: () => ({ m: 'sit', fx: .5, hip: 12 }),
   sloth: () => ({ m: 'sit', fx: .33, hip: 15 }),
-  bed: d => [[.27, .5, .73].map(fx => ({ m: 'sleep', fx, chin: 66 })), [44, 26].map(cy => ({ m: 'rot', fx: .25, cy, rl: -1 })), [.27, .5, .73].map(fx => ({ m: 'hide', fx, chin: 64 })), [44, 26].map(cy => ({ m: 'rot', fx: .75, cy, rl: 1 }))][d],
-  sbed: () => ({ m: 'sleep', fx: .5, chin: 64 }), canopy: () => [.3, .7].map(fx => ({ m: 'hide', fx, chin: 38 })),
+  bed: d => [[.27, .5, .73].map(fx => ({ m: 'sleep', fx, chin: 64, fold: 64 })), [44, 26].map(cy => ({ m: 'rot', fx: .21, cy, rl: -1, foldX: 31 })), [.27, .5, .73].map(fx => ({ m: 'hide', fx, chin: 64 })), [44, 26].map(cy => ({ m: 'rot', fx: .81, cy, rl: 1, foldX: 67 }))][d],
+  sbed: () => ({ m: 'sleep', fx: .5, chin: 68, fold: 69 }), canopy: () => [.3, .7].map(fx => ({ m: 'hide', fx, chin: 38 })),
   lust: () => ({ m: 'rot', fx: .25, cy: 24, rl: -1, nocov: 1 })
 };
 /* 자리 여러 개(큰 소파·침대): 다른 사람이 쓰는 자리는 비켜서, 누른 곳에서 가까운 빈자리 */
@@ -391,6 +391,7 @@ function avSeatTap(owner, it, room, tap) {
   const px = b.x + b.w * sp.fx, k = sp.m === 'sit' ? 'sit' : 'lie';
   avWalkTo(owner, Math.max(f.x + 4, Math.min(f.x + f.w - 4, px)), Math.min(f.y + f.h - 2, bot)); const s = AVLOCAL[ME.uid]; if (!s) return true;
   s.pose = { k, m: sp.m, cov: k === 'lie' && !sp.nocov ? 1 : 0, dir: sp.dir || 0, px, py: sp.m === 'sit' ? bot - sp.hip : sp.m === 'sleep' || sp.m === 'hide' ? bot - sp.chin : bot - sp.cy, rl: sp.rl || -1,
+    fold: sp.fold != null ? bot - sp.fold : null, foldX: sp.foldX != null ? b.x + sp.foldX : null,
     dy: sp.behind ? f.y + .01 + si * .001 : f.y + f.h + .5 + (200 - (sp.hip || sp.cy || sp.chin || 0)) / 1000, item: it.id || it.k, slot: si };
   if (owner !== AVTEST_ROOM) avPush(owner);
   toast(k === 'lie' ? '눕기' : '앉기'); return true;
@@ -411,6 +412,16 @@ function avPoseSprite(cfg, dir, k) {
 }
 /* 자동 깜빡임: 토큰마다 3~4.5초에 한 번, 0.15초 */
 function avBlinkCfg(cfg, uid) { let h = 0; for (const ch of String(uid || '')) h = (h * 31 + ch.charCodeAt(0)) >>> 0; const per = 3000 + h % 1500; return (Date.now() + h) % per < 150 ? Object.assign({}, cfg, { blink: 1 }) : cfg; }
+/* 이불 덮기: 이불 선(fold)부터 침대를 다시 그림 — 토큰 몸이 이불 밑으로 */
+function avTuck(g, a, p, ax) {
+  const room = a.room, it = room && (room.items || []).find(x => (x.id || x.k) === p.item); if (!it || typeof drawSprite !== 'function') return;
+  const b = itemBox(it, room); if (!b) return; const S = g._S || 1;
+  g.save(); g.setTransform(1, 0, 0, 1, 0, 0); g.beginPath();
+  if (ax === 'y' && p.fold != null) g.rect(Math.round((b.x - 4) * S), Math.round(p.fold * S), Math.round((b.w + 8) * S), Math.round((b.y + b.h + 4 - p.fold) * S));
+  else if (ax === 'x' && p.foldX != null) { if (p.rl < 0) g.rect(Math.round(p.foldX * S), Math.round((b.y - 4) * S), Math.round((b.x + b.w + 4 - p.foldX) * S), Math.round((b.h + 8) * S)); else g.rect(Math.round((b.x - 4) * S), Math.round((b.y - 4) * S), Math.round((p.foldX - b.x + 4) * S), Math.round((b.h + 8) * S)); }
+  else { g.restore(); return; }
+  g.clip(); drawSprite(g, it.k, b.x, b.y, (typeof RM !== 'undefined' && RM.t) || 0, null, it.col, it.dir, it.img); g.restore();
+}
 function avDrawPose(g, a) {
   const FR = (x, y, w, h) => (g._fr || g.fillRect.bind(g))(x, y, w, h);   // 기기 픽셀 그대로 (방 캔버스는 fillRect가 배율을 또 곱함)
   const S = g._S || 1, p = a.pose, put = (sp, sx, sy, sw, sh, x, y, w, h) => { g.save(); g.setTransform(1, 0, 0, 1, 0, 0); g.imageSmoothingEnabled = S < 2; g.drawImage(sp, sx, sy, sw, sh, Math.round(x * S), Math.round(y * S), Math.round(w * S), Math.round(h * S)); g.restore(); };
@@ -418,25 +429,15 @@ function avDrawPose(g, a) {
   if (p.m === 'hide') return;   // 얼굴이 안 보이는 침대: 안 그림
   if (p.m === 'sleep' && !p.cov) {   // 이불 걷음: 온몸 (머리는 베개)
     const sp = avSprite(Object.assign({}, a.cfg, { blink: 1 }), 0, 0), R = AV_RS; put(sp, 0, 0, AVW, AVH, p.px - AVW * R / 2, p.py - 46 * R, AVW * R, AVH * R); return; }
-  if (p.m === 'sleep') {   // 이불 덮고 누움: 얼굴~어깨, 어깨 아래는 이불로 덮음 (턱 = 캔버스 46줄)
-    const pick = (x, y) => { try { const d = g.getImageData(Math.round(x * S), Math.round(y * S), 1, 1).data; return `rgb(${d[0]},${d[1]},${d[2]})`; } catch (e) { return null; } };
-    const fold = pick(p.px, p.py + 1), quilt = pick(p.px, p.py + 16);
-    const sp = avSprite(Object.assign({}, a.cfg, { blink: 1 }), 0, 0), cut = 56, R = AV_RS, y0 = p.py - 46 * R; put(sp, 0, 0, AVW, cut, p.px - AVW * R / 2, y0, AVW * R, cut * R);
-    if (fold && quilt) { const bw = 24 * R, by = y0 + 50 * R; g.save(); g.setTransform(1, 0, 0, 1, 0, 0);
-      g.fillStyle = quilt; FR(Math.round((p.px - bw / 2) * S), Math.round(by * S), Math.round(bw * S), Math.round((cut * R - 50 * R + 3) * S));
-      g.fillStyle = fold; FR(Math.round((p.px - bw / 2 - 1) * S), Math.round(by * S), Math.round((bw + 2) * S), Math.round(2 * S)); g.restore(); }
-    return; }
+  if (p.m === 'sleep') {   // 이불 덮음: 온몸을 그린 뒤 침대 이불(흰 접힌 부분부터 아래)을 다시 그려 덮음
+    const sp = avSprite(Object.assign({}, a.cfg, { blink: 1 }), 0, 0), R = AV_RS; put(sp, 0, 0, AVW, AVH, p.px - AVW * R / 2, p.py - 46 * R, AVW * R, AVH * R);
+    avTuck(g, a, p, 'y'); return; }
   if (p.m === 'rot') {   // 옆으로 누움: 머리 중심이 돌린 그림 왼쪽(또는 오른쪽)에서 14칸
     const b = avSprite(Object.assign({}, a.cfg, { blink: 1 }), 0, 0), c = document.createElement('canvas'); c.width = AVH; c.height = AVW; const lg = c.getContext('2d');
     lg.translate(AVH / 2, AVW / 2); lg.rotate(p.rl < 0 ? -Math.PI / 2 : Math.PI / 2); lg.drawImage(b, -AVW / 2, -AVH / 2);
     const R = AV_RS, w = AVH * R, h = AVW * R, x = p.rl < 0 ? p.px - 30 * R : p.px + 30 * R - w;
-    let quilt = null, fold = null; if (p.cov) { try { const sx = p.px - p.rl * 40 * R, d = g.getImageData(Math.round(sx * S), Math.round(p.py * S), 1, 1).data; quilt = `rgb(${d[0]},${d[1]},${d[2]})`;
-      fold = `rgb(${Math.min(255, d[0] + 40)},${Math.min(255, d[1] + 40)},${Math.min(255, d[2] + 40)})`; } catch (e) {} }
     put(c, 0, 0, c.width, c.height, x, p.py - h / 2, w, h);
-    if (quilt) {   // 목 아래로 이불 (머리 쪽 끝에 접힌 선)
-      const nk = p.rl < 0 ? x + 46 * R : x + w - 46 * R, len = 26 * R, bx = p.rl < 0 ? nk : nk - len, by = p.py - 9 * R, bh = 18 * R;
-      g.save(); g.setTransform(1, 0, 0, 1, 0, 0); g.fillStyle = quilt; FR(Math.round(bx * S), Math.round(by * S), Math.round(len * S), Math.round(bh * S));
-      g.fillStyle = fold; FR(Math.round((p.rl < 0 ? bx : bx + len - 2) * S), Math.round((by - 1) * S), Math.round(2 * S), Math.round((bh + 2) * S)); g.restore(); }
+    if (p.cov) avTuck(g, a, p, 'x');
     return; }
   const sp = avPoseSprite(avBlinkCfg(a.cfg, a.uid), p.dir, 'sit');   // 앉기: 엉덩이(캔버스 61줄)를 자리 높이에
   put(sp, 0, 0, sp.width, sp.height, p.px - AVW * AV_RS / 2, p.py - 61 * AV_RS, AVW * AV_RS, AVH * AV_RS);
