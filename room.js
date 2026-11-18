@@ -1499,6 +1499,22 @@ const ENVYHI = (p, t, C) => { const { c, el, ln } = p, M = C.c, A = C.a;   // 64
   for (let i = 0; i < 34; i++) { c(19 + Math.round(i * .45), 38 + i * 3, 3, 3, 'rgba(255,255,255,.35)'); c(27 + Math.round(i * .45), 34 + i * 3, 1, 3, 'rgba(255,255,255,.25)'); }
   // 받침에 기대 둔 수첩 · 만년필
   c(38, 138, 12, 14, '#2a3a2e'); c(39, 139, 10, 12, '#4a6a50'); c(40, 144, 8, 1, '#f4ecd8'); c(48, 136, 2, 16, '#1e1e24'); c(48, 136, 2, 3, GOLD); };
+/* 데이베드 토끼 인형 (hi 좌표: x 가운데, y 발끝) — 왼쪽은 동그란 눈, 오른쪽은 반원 눈 (오른쪽 귀 하나는 접힘) */
+const LUST_BUNNIES = [{ dx: 0, fur: '#f4ece4', ln: '#c8b8a8', half: false }, { dx: 15, fur: '#f6e4e8', ln: '#c8a8b0', half: true }];
+function lustBunny(p, x, y, fur, ln, half) { const { c, el } = p; const PK = { o: '#f4b8c8', l: '#f4b8c8', t: '#f4b8c8', f: '#f4b8c8' };
+    const ears = half ? [['l', [x - 3, y - 19, x - 5, y - 30, 4], fur, ln], ['l', [x + 3, y - 19, x + 10, y - 24, 4], fur, ln]]
+                      : [['l', [x - 3, y - 19, x - 4, y - 31, 4], fur, ln], ['l', [x + 3, y - 19, x + 4, y - 31, 4], fur, ln]];
+    hblob(p, [...ears, ['e', [x, y - 6, 7, 6], fur, ln], ['e', [x - 4, y, 3, 2], fur, ln], ['e', [x + 4, y, 3, 2], fur, ln], ['e', [x, y - 16, 6, 5], fur, ln]]);
+    if (half) { hleaf(p, x - 3, y - 21, x - 5, y - 28, 1, PK); hleaf(p, x + 4, y - 20, x + 9, y - 23, 1, PK); }
+    else { hleaf(p, x - 3, y - 21, x - 4, y - 29, 1, PK); hleaf(p, x + 3, y - 21, x + 4, y - 29, 1, PK); }
+    [-3, 2].forEach(dx => { const ex = x + dx;
+      if (half) { c(ex, y - 17, 2, 1, OL); c(ex - 1, y - 16, 1, 1, OL); c(ex + 2, y - 16, 1, 1, OL); }   // 반눈 ⩌ (선만)
+      else { c(ex, y - 17, 2, 2, OL); c(ex, y - 17, 1, 1, '#ffffff'); } });   // 동그란 눈 + 반짝
+    c(x - 1, y - 14, 2, 1, '#e87890'); el(x - 5, y - 14, 1, 1, '#f4a8b8'); el(x + 5, y - 14, 1, 1, '#f4a8b8'); el(x, y - 4, 3, 2, '#ffffff'); }
+/* 누운 토끼 인형: 방 좌표 (cx, cy)가 인형 가운데, 머리는 왼쪽(rl<0) 또는 오른쪽 */
+function drawLyingBunny(g, cx, cy, i, rl, k) { const b = LUST_BUNNIES[i], S = g._S || 1; k = k || .5;
+  g.save(); g.setTransform(1, 0, 0, 1, 0, 0); g.translate(Math.round(cx * S), Math.round(cy * S)); g.rotate(rl < 0 ? -Math.PI / 2 : Math.PI / 2);
+  lustBunny(pen(g, -84 * k, -52 * k, 0, k), 84, 66, b.fur, b.ln, b.half); g.restore(); }
 const LUSTHI = (p, t, C) => { const { c, el, ln } = p, A = C.a, B = C.b, R = ramp(C.c.t);   // 128 × 104 · 푹신한 장미 데이베드 (단추 누빔 등받이 · 둥근 팔걸이 · 통통한 좌판) + 그림책 · 토끼 인형
   el(64, 100, 58, 4, 'rgba(0,0,0,.2)');
   // 나무 등받이 테 (장미 조각) · 다리 · 치마단
@@ -1519,19 +1535,8 @@ const LUSTHI = (p, t, C) => { const { c, el, ln } = p, A = C.a, B = C.b, R = ram
     for (let v = 9; v < 15; v++) for (let u = 19; u < 25; u++) pt(u, v, v < 12 ? '#d8303a' : '#f4e8d0'); pt(21, 14, '#8a5a34'); pt(22, 14, '#8a5a34');
     for (let u = -1; u < 31; u++) pt(u, 19, '#1e3a6a'); };
   book(30, 53);
-  // 나란히 앉은 토끼 인형 둘 — 왼쪽은 동그란 눈, 오른쪽은 반원 눈 (오른쪽 귀 하나는 접힘)
-  const bunny = (x, y, fur, ln, half) => { const PK = { o: '#f4b8c8', l: '#f4b8c8', t: '#f4b8c8', f: '#f4b8c8' };
-    const ears = half ? [['l', [x - 3, y - 19, x - 5, y - 30, 4], fur, ln], ['l', [x + 3, y - 19, x + 10, y - 24, 4], fur, ln]]
-                      : [['l', [x - 3, y - 19, x - 4, y - 31, 4], fur, ln], ['l', [x + 3, y - 19, x + 4, y - 31, 4], fur, ln]];
-    hblob(p, [...ears, ['e', [x, y - 6, 7, 6], fur, ln], ['e', [x - 4, y, 3, 2], fur, ln], ['e', [x + 4, y, 3, 2], fur, ln], ['e', [x, y - 16, 6, 5], fur, ln]]);
-    if (half) { hleaf(p, x - 3, y - 21, x - 5, y - 28, 1, PK); hleaf(p, x + 4, y - 20, x + 9, y - 23, 1, PK); }
-    else { hleaf(p, x - 3, y - 21, x - 4, y - 29, 1, PK); hleaf(p, x + 3, y - 21, x + 4, y - 29, 1, PK); }
-    [-3, 2].forEach(dx => { const ex = x + dx;
-      if (half) { c(ex, y - 17, 2, 1, OL); c(ex - 1, y - 16, 1, 1, OL); c(ex + 2, y - 16, 1, 1, OL); }   // 반눈 ⩌ (선만)
-      else { c(ex, y - 17, 2, 2, OL); c(ex, y - 17, 1, 1, '#ffffff'); } });   // 동그란 눈 + 반짝
-    c(x - 1, y - 14, 2, 1, '#e87890'); el(x - 5, y - 14, 1, 1, '#f4a8b8'); el(x + 5, y - 14, 1, 1, '#f4a8b8'); el(x, y - 4, 3, 2, '#ffffff'); };
-  bunny(84, 66, '#f4ece4', '#c8b8a8', false);
-  bunny(99, 66, '#f6e4e8', '#c8a8b0', true);
+  // 나란히 앉은 토끼 인형 둘 — 누가 안고 누우면(HI_NOBUNNY) 인형은 토큰 품으로
+  if (!window.HI_NOBUNNY) LUST_BUNNIES.forEach(b => lustBunny(p, 84 + b.dx, 66, b.fur, b.ln, b.half));
   };
 /* ===== 새 가구 (v58): 취미·생활 + 앤틱 ===== */
 // 다리 달린 욕조 128 × 80
@@ -1870,7 +1875,8 @@ function paintRoom(cv, room, opts) {
     const b = itemBox(i, room); if (!b) return; const f = FURN[i.k];
     if (AVL.length) avDrawList(g, AVL, f.wall || f.flat ? -1 : i.r + fd(i.k, i.dir) - .01);
     if (i.r >= 0 && !f.flat && !f.top) { g.fillStyle = 'rgba(30,15,5,.22)'; g.fillRect(b.x + 3, b.y + b.h - 5, b.w - 6, 6); g.fillRect(b.x + 7, b.y + b.h + 1, b.w - 14, 2); }
-    HI_MS = i.imgMs || 140; drawSprite(g, i.k, b.x, b.y, t, i.id === dragId ? .35 : null, i.col, i.dir, i.img);
+    HI_MS = i.imgMs || 140; window.HI_NOBUNNY = AVL.some(a => a.pose && a.pose.hug && a.pose.item === (i.id || i.k));
+    drawSprite(g, i.k, b.x, b.y, t, i.id === dragId ? .35 : null, i.col, i.dir, i.img); window.HI_NOBUNNY = false;
     if (i.wear && f.hang && typeof avDrawHung === 'function') avDrawHung(g, i, b, f.hang);
     if (edit && RM.sel === 'id:' + i.id) { frameRect(g, b.x, b.y, b.w, b.h, '#ffe08a'); if (b.foot) frameRect(g, b.foot.x, b.foot.y, b.foot.w, b.foot.h, 'rgba(255,224,138,.6)'); }
   });
