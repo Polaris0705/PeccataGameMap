@@ -635,19 +635,23 @@ function avOvSection() {
 async function avOvExport(keys) {
   toast('그림 준비 중');
   await avLoadUrls(Object.values(AVOV).flatMap(v => Object.values(v.pics || {})));
-  const LW = 90, G = 4, rows = keys.length + 1, c = document.createElement('canvas');
-  c.width = LW + (AVW + G) * 3; c.height = rows * (AVH + G) + 14; const g = c.getContext('2d');
-  g.fillStyle = '#ffffff'; g.font = '9px sans-serif'; g.textBaseline = 'top';
-  ['앞', '옆', '뒤'].forEach((t, i) => g.fillText(t, LW + i * (AVW + G) + 2, 1));
+  // 4배로 크게 · 층마다 몸을 흐리게 깔아서 위치·크기를 몸과 비교 (몸 층 자체는 그대로)
+  const Z = 4, LW = 90, G = 4, rows = keys.length + 1, c = document.createElement('canvas'), TX = [];
+  c.width = LW + (AVW + G) * 3; c.height = rows * (AVH + G) + 14; const g = c.getContext('2d'); g.imageSmoothingEnabled = false;
+  ['앞', '옆', '뒤'].forEach((t, i) => TX.push([t, LW + i * (AVW + G) + 2, 1]));
+  const bodyPic = v => { const bp = AVOV.body && AVOV.body.pics && AVOV.body.pics[v], im = bp && cfImg(bp); return im ? { im, n: (AVOV.body.n || {})[v] } : { im: avLayerPng('body', v, true), n: 1 }; };
   keys.forEach((k, r) => { const y = 14 + r * (AVH + G), ov = AVOV[k] || {}, pics = ov.pics || {};
-    g.fillText(k, 2, y + 2); g.fillText(pics[0] || pics[1] || pics[2] ? '(고침)' : '(원래)', 2, y + 14);
+    TX.push([k, 2, y + 2]); TX.push([pics[0] || pics[1] || pics[2] ? '(고침)' : '(원래)', 2, y + 14]);
     [0, 1, 2].forEach(v => { const x = LW + v * (AVW + G), im = pics[v] && cfImg(pics[v]);
-      g.fillStyle = 'rgba(255,255,255,.08)'; g.fillRect(x, y, AVW, AVH); g.fillStyle = '#ffffff';
+      g.fillStyle = 'rgba(255,255,255,.08)'; g.fillRect(x, y, AVW, AVH);
+      if (k !== 'body') { const b = bodyPic(v); g.globalAlpha = .22; avPic(g, b.im, x, y, 0, b.n); g.globalAlpha = 1; }
       if (im) avPic(g, im, x, y, 0, (ov.n || {})[v]); else { g.globalAlpha = .35; g.drawImage(avLayerPng(k, v, true), x, y); g.globalAlpha = 1; } }); });
-  const y = 14 + keys.length * (AVH + G), cfg = keys.length === 1 ? avOvCfg(keys[0]) : Object.assign({}, AV_DEF, P.avatar || {}); g.fillText('전체 모습', 2, y + 2); avClr();
+  const y = 14 + keys.length * (AVH + G), cfg = keys.length === 1 ? avOvCfg(keys[0]) : Object.assign({}, AV_DEF, (P && P.avatar) || {}); TX.push(['전체 모습', 2, y + 2]); avClr();
   [0, 1, 2].forEach(v => g.drawImage(avSprite(cfg, v, 0), LW + v * (AVW + G), y));
-  // 어두운 배경 위에 투명 그림이 잘 보이게 바탕을 깔고 PNG로
-  const out = document.createElement('canvas'); out.width = c.width; out.height = c.height; const og = out.getContext('2d'); og.fillStyle = '#3a3036'; og.fillRect(0, 0, out.width, out.height); og.drawImage(c, 0, 0);
+  // 어두운 바탕 + 4배 확대(도트 그대로) + 글자는 확대한 뒤에 또렷하게
+  const out = document.createElement('canvas'); out.width = c.width * Z; out.height = c.height * Z; const og = out.getContext('2d'); og.fillStyle = '#3a3036'; og.fillRect(0, 0, out.width, out.height);
+  og.imageSmoothingEnabled = false; og.drawImage(c, 0, 0, out.width, out.height);
+  og.fillStyle = '#ffffff'; og.font = (9 * Z) + 'px sans-serif'; og.textBaseline = 'top'; TX.forEach(([t, x, yy]) => og.fillText(t, x * Z, yy * Z, (LW - 4) * Z));
   const name = 'token_' + (keys.length === 1 ? keys[0].replace(/[:]/g, '_') : 'all') + '.png';
   out.toBlob(async blob => { const f = new File([blob], name, { type: 'image/png' });
     try { if (navigator.canShare && navigator.canShare({ files: [f] })) { await navigator.share({ files: [f], title: name }); return; } } catch (e) { if (e && e.name === 'AbortError') return; }
