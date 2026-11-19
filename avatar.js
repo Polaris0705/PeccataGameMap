@@ -599,7 +599,9 @@ function wfForm() {
 }
 function wfRead() { const n = $('#wfN'); if (!n) return; WFD.name = n.value.trim(); WFD.slot = $('#wfS').value; if (WFD.kind === 'kp') { WFD.cost = Math.max(0, +$('#wfC').value || 0); WFD.sell = $('#wfSell').checked; } }
 async function wfDraw(k) {
-  wfRead(); const base = Object.assign({}, AV_DEF, { hair: 'short', top: '', bottom: '', shoes: '', one: k >= 3 ? 'dress' : '', outer: '', hat: '', acc: '' }), dir = k % 3 === 1 ? 1 : k % 3 === 2 ? 2 : 0;   // 3~5: 원피스 위 겉옷 (드레스 밑그림)
+  wfRead(); const my = P && avCfgOf(P), sl = WFD.slot, base = my ? Object.assign({}, my) : Object.assign({}, AV_DEF, { hair: 'short', top: '', bottom: '', shoes: '', one: '', outer: '', hat: '', acc: '' });   // 밑그림: 지금 내 토큰 (그리는 부위는 벗김)
+  if (my) { base[sl] = ''; if (sl === 'one') { base.top = ''; base.bottom = ''; } if (sl === 'top' || sl === 'bottom') base.one = ''; if (sl !== 'outer') base.outer = sl === 'one' ? '' : base.outer; }
+  if (k >= 3) { base.one = base.one || 'dress'; base.outer = ''; } const dir = k % 3 === 1 ? 1 : k % 3 === 2 ? 2 : 0;   // 3~5: 원피스 위 겉옷 (드레스 밑그림)
   toast('밑그림 준비 중');
   const ref = await avRefUrl(base, dir), guide = k % 3 && WFD.pics[k - k % 3] ? await avRefUrl(base, 0, { extra: [WFD.pics[k - k % 3]] }) : null;
   const src0 = WFD.pics[k] ? await avToFull(WFD.pics[k]) : null;
@@ -666,6 +668,12 @@ async function avOvExport(keys) {
     try { if (navigator.canShare && navigator.canShare({ files: [f] })) { await navigator.share({ files: [f], title: name }); return; } } catch (e) { if (e && e.name === 'AbortError') return; }
     const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = name; document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 4000); toast('내보내기 완료'); }, 'image/png');
 }
+function avMyRefCfg(key) { const my = typeof P !== 'undefined' && P ? avCfgOf(P) : null, o = avOvCfg(key); if (!my) return o;
+  const [k, id] = key.split(':'), c = Object.assign({}, my), keepCol = (sl, ck) => { if (c[sl] !== id) c[ck] = o[ck]; c[sl] = id; };
+  if (k === 'hairF' || k === 'hairB') keepCol('hair', 'hairCol'); else if (k === 'eye') keepCol('eye', 'eyeCol'); else if (k === 'face') keepCol('face', 'faceCol');
+  else if (k === 'outerD') { keepCol('outer', 'outerCol'); if (!c.one) { c.one = o.one; c.oneCol = o.oneCol; } }
+  else if (k === 'one') keepCol('one', 'oneCol'); else if (k === 'top' || k === 'bottom') { keepCol(k, k === 'top' ? 'topCol' : 'botCol'); c.one = ''; }
+  else if (AVCOLKEY[k]) keepCol(k, AVCOLKEY[k]); return c; }
 function avOvCfg(key) { const [k, id] = key.split(':'), c = Object.assign({}, AV_DEF); if (k === 'outerD') { Object.assign(c, { one: 'dress', oneCol: AV_ITEMS.one.dress[2], outer: id, outerCol: AV_ITEMS.outer[id][2] }); return c; } if (k === 'eye') c.eye = id; if (k === 'hairB' || k === 'hairF') { c.hair = id; c.hairCol = AV_ITEMS.hair[id][2]; }
   if (AV_ITEMS[k] && k !== 'eye' && k !== 'hair') { if (k === 'one') { c.one = id; } else c[k] = id; const ck = { top: 'topCol', bottom: 'botCol', one: 'oneCol', outer: 'outerCol', face: 'faceCol', shoes: 'shoeCol', hat: 'hatCol', acc: 'accCol' }[k]; c[ck] = AV_ITEMS[k][id][2]; } return c; }
 function avNoArms(vw) { const bp = AVOV.body && AVOV.body.pics || {}; if (!bp[vw]) return false; const r = avBodyCut(vw === 1 ? 0 : vw, vw === 1 ? bp[0] || '' : bp[vw]); return !!(r && r.noArms); }
@@ -693,12 +701,12 @@ async function avRefUrl(cfg, d, o) {
   if (o.key && o.pend) { if (had) AVOV[o.key] = keep; else delete AVOV[o.key]; }
   AV_SKIP = null; avClr(); return c.toDataURL();
 }
-function avSetRef(url, a) { const im = new Image(), o = DE && DE.o; im.onload = () => { if (DE && DE.o === o) { DE.base = { img: im, a, on: true, name: '몸' }; deUI(); deDraw(); } }; im.src = url; }   // 기본 몸 밑그림은 따로 (올린 밑그림과 같이 보임)
+function avSetRef(url, a) { const im = new Image(), o = DE && DE.o; im.onload = () => { if (DE && DE.o === o) { DE.base = { img: im, a, on: true, name: '토큰' }; deUI(); deDraw(); } }; im.src = url; }   // 기본 몸 밑그림은 따로 (올린 밑그림과 같이 보임)
 async function avOvDraw(key, d) {
   toast('밑그림 준비 중');
-  const orig = avLayerPng(key, d), cfg = avOvCfg(key);
-  const base = await avRefUrl(cfg, d, { key, pend: AVOD.pics, skip: key });
-  const guide = d ? await avRefUrl(cfg, 0, { key, pend: AVOD.pics }) : null;
+  const orig = avLayerPng(key, d), cfg = avOvCfg(key), rc = avMyRefCfg(key);   // 밑그림·앞모습은 지금 내 토큰에 이 템을 입힌 모습
+  const base = await avRefUrl(rc, d, { key, pend: AVOD.pics, skip: key });
+  const guide = d ? await avRefUrl(rc, 0, { key, pend: AVOD.pics }) : null;
   const src0 = AVOD.pics[d] ? await avToFull(AVOD.pics[d], AVOD.n[d] || 1) : orig;
   dotEdit({ W: AVW, H: AVH, src: src0, orig, key: 'avov_' + key + '_' + d, title: key + ' · ' + ['앞', '옆', '뒤'][d], guide, guideName: '앞모습', allowEmpty: key !== 'body', layerSrc: AV_LSRC(), presets: { list: avPresetList(key), get: pk => pk === 'o|' + key ? Promise.resolve({ url: orig, n: 1 }) : avPresetPic(pk, key, d) },
     cols: (() => { const b = avLayerCol(key, cfg)[0]; if (!b || key === 'body') return null; const r = ramp(b); return { name: '색 바꾸기 색', cols: [r.L, r.l, r.t, r.f, r.d, r.o] }; })(),   // 다 지우고 저장하면 그 층을 안 그림 (원래대로는 ↺)
