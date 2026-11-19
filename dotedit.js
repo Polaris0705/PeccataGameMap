@@ -66,6 +66,8 @@ function dotEdit(o) {
 function deClose(save) {
   if (!DE) return; const o = DE.o;
   if (!save && DE.dirty && !confirm('그린 것을 저장하지 않고 닫을까요?')) return;
+  if (save && !DE.opWarned) { const lo = DE.layers.filter(L => L.vis !== false && (L.op == null ? 1 : L.op) < 1); DE.opWarned = 1;   // 투명도 100% 아닌 레이어: 저장 때 한 번만 확인
+    if (lo.length && !confirm(`투명도가 100%가 아닌 레이어가 있습니다.\n${lo.map(L => `· ${L.name} (${Math.round(L.op * 100)}%)`).join('\n')}\n\n그대로 저장할까요?`)) return; }
   let url = null, meta = null;
   if (save) { if (DE.float) deCommitFloat(); deStop(); meta = { n: deN(), ms: DE.ms, fms: deFms() };
     if (deIsEmpty()) url = null; else if (DE.origPx && deN() === 1 && deSame(deComp(0), DE.origPx)) { url = null; toast('원래 그림과 같아서 원래대로 돌려 둠'); } else url = dePng(); }
@@ -168,7 +170,7 @@ function deUI() {
     <span class="muted">크기</span><input type="range" min="5" max="400" value="${Math.round(DE.ref.s * 100)}" oninput="deRefScale(this.value/100)"><button onclick="deRefFit()">맞추기</button><button onclick="deSheet('conv')">🧩 도트로 바꾸기</button><button onclick="DE.ref=null;deUI();deDraw()">🗑</button>` : '';
   const gd = DE.guide ? `<button class="${DE.guide.on ? 'on' : ''}" onclick="DE.guide.on=!DE.guide.on;deUI();deDraw()">👁 ${DE.guide.name}</button><input type="range" min="5" max="100" value="${Math.round(DE.guide.a * 100)}" oninput="DE.guide.a=this.value/100;deDraw()">` : '';
   $('#deOpts').innerHTML = `${gd}${DE.o.orig ? '<button onclick="deToOrig()">↺ 원래 도트로</button>' : ''}${sz}${dith}${grad}${scope}${shp}${sel}<button class="${DE.mirror ? 'on' : ''}" onclick="DE.mirror=!DE.mirror;deUI();deDraw()">⇿ 좌우 대칭</button><button class="${DE.grid ? 'on' : ''}" onclick="DE.grid=!DE.grid;deUI();deDraw()"># 격자</button><button onclick="deFit()">⤢ 화면 맞춤</button>
-    <button class="${DE.sheet === 'room' ? 'on' : ''}" onclick="deSheet('room')">🏠 방에서 보기</button><button class="${DE.sheet === 'fx' ? 'on' : ''}" onclick="deSheet('fx')">✨ 외곽선·그림자</button><button onclick="deRefPick()">📷 밑그림 올리기</button>${ref}<button onclick="deSheet('imp')">🪑 가구 불러오기</button><button onclick="deFlipAll()">⇋ 전체 뒤집기</button><button onclick="deClearAll()">🗑 이 레이어 지우기</button>`;
+    <button class="${DE.sheet === 'bg' ? 'on' : ''}" onclick="deSheet('bg')">🖼 배경</button><button class="${DE.sheet === 'room' ? 'on' : ''}" onclick="deSheet('room')">🏠 방에서 보기</button><button class="${DE.sheet === 'fx' ? 'on' : ''}" onclick="deSheet('fx')">✨ 외곽선·그림자</button><button onclick="deRefPick()">📷 밑그림 올리기</button>${ref}<button onclick="deSheet('imp')">🪑 가구 불러오기</button><button onclick="deFlipAll()">⇋ 전체 뒤집기</button><button onclick="deClearAll()">🗑 이 레이어 지우기</button>`;
   deCols();
 }
 function deScopeHtml() { return `<label class="muted"><input type="checkbox" ${DE.scopeL ? 'checked' : ''} onchange="DE.scopeL=this.checked">모든 레이어</label>${deN() > 1 ? `<label class="muted"><input type="checkbox" ${DE.scopeF ? 'checked' : ''} onchange="DE.scopeF=this.checked">모든 장면</label>` : ''}`; }
@@ -215,6 +217,10 @@ function deSheetBody() {
     <div class="row" style="gap:4px;flex-wrap:wrap;align-items:center"><button onclick="deOutline(false)">✒ 바깥 테두리</button><button onclick="deOutline(true)">✒ 대각선까지</button>${deN() > 1 ? `<label class="muted"><input type="checkbox" ${DE.scopeF ? 'checked' : ''} onchange="DE.scopeF=this.checked">모든 장면</label>` : ''}</div>
     <p class="muted" style="margin:10px 0 2px;font-size:.82rem"><b>그림자</b> — 맨 아래에 반투명 그림자 레이어를 새로 만듦 (투명도는 레이어에서 조절).</p>
     <div class="row" style="gap:4px;flex-wrap:wrap"><button onclick="deShadow('floor')">🌑 바닥 타원 그림자</button><button onclick="deShadow('drop')">🌘 오른쪽 아래 그림자</button>${close}</div>`;
+  if (k === 'bg') { const cur = deBg(); sh.innerHTML = `<div class="row" style="justify-content:space-between;align-items:center"><b>🖼 배경색</b>${close}</div>
+      <div class="row" style="gap:6px;flex-wrap:wrap;margin-top:8px">${DE_BGS.map(([n, a, b]) => `<button class="${cur[0] === a && cur[1] === b ? 'on' : ''}" onclick="deBgSet('${a}','${b}')"><span class="sw" style="display:inline-block;width:16px;height:16px;vertical-align:-3px;margin-right:4px;background:repeating-conic-gradient(${a} 0 25%,${b} 0 50%) 0 0/8px 8px"></span>${n}</button>`).join('')}
+        <label class="row" style="gap:4px;align-items:center;flex:0 0 auto"><span>직접</span><input type="color" value="${cur[0]}" style="width:50px" onchange="deBgSet(this.value,'')"></label></div>
+      <p class="muted" style="font-size:.78rem;margin:6px 0 0">보기만 바뀜 · 그림에는 안 들어감</p>`; return; }
   if (k === 'room') { sh.innerHTML = `<div class="row" style="justify-content:space-between;align-items:center"><b>🏠 방에 놓인 모습</b>${close}</div><div style="display:flex;gap:10px;align-items:flex-end;overflow-x:auto;margin-top:6px"><div style="text-align:center"><canvas id="deRm1" style="image-rendering:pixelated"></canvas><div class="muted" style="font-size:.75rem">실제 크기</div></div><div style="text-align:center"><canvas id="deRm2" style="image-rendering:pixelated"></canvas><div class="muted" style="font-size:.75rem">2배</div></div></div>`;
     deRoomPrev(); DE.roomT = setInterval(deRoomPrev, Math.max(120, DE.ms)); }
   if (k === 'conv') sh.innerHTML = `<b>🧩 밑그림을 도트로 바꾸기</b><p class="muted" style="margin:4px 0">밑그림 → 도트 변환 · 현재 레이어 덮어씀</p>
@@ -228,13 +234,17 @@ function deSheetBody() {
 }
 
 /* ---------- 그리기 ---------- */
+/* 그림판 배경 (보기 전용 · 기억함) — [이름, 바탕, 체크 칸] */
+const DE_BGS = [['어두움', '#2a2420', '#332c27'], ['회색', '#808080', '#8c8c8c'], ['밝은 회색', '#c8c8c8', '#d4d4d4'], ['흰색', '#ffffff', '#f0f0f0'], ['체크', '#9a9a9a', '#e0e0e0'], ['초록', '#4a8a5a', '#52946a']];
+function deBg() { try { const v = JSON.parse(localStorage.getItem('peccata_debg') || 'null'); if (v && v[0]) return v; } catch (e) {} return [DE_BGS[0][1], DE_BGS[0][2]]; }
+function deBgSet(a, b) { try { localStorage.setItem('peccata_debg', JSON.stringify([a, b || ''])); } catch (e) {} if (DE && DE.sheet === 'bg') deSheetBody(); deDraw(); }
 function deDraw() {
   if (!DE) return; const cv = $('#deCv'); if (!cv) return; const r = cv.getBoundingClientRect(), dpr = window.devicePixelRatio || 1;
   if (cv.width !== Math.round(r.width * dpr) || cv.height !== Math.round(r.height * dpr)) { cv.width = Math.round(r.width * dpr); cv.height = Math.round(r.height * dpr); }
   const g = cv.getContext('2d'); g.setTransform(dpr, 0, 0, dpr, 0, 0); g.clearRect(0, 0, r.width, r.height);
   const { W, H, z, ox, oy } = DE;
-  g.fillStyle = '#2a2420'; g.fillRect(ox, oy, W * z, H * z); g.fillStyle = '#332c27'; const ck = Math.max(z * 4, 8);
-  for (let y = 0; y < H * z; y += ck) for (let x = (Math.floor(y / ck) % 2) * ck; x < W * z; x += ck * 2) g.fillRect(ox + x, oy + y, Math.min(ck, W * z - x), Math.min(ck, H * z - y));
+  const [bg1, bg2] = deBg(); g.fillStyle = bg1; g.fillRect(ox, oy, W * z, H * z); g.fillStyle = bg2 || bg1; const ck = Math.max(z * 4, 8);
+  if (bg2) for (let y = 0; y < H * z; y += ck) for (let x = (Math.floor(y / ck) % 2) * ck; x < W * z; x += ck * 2) g.fillRect(ox + x, oy + y, Math.min(ck, W * z - x), Math.min(ck, H * z - y));
   if (DE.ref && DE.ref.on && DE.ref.img) { g.save(); g.globalAlpha = DE.ref.a; g.imageSmoothingEnabled = !DE.ref.crisp; g.drawImage(DE.ref.img, ox + DE.ref.x * z, oy + DE.ref.y * z, DE.ref.img.width * DE.ref.s * z, DE.ref.img.height * DE.ref.s * z); g.restore(); }
   if (DE.guide && DE.guide.on) { g.save(); g.globalAlpha = DE.guide.a; g.imageSmoothingEnabled = false; g.drawImage(DE.guide.img, ox, oy, W * z, H * z); g.restore(); }
   const tmp = deTmp();
