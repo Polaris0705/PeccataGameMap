@@ -23,7 +23,7 @@ GitHub Pages(화면) + Firebase(로그인·데이터) + Railway(푸시 알림 �
 | `icons.js` · `gifkit.js` | 도트 아이콘 · 움직이는 GIF 줄이기 |
 | `fonts/` | 갈무리11 글꼴 (SIL OFL). **폴더째로** 올려 주세요 |
 | `firestore.rules` | Firebase 보안 규칙 |
-| `manifest.json`, `sw.js`, `icon-192.png`, `icon-512.png`, `apple-touch-icon.png` | 앱 설치(PWA) · 캐시 · 푸시 알림 |
+| `manifest.json`, `sw.js`, `icon-*.png`, `apple-touch-icon.png`, `badge-96.png` | 앱 설치(PWA) · 캐시 · 푸시 알림 |
 | `push-server/` | Railway에 올리는 푸시 알림 서버 |
 
 ## 0. 먼저 데모로 확인하기 (선택)
@@ -72,7 +72,7 @@ cocEdition: 7                   // 채팅 판정 규칙 (6판/7판)
   '홈 화면에 추가'(바로가기)로 넣으면 알림이 크롬 이름·아이콘으로 와요. 꼭 **앱 설치**로 넣어 주세요.
 - **아이패드/아이폰**: Safari로 열고 **공유 ⬆ › 홈 화면에 추가**를 눌러요. 크롬 앱에서는 안 돼요.
 - 설치하면 주소창 없이 전체 화면으로 열리고, 로그인도 유지돼요.
-- 앱 아이콘을 바꾸려면 `icon-192.png`(192×192), `icon-512.png`(512×512), `apple-touch-icon.png`(180×180)를 같은 이름으로 바꿔 올리고 `sw.js`의 캐시 버전을 올려요. 아이폰은 홈 화면 아이콘을 지웠다가 다시 추가해야 바뀌어요.
+- 앱 아이콘을 바꾸려면 `icon-192.png`(192×192), `icon-512.png`(512×512), `apple-touch-icon.png`(180×180), `icon-maskable-512.png`(안드로이드 동그라미용, 그림을 62% 크기로 가운데), `badge-96.png`(알림 막대용 흰 실루엣)를 같은 이름으로 바꿔 올리고 `sw.js`의 캐시 버전을 올려요. 아이폰은 홈 화면 아이콘을 지웠다가 다시 추가해야 바뀌어요.
 
 ## 6. 푸시 알림 (Railway)
 화면이 꺼져 있어도 알림이 와요 (호출, 예약 승인/거절/변경, 새 물건, 숨은 글 공개, 채팅 @언급·귓속말, 세션 일정 등).
