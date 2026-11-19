@@ -667,7 +667,7 @@ async function avRefUrl(cfg, d, o) {
   if (o.key && o.pend) { if (had) AVOV[o.key] = keep; else delete AVOV[o.key]; }
   AV_SKIP = null; avClr(); return c.toDataURL();
 }
-function avSetRef(url, a) { if (DE && DE.userRef) return; const im = new Image(); im.onload = () => { if (DE && !DE.userRef) { DE.ref = { img: im, data: null, a, on: true, x: 0, y: 0, s: 1, crisp: true }; deUI(); deDraw(); } }; im.src = url; }
+function avSetRef(url, a) { const im = new Image(), o = DE && DE.o; im.onload = () => { if (DE && DE.o === o) { DE.base = { img: im, a, on: true, name: '몸' }; deUI(); deDraw(); } }; im.src = url; }   // 기본 몸 밑그림은 따로 (올린 밑그림과 같이 보임)
 async function avOvDraw(key, d) {
   toast('밑그림 준비 중');
   const orig = avLayerPng(key, d), cfg = avOvCfg(key);

@@ -184,8 +184,9 @@ function deUI() {
     : `<button onclick="deLift()" ${DE.sel ? '' : 'disabled'}>🖐 들어 옮기기</button><button onclick="deCopy(false)" ${DE.sel ? '' : 'disabled'}>📄 복사</button><button onclick="deCopy(true)" ${DE.sel ? '' : 'disabled'}>✂ 잘라내기</button><button onclick="deClearSel()" ${DE.sel ? '' : 'disabled'}>🧹 지우기</button><button onclick="dePaste()" ${DECLIP ? '' : 'disabled'}>📋 붙여넣기</button>${DE.sel ? '<button onclick="DE.sel=null;deUI();deDraw()">선택 풀기</button>' : ''}`) : '';
   const ref = DE.ref ? `<button class="${DE.ref.on ? 'on' : ''}" onclick="DE.ref.on=!DE.ref.on;deUI();deDraw()">👁 밑그림</button><span class="muted">투명</span><input type="range" min="5" max="100" value="${Math.round(DE.ref.a * 100)}" oninput="DE.ref.a=this.value/100;deDraw()" onchange="deRefSave()">
     <span class="muted">크기</span><input type="range" min="5" max="400" value="${Math.round(DE.ref.s * 100)}" oninput="deRefScale(this.value/100)" onchange="deRefSave()"><button onclick="deRefFit()">맞추기</button><button onclick="deSheet('conv')">🧩 도트로 바꾸기</button><button onclick="deRefForget()">🗑</button>` : '';
+  const bs = DE.base ? `<button class="${DE.base.on ? 'on' : ''}" onclick="DE.base.on=!DE.base.on;deUI();deDraw()">👁 ${esc(DE.base.name || '몸')}</button><input type="range" min="5" max="100" value="${Math.round(DE.base.a * 100)}" oninput="DE.base.a=this.value/100;deDraw()">` : '';
   const gd = DE.guide ? `<button class="${DE.guide.on ? 'on' : ''}" onclick="DE.guide.on=!DE.guide.on;deUI();deDraw()">👁 ${DE.guide.name}</button><input type="range" min="5" max="100" value="${Math.round(DE.guide.a * 100)}" oninput="DE.guide.a=this.value/100;deDraw()">` : '';
-  $('#deOpts').innerHTML = `${gd}${DE.o.presets ? `<button class="${DE.sheet === 'pre' ? 'on' : ''}" onclick="deSheet('pre')">📂 프리셋</button>` : DE.o.orig ? '<button onclick="deToOrig()">↺ 원래 도트로</button>' : ''}${sz}${dith}${grad}${scope}${shp}${sel}<button class="${DE.mirror ? 'on' : ''}" onclick="DE.mirror=!DE.mirror;deUI();deDraw()">⇿ 좌우 대칭</button><button class="${DE.grid ? 'on' : ''}" onclick="DE.grid=!DE.grid;deUI();deDraw()"># 격자</button><button onclick="deFit()">⤢ 화면 맞춤</button>
+  $('#deOpts').innerHTML = `${bs}${gd}${DE.o.presets ? `<button class="${DE.sheet === 'pre' ? 'on' : ''}" onclick="deSheet('pre')">📂 프리셋</button>` : DE.o.orig ? '<button onclick="deToOrig()">↺ 원래 도트로</button>' : ''}${sz}${dith}${grad}${scope}${shp}${sel}<button class="${DE.mirror ? 'on' : ''}" onclick="DE.mirror=!DE.mirror;deUI();deDraw()">⇿ 좌우 대칭</button><button class="${DE.grid ? 'on' : ''}" onclick="DE.grid=!DE.grid;deUI();deDraw()"># 격자</button><button onclick="deFit()">⤢ 화면 맞춤</button>
     <button class="${DE.sheet === 'bg' ? 'on' : ''}" onclick="deSheet('bg')">🖼 배경</button><button class="${DE.sheet === 'room' ? 'on' : ''}" onclick="deSheet('room')">🏠 방에서 보기</button><button class="${DE.sheet === 'fx' ? 'on' : ''}" onclick="deSheet('fx')">✨ 외곽선·그림자</button><button onclick="deRefPick()">📷 밑그림 올리기</button>${ref}<button onclick="deSheet('imp')">🪑 가구 불러오기</button><button onclick="deFlipAll()">⇋ 전체 뒤집기</button><button onclick="deClearAll()">🗑 이 레이어 지우기</button>`;
   deCols();
 }
@@ -278,6 +279,7 @@ function deDraw() {
   const { W, H, z, ox, oy } = DE;
   const [bg1, bg2] = deBg(); g.fillStyle = bg1; g.fillRect(ox, oy, W * z, H * z); g.fillStyle = bg2 || bg1; const ck = Math.max(z * 4, 8);
   if (bg2) for (let y = 0; y < H * z; y += ck) for (let x = (Math.floor(y / ck) % 2) * ck; x < W * z; x += ck * 2) g.fillRect(ox + x, oy + y, Math.min(ck, W * z - x), Math.min(ck, H * z - y));
+  if (DE.base && DE.base.on && DE.base.img) { const B = DE.base; g.save(); g.globalAlpha = B.a; g.imageSmoothingEnabled = false; g.drawImage(B.img, ox, oy, B.img.width * z, B.img.height * z); g.restore(); }   // 기본 몸 밑그림 (올린 밑그림 아래)
   if (DE.ref && DE.ref.on && DE.ref.img) { g.save(); g.globalAlpha = DE.ref.a; g.imageSmoothingEnabled = !DE.ref.crisp; g.drawImage(DE.ref.img, ox + DE.ref.x * z, oy + DE.ref.y * z, DE.ref.img.width * DE.ref.s * z, DE.ref.img.height * DE.ref.s * z); g.restore(); }
   if (DE.guide && DE.guide.on) { g.save(); g.globalAlpha = DE.guide.a; g.imageSmoothingEnabled = false; g.drawImage(DE.guide.img, ox, oy, W * z, H * z); g.restore(); }
   const tmp = deTmp();
@@ -380,6 +382,8 @@ function dePickAt(x, y) {
   const G = DE.guide; if (G && G.on && x < G.w && y < G.h) { const j = (y * G.w + x) * 4; if (G.orig[j + 3] > 100) return deToHex(G.orig[j], G.orig[j + 1], G.orig[j + 2]); }   // 비친 앞모습 색
   const R = DE.ref; if (R && R.on && !R.data && R.img) { try { const c = document.createElement('canvas'); c.width = R.img.width; c.height = R.img.height; const g = c.getContext('2d'); g.drawImage(R.img, 0, 0); R.data = g.getImageData(0, 0, c.width, c.height).data; } catch (e) {} }
   if (R && R.on && R.data) { const rx = Math.floor((x + .5 - R.x) / R.s), ry = Math.floor((y + .5 - R.y) / R.s); if (rx >= 0 && ry >= 0 && rx < R.img.width && ry < R.img.height) { const j = (ry * R.img.width + rx) * 4, d = R.data; if (d[j + 3] > 20) return deToHex(d[j], d[j + 1], d[j + 2]); } }
+  const Bs = DE.base; if (Bs && Bs.on && Bs.img) { if (!Bs.data) try { const c = document.createElement('canvas'); c.width = Bs.img.width; c.height = Bs.img.height; const g = c.getContext('2d'); g.drawImage(Bs.img, 0, 0); Bs.data = g.getImageData(0, 0, c.width, c.height).data; } catch (e) {}
+    if (Bs.data && x < Bs.img.width && y < Bs.img.height) { const j = (y * Bs.img.width + x) * 4; if (Bs.data[j + 3] > 20) return deToHex(Bs.data[j], Bs.data[j + 1], Bs.data[j + 2]); } }
   return null;
 }
 
