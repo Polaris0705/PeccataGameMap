@@ -8,7 +8,9 @@
 ============================================================================= */
 let AVCFG = { open: false }, WEAR = [], AVPOS = [];
 const AVW = 64, AVH = 72;
-const avOn = () => !!AVCFG.open;   // 공개 전에는 시험실에서만 보임
+let AVKP = false; try { AVKP = localStorage.getItem('peccata_avkp') === '1'; } catch (e) {}
+const avOn = () => !!AVCFG.open || (typeof IS_ADMIN !== 'undefined' && IS_ADMIN && AVKP);   // 공개 전에는 시험실에서만 · KP 미리보기 켜면 KP 화면에서만 모든 방에 보임
+function avKpToggle() { AVKP = !AVKP; try { localStorage.setItem('peccata_avkp', AVKP ? '1' : '0'); } catch (e) {} avClr(); toast(AVKP ? 'KP 미리보기 켬 · 내 화면에서만 모든 방에 토큰 보임' : 'KP 미리보기 끔'); render(); }
 const SKINS = ['#fbe3cf', '#f6d2b4', '#ecc29e', '#d9a47c', '#b07a52', '#7a4e32'];
 const AV_SLOTS = [['hair', '머리'], ['eye', '눈'], ['top', '상의'], ['bottom', '하의'], ['one', '한 벌'], ['outer', '겉옷'], ['shoes', '신발'], ['hat', '모자'], ['acc', '액세서리']];
 const AV_ITEMS = {
@@ -731,8 +733,8 @@ VIEWS.kavatar = () => {
   const mine = avCfgOf(P), kpW = WEAR.filter(w => w.kind === 'kp'), plW = WEAR.filter(w => w.kind === 'pl');
   return `<div class="panel"><h2>🎎 토큰 시험실</h2><p class="muted" style="margin:0 0 6px">상태: <b>${AVCFG.open ? '전체 공개' : 'KP 전용'}</b></p>
     <div class="row" style="gap:6px;flex-wrap:wrap"><button class="primary" onclick="avEdit()">${mine ? '✏ 내 토큰 꾸미기' : '＋ 내 토큰 만들기'}</button><button onclick="avFake(${AVFAKE.length ? 0 : 2})">${AVFAKE.length ? '손님 없애기' : '👥 시험용 손님 2명'}</button><button onclick="avFake(2)">🎲 손님 다시 뽑기</button>
-    <button class="${AVCFG.open ? 'danger' : ''}" onclick="avOpenToggle()">${AVCFG.open ? '🔒 다시 KP만 보기' : '🌐 모두에게 공개'}</button></div>
-    <p class="muted" style="font-size:.8rem;margin:8px 0 4px">바닥 터치 → 이동</p>
+    ${AVCFG.open ? '' : `<button class="${AVKP ? 'on primary' : ''}" onclick="avKpToggle()">${AVKP ? '👁 KP 미리보기 켜짐' : '👁 KP 미리보기'}</button>`}<button class="${AVCFG.open ? 'danger' : ''}" onclick="avOpenToggle()">${AVCFG.open ? '🔒 다시 KP만 보기' : '🌐 모두에게 공개'}</button></div>
+    <p class="muted" style="font-size:.8rem;margin:8px 0 4px">바닥 터치 → 이동${AVCFG.open ? '' : ' · KP 미리보기: 내 화면에서만 모든 방(방 구경 포함)·지도에 토큰이 보임 (PL에겐 안 보임)'}</p>
     <canvas id="avTestCv" class="roomcv" width="${RW * 2}" height="${RH * 2}"></canvas></div>
    <div class="panel"><div class="row" style="justify-content:space-between;align-items:center"><h2 style="margin:0">🧥 KP가 만든 옷</h2><button class="primary" style="flex:0 0 auto" onclick="wfNew('one','kp')">＋ 새 옷</button></div>
     ${kpW.map(w => `<div class="item" style="margin:4px 0"><div style="display:flex;align-items:center;gap:8px"><img src="${(w.pics || {})[0] || ''}" style="height:48px;image-rendering:pixelated;background:#2a2420"><div><b>${esc(w.name)}</b><div class="muted" style="font-size:.78rem">${esc((AV_SLOTS.find(s => s[0] === w.slot) || [, ''])[1])} · ${w.cost || 0} 은화${w.sell === false ? ' · 판매 안 함' : ''}</div></div></div><div class="row" style="flex:0 0 auto;gap:4px"><button class="sm" onclick="wfEdit('${w.id}')">고치기</button><button class="sm danger" onclick="wfDel('${w.id}')">지우기</button></div></div>`).join('') || '<p class="muted">없음</p>'}</div>
