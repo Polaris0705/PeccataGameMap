@@ -8,9 +8,7 @@
 ============================================================================= */
 let AVCFG = { open: false }, WEAR = [], AVPOS = [];
 const AVW = 64, AVH = 72;
-let AVKP = false; try { AVKP = localStorage.getItem('peccata_avkp') === '1'; } catch (e) {}
-const avOn = () => !!AVCFG.open || (typeof IS_ADMIN !== 'undefined' && IS_ADMIN && AVKP);   // 공개 전에는 시험실에서만 · KP 미리보기 켜면 KP 화면에서만 모든 방에 보임
-function avKpToggle() { AVKP = !AVKP; try { localStorage.setItem('peccata_avkp', AVKP ? '1' : '0'); } catch (e) {} avClr(); toast(AVKP ? 'KP 미리보기 켬 · 내 화면에서만 모든 방에 토큰 보임' : 'KP 미리보기 끔'); render(); }
+const avOn = () => !!AVCFG.open;   // 공개 전에는 비밀번호 시험실에서만 보임 (KP 화면에서도 다른 방엔 안 보임)
 const SKINS = ['#fbe3cf', '#f6d2b4', '#ecc29e', '#d9a47c', '#b07a52', '#7a4e32'];
 const AV_SLOTS = [['hair', '머리'], ['eye', '눈'], ['top', '상의'], ['bottom', '하의'], ['one', '한 벌'], ['outer', '겉옷'], ['shoes', '신발'], ['hat', '모자'], ['acc', '액세서리']];
 const AV_ITEMS = {
@@ -733,8 +731,9 @@ VIEWS.kavatar = () => {
   const mine = avCfgOf(P), kpW = WEAR.filter(w => w.kind === 'kp'), plW = WEAR.filter(w => w.kind === 'pl');
   return `<div class="panel"><h2>🎎 토큰 시험실</h2><p class="muted" style="margin:0 0 6px">상태: <b>${AVCFG.open ? '전체 공개' : 'KP 전용'}</b></p>
     <div class="row" style="gap:6px;flex-wrap:wrap"><button class="primary" onclick="avEdit()">${mine ? '✏ 내 토큰 꾸미기' : '＋ 내 토큰 만들기'}</button><button onclick="avFake(${AVFAKE.length ? 0 : 2})">${AVFAKE.length ? '손님 없애기' : '👥 시험용 손님 2명'}</button><button onclick="avFake(2)">🎲 손님 다시 뽑기</button>
-    ${AVCFG.open ? '' : `<button class="${AVKP ? 'on primary' : ''}" onclick="avKpToggle()">${AVKP ? '👁 KP 미리보기 켜짐' : '👁 KP 미리보기'}</button>`}<button class="${AVCFG.open ? 'danger' : ''}" onclick="avOpenToggle()">${AVCFG.open ? '🔒 다시 KP만 보기' : '🌐 모두에게 공개'}</button></div>
-    <p class="muted" style="font-size:.8rem;margin:8px 0 4px">바닥 터치 → 이동${AVCFG.open ? '' : ' · KP 미리보기: 내 화면에서만 모든 방(방 구경 포함)·지도에 토큰이 보임 (PL에겐 안 보임)'}</p>
+    <button class="${AVCFG.open ? 'danger' : ''}" onclick="avOpenToggle()">${AVCFG.open ? '🔒 다시 KP만 보기' : '🌐 모두에게 공개'}</button></div>
+    <div class="row" style="gap:6px;align-items:center;margin:8px 0 4px"><span class="muted" style="font-size:.8rem;flex:0 0 auto">시험할 방</span><select onchange="AVTEST_SRC=this.value;AVLOCAL[ME.uid]&&(AVLOCAL[ME.uid].pose=null);AVFAKE.forEach(f=>f.pose=null)">${avTestRooms().map(([v, n]) => `<option value="${v}" ${AVTEST_SRC === v ? 'selected' : ''}>${esc(n)}</option>`).join('')}</select></div>
+    <p class="muted" style="font-size:.8rem;margin:0 0 4px">바닥 터치 → 이동 · PL 방은 가구 배치만 빌려와서 보기만 함 (그 방엔 아무것도 안 남음)</p>
     <canvas id="avTestCv" class="roomcv" width="${RW * 2}" height="${RH * 2}"></canvas></div>
    <div class="panel"><div class="row" style="justify-content:space-between;align-items:center"><h2 style="margin:0">🧥 KP가 만든 옷</h2><button class="primary" style="flex:0 0 auto" onclick="wfNew('one','kp')">＋ 새 옷</button></div>
     ${kpW.map(w => `<div class="item" style="margin:4px 0"><div style="display:flex;align-items:center;gap:8px"><img src="${(w.pics || {})[0] || ''}" style="height:48px;image-rendering:pixelated;background:#2a2420"><div><b>${esc(w.name)}</b><div class="muted" style="font-size:.78rem">${esc((AV_SLOTS.find(s => s[0] === w.slot) || [, ''])[1])} · ${w.cost || 0} 은화${w.sell === false ? ' · 판매 안 함' : ''}</div></div></div><div class="row" style="flex:0 0 auto;gap:4px"><button class="sm" onclick="wfEdit('${w.id}')">고치기</button><button class="sm danger" onclick="wfDel('${w.id}')">지우기</button></div></div>`).join('') || '<p class="muted">없음</p>'}</div>
@@ -743,15 +742,22 @@ VIEWS.kavatar = () => {
 };
 async function avOpenToggle() { const v = !AVCFG.open; if (v && !confirm('전체 PL에게 공개할까요?')) return; try { await B.set('settings/avatar', { open: v }, true); toast(v ? '모두에게 공개 완료' : 'KP만 보이게 함'); } catch (e) { toast('실패: ' + (e.code || e.message)); } }
 const AVTEST = { items: [], invc: [], wall: 'plain', floor: 'plank', cols: { frame: null }, arc: {}, ow: [], dye: 0 };
+let AVTEST_SRC = '';   // 시험실 방: '' = 내 방(없으면 빈 방) · uid = 그 PL 방 가구 배치
+function avTestRooms() { const nm = id => { const u = (typeof USERS !== 'undefined' ? USERS : []).find(x => x.id === id); return u ? (u.name || u.email || id) : id; };
+  return [['', PROF.ho ? '내 방' : '빈 방'], ...PROGS.filter(p => p.room && p.id !== ME.uid && (p.room.items || []).length).map(p => [p.id, nm(p.id) + '의 방'])]; }
+let AVTEST_RC = null;
 function avTestPaint() {
-  const cv = document.getElementById('avTestCv'); if (!cv) return; const room = PROF.ho ? myRoom() : hoRoom('__avtest');
+  const cv = document.getElementById('avTestCv'); if (!cv) return; let room;
+  if (AVTEST_SRC && PROGS.some(p => p.id === AVTEST_SRC)) { const p = PROGS.find(x => x.id === AVTEST_SRC); if (!AVTEST_RC || AVTEST_RC.src !== AVTEST_SRC || AVTEST_RC.at !== p.room) AVTEST_RC = { src: AVTEST_SRC, at: p.room, room: hoRoom(AVTEST_SRC) }; room = AVTEST_RC.room; }
+  else room = PROF.ho ? myRoom() : hoRoom('__avtest');
   AV_PAINT_OWNER = AVTEST_ROOM; paintRoom(cv, room, {}); AV_PAINT_OWNER = null;
   cv.onclick = ev => { if (!avCfgOf(P)) return toast('토큰 먼저 만들기'); const p = cvPos(cv, ev), it = itemAt(room, p.x, p.y); if (it && avHangTap(AVTEST_ROOM, it)) return; if (it && avSeatTap(AVTEST_ROOM, it, room, p)) return; avWalkTo(AVTEST_ROOM, p.x, p.y); };
 }
 let AV_PAINT_OWNER = null;
 setInterval(() => { if (tab === 'kavatar' && !document.hidden) { avTestPaint(); document.querySelectorAll('canvas.avovp:not([data-done])').forEach(c => { c.dataset.done = 1; const k = c.dataset.k, cfg = avOvCfg(k), g = c.getContext('2d'); g.clearRect(0, 0, AVW, AVH); g.drawImage(avSprite(cfg, 0, 0), 0, 0); }); } }, 140);
 function avOnAuth(sub) {
-  sub(B.onDoc('settings/avatar', d => { AVCFG = Object.assign({ open: false }, d || {}); softRender(); }));
+  sub(B.onDoc('settings/avatar', d => { AVCFG = Object.assign({ open: false }, d || {}); if (!AVCFG.open && ME && !avOnAuth.clean) { avOnAuth.clean = 1; B.del('avpos/' + ME.uid).catch(() => {}); }   // 비공개: 남은 내 위치 기록 지움
+    softRender(); }));
   sub(B.onCol('wear', l => { WEAR = l; Object.keys(AVC).forEach(k => delete AVC[k]); softRender(); }));
   sub(B.onCol('avpos', l => { AVPOS = l; }));
   sub(B.onCol('avOv', l => { AVOV = {}; AVX = {}; l.forEach(d => { if (d.id === '_items') AVX = d; else if (d.key) AVOV[d.key] = d; }); avApplyX(); Object.keys(AVC).forEach(k => delete AVC[k]); Object.keys(AVRC).forEach(k => delete AVRC[k]); softRender(); }));
