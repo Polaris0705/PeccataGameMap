@@ -13,7 +13,7 @@ const SKINS = ['#fbe3cf', '#f6d2b4', '#ecc29e', '#d9a47c', '#b07a52', '#7a4e32']
 const AV_SLOTS = [['hair', '머리'], ['eye', '눈'], ['top', '상의'], ['bottom', '하의'], ['one', '한 벌'], ['outer', '겉옷'], ['shoes', '신발'], ['hat', '모자'], ['acc', '액세서리']];
 const AV_ITEMS = {
   hair: { bob: ['단발', 0, '#3a2418'], long: ['긴 생머리', 0, '#24160e'], braids: ['양갈래 땋기', 0, '#5a3a24'], short: ['짧은 머리', 0, '#2a1e18'], pony: ['포니테일', 0, '#8a5530'], bun: ['올림머리', 0, '#3a2418'], wavy: ['웨이브', 0, '#c89a5a'] },
-  eye: { round: ['눈', 0, '#3a2a20'] },   // 눈은 한 가지 + 자동 깜빡임
+  eye: { round: ['기본 눈', 0, '#3a2a20'], big: ['큰 눈', 0, '#3a2a20'], smile: ['반달 눈', 0, '#3a2a20'], sharp: ['날카로운 눈', 0, '#3a2a20'], droop: ['처진 눈', 0, '#3a2a20'] },   // 눈 (모두 공짜) + 자동 깜빡임
   top: { shirt: ['셔츠', 0, '#f4f0e6'], blouse: ['리본 블라우스', 0, '#f8f4ea'], vest: ['셔츠와 조끼', 40, '#5a3a2a'], yagasuri: ['화살깃 기모노', 60, '#8a3a6a'], gakuran: ['학생복 상의', 50, '#24242e'], knit: ['니트', 40, '#8a6a4a'] },
   bottom: { pants: ['바지', 0, '#3a3a44'], skirt: ['스커트', 0, '#3a4a6a'], hakama: ['하카마', 60, '#6a2a3a'], shorts: ['반바지', 30, '#6a5a4a'], long: ['롱스커트', 50, '#2e2a3a'] },
   one: { maid: ['메이드복', 90, '#2a2a34'], kimono: ['기모노', 120, '#a83a4a'], dress: ['드레스', 110, '#5a2a6a'], butler: ['연미복', 100, '#1e1e28'] },
@@ -118,10 +118,12 @@ const avOutHex = hex => { const o = avOutCol(...deHex(hex)); return deToHex(o[0]
 const AV_LASH = '#3a3a44';
 function AV_EYE1(P2, eye, C, x, flip) {
   const { R } = P2, y = 33;
-  if (eye === 'round') { R(x, y, 2, 1, AV_LASH); R(x, y + 1, 2, 4, C.t); }
-  else if (eye === 'half') { R(x, y + 2, 2, 1, AV_LASH); R(flip ? x + 2 : x - 1, y + 3, 1, 1, AV_LASH); R(flip ? x - 1 : x + 2, y + 3, 1, 1, AV_LASH); }
-  else if (eye === 'sharp') { R(flip ? x - 1 : x, y + 1, 3, 1, AV_LASH); R(flip ? x : x + 1, y, 2, 1, AV_LASH); R(x, y + 2, 2, 3, C.t); }
-  else { R(x - 1, y + 3, 4, 1, AV_LASH); }
+  const out = flip ? x + 2 : x - 1, x3 = flip ? x : x - 1, bl = P2.cfg && P2.cfg.blink;   // out: 눈꼬리 쪽 칸 · x3: 3칸짜리 눈 시작 · 깜빡일 땐 눈꼬리 점 생략
+  if (eye === 'big') { R(x3, y, 3, 1, AV_LASH); R(x3, y + 1, 3, 4, C.t); if (!bl) { R(x3, y + 4, 3, 1, C.l); R(flip ? x + 1 : x - 1, y + 1, 1, 1, '#fdfbf6'); } }   // 크고 동그란 눈 + 반짝
+  else if (eye === 'smile') { R(x, y + 2, 2, 1, AV_LASH); R(x - 1, y + 3, 1, 1, AV_LASH); R(x + 2, y + 3, 1, 1, AV_LASH); }   // 반달 ∩
+  else if (eye === 'sharp') { R(x, y + 1, 2, 1, AV_LASH); if (!bl) R(out, y, 1, 1, AV_LASH); R(x, y + 2, 2, 3, C.t); }   // 눈꼬리 올라감
+  else if (eye === 'droop') { R(x, y, 2, 1, AV_LASH); if (!bl) R(out, y + 1, 1, 1, AV_LASH); R(x, y + 1, 2, 4, C.t); }   // 눈꼬리 내려감
+  else { R(x, y, 2, 1, AV_LASH); R(x, y + 1, 2, 4, C.t); }
 }
 function AV_FACE(P2, eye, C) {
   const { R, side } = P2, mouth = '#5a4448';
@@ -307,7 +309,7 @@ function avSprite(cfg, dir, step) {
   if (cfg.one) item('one'); else { item('bottom'); item('top'); }
   if (cfg.outer && !custom('outer')) { const id = cfg.outer, dk = 'outerD:' + id, nk = 'outer:' + id, has = k => AVOV[k] && AVOV[k].pics && AVOV[k].pics[vw];   // 원피스 위면 드레스용 그림 (없으면 고친 보통 그림 → 원래 그림)
     layer(cfg.one && (has(dk) || !has(nk)) ? dk : nk); }
-  if (vw !== 2) { const ek = 'eye:round', eo = AVOV[ek], anim = eo && eo.n && eo.n[vw] > 1;
+  if (vw !== 2) { const ek = 'eye:' + (AV_ITEMS.eye[cfg.eye] ? cfg.eye : 'round'), eo = AVOV[ek], anim = eo && eo.n && eo.n[vw] > 1;
     if (cfg.blink && !anim) {   // 깜빡임: 눈 그림을 세로 한 줄(아래에서 둘째 칸)로 눌러 감은 눈으로
       const t = document.createElement('canvas'); t.width = AVW; t.height = AVH; const tg = t.getContext('2d'), sg = G; G = tg; PP = avP2(tg, cfg, dir, step); layer(ek); G = sg; PP = P2;
       const d = tg.getImageData(0, 0, AVW, AVH), q = d.data, o = new Uint8ClampedArray(q.length); avBlinkMark.fill(0);
