@@ -548,7 +548,7 @@ setInterval(()=>{if(ME&&document.querySelector('.onchip'))softRender();},60000);
 const cname=c=>(PUB&&PUB.names&&PUB.names[c])||(c==='TEST'?'테스트':c);
 /* 테스트 계정: 아이디가 test_로 시작 · @ 없이 아이디만 치면 아이디@hamkata.test 로 가입/로그인
    HO 없이 바로 PL 화면(HO는 TEST) · KP가 아닌 사람 화면의 회원 목록·진행 기록에서 숨김 */
-const ID_DOM='@hamkata.test',idToEmail=e=>e.includes('@')?e:e+ID_DOM,isTestEmail=e=>(e||'').toLowerCase().startsWith('test_'),isTestU=u=>!!u&&isTestEmail(u.email);
+const ID_DOM='@id.hamkata.app',idToEmail=e=>e.includes('@')?e:e+ID_DOM,isTestEmail=e=>(e||'').toLowerCase().startsWith('test_'),isTestU=u=>!!u&&isTestEmail(u.email);
 let USERS_RAW=[],PROGS_RAW=[];
 function testFilter(){const T=new Set(USERS_RAW.filter(isTestU).map(u=>u.id)),keep=x=>IS_ADMIN||!T.has(x.id)||(ME&&x.id===ME.uid);USERS=USERS_RAW.filter(keep);PROGS=PROGS_RAW.filter(keep);}
 const dayName=d=>(PUB&&PUB.dayNames&&PUB.dayNames[d-1])||('Day '+(d-1));
