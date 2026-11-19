@@ -216,7 +216,9 @@ function deSheetBody() {
     <p class="muted" style="margin:6px 0 2px;font-size:.82rem"><b>외곽선</b> — 지금 레이어 그림 바깥에 주색으로 1도트 테두리를 두름.</p>
     <div class="row" style="gap:4px;flex-wrap:wrap;align-items:center"><button onclick="deOutline(false)">✒ 바깥 테두리</button><button onclick="deOutline(true)">✒ 대각선까지</button>${deN() > 1 ? `<label class="muted"><input type="checkbox" ${DE.scopeF ? 'checked' : ''} onchange="DE.scopeF=this.checked">모든 장면</label>` : ''}</div>
     <p class="muted" style="margin:10px 0 2px;font-size:.82rem"><b>그림자</b> — 맨 아래에 반투명 그림자 레이어를 새로 만듦 (투명도는 레이어에서 조절).</p>
-    <div class="row" style="gap:4px;flex-wrap:wrap"><button onclick="deShadow('floor')">🌑 바닥 타원 그림자</button><button onclick="deShadow('drop')">🌘 오른쪽 아래 그림자</button>${close}</div>`;
+    <div class="row" style="gap:4px;flex-wrap:wrap"><button onclick="deShadow('floor')">🌑 바닥 타원 그림자</button><button onclick="deShadow('drop')">🌘 오른쪽 아래 그림자</button></div>
+    <p class="muted" style="margin:10px 0 2px;font-size:.82rem"><b>반투명 점 지우기</b> — 지금 레이어에서 덜 진한 점만 지움 (흐리게 깔았다가 같이 저장된 밑그림 정리용).</p>
+    <div class="row" style="gap:4px;flex-wrap:wrap;align-items:center"><select id="deSemiT"><option value="255">100% 아닌 점 전부</option><option value="200">80% 미만</option><option value="128">50% 미만</option></select><button onclick="deClearSemi()">🧹 지우기</button>${close}</div>`;
   if (k === 'bg') { const cur = deBg(); sh.innerHTML = `<div class="row" style="justify-content:space-between;align-items:center"><b>🖼 배경색</b>${close}</div>
       <div class="row" style="gap:6px;flex-wrap:wrap;margin-top:8px">${DE_BGS.map(([n, a, b]) => `<button class="${cur[0] === a && cur[1] === b ? 'on' : ''}" onclick="deBgSet('${a}','${b}')"><span class="sw" style="display:inline-block;width:16px;height:16px;vertical-align:-3px;margin-right:4px;background:repeating-conic-gradient(${a} 0 25%,${b} 0 50%) 0 0/8px 8px"></span>${n}</button>`).join('')}
         <label class="row" style="gap:4px;align-items:center;flex:0 0 auto"><span>직접</span><input type="color" value="${cur[0]}" style="width:50px" onchange="deBgSet(this.value,'')"></label></div>
@@ -234,6 +236,11 @@ function deSheetBody() {
 }
 
 /* ---------- 그리기 ---------- */
+/* 반투명 점 지우기: 지금 레이어(모든 장면 옵션 따름)에서 알파가 기준보다 낮은 점 */
+function deClearSemi() { if (!deEditable()) return; const th = +(($('#deSemiT') || {}).value || 255), all = DE.scopeF && deN() > 1; dePush(all ? deL().frames.map((f, fi) => ({ li: DE.li, fi })) : undefined); let n = 0;
+  const frs = all ? deL().frames : [DE.px];
+  frs.forEach(px => { for (let i = 3; i < px.length; i += 4) if (px[i] && px[i] < th) { px[i - 3] = px[i - 2] = px[i - 1] = px[i] = 0; n++; } });
+  DE.dirty = true; deSync(); deDraw(); toast(n ? `반투명 점 ${n}개 지움` : '반투명 점 없음'); }
 /* 그림판 배경 (보기 전용 · 기억함) — [이름, 바탕, 체크 칸] */
 const DE_BGS = [['어두움', '#2a2420', '#332c27'], ['회색', '#808080', '#8c8c8c'], ['밝은 회색', '#c8c8c8', '#d4d4d4'], ['흰색', '#ffffff', '#f0f0f0'], ['체크', '#9a9a9a', '#e0e0e0'], ['초록', '#4a8a5a', '#52946a']];
 function deBg() { try { const v = JSON.parse(localStorage.getItem('peccata_debg') || 'null'); if (v && v[0]) return v; } catch (e) {} return [DE_BGS[0][1], DE_BGS[0][2]]; }
