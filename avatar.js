@@ -301,7 +301,7 @@ function avSprite(cfg, dir, step) {
   const custom = slot => { const id = cfg[slot]; if (!id || !id.startsWith('w:')) return false; const w = WEAR.find(x => 'w:' + x.id === id); if (!w) { pending = true; return true; } const p0 = w.pics || {}, dp = slot === 'outer' && cfg.one && p0[3] ? { 0: p0[3], 1: p0[4], 2: p0[5] } : null, pics = dp || p0, src = vw === 2 && pics[2] ? pics[2] : vw === 1 && pics[1] ? pics[1] : pics[0], im = cfImg(src);   // 겉옷: 원피스 위 그림(3~5)이 있으면 그걸로
     if (!im) pending = true; else masked(slot, () => avPic(G, im), true); return true; };
   const item = slot => { if (!cfg[slot]) return; if (!custom(slot)) layer(slot + ':' + cfg[slot]); };
-  if (cfg.hair) layer('hairB:' + cfg.hair);
+  if (cfg.hair && vw !== 2) layer('hairB:' + cfg.hair);   // 늘어진 머리: 앞·옆은 몸 뒤, 뒷모습은 옷 위(아래에서)
   layer('body');
   item('shoes');
   if (cfg.one) item('one'); else { item('bottom'); item('top'); }
@@ -321,6 +321,7 @@ function avSprite(cfg, dir, step) {
         const nx = vw === 1 ? e + 1 : (x + e) / 2 < AVW / 2 ? x - 1 : e + 1, src = (y * AVW + (nx < x ? x : e)) * 4, dst = (y * AVW + nx) * 4; if (nx >= 0 && nx < AVW && !o[dst + 3]) for (let k = 0; k < 4; k++) o[dst + k] = o[src + k]; x = e + 1; } }
       tg.putImageData(new ImageData(o, AVW, AVH), 0, 0); g.drawImage(t, 0, 0);
     } else layer(ek); }
+  if (cfg.hair && vw === 2) layer('hairB:' + cfg.hair);
   if (cfg.hair) layer('hairF:' + cfg.hair);
   item('acc'); item('hat');
   // 외곽선 자동
@@ -597,7 +598,7 @@ function avRandCfg() { const pick = o => { const k = Object.keys(o); return k[Ma
 function avFake(n) { AVFAKE.length = 0; for (let i = 0; i < n; i++) { const x = OX + 60 + i * 120, y = FY + 120 + i * 40; AVFAKE.push({ id: 'fake' + i, cfg: avRandCfg(), x, y, tx: x, ty: y, t0: Date.now(), dir: 0 }); } render(); }
 function avPwTry() { const v = ($('#avPw') || {}).value || ''; if (v.trim() === '1117') { try { sessionStorage.setItem('peccata_avpw', '1'); } catch (e) {} render(); } else { sfx('bad'); toast('비밀번호 오류'); } }
 const AV_OV_GROUPS = () => [['몸', [['body', '기본 몸 · 얼굴형'], ['pose:sit', '앉은 다리 (안 고치면 자동)']]], ['눈', Object.entries(AV_ITEMS.eye).map(([k, v]) => ['eye:' + k, v[0]])],
-  ['머리 (앞)', Object.entries(AV_ITEMS.hair).map(([k, v]) => ['hairF:' + k, v[0] + ' 앞머리'])], ['머리 (뒤)', Object.entries(AV_ITEMS.hair).map(([k, v]) => ['hairB:' + k, v[0] + ' 뒷머리'])],
+  ['머리', Object.entries(AV_ITEMS.hair).map(([k, v]) => ['hairF:' + k, v[0]])], ['늘어진 머리 (앞·옆: 몸 뒤 / 뒤: 몸 위)', Object.entries(AV_ITEMS.hair).map(([k, v]) => ['hairB:' + k, v[0] + ' · 늘어진 머리'])],
   ...['top', 'bottom', 'one', 'outer', 'shoes', 'hat', 'acc'].map(sl => [AV_SLOTS.find(x => x[0] === sl)[1], Object.entries(AV_ITEMS[sl]).map(([k, v]) => [sl + ':' + k, v[0]])]),
   ['겉옷 (원피스 위)', Object.entries(AV_ITEMS.outer).map(([k, v]) => ['outerD:' + k, v[0] + ' · 드레스 위'])]];
 let AVOV_OPEN = '';
