@@ -140,6 +140,15 @@ function deStop() { if (DE && DE.play) { clearTimeout(DE.play); DE.play = null; 
 function deLayerGo(i) { if (DE.float) deCommitFloat(); DE.li = i; deSync(); deUI(); deDraw(); if (DE.sheet === 'lay') deSheetBody(); }
 function deLayerAdd(copy) { if (DE.layers.length >= DE_MAXL) return toast(`레이어는 ${DE_MAXL}장까지`); const L = copy ? { name: deL().name + ' 복사', vis: true, lock: false, op: deL().op, frames: deL().frames.map(f => f.slice()) } : deNewLayer('레이어 ' + (DE.layers.length + 1));
   DE.layers.splice(DE.li + 1, 0, L); deStruct(); deLayerGo(DE.li + 1); }
+/* 다른 그림을 새 레이어로 (같은 자리 · 장면 수가 다르면 첫 장면을 모든 장면에) */
+async function deLayerFromUrl(url, n, name) { if (!DE) return; if (DE.layers.length >= DE_MAXL) return toast(`레이어는 ${DE_MAXL}장까지`); if (DE.float) deCommitFloat();
+  const fr = await deDecode(url, n || 1); if (!DE || !fr) return toast('불러오기 실패'); const N = deN(), frames = [];
+  for (let i = 0; i < N; i++) frames.push((fr.length === N ? fr[i] : fr[0]).slice());
+  DE.layers.splice(DE.li + 1, 0, { name: (name || '불러온 그림').slice(0, 20), vis: true, lock: false, op: 1, frames }); deStruct(); DE.sheet = ''; $('#deSheet').style.display = 'none'; deLayerGo(DE.li + 1); toast('새 레이어로 불러옴'); }
+async function deLimpGo() { const S = DE.o.layerSrc; if (!S) return; const key = $('#deLiK').value, v = +$('#deLiV').value, nm = ($('#deLiK').selectedOptions[0] || {}).textContent || key;
+  toast('불러오는 중'); try { const r = await S.get(key, v); if (!r || !r.url) return toast('그림 없음'); deLayerFromUrl(r.url, r.n, nm + ' · ' + S.views[v]); } catch (e) { toast('불러오기 실패'); } }
+function deLimpFile() { const inp = document.createElement('input'); inp.type = 'file'; inp.accept = 'image/*';
+  inp.onchange = () => { const f = inp.files[0]; if (!f) return; const rd = new FileReader(); rd.onload = () => { const n = Math.max(1, +(($('#deLiN') || {}).value || 1)); deLayerFromUrl(rd.result, n, f.name.replace(/\.[^.]+$/, '')); }; rd.readAsDataURL(f); }; inp.click(); }
 function deLayerDel() { if (DE.layers.length <= 1) return toast('레이어는 하나 이상 있어야 함'); if (!confirm(`「${deL().name}」 레이어를 지울까요?`)) return; DE.layers.splice(DE.li, 1); deStruct(); deLayerGo(Math.max(0, DE.li - 1)); }
 function deLayerMove(d) { const j = DE.li + d; if (j < 0 || j >= DE.layers.length) return; [DE.layers[DE.li], DE.layers[j]] = [DE.layers[j], DE.layers[DE.li]]; deStruct(); deLayerGo(j); }
 function deLayerMerge() {
@@ -201,7 +210,7 @@ function deSheetBody() {
         <button class="sm ${L.vis ? '' : 'on'}" onclick="event.stopPropagation();DE.layers[${i}].vis=!DE.layers[${i}].vis;DE.editAt=Date.now();deSheetBody();deUI();deDraw()">${L.vis ? '👁' : '🙈'}</button>
         <button class="sm ${L.lock ? 'on' : ''}" onclick="event.stopPropagation();DE.layers[${i}].lock=!DE.layers[${i}].lock;deSheetBody();deUI()">${L.lock ? '🔒' : '🔓'}</button></div>`).join('')}
       <div class="row" style="gap:4px;flex-wrap:wrap;margin-top:6px"><button onclick="deLayerAdd(false)">＋ 새 레이어</button><button onclick="deLayerAdd(true)">⧉ 복제</button><button onclick="deLayerMove(1)">▲ 위로</button><button onclick="deLayerMove(-1)">▼ 아래로</button>
-        <button onclick="deLayerMerge()">⤓ 아래로 합치기</button><button onclick="deLayerRename()">✏ 이름</button><button class="danger" onclick="deLayerDel()">🗑</button>${close}</div>`;
+        <button onclick="deLayerMerge()">⤓ 아래로 합치기</button><button onclick="deLayerRename()">✏ 이름</button><button onclick="deSheet('limp')">📥 불러오기</button><button class="danger" onclick="deLayerDel()">🗑</button>${close}</div>`;
     sh.querySelectorAll('canvas[data-li]').forEach(c => { const L = DE.layers[+c.dataset.li]; c.getContext('2d').putImageData(new ImageData(L.frames[DE.fi].slice(), DE.W, DE.H), 0, 0); });
   }
   if (k === 'pal') {
@@ -229,6 +238,11 @@ function deSheetBody() {
     <div class="row" style="align-items:center;gap:6px;flex-wrap:wrap"><span>색 수</span><select id="deCn">${[4, 8, 12, 16, 24, 32].map(n => `<option ${n === 16 ? 'selected' : ''}>${n}</option>`).join('')}</select>
     <label><input type="checkbox" id="deBg" checked> 배경 지우기</label><label><input type="checkbox" id="deOl"> 테두리 진하게</label></div>
     <div class="row" style="margin-top:8px">${close}<button class="primary" onclick="deConvert()">바꾸기</button></div>`;
+  if (k === 'limp') { const S = DE.o.layerSrc;
+    sh.innerHTML = `<div class="row" style="justify-content:space-between;align-items:center"><b>📥 새 레이어로 불러오기</b>${close}</div><p class="muted" style="margin:4px 0;font-size:.8rem">지금 레이어 위에 같은 자리로 · 위치는 이동 도구로</p>
+      ${S ? `<select id="deLiK" style="width:100%">${S.list.map(([g, items]) => `<optgroup label="${esc(g)}">${items.map(([kk, n]) => `<option value="${kk}">${esc(n)}</option>`).join('')}</optgroup>`).join('')}</select>
+      <div class="row" style="margin-top:6px;gap:6px"><select id="deLiV">${S.views.map((n, i) => `<option value="${i}">${n}</option>`).join('')}</select><button class="primary" onclick="deLimpGo()">불러오기</button></div>` : ''}
+      <div class="row" style="margin-top:10px;gap:6px;align-items:center"><button onclick="deLimpFile()">📱 그림 파일에서</button><span class="muted" style="font-size:.78rem">세로 장면</span><input id="deLiN" type="number" min="1" max="${DE_MAXF}" value="1" style="width:56px"></div>`; return; }
   if (k === 'imp') { const ks = Object.keys(FURN).filter(x => FURN[x].hi || FURN[x].custom);
     sh.innerHTML = `<b>🪑 가구 불러오기</b><p class="muted" style="margin:4px 0">위치 조정 후 「여기에 붙이기」</p>
       <select id="deImpK" style="width:100%">${ks.map(x => `<option value="${x}">${esc(FURN[x].name)}${FURN[x].custom ? ' ✏' : ''}</option>`).join('')}</select>

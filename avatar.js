@@ -572,7 +572,7 @@ async function wfDraw(k) {
   wfRead(); const base = Object.assign({}, AV_DEF, { hair: 'short', top: '', bottom: '', shoes: '', one: k >= 3 ? 'dress' : '', outer: '', hat: '', acc: '' }), dir = k % 3 === 1 ? 1 : k % 3 === 2 ? 2 : 0;   // 3~5: 원피스 위 겉옷 (드레스 밑그림)
   toast('밑그림 준비 중');
   const ref = await avRefUrl(base, dir), guide = k % 3 && WFD.pics[k - k % 3] ? await avRefUrl(base, 0, { extra: [WFD.pics[k - k % 3]] }) : null;
-  dotEdit({ W: AVW, H: AVH, src: WFD.pics[k] || null, key: 'wear_' + (WFD.id || 'new') + '_' + k, title: (WFD.name || '새 옷') + ' · ' + (k >= 3 ? '드레스 위 ' : '') + ['앞', '옆', '뒤'][k % 3], guide, guideName: '앞모습',
+  dotEdit({ W: AVW, H: AVH, layerSrc: AV_LSRC(), src: WFD.pics[k] || null, key: 'wear_' + (WFD.id || 'new') + '_' + k, title: (WFD.name || '새 옷') + ' · ' + (k >= 3 ? '드레스 위 ' : '') + ['앞', '옆', '뒤'][k % 3], guide, guideName: '앞모습',
     onSave: url => { if (url) WFD.pics[k] = url; else delete WFD.pics[k]; wfForm(); }, onCancel: () => wfForm() });
   avSetRef(ref, .5);
 }
@@ -663,11 +663,15 @@ async function avOvDraw(key, d) {
   const orig = avLayerPng(key, d), cfg = avOvCfg(key);
   const base = await avRefUrl(cfg, d, { key, pend: AVOD.pics, skip: key });
   const guide = d ? await avRefUrl(cfg, 0, { key, pend: AVOD.pics }) : null;
-  dotEdit({ W: AVW, H: AVH, src: AVOD.pics[d] || orig, orig, key: 'avov_' + key + '_' + d, title: key + ' · ' + ['앞', '옆', '뒤'][d], guide, guideName: '앞모습', allowEmpty: key !== 'body',   // 다 지우고 저장하면 그 층을 안 그림 (원래대로는 ↺)
+  dotEdit({ W: AVW, H: AVH, src: AVOD.pics[d] || orig, orig, key: 'avov_' + key + '_' + d, title: key + ' · ' + ['앞', '옆', '뒤'][d], guide, guideName: '앞모습', allowEmpty: key !== 'body', layerSrc: AV_LSRC(),   // 다 지우고 저장하면 그 층을 안 그림 (원래대로는 ↺)
     n: AVOD.pics[d] ? AVOD.n[d] || 1 : 1, ms: AVOD.ms[d], fms: AVOD.fms[d],
     onSave: (url, m) => { if (url) { AVOD.pics[d] = url; AVOD.n[d] = m.n; AVOD.ms[d] = m.ms; if (m.fms) AVOD.fms[d] = m.fms; else delete AVOD.fms[d]; } else { delete AVOD.pics[d]; delete AVOD.n[d]; delete AVOD.ms[d]; delete AVOD.fms[d]; } avOvEdit(key); }, onCancel: () => avOvEdit(key) });
   avSetRef(base, .45);
 }
+/* 도트 편집기 '새 레이어로 불러오기'용 토큰 층 목록 (고친 그림이 있으면 그것, 없으면 원래 그림) */
+const AV_LSRC = () => ({ views: ['앞', '옆', '뒤'], list: AV_OV_GROUPS().map(([g, items]) => [g, items.map(([k, n]) => [k, n + (AVOV[k] && AVOV[k].pics ? ' (고침)' : '')])]),
+  get: async (key, v) => { const pend = AVOD && AVOD.key === key ? AVOD : null, o = pend || AVOV[key], src = o && o.pics && o.pics[v];
+    if (src) return { url: src, n: (o.n || {})[v] || 1 }; return { url: avLayerPng(key, v), n: 1 }; } });
 const avOvId = key => key.replace(':', '__');
 async function avOvSave(key) {
   const pics = AVOD.pics; try { if (!Object.keys(pics).length) await B.del('avOv/' + avOvId(key)); else { const n = {}, ms = {}, fms = {}; Object.keys(pics).forEach(d => { n[d] = AVOD.n[d] || 1; ms[d] = AVOD.ms[d] || 220; if (AVOD.fms[d]) fms[d] = AVOD.fms[d]; }); await B.set('avOv/' + avOvId(key), { key, pics, n, ms, fms, at: Date.now() }); } AVOD = null; closeModal(); toast(Object.keys(pics).length ? '저장 완료! 모든 토큰에 적용됨' : '원래 그림으로 돌림'); } catch (e) { toast('실패: ' + (e.code || e.message)); }
