@@ -663,7 +663,7 @@ async function avOvDraw(key, d) {
   const orig = avLayerPng(key, d), cfg = avOvCfg(key);
   const base = await avRefUrl(cfg, d, { key, pend: AVOD.pics, skip: key });
   const guide = d ? await avRefUrl(cfg, 0, { key, pend: AVOD.pics }) : null;
-  dotEdit({ W: AVW, H: AVH, src: AVOD.pics[d] || orig, orig, key: 'avov_' + key + '_' + d, title: key + ' · ' + ['앞', '옆', '뒤'][d], guide, guideName: '앞모습',
+  dotEdit({ W: AVW, H: AVH, src: AVOD.pics[d] || orig, orig, key: 'avov_' + key + '_' + d, title: key + ' · ' + ['앞', '옆', '뒤'][d], guide, guideName: '앞모습', allowEmpty: key !== 'body',   // 다 지우고 저장하면 그 층을 안 그림 (원래대로는 ↺)
     n: AVOD.pics[d] ? AVOD.n[d] || 1 : 1, ms: AVOD.ms[d], fms: AVOD.fms[d],
     onSave: (url, m) => { if (url) { AVOD.pics[d] = url; AVOD.n[d] = m.n; AVOD.ms[d] = m.ms; if (m.fms) AVOD.fms[d] = m.fms; else delete AVOD.fms[d]; } else { delete AVOD.pics[d]; delete AVOD.n[d]; delete AVOD.ms[d]; delete AVOD.fms[d]; } avOvEdit(key); }, onCancel: () => avOvEdit(key) });
   avSetRef(base, .45);

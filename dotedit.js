@@ -70,7 +70,7 @@ function deClose(save) {
     if (lo.length && !confirm(`투명도가 100%가 아닌 레이어가 있습니다.\n${lo.map(L => `· ${L.name} (${Math.round(L.op * 100)}%)`).join('\n')}\n\n그대로 저장할까요?`)) return; }
   let url = null, meta = null;
   if (save) { if (DE.float) deCommitFloat(); deStop(); meta = { n: deN(), ms: DE.ms, fms: deFms() };
-    if (deIsEmpty()) url = null; else if (DE.origPx && deN() === 1 && deSame(deComp(0), DE.origPx)) { url = null; toast('원래 그림과 같아서 원래대로 돌려 둠'); } else url = dePng(); }
+    if (deIsEmpty()) { url = o.allowEmpty ? dePng() : null; if (url) { meta.empty = 1; toast('빈 그림으로 저장 · 이 층은 안 보임'); } } else if (DE.origPx && deN() === 1 && deSame(deComp(0), DE.origPx)) { url = null; toast('원래 그림과 같아서 원래대로 돌려 둠'); } else url = dePng(); }
   clearInterval(DE.saveT); clearInterval(DE.roomT); deDraftDel(); deStop(); window.removeEventListener('keydown', deKey);
   const r = document.getElementById('dotEd'); if (r) r.remove(); document.body.style.overflow = ''; DE = null;
   if (save) o.onSave && o.onSave(url, meta); else o.onCancel && o.onCancel();
