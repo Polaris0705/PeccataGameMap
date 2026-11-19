@@ -750,7 +750,7 @@ function avTestPaint() {
   const cv = document.getElementById('avTestCv'); if (!cv) return; let room;
   if (AVTEST_SRC && PROGS.some(p => p.id === AVTEST_SRC)) { const p = PROGS.find(x => x.id === AVTEST_SRC); if (!AVTEST_RC || AVTEST_RC.src !== AVTEST_SRC || AVTEST_RC.at !== p.room) AVTEST_RC = { src: AVTEST_SRC, at: p.room, room: hoRoom(AVTEST_SRC) }; room = AVTEST_RC.room; }
   else room = PROF.ho ? myRoom() : hoRoom('__avtest');
-  AV_PAINT_OWNER = AVTEST_ROOM; paintRoom(cv, room, {}); AV_PAINT_OWNER = null;
+  AV_PAINT_OWNER = AVTEST_ROOM; paintRoomLazy(cv, room, {}); AV_PAINT_OWNER = null;
   cv.onclick = ev => { if (!avCfgOf(P)) return toast('토큰 먼저 만들기'); const p = cvPos(cv, ev), it = itemAt(room, p.x, p.y); if (it && avHangTap(AVTEST_ROOM, it)) return; if (it && avSeatTap(AVTEST_ROOM, it, room, p)) return; avWalkTo(AVTEST_ROOM, p.x, p.y); };
 }
 let AV_PAINT_OWNER = null;
@@ -759,9 +759,9 @@ let AV_FSIG = '';
 function avFrameSig(uids) { let s = ''; for (const k in AVOV) { const o = AVOV[k], n = o.n || {}; for (const v in n) if (n[v] > 1) s += k + v + ':' + animFrame(n[v], (o.ms || {})[v], (o.fms || {})[v]) + ','; }
   uids.forEach(u => { s += avBlinkCfg({}, u).blink ? '1' : '0'; }); return s; }
 setInterval(() => { try { if (document.hidden || !ME || !P) return;
-  if (tab === 'kavatar') { if (!document.getElementById('avTestCv')) return; const s = avFrameSig([ME.uid, ...AVFAKE.map(f => f.id)]); if (s !== AV_FSIG) { AV_FSIG = s; avTestPaint(); } return; }
+  if (tab === 'kavatar') { if (!document.getElementById('avTestCv')) return; avTestPaint(); return; }
   if ((tab !== 'room' && tab !== 'visit') || !avOn()) return; const cv = document.getElementById('roomCv'), owner = tab === 'room' ? ME.uid : RV; if (!cv || !owner) return;
-  const s = avFrameSig([ME.uid, ...AVPOS.filter(x => x.room === owner).map(x => x.id)]); if (s === AV_FSIG) return; AV_FSIG = s; paintRoom(cv, hoRoom(owner), { edit: tab === 'room' && RM.edit }); } catch (e) {} }, 40);
+  if (!(tab === 'room' && RM.edit)) paintRoomLazy(cv, hoRoom(owner), {}); } catch (e) {} }, 40);
 setInterval(() => { if (tab === 'kavatar' && !document.hidden) { avTestPaint(); document.querySelectorAll('canvas.avovp:not([data-done])').forEach(c => { c.dataset.done = 1; const k = c.dataset.k, cfg = avOvCfg(k), g = c.getContext('2d'); g.clearRect(0, 0, AVW, AVH); g.drawImage(avSprite(cfg, 0, 0), 0, 0); }); } }, 140);
 function avOnAuth(sub) {
   sub(B.onDoc('settings/avatar', d => { AVCFG = Object.assign({ open: false }, d || {}); if (!AVCFG.open && ME && !avOnAuth.clean) { avOnAuth.clean = 1; B.del('avpos/' + ME.uid).catch(() => {}); }   // 비공개: 남은 내 위치 기록 지움

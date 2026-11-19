@@ -736,7 +736,7 @@ const TEACARTHI = (p, t, C) => { const { c, el } = p, M = C.c, A = C.a;   // 128
 let HI_IMG = null, HI_PH = 0, HI_MS = 140; const PIXC = {};
 function picPixels(url) { if (!url) return null; const e = PIXC[url]; if (e) return e.px ? e : null; PIXC[url] = { loading: true };
   const im = new Image(); im.onload = () => { const cv = document.createElement('canvas'); cv.width = im.width; cv.height = im.height; const g = cv.getContext('2d'); g.drawImage(im, 0, 0); const d = g.getImageData(0, 0, im.width, im.height).data, px = [];
-    for (let i = 0; i < d.length; i += 4) px.push(`rgb(${d[i]},${d[i + 1]},${d[i + 2]})`); PIXC[url] = { w: im.width, h: im.height, px }; }; im.src = url; return null; }
+    for (let i = 0; i < d.length; i += 4) px.push(`rgb(${d[i]},${d[i + 1]},${d[i + 2]})`); PIXC[url] = { w: im.width, h: im.height, px }; IMGV++; }; im.src = url; return null; }
 function hpic(p, x, y, w, h) { const P = picPixels(HI_IMG); if (!HI_IMG) return false; if (!P) { p.c(x, y, w, h, '#2a2230'); return true; }
   // 움직이는 그림: 세로로 이어 붙인 프레임 중 지금 장면만
   const fh = HI_PH && P.h > HI_PH && P.h % HI_PH === 0 ? HI_PH : P.h, nf = P.h / fh, o = nf > 1 ? Math.floor(Date.now() / (HI_MS || 140)) % nf * fh : 0;
@@ -1879,11 +1879,40 @@ function drawSprite(g, k, x, y, t, alpha, col, dir, img) {
   g.restore();
 }
 function frameRect(g, x, y, w, h, col) { g.fillStyle = col; g.fillRect(x, y, w, 1); g.fillRect(x, y + h - 1, w, 1); g.fillRect(x, y, 1, h); g.fillRect(x + w - 1, y, 1, h); }
+let PR_BUF = null;
 function paintRoom(cv, room, opts) {
-  if (!cv) return; const g = cv.getContext('2d'); g.imageSmoothingEnabled = false;
+  if (!cv) return;
   const cssW = cv.clientWidth || RW * 2, want = Math.max(RW, Math.round(cssW * (window.devicePixelRatio || 1)));
   if (Math.abs(cv.width - want) > 1) { cv.width = want; cv.height = Math.round(want * RH / RW); }
-  const S = cv.width / RW; snapCtx(g, S);
+  const buf = PR_BUF || (PR_BUF = document.createElement('canvas')); if (buf.width !== cv.width || buf.height !== cv.height) { buf.width = cv.width; buf.height = cv.height; }
+  const bg = buf.getContext('2d'); bg.setTransform(1, 0, 0, 1, 0, 0); bg.clearRect(0, 0, buf.width, buf.height);
+  try { paintRoomTo(cv, bg, room, opts); } catch (e) { console.warn('paintRoom', e); return; }   // 그리다 실패하면 이전 화면 그대로
+  const g = cv.getContext('2d'); g.setTransform(1, 0, 0, 1, 0, 0); g.clearRect(0, 0, cv.width, cv.height); g.drawImage(buf, 0, 0);
+  cv._sig = roomSig(cv, room, opts);
+}
+/* 필요할 때만 다시 그리기: 방 내용·시간대·커튼·토큰·움직이는 가구 장면이 바뀌었을 때만 */
+let IMGV = 0;   // 그림이 새로 불러와지면 +1
+const ANIMK = {};
+function furnAnimates(k, dir) {   // t(시간)에 따라 그림이 바뀌는 가구인지 (한 번 그려 보고 비교)
+  const tod = (typeof curTod === 'function' && curTod()) || '', key = k + '|' + (dir || 0) + '|' + tod; if (key in ANIMK) return ANIMK[key];
+  try { const dm = dimsOf(k, dir), w = Math.ceil(dm.w * T) + 4, h = Math.ceil(dm.h) + 4, c = document.createElement('canvas'); c.width = w; c.height = h; const g = c.getContext('2d'); snapCtx(g, 1);
+    let first = null, anim = false; for (const t of [0, 1, 2, 3, 5, 8, 13]) { g.setTransform(1, 0, 0, 1, 0, 0); g.clearRect(0, 0, w, h); drawSprite(g, k, 2, 2, t, null, null, dir || 0); const d = g.getImageData(0, 0, w, h).data;
+      if (!first) first = d; else { for (let i = 0; i < d.length; i += 16) if (d[i] !== first[i] || d[i + 3] !== first[i + 3]) { anim = true; break; } if (anim) break; } }
+    return ANIMK[key] = anim; } catch (e) { return ANIMK[key] = true; } }
+function roomSig(cv, room, opts) {
+  const edit = opts && opts.edit; if (edit) return 'edit' + Date.now();   // 꾸미기 중에는 매번
+  const own = AV_PAINT_OWNER || (cv.id === 'roomCv' ? (tab === 'room' ? ME && ME.uid : RV) : null), now = Date.now();
+  let s = JSON.stringify([room.wall, room.floor, room.cols, room.items]) + '|' + cv.width + '|' + IMGV + '|' + ((typeof curTod === 'function' && curTod()) || '') + '|' + JSON.stringify((own && CURT[own]) || {});
+  for (const i of room.items) { if (i.imgMs) s += '|g' + Math.floor(now / i.imgMs); else if (FURN[i.k] && furnAnimates(i.k, i.dir)) s += '|t' + RM.t; }
+  if (typeof roomHasFrames === 'function' && roomHasFrames(room)) s += '|f' + Math.floor(now / 60);
+  if (typeof avRoomList === 'function' && !cv.classList.contains('rthumb')) { const L = avRoomList(room, own); if (L.length) {
+    s += '|' + JSON.stringify(L.map(a => [a.uid, Math.round(a.x), Math.round(a.y), a.dir, a.step, a.pose, a.cfg])); if (typeof avFrameSig === 'function') s += '|' + avFrameSig(L.map(a => a.uid)); } }
+  return s;
+}
+function paintRoomLazy(cv, room, opts) { if (!cv) return; const cssW = cv.clientWidth || RW * 2, want = Math.max(RW, Math.round(cssW * (window.devicePixelRatio || 1)));
+  if (Math.abs(cv.width - want) > 1 || cv._sig !== roomSig(cv, room, opts)) paintRoom(cv, room, opts); }
+function paintRoomTo(cv, g, room, opts) {
+  g.imageSmoothingEnabled = false; const S = cv.width / RW; snapCtx(g, S);
   const t = RM.t, edit = opts && opts.edit;
   drawFrame(g, room.cols.frame); drawWall(g, WALLS[room.wall] ? room.wall : 'plain', t, wallCol(room)); drawFloor(g, FLOORS[room.floor] ? room.floor : 'plank', floorCol(room));
   if (edit) { g.fillStyle = 'rgba(255,255,255,.09)'; for (let c = 0; c <= COLS; c++) g.fillRect(OX + c * T, FY, 1, ROWS * T); for (let r = 0; r <= ROWS; r++) g.fillRect(OX, FY + r * T, COLS * T, 1);
@@ -1988,8 +2017,8 @@ function roomAfter() {
   let cv = document.getElementById('roomCv');
   if (cv && ROOM_CV && ROOM_CV !== cv && ROOM_CV.dataset.tab === tab) { ROOM_CV.className = cv.className; cv.replaceWith(ROOM_CV); cv = ROOM_CV; }   // 다시 그릴 때 방 캔버스를 그대로 옮겨 씀 (빈 캔버스가 잠깐 보이며 깜빡이지 않게)
   if (cv) { ROOM_CV = cv; cv.dataset.tab = tab; }
-  if (cv) { const uid = tab === 'room' ? ME.uid : RV; paintRoom(cv, hoRoom(uid), { edit: tab === 'room' && RM.edit }); if (tab === 'room') bindRoomCv(cv); else bindViewCv(cv, uid); }
-  document.querySelectorAll('canvas.rthumb').forEach(c => paintRoom(c, hoRoom(c.dataset.uid)));
+  if (cv) { const uid = tab === 'room' ? ME.uid : RV; paintRoomLazy(cv, hoRoom(uid), { edit: tab === 'room' && RM.edit }); if (tab === 'room') bindRoomCv(cv); else bindViewCv(cv, uid); }
+  document.querySelectorAll('canvas.rthumb').forEach(c => paintRoomLazy(c, hoRoom(c.dataset.uid)));
   document.querySelectorAll('canvas.fprev').forEach(paintPreview);
 }
 function paintPreview(c) {
@@ -2006,8 +2035,8 @@ setInterval(() => {      // 140ms마다: 평소엔 두 번에 한 번 그리고,
   RM_HALF ^= 1; if (!RM_HALF) RM.t++;
   if (!ME || !P || (tab !== 'room' && tab !== 'visit') || document.hidden) return;
   const cv = document.getElementById('roomCv'), room = cv && hoRoom(tab === 'room' ? ME.uid : RV);
-  if (cv && (!RM_HALF || room.items.some(i => i.imgMs) || (typeof roomHasFrames === 'function' && roomHasFrames(room)) || (typeof avOn === 'function' && avOn()))) paintRoom(cv, room, { edit: tab === 'room' && RM.edit });
-  if (!RM_HALF && RM.t % 4 === 0) document.querySelectorAll('canvas.rthumb').forEach(c => paintRoom(c, hoRoom(c.dataset.uid)));
+  if (cv) paintRoomLazy(cv, room, { edit: tab === 'room' && RM.edit });
+  if (!RM_HALF && RM.t % 4 === 0) document.querySelectorAll('canvas.rthumb').forEach(c => paintRoomLazy(c, hoRoom(c.dataset.uid)));
 }, 140);
 
 /* ---------- 조작 ---------- */

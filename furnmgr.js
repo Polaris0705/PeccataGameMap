@@ -21,7 +21,7 @@ function furnCfgApply(d) {
 const CFIMG = {};
 function cfImg(url) {
   if (!url) return null; const e = CFIMG[url]; if (e) return e.ok ? e.im : null;
-  const im = new Image(); CFIMG[url] = { im }; im.onload = () => { CFIMG[url].ok = true; cfRepaint(); }; im.src = url; return null;
+  const im = new Image(); CFIMG[url] = { im }; im.onload = () => { CFIMG[url].ok = true; if (typeof IMGV !== 'undefined') IMGV++; cfRepaint(); }; im.src = url; return null;
 }
 let CF_RP = 0; function cfRepaint() { clearTimeout(CF_RP); CF_RP = setTimeout(() => { try { document.querySelectorAll('canvas.fprev').forEach(paintPreview); if (typeof roomAfter === 'function') roomAfter(); } catch (e) {} }, 60); }
 function cfRegister(list) {
