@@ -754,6 +754,14 @@ function avTestPaint() {
   cv.onclick = ev => { if (!avCfgOf(P)) return toast('토큰 먼저 만들기'); const p = cvPos(cv, ev), it = itemAt(room, p.x, p.y); if (it && avHangTap(AVTEST_ROOM, it)) return; if (it && avSeatTap(AVTEST_ROOM, it, room, p)) return; avWalkTo(AVTEST_ROOM, p.x, p.y); };
 }
 let AV_PAINT_OWNER = null;
+/* 눈 깜빡임·움직이는 그림은 짧은 장면(예: 80ms)도 편집기와 같은 빠르기로 — 40ms마다 장면이 바뀌었는지만 보고 바뀌면 다시 그림 (방은 원래 140ms 간격) */
+let AV_FSIG = '';
+function avFrameSig(uids) { let s = ''; for (const k in AVOV) { const o = AVOV[k], n = o.n || {}; for (const v in n) if (n[v] > 1) s += k + v + ':' + animFrame(n[v], (o.ms || {})[v], (o.fms || {})[v]) + ','; }
+  uids.forEach(u => { s += avBlinkCfg({}, u).blink ? '1' : '0'; }); return s; }
+setInterval(() => { try { if (document.hidden || !ME || !P) return;
+  if (tab === 'kavatar') { if (!document.getElementById('avTestCv')) return; const s = avFrameSig([ME.uid, ...AVFAKE.map(f => f.id)]); if (s !== AV_FSIG) { AV_FSIG = s; avTestPaint(); } return; }
+  if ((tab !== 'room' && tab !== 'visit') || !avOn()) return; const cv = document.getElementById('roomCv'), owner = tab === 'room' ? ME.uid : RV; if (!cv || !owner) return;
+  const s = avFrameSig([ME.uid, ...AVPOS.filter(x => x.room === owner).map(x => x.id)]); if (s === AV_FSIG) return; AV_FSIG = s; paintRoom(cv, hoRoom(owner), { edit: tab === 'room' && RM.edit }); } catch (e) {} }, 40);
 setInterval(() => { if (tab === 'kavatar' && !document.hidden) { avTestPaint(); document.querySelectorAll('canvas.avovp:not([data-done])').forEach(c => { c.dataset.done = 1; const k = c.dataset.k, cfg = avOvCfg(k), g = c.getContext('2d'); g.clearRect(0, 0, AVW, AVH); g.drawImage(avSprite(cfg, 0, 0), 0, 0); }); } }, 140);
 function avOnAuth(sub) {
   sub(B.onDoc('settings/avatar', d => { AVCFG = Object.assign({ open: false }, d || {}); if (!AVCFG.open && ME && !avOnAuth.clean) { avOnAuth.clean = 1; B.del('avpos/' + ME.uid).catch(() => {}); }   // 비공개: 남은 내 위치 기록 지움
