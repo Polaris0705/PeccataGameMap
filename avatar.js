@@ -374,12 +374,14 @@ function avRoomList(room, owner) {
   return out;
 }
 const AV_RS = .75;
+/* 방에서 토큰 도트 1칸 = 기기 픽셀 정수배 (.75배를 그대로 쓰면 줄마다 1칸씩 빠지거나 겹쳐서 눈 사이가 벌어져 보임) */
+const avRS = S => Math.max(1, Math.round(S * AV_RS)) / S;
 const avBlinkMark = new Uint8Array(64 * 72);   // 방에서 토큰 크기 (캔버스 1칸 = 방 0.75픽셀)
 function avDrawList(g, list, maxDepth) {
   list.forEach(a => { if (a.done) return; const depth = ((a.pose ? a.pose.dy : a.y) - FY) / T; if (depth >= maxDepth) return; a.done = true;
     if (!a.cfg) return; if (a.pose) return avDrawPose(g, a);
-    const sp = avSprite(avBlinkCfg(a.cfg, a.uid), a.dir, a.step), S = g._S || 1, w = AVW * AV_RS, h = AVH * AV_RS, x = a.x - w / 2, y = a.y - 66 * AV_RS + 1 + (a.step % 2 ? -1 : 0);
-    g.save(); g.setTransform(1, 0, 0, 1, 0, 0); g.imageSmoothingEnabled = S < 2; g.fillStyle = 'rgba(20,10,5,.28)'; (g._fr || g.fillRect.bind(g))(Math.round((a.x - 9) * S), Math.round((a.y - 1) * S), Math.round(18 * S), Math.round(2 * S));
+    const sp = avSprite(avBlinkCfg(a.cfg, a.uid), a.dir, a.step), S = g._S || 1, R = avRS(S), w = AVW * R, h = AVH * R, x = Math.round((a.x - w / 2) * S) / S, y = Math.round((a.y - 66 * R + 1 + (a.step % 2 ? -1 : 0)) * S) / S;
+    g.save(); g.setTransform(1, 0, 0, 1, 0, 0); g.imageSmoothingEnabled = false; g.fillStyle = 'rgba(20,10,5,.28)'; (g._fr || g.fillRect.bind(g))(Math.round((a.x - 9) * S), Math.round((a.y - 1) * S), Math.round(18 * S), Math.round(2 * S));
     g.drawImage(sp, Math.round(x * S), Math.round(y * S), Math.round(w * S), Math.round(h * S));
     g.restore(); });
 }
@@ -470,19 +472,19 @@ const AV_ROTC = new WeakMap();
 const AV_HUG = { x: 47, y: 4, x2: 46, y2: -9, k: .35, arm: [55, 59, 36, 41] };   // 안은 토끼 위치 (돌린 토큰 그림 왼쪽 기준, 방 좌표) · arm: 돌린 그림에서 앞팔 [x0,x1,y0,y1]
 function avDrawPose(g, a) {
   const FR = (x, y, w, h) => (g._fr || g.fillRect.bind(g))(x, y, w, h);   // 기기 픽셀 그대로 (방 캔버스는 fillRect가 배율을 또 곱함)
-  const S = g._S || 1, p = a.pose, put = (sp, sx, sy, sw, sh, x, y, w, h) => { g.save(); g.setTransform(1, 0, 0, 1, 0, 0); g.imageSmoothingEnabled = S < 2; g.drawImage(sp, sx, sy, sw, sh, Math.round(x * S), Math.round(y * S), Math.round(w * S), Math.round(h * S)); g.restore(); };
+  const S = g._S || 1, p = a.pose, put = (sp, sx, sy, sw, sh, x, y, w, h) => { g.save(); g.setTransform(1, 0, 0, 1, 0, 0); g.imageSmoothingEnabled = false; g.drawImage(sp, sx, sy, sw, sh, Math.round(x * S), Math.round(y * S), Math.round(w * S), Math.round(h * S)); g.restore(); };
   if (p.px == null) return;   // 예전 형식
   if (p.m === 'hide') return;   // 얼굴이 안 보이는 침대: 안 그림
   if (p.m === 'sleep' && !p.cov) {   // 이불 걷음: 온몸 (머리는 베개)
-    const sp = avSprite(Object.assign({}, a.cfg, { blink: 1 }), 0, 0), R = AV_RS; put(sp, 0, 0, AVW, AVH, p.px - AVW * R / 2, p.py - 46 * R, AVW * R, AVH * R); return; }
+    const sp = avSprite(Object.assign({}, a.cfg, { blink: 1 }), 0, 0), R = avRS(S); put(sp, 0, 0, AVW, AVH, p.px - AVW * R / 2, p.py - 46 * R, AVW * R, AVH * R); return; }
   if (p.m === 'sleep') {   // 이불 덮음: 온몸을 그린 뒤 침대 이불(흰 접힌 부분부터 아래)을 다시 그려 덮음
-    const sp = avSprite(Object.assign({}, a.cfg, { blink: 1 }), 0, 0), R = AV_RS; put(sp, 0, 0, AVW, AVH, p.px - AVW * R / 2, p.py - 46 * R, AVW * R, AVH * R);
+    const sp = avSprite(Object.assign({}, a.cfg, { blink: 1 }), 0, 0), R = avRS(S); put(sp, 0, 0, AVW, AVH, p.px - AVW * R / 2, p.py - 46 * R, AVW * R, AVH * R);
     avTuck(g, a, p, 'y'); return; }
   if (p.m === 'rot') {   // 옆으로 누움: 머리 중심이 돌린 그림 왼쪽(또는 오른쪽)에서 14칸
     const b = avSprite(Object.assign({}, a.cfg, { blink: 1 }), 0, 0), rk = p.rl < 0 ? 'l' : 'r', rc = AV_ROTC.get(b) || {}; let c = rc[rk];   // 돌린 그림은 한 번만 만들어 둠
     if (!c) { c = rc[rk] = document.createElement('canvas'); c.width = AVH; c.height = AVW; const lg = c.getContext('2d');
       lg.translate(AVH / 2, AVW / 2); lg.rotate(p.rl < 0 ? -Math.PI / 2 : Math.PI / 2); lg.drawImage(b, -AVW / 2, -AVH / 2); AV_ROTC.set(b, rc); }
-    const R = AV_RS, w = AVH * R, h = AVW * R, x = p.rl < 0 ? p.px - 30 * R : p.px + 30 * R - w, H = AV_HUG, hb = typeof drawLyingBunny === 'function' && p.hug, fx = v => x + (p.rl < 0 ? v : w - v);
+    const R = avRS(S), w = AVH * R, h = AVW * R, x = p.rl < 0 ? p.px - 30 * R : p.px + 30 * R - w, H = AV_HUG, hb = typeof drawLyingBunny === 'function' && p.hug, fx = v => x + (p.rl < 0 ? v : w - v);
     if (hb) drawLyingBunny(g, fx(H.x2), p.py + H.y2, 1, p.rl, H.k);   // 한 마리는 뒤(등받이 쪽)에 나란히
     put(c, 0, 0, c.width, c.height, x, p.py - h / 2, w, h);
     if (p.cov) avTuck(g, a, p, 'x');
@@ -490,7 +492,7 @@ function avDrawPose(g, a) {
       const [ax0, ax1, ay0, ay1] = H.arm, sx = p.rl < 0 ? ax0 : AVH - ax1; put(c, sx, ay0, ax1 - ax0, ay1 - ay0, x + sx * R, p.py - h / 2 + ay0 * R, (ax1 - ax0) * R, (ay1 - ay0) * R); }
     return; }
   const sp = avPoseSprite(avBlinkCfg(a.cfg, a.uid), p.dir, 'sit');   // 앉기: 엉덩이(캔버스 61줄)를 자리 높이에
-  put(sp, 0, 0, sp.width, sp.height, p.px - AVW * AV_RS / 2, p.py - 61 * AV_RS, AVW * AV_RS, AVH * AV_RS);
+  const R = avRS(S); put(sp, 0, 0, sp.width, sp.height, p.px - AVW * R / 2, p.py - 61 * R, AVW * R, AVH * R);
 }
 /* ---------- 옷 걸어 두기 (옷 걸이대 · 옷 마네킹) ---------- */
 const AV_HANG_SLOTS = ['top', 'one', 'outer', 'bottom', 'hat', 'acc', 'shoes'];
