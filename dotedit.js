@@ -442,7 +442,9 @@ function deRefSave() { if (!DE || !DE.ref || !DE.ref.user || !DE.ref.url) return
     while (ix.length > 40) localStorage.removeItem(ix.shift());
     for (;;) { try { put(); break; } catch (e) { if (ix.length <= 1) throw e; localStorage.removeItem(ix.shift()); } }   // 공간이 모자라면 오래된 밑그림부터 지움
     localStorage.setItem('peccata_deref_ix', JSON.stringify(ix)); } catch (e) { toast('밑그림 기억 실패 (저장 공간 부족)'); } }
-function deRefLoadSaved() { let v = null; try { v = JSON.parse(localStorage.getItem(deRefKey()) || 'null'); } catch (e) {} if (!v || !v.url) return; DE.userRef = true; const o = DE.o, im = new Image();
+function deRefLoadSaved() { let v = null; try { v = JSON.parse(localStorage.getItem(deRefKey()) || 'null');
+    if (!v && DE.W % 2 === 0 && DE.H % 2 === 0) { const ok = deRefKey().replace(new RegExp('_' + DE.W + 'x' + DE.H + '$'), '_' + DE.W / 2 + 'x' + DE.H / 2), o = JSON.parse(localStorage.getItem(ok) || 'null');   // 캔버스가 2배가 되기 전에 올린 밑그림
+      if (o && o.url) v = Object.assign(o, { x: (o.x || 0) * 2, y: (o.y || 0) * 2, s: (o.s || 1) * 2 }); } } catch (e) {} if (!v || !v.url) return; DE.userRef = true; const o = DE.o, im = new Image();
   im.onload = () => { if (!DE || DE.o !== o) return; DE.ref = { img: im, url: v.url, user: true, data: null, a: v.a || .45, on: v.on !== false, x: v.x || 0, y: v.y || 0, s: v.s || 1, crisp: !!v.crisp }; deUI(); deDraw(); }; im.src = v.url; }
 function deRefForget() { if (!DE) return; if (DE.ref && DE.ref.user) { try { localStorage.removeItem(deRefKey()); } catch (e) {} DE.userRef = false; toast('밑그림 지움 · 기억도 지움'); } DE.ref = null; deUI(); deDraw(); }
 function deRefPick() {

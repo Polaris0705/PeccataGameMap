@@ -7,7 +7,7 @@
    그림: 48×68 도트(큰 머리 SD), 방에서는 절반 크기(24×34)로 촘촘하게. 방향 0 앞 · 1 왼쪽 · 2 뒤 · 3 오른쪽(왼쪽 뒤집기)
 ============================================================================= */
 let AVCFG = { open: false }, WEAR = [], AVPOS = [];
-const AVW = 64, AVH = 72;
+const AVU = 2, AVW = 64 * AVU, AVH = 72 * AVU;   // 토큰 도트 2배로 쪼갬: 설계 1칸(예전 도트) = 그림 2×2칸 · 예전 64×72·48×68 그림은 2배로 늘려서 씀
 const avOn = () => !!AVCFG.open;   // 공개 전에는 비밀번호 시험실에서만 보임 (KP 화면에서도 다른 방엔 안 보임)
 const SKINS = ['#fbe3cf', '#f6d2b4', '#ecc29e', '#d9a47c', '#b07a52', '#7a4e32'];
 const AV_SLOTS = [['hair', '머리'], ['eye', '눈'], ['face', '얼굴'], ['top', '상의'], ['bottom', '하의'], ['one', '한 벌'], ['outer', '겉옷'], ['shoes', '신발'], ['hat', '모자'], ['acc', '액세서리']];
@@ -94,7 +94,7 @@ const AV_BALLF = { 13: 6, 14: 9, 15: 11, 16: 12, 17: 13, 18: 14, 19: 15, 20: 15,
 const AV_TROW = { 46: [19, 28], 47: [19, 28], 48: [19, 28], 49: [18, 29], 50: [18, 29], 51: [17, 30], 52: [17, 30], 53: [17, 30], 54: [17, 30], 55: [18, 29] };
 const AV_TROWS = { 46: [21, 26], 47: [21, 26], 48: [21, 26], 49: [20, 27], 50: [20, 27], 51: [20, 27], 52: [20, 27], 53: [20, 27], 54: [20, 27], 55: [21, 26] };
 function avP2(g, cfg, dir, step) {
-  const R = (x, y, w, h, col) => { if (w <= 0 || h <= 0 || !col) return; g.fillStyle = col; g.fillRect(Math.round(x) + AV_OX, Math.round(y) + AV_OY, Math.round(w), Math.round(h)); };
+  const R = (x, y, w, h, col) => { if (w <= 0 || h <= 0 || !col) return; g.fillStyle = col; g.fillRect((Math.round(x) + AV_OX) * AVU, (Math.round(y) + AV_OY) * AVU, Math.round(w) * AVU, Math.round(h) * AVU); };
   const H = (y, half, col, off) => R(24 - half + (off || 0), y, half * 2, 1, col);
   const M = (x, y, w, h, col) => { R(x, y, w, h, col); R(48 - x - w, y, w, h, col); };
   const view = dir === 2 ? 'back' : dir % 2 ? 'side' : 'front', side = view === 'side', lift = [0, -1, 0, 1][step] || 0;
@@ -238,9 +238,14 @@ const AV_DRAW = {
 };
 /* 그림 붙이기: 예전 48×68 그림은 가운데 아래 맞춤(+8, +4). n장 세로 띠면 fi번째 장면만 */
 function avPic(g, im, x, y, fi, n) {
-  n = Math.max(1, n || 1); const fw = im.width, fh = Math.round(im.height / n), old = fw === 48 && fh === 68;
-  g.drawImage(im, 0, (fi || 0) * fh, fw, fh, (x || 0) + (old ? AV_OX : Math.round((AVW - fw) / 2)), (y || 0) + (old ? AV_OY : AVH - fh), fw, fh);
+  n = Math.max(1, n || 1); const fw = im.width, fh = Math.round(im.height / n), o48 = fw === 48 && fh === 68, o64 = fw === 64 && fh === 72, s = o48 || o64 ? AVU : 1;
+  const ox = o48 ? AV_OX * AVU : o64 ? 0 : Math.round((AVW - fw) / 2), oy = o48 ? AV_OY * AVU : o64 ? 0 : AVH - fh, sm = g.imageSmoothingEnabled; g.imageSmoothingEnabled = false;
+  g.drawImage(im, 0, (fi || 0) * fh, fw, fh, (x || 0) + ox, (y || 0) + oy, fw * s, fh * s); g.imageSmoothingEnabled = sm;
 }
+/* 예전 크기(64×72 · 48×68) 그림을 지금 크기로 늘린 주소 (편집기·불러오기용) · n장 세로 띠도 장면마다 */
+async function avToFull(url, n) { if (!url) return url; n = Math.max(1, n || 1); await avLoadUrls([url]); const im = cfImg(url); if (!im) return url; const fw = im.width, fh = Math.round(im.height / n);
+  if (fw === AVW && fh === AVH) return url; if (!((fw === 64 && fh === 72) || (fw === 48 && fh === 68))) return url;
+  const c = document.createElement('canvas'); c.width = AVW; c.height = AVH * n; const g = c.getContext('2d'); for (let i = 0; i < n; i++) avPic(g, im, 0, i * AVH, i, n); return c.toDataURL('image/png'); }
 /* 층 하나 그리기 (원래 그림) */
 function avDrawLayer(P2, key) {
   const [k, id] = key.split(':'), c = P2.cfg;
@@ -285,9 +290,9 @@ function avBodyCut(vw, url) {
   const c = document.createElement('canvas'); c.width = AVW; c.height = AVH; const cg = c.getContext('2d'); avPic(cg, im, 0, 0, 0, ((AVOV.body || {}).n || {})[vw]); const b = cg.getImageData(0, 0, AVW, AVH).data;
   const N = AVW * AVH, gone = new Uint8Array(N), cut = new Uint8Array(N); let armAll = 0, armGone = 0;
   for (let i = 0; i < N; i++) { gone[i] = a[i * 4 + 3] > 0 && !b[i * 4 + 3] ? 1 : 0; const x = i % AVW, y = (i / AVW) | 0;
-    if (vw !== 1 && y >= 55 && y <= 58 && (x < 27 || x >= 37) && a[i * 4 + 3]) { armAll++; armGone += gone[i]; } }
-  for (let y = 0; y <= 62; y++) for (let x = 0; x < AVW; x++) { const i = y * AVW + x; if (b[i * 4 + 3]) continue;
-    let hit = 0; for (let dy = -2; dy <= 2 && !hit; dy++) for (let dx = -2; dx <= 2; dx++) { const X = x + dx, Y = y + dy; if (X >= 0 && Y >= 0 && X < AVW && Y < AVH && gone[Y * AVW + X]) { hit = 1; break; } }
+    if (vw !== 1 && y >= 55 * AVU && y < 59 * AVU && (x < 27 * AVU || x >= 37 * AVU) && a[i * 4 + 3]) { armAll++; armGone += gone[i]; } }
+  const RR = 2 * AVU; for (let y = 0; y < 63 * AVU; y++) for (let x = 0; x < AVW; x++) { const i = y * AVW + x; if (b[i * 4 + 3]) continue;
+    let hit = 0; for (let dy = -RR; dy <= RR && !hit; dy++) for (let dx = -RR; dx <= RR; dx++) { const X = x + dx, Y = y + dy; if (X >= 0 && Y >= 0 && X < AVW && Y < AVH && gone[Y * AVW + X]) { hit = 1; break; } }
     cut[i] = hit; }
   return AVCUT[k] = { cut, noArms: armAll > 0 && armGone / armAll > .6 };
 }
@@ -329,13 +334,14 @@ function avSprite(cfg, dir, step) {
       const t = document.createElement('canvas'); t.width = AVW; t.height = AVH; const tg = t.getContext('2d'), sg = G; G = tg; PP = avP2(tg, cfg, dir, step); layer(ek); G = sg; PP = P2;
       const d = tg.getImageData(0, 0, AVW, AVH), q = d.data, o = new Uint8ClampedArray(q.length); avBlinkMark.fill(0);
       for (let x = 0; x < AVW; x++) { let a = -1, b = -1; for (let y = 0; y < AVH; y++) if (q[(y * AVW + x) * 4 + 3]) { if (a < 0) a = y; b = y; }
-        if (a < 0) continue; if (a === b) { const k = (a * AVW + x) * 4; for (let i = 0; i < 4; i++) o[k + i] = q[k + i]; continue; }   // 한 줄짜리(입)는 그대로
+        if (a < 0) continue; if (b - a < AVU) { for (let yy = a; yy <= b; yy++) { const k = (yy * AVW + x) * 4; for (let i = 0; i < 4; i++) o[k + i] = q[k + i]; } continue; }   // 한 줄짜리(입)는 그대로
         // 세로로 이어진 덩어리(눈)마다: 맨 위 색으로 아래에서 둘째 줄에 한 칸
         let y = a; while (y <= b) { if (!q[(y * AVW + x) * 4 + 3]) { y++; continue; } let e = y; while (e + 1 <= b && q[((e + 1) * AVW + x) * 4 + 3]) e++;
-          const src = (y * AVW + x) * 4, dst = (Math.max(y, e - 1) * AVW + x) * 4; if (e > y) { for (let i = 0; i < 4; i++) o[dst + i] = q[src + i]; avBlinkMark[dst / 4] = 1; } else for (let i = 0; i < 4; i++) o[src + i] = q[src + i]; y = e + 1; } }
+          const src = (y * AVW + x) * 4; if (e - y >= AVU) { const r0 = Math.max(y, e - 2 * AVU + 1); for (let r = r0; r < r0 + AVU && r <= e; r++) { const dst = (r * AVW + x) * 4; for (let i = 0; i < 4; i++) o[dst + i] = q[src + i]; avBlinkMark[dst / 4] = 1; } }   // 눈 덩어리: 아래에서 둘째 칸(AVU줄)에 감은 선
+          else for (let r = y; r <= e; r++) { const k = (r * AVW + x) * 4; for (let i = 0; i < 4; i++) o[k + i] = q[k + i]; } y = e + 1; } }
       // 감은 눈 선을 바깥쪽으로 1칸씩 (앞·뒤: 왼눈은 왼쪽, 오른눈은 오른쪽 · 옆: 귀 쪽)
       for (let y = 0; y < AVH; y++) { let x = 0; while (x < AVW) { const i = y * AVW + x; if (!o[i * 4 + 3] || !avBlinkMark[i]) { x++; continue; } let e = x; while (e + 1 < AVW && o[(y * AVW + e + 1) * 4 + 3] && avBlinkMark[y * AVW + e + 1]) e++;
-        const nx = vw === 1 ? e + 1 : (x + e) / 2 < AVW / 2 ? x - 1 : e + 1, src = (y * AVW + (nx < x ? x : e)) * 4, dst = (y * AVW + nx) * 4; if (nx >= 0 && nx < AVW && !o[dst + 3]) for (let k = 0; k < 4; k++) o[dst + k] = o[src + k]; x = e + 1; } }
+        const out = vw === 1 || (x + e) / 2 >= AVW / 2 ? 1 : -1, src = (y * AVW + (out < 0 ? x : e)) * 4; for (let j = 1; j <= AVU; j++) { const nx = out < 0 ? x - j : e + j, dst = (y * AVW + nx) * 4; if (nx >= 0 && nx < AVW && !o[dst + 3]) for (let k = 0; k < 4; k++) o[dst + k] = o[src + k]; } x = e + 1; } }   // 바깥쪽으로 설계 1칸(AVU칸)
       tg.putImageData(new ImageData(o, AVW, AVH), 0, 0); g.drawImage(t, 0, 0);
     } else layer(ek); }
   if (cfg.face && vw !== 2) {   // 얼굴(홍조·흉터): 몸 층 모양으로 잘라서 피부 위에만
@@ -375,13 +381,13 @@ function avRoomList(room, owner) {
 }
 const AV_RS = .75;
 /* 방에서 토큰 도트 1칸 = 기기 픽셀 정수배 (.75배를 그대로 쓰면 줄마다 1칸씩 빠지거나 겹쳐서 눈 사이가 벌어져 보임) */
-const avRS = S => Math.max(1, Math.round(S * AV_RS)) / S;
-const avBlinkMark = new Uint8Array(64 * 72);   // 방에서 토큰 크기 (캔버스 1칸 = 방 0.75픽셀)
+const avRS = S => { const k = S * AV_RS / AVU; return (k >= 1 ? Math.round(k) : k) / S; }, avSmooth = S => S * AV_RS / AVU < 1;
+const avBlinkMark = new Uint8Array(AVW * AVH);   // 방에서 토큰 크기 (캔버스 1칸 = 방 0.75픽셀)
 function avDrawList(g, list, maxDepth) {
   list.forEach(a => { if (a.done) return; const depth = ((a.pose ? a.pose.dy : a.y) - FY) / T; if (depth >= maxDepth) return; a.done = true;
     if (!a.cfg) return; if (a.pose) return avDrawPose(g, a);
-    const sp = avSprite(avBlinkCfg(a.cfg, a.uid), a.dir, a.step), S = g._S || 1, R = avRS(S), w = AVW * R, h = AVH * R, x = Math.round((a.x - w / 2) * S) / S, y = Math.round((a.y - 66 * R + 1 + (a.step % 2 ? -1 : 0)) * S) / S;
-    g.save(); g.setTransform(1, 0, 0, 1, 0, 0); g.imageSmoothingEnabled = false; g.fillStyle = 'rgba(20,10,5,.28)'; (g._fr || g.fillRect.bind(g))(Math.round((a.x - 9) * S), Math.round((a.y - 1) * S), Math.round(18 * S), Math.round(2 * S));
+    const sp = avSprite(avBlinkCfg(a.cfg, a.uid), a.dir, a.step), S = g._S || 1, R = avRS(S), w = AVW * R, h = AVH * R, x = Math.round((a.x - w / 2) * S) / S, y = Math.round((a.y - 66 * AVU * R + 1 + (a.step % 2 ? -1 : 0)) * S) / S;
+    g.save(); g.setTransform(1, 0, 0, 1, 0, 0); g.imageSmoothingEnabled = avSmooth(S); g.fillStyle = 'rgba(20,10,5,.28)'; (g._fr || g.fillRect.bind(g))(Math.round((a.x - 9) * S), Math.round((a.y - 1) * S), Math.round(18 * S), Math.round(2 * S));
     g.drawImage(sp, Math.round(x * S), Math.round(y * S), Math.round(w * S), Math.round(h * S));
     g.restore(); });
 }
@@ -447,12 +453,12 @@ const AVPOSEC = {};
 function avPoseSprite(cfg, dir, k) {
   const vw = avView(dir), base = avSprite(cfg, vw === 1 ? 1 : dir, 0), key = base.__k || (base.__k = Math.random().toString(36).slice(2)), ck = key + k + dir; if (AVPOSEC[ck]) return AVPOSEC[ck];
   if (Object.keys(AVPOSEC).length > 200) Object.keys(AVPOSEC).forEach(x => delete AVPOSEC[x]);
-  const c = document.createElement('canvas'); c.width = AVW; c.height = AVH; const g = c.getContext('2d'), HIP = 60 + 1, ov = AVOV['pose:sit'], src = ov && ov.pics && ov.pics[vw];
+  const c = document.createElement('canvas'); c.width = AVW; c.height = AVH; const g = c.getContext('2d'), U = AVU, HIP = 61 * U, ov = AVOV['pose:sit'], src = ov && ov.pics && ov.pics[vw];
   if (k === 'lie') { const b = avSprite(cfg, 0, 0); c.width = AVH; c.height = AVW; const lg = c.getContext('2d'); lg.translate(AVH / 2, AVW / 2); lg.rotate(-Math.PI / 2); lg.drawImage(b, -AVW / 2, -AVH / 2); return AVPOSEC[ck] = c; }
   g.drawImage(base, 0, 0, AVW, HIP, 0, 0, AVW, HIP);   // 윗몸
   if (src) { const im = avRecolor(src, SKINS[0], cfg.skin); if (im) avPic(g, im, 0, 0, 0, (ov.n || {})[vw]); }
-  else if (vw === 1) { g.save(); g.translate(30, HIP); g.rotate(Math.PI / 2); g.drawImage(base, 24, HIP, 16, AVH - HIP, -1, -14, 16, AVH - HIP); g.restore(); }   // 다리를 앞(왼쪽)으로
-  else g.drawImage(base, 0, HIP + 4, AVW, AVH - HIP - 4, 0, HIP, AVW, AVH - HIP - 4);   // 허벅지 줄이기
+  else if (vw === 1) { g.save(); g.translate(30 * U, HIP); g.rotate(Math.PI / 2); g.drawImage(base, 24 * U, HIP, 16 * U, AVH - HIP, -1 * U, -14 * U, 16 * U, AVH - HIP); g.restore(); }   // 다리를 앞(왼쪽)으로
+  else g.drawImage(base, 0, HIP + 4 * U, AVW, AVH - HIP - 4 * U, 0, HIP, AVW, AVH - HIP - 4 * U);   // 허벅지 줄이기
   if (dir === 3) { const m = document.createElement('canvas'); m.width = AVW; m.height = AVH; const mg = m.getContext('2d'); mg.translate(AVW, 0); mg.scale(-1, 1); mg.drawImage(c, 0, 0); return AVPOSEC[ck] = m; }
   return AVPOSEC[ck] = c;
 }
@@ -472,27 +478,27 @@ const AV_ROTC = new WeakMap();
 const AV_HUG = { x: 47, y: 4, x2: 46, y2: -9, k: .35, arm: [55, 59, 36, 41] };   // 안은 토끼 위치 (돌린 토큰 그림 왼쪽 기준, 방 좌표) · arm: 돌린 그림에서 앞팔 [x0,x1,y0,y1]
 function avDrawPose(g, a) {
   const FR = (x, y, w, h) => (g._fr || g.fillRect.bind(g))(x, y, w, h);   // 기기 픽셀 그대로 (방 캔버스는 fillRect가 배율을 또 곱함)
-  const S = g._S || 1, p = a.pose, put = (sp, sx, sy, sw, sh, x, y, w, h) => { g.save(); g.setTransform(1, 0, 0, 1, 0, 0); g.imageSmoothingEnabled = false; g.drawImage(sp, sx, sy, sw, sh, Math.round(x * S), Math.round(y * S), Math.round(w * S), Math.round(h * S)); g.restore(); };
+  const S = g._S || 1, p = a.pose, put = (sp, sx, sy, sw, sh, x, y, w, h) => { g.save(); g.setTransform(1, 0, 0, 1, 0, 0); g.imageSmoothingEnabled = avSmooth(S); g.drawImage(sp, sx, sy, sw, sh, Math.round(x * S), Math.round(y * S), Math.round(w * S), Math.round(h * S)); g.restore(); };
   if (p.px == null) return;   // 예전 형식
   if (p.m === 'hide') return;   // 얼굴이 안 보이는 침대: 안 그림
   if (p.m === 'sleep' && !p.cov) {   // 이불 걷음: 온몸 (머리는 베개)
-    const sp = avSprite(Object.assign({}, a.cfg, { blink: 1 }), 0, 0), R = avRS(S); put(sp, 0, 0, AVW, AVH, p.px - AVW * R / 2, p.py - 46 * R, AVW * R, AVH * R); return; }
+    const sp = avSprite(Object.assign({}, a.cfg, { blink: 1 }), 0, 0), R = avRS(S); put(sp, 0, 0, AVW, AVH, p.px - AVW * R / 2, p.py - 46 * AVU * R, AVW * R, AVH * R); return; }
   if (p.m === 'sleep') {   // 이불 덮음: 온몸을 그린 뒤 침대 이불(흰 접힌 부분부터 아래)을 다시 그려 덮음
-    const sp = avSprite(Object.assign({}, a.cfg, { blink: 1 }), 0, 0), R = avRS(S); put(sp, 0, 0, AVW, AVH, p.px - AVW * R / 2, p.py - 46 * R, AVW * R, AVH * R);
+    const sp = avSprite(Object.assign({}, a.cfg, { blink: 1 }), 0, 0), R = avRS(S); put(sp, 0, 0, AVW, AVH, p.px - AVW * R / 2, p.py - 46 * AVU * R, AVW * R, AVH * R);
     avTuck(g, a, p, 'y'); return; }
   if (p.m === 'rot') {   // 옆으로 누움: 머리 중심이 돌린 그림 왼쪽(또는 오른쪽)에서 14칸
     const b = avSprite(Object.assign({}, a.cfg, { blink: 1 }), 0, 0), rk = p.rl < 0 ? 'l' : 'r', rc = AV_ROTC.get(b) || {}; let c = rc[rk];   // 돌린 그림은 한 번만 만들어 둠
     if (!c) { c = rc[rk] = document.createElement('canvas'); c.width = AVH; c.height = AVW; const lg = c.getContext('2d');
       lg.translate(AVH / 2, AVW / 2); lg.rotate(p.rl < 0 ? -Math.PI / 2 : Math.PI / 2); lg.drawImage(b, -AVW / 2, -AVH / 2); AV_ROTC.set(b, rc); }
-    const R = avRS(S), w = AVH * R, h = AVW * R, x = p.rl < 0 ? p.px - 30 * R : p.px + 30 * R - w, H = AV_HUG, hb = typeof drawLyingBunny === 'function' && p.hug, fx = v => x + (p.rl < 0 ? v : w - v);
+    const R = avRS(S), w = AVH * R, h = AVW * R, x = p.rl < 0 ? p.px - 30 * AVU * R : p.px + 30 * AVU * R - w, H = AV_HUG, hb = typeof drawLyingBunny === 'function' && p.hug, fx = v => x + (p.rl < 0 ? v : w - v);
     if (hb) drawLyingBunny(g, fx(H.x2), p.py + H.y2, 1, p.rl, H.k);   // 한 마리는 뒤(등받이 쪽)에 나란히
     put(c, 0, 0, c.width, c.height, x, p.py - h / 2, w, h);
     if (p.cov) avTuck(g, a, p, 'x');
     if (hb) { drawLyingBunny(g, fx(H.x), p.py + H.y, 0, p.rl, H.k);   // 한 마리는 품에 — 그 위로 팔을 다시 그려 안은 모양
-      const [ax0, ax1, ay0, ay1] = H.arm, sx = p.rl < 0 ? ax0 : AVH - ax1; put(c, sx, ay0, ax1 - ax0, ay1 - ay0, x + sx * R, p.py - h / 2 + ay0 * R, (ax1 - ax0) * R, (ay1 - ay0) * R); }
+      const [ax0, ax1, ay0, ay1] = H.arm.map(v => v * AVU), sx = p.rl < 0 ? ax0 : AVH - ax1; put(c, sx, ay0, ax1 - ax0, ay1 - ay0, x + sx * R, p.py - h / 2 + ay0 * R, (ax1 - ax0) * R, (ay1 - ay0) * R); }
     return; }
   const sp = avPoseSprite(avBlinkCfg(a.cfg, a.uid), p.dir, 'sit');   // 앉기: 엉덩이(캔버스 61줄)를 자리 높이에
-  const R = avRS(S); put(sp, 0, 0, sp.width, sp.height, p.px - AVW * R / 2, p.py - 61 * R, AVW * R, AVH * R);
+  const R = avRS(S); put(sp, 0, 0, sp.width, sp.height, p.px - AVW * R / 2, p.py - 61 * AVU * R, AVW * R, AVH * R);
 }
 /* ---------- 옷 걸어 두기 (옷 걸이대 · 옷 마네킹) ---------- */
 const AV_HANG_SLOTS = ['top', 'one', 'outer', 'bottom', 'hat', 'acc', 'shoes'];
@@ -524,9 +530,9 @@ function avHangPng(w) {
 function avDrawHung(g, it, b, kind) {
   if (!avOn() && AV_PAINT_OWNER !== AVTEST_ROOM) return; const w = it.wear; if (!w || !w.id) return;
   const im = avHangPng(w), S = g._S || 1, [sy, sh] = w.slot === 'hat' ? [4, 22] : w.slot === 'shoes' ? [60, 8] : w.slot === 'one' || w.slot === 'outer' ? [48, 24] : w.slot === 'bottom' ? [55, 16] : [48, 18];   // 캔버스 줄
-  const cx = b.x + b.w / 2, top = kind === 'form' ? b.y + 11 : b.y + 15, dw = AVW, dh = sh;   // 걸린 옷은 토큰보다 2배로 (가구 크기에 맞춤)
-  g.save(); g.setTransform(1, 0, 0, 1, 0, 0); g.imageSmoothingEnabled = S < 2;
-  g.drawImage(im, 0, sy, AVW, sh, Math.round((cx - dw / 2) * S), Math.round(top * S), Math.round(dw * S), Math.round(dh * S)); g.restore();
+  const cx = b.x + b.w / 2, top = kind === 'form' ? b.y + 11 : b.y + 15, dw = AVW / AVU, dh = sh;   // 걸린 옷은 토큰보다 2배로 (가구 크기에 맞춤)
+  g.save(); g.setTransform(1, 0, 0, 1, 0, 0); g.imageSmoothingEnabled = S < AVU;
+  g.drawImage(im, 0, sy * AVU, AVW, sh * AVU, Math.round((cx - dw / 2) * S), Math.round(top * S), Math.round(dw * S), Math.round(dh * S)); g.restore();
 }
 function avTap(owner, p) { if (!avOn() || !avCfgOf(P)) return false; if (p.y < FY + 2) return false; avWalkTo(owner, p.x, p.y); return true; }
 
@@ -596,7 +602,8 @@ async function wfDraw(k) {
   wfRead(); const base = Object.assign({}, AV_DEF, { hair: 'short', top: '', bottom: '', shoes: '', one: k >= 3 ? 'dress' : '', outer: '', hat: '', acc: '' }), dir = k % 3 === 1 ? 1 : k % 3 === 2 ? 2 : 0;   // 3~5: 원피스 위 겉옷 (드레스 밑그림)
   toast('밑그림 준비 중');
   const ref = await avRefUrl(base, dir), guide = k % 3 && WFD.pics[k - k % 3] ? await avRefUrl(base, 0, { extra: [WFD.pics[k - k % 3]] }) : null;
-  dotEdit({ W: AVW, H: AVH, layerSrc: AV_LSRC(), src: WFD.pics[k] || null, key: 'wear_' + (WFD.id || 'new') + '_' + k, title: (WFD.name || '새 옷') + ' · ' + (k >= 3 ? '드레스 위 ' : '') + ['앞', '옆', '뒤'][k % 3], guide, guideName: '앞모습',
+  const src0 = WFD.pics[k] ? await avToFull(WFD.pics[k]) : null;
+  dotEdit({ W: AVW, H: AVH, layerSrc: AV_LSRC(), src: src0, key: 'wear_' + (WFD.id || 'new') + '_' + k, title: (WFD.name || '새 옷') + ' · ' + (k >= 3 ? '드레스 위 ' : '') + ['앞', '옆', '뒤'][k % 3], guide, guideName: '앞모습',
     onSave: url => { if (url) WFD.pics[k] = url; else delete WFD.pics[k]; wfForm(); }, onCancel: () => wfForm() });
   avSetRef(ref, .5);
 }
@@ -638,22 +645,22 @@ async function avOvExport(keys) {
   toast('그림 준비 중');
   await avLoadUrls(Object.values(AVOV).flatMap(v => Object.values(v.pics || {})));
   // 4배로 크게 · 층마다 몸을 흐리게 깔아서 위치·크기를 몸과 비교 (몸 층 자체는 그대로)
-  const Z = 4, LW = 90, G = 4, rows = keys.length + 1, c = document.createElement('canvas'), TX = [];
-  c.width = LW + (AVW + G) * 3; c.height = rows * (AVH + G) + 14; const g = c.getContext('2d'); g.imageSmoothingEnabled = false;
+  const Z = Math.max(1, 4 / AVU), LW = 90 * AVU, G = 4 * AVU, rows = keys.length + 1, c = document.createElement('canvas'), TX = [];
+  c.width = LW + (AVW + G) * 3; c.height = rows * (AVH + G) + 14 * AVU; const g = c.getContext('2d'); g.imageSmoothingEnabled = false;
   ['앞', '옆', '뒤'].forEach((t, i) => TX.push([t, LW + i * (AVW + G) + 2, 1]));
   const bodyPic = v => { const bp = AVOV.body && AVOV.body.pics && AVOV.body.pics[v], im = bp && cfImg(bp); return im ? { im, n: (AVOV.body.n || {})[v] } : { im: avLayerPng('body', v, true), n: 1 }; };
-  keys.forEach((k, r) => { const y = 14 + r * (AVH + G), ov = AVOV[k] || {}, pics = ov.pics || {};
-    TX.push([k, 2, y + 2]); TX.push([pics[0] || pics[1] || pics[2] ? '(고침)' : '(원래)', 2, y + 14]);
+  keys.forEach((k, r) => { const y = 14 * AVU + r * (AVH + G), ov = AVOV[k] || {}, pics = ov.pics || {};
+    TX.push([k, 2, y + 2]); TX.push([pics[0] || pics[1] || pics[2] ? '(고침)' : '(원래)', 2, y + 14 * AVU]);
     [0, 1, 2].forEach(v => { const x = LW + v * (AVW + G), im = pics[v] && cfImg(pics[v]);
       g.fillStyle = 'rgba(255,255,255,.08)'; g.fillRect(x, y, AVW, AVH);
       if (k !== 'body') { const b = bodyPic(v); g.globalAlpha = .22; avPic(g, b.im, x, y, 0, b.n); g.globalAlpha = 1; }
       if (im) avPic(g, im, x, y, 0, (ov.n || {})[v]); else { g.globalAlpha = .35; g.drawImage(avLayerPng(k, v, true), x, y); g.globalAlpha = 1; } }); });
-  const y = 14 + keys.length * (AVH + G), cfg = keys.length === 1 ? avOvCfg(keys[0]) : Object.assign({}, AV_DEF, (P && P.avatar) || {}); TX.push(['전체 모습', 2, y + 2]); avClr();
+  const y = 14 * AVU + keys.length * (AVH + G), cfg = keys.length === 1 ? avOvCfg(keys[0]) : Object.assign({}, AV_DEF, (P && P.avatar) || {}); TX.push(['전체 모습', 2, y + 2]); avClr();
   [0, 1, 2].forEach(v => g.drawImage(avSprite(cfg, v, 0), LW + v * (AVW + G), y));
   // 어두운 바탕 + 4배 확대(도트 그대로) + 글자는 확대한 뒤에 또렷하게
   const out = document.createElement('canvas'); out.width = c.width * Z; out.height = c.height * Z; const og = out.getContext('2d'); og.fillStyle = '#3a3036'; og.fillRect(0, 0, out.width, out.height);
   og.imageSmoothingEnabled = false; og.drawImage(c, 0, 0, out.width, out.height);
-  og.fillStyle = '#ffffff'; og.font = (9 * Z) + 'px sans-serif'; og.textBaseline = 'top'; TX.forEach(([t, x, yy]) => og.fillText(t, x * Z, yy * Z, (LW - 4) * Z));
+  og.fillStyle = '#ffffff'; og.font = (9 * AVU * Z) + 'px sans-serif'; og.textBaseline = 'top'; TX.forEach(([t, x, yy]) => og.fillText(t, x * Z, yy * Z, (LW - 4) * Z));
   const name = 'token_' + (keys.length === 1 ? keys[0].replace(/[:]/g, '_') : 'all') + '.png';
   out.toBlob(async blob => { const f = new File([blob], name, { type: 'image/png' });
     try { if (navigator.canShare && navigator.canShare({ files: [f] })) { await navigator.share({ files: [f], title: name }); return; } } catch (e) { if (e && e.name === 'AbortError') return; }
@@ -692,7 +699,8 @@ async function avOvDraw(key, d) {
   const orig = avLayerPng(key, d), cfg = avOvCfg(key);
   const base = await avRefUrl(cfg, d, { key, pend: AVOD.pics, skip: key });
   const guide = d ? await avRefUrl(cfg, 0, { key, pend: AVOD.pics }) : null;
-  dotEdit({ W: AVW, H: AVH, src: AVOD.pics[d] || orig, orig, key: 'avov_' + key + '_' + d, title: key + ' · ' + ['앞', '옆', '뒤'][d], guide, guideName: '앞모습', allowEmpty: key !== 'body', layerSrc: AV_LSRC(), presets: { list: avPresetList(key), get: pk => pk === 'o|' + key ? Promise.resolve({ url: orig, n: 1 }) : avPresetPic(pk, key, d) },
+  const src0 = AVOD.pics[d] ? await avToFull(AVOD.pics[d], AVOD.n[d] || 1) : orig;
+  dotEdit({ W: AVW, H: AVH, src: src0, orig, key: 'avov_' + key + '_' + d, title: key + ' · ' + ['앞', '옆', '뒤'][d], guide, guideName: '앞모습', allowEmpty: key !== 'body', layerSrc: AV_LSRC(), presets: { list: avPresetList(key), get: pk => pk === 'o|' + key ? Promise.resolve({ url: orig, n: 1 }) : avPresetPic(pk, key, d) },
     cols: (() => { const b = avLayerCol(key, cfg)[0]; if (!b || key === 'body') return null; const r = ramp(b); return { name: '색 바꾸기 색', cols: [r.L, r.l, r.t, r.f, r.d, r.o] }; })(),   // 다 지우고 저장하면 그 층을 안 그림 (원래대로는 ↺)
     n: AVOD.pics[d] ? AVOD.n[d] || 1 : 1, ms: AVOD.ms[d], fms: AVOD.fms[d],
     onSave: (url, m) => { if (url) { AVOD.pics[d] = url; AVOD.n[d] = m.n; AVOD.ms[d] = m.ms; if (m.fms) AVOD.fms[d] = m.fms; else delete AVOD.fms[d]; } else { delete AVOD.pics[d]; delete AVOD.n[d]; delete AVOD.ms[d]; delete AVOD.fms[d]; } avOvEdit(key); }, onCancel: () => avOvEdit(key) });
@@ -701,7 +709,7 @@ async function avOvDraw(key, d) {
 /* 도트 편집기 '새 레이어로 불러오기'용 토큰 층 목록 (고친 그림이 있으면 그것, 없으면 원래 그림) */
 const AV_LSRC = () => ({ views: ['앞', '옆', '뒤'], list: AV_OV_GROUPS().map(([g, items]) => [g, items.map(([k, n]) => [k, n + (AVOV[k] && AVOV[k].pics ? ' (고침)' : '')])]),
   get: async (key, v) => { const pend = AVOD && AVOD.key === key ? AVOD : null, o = pend || AVOV[key], src = o && o.pics && o.pics[v];
-    if (src) return { url: src, n: (o.n || {})[v] || 1 }; return { url: avLayerPng(key, v), n: 1 }; } });
+    if (src) { const n = (o.n || {})[v] || 1; return { url: await avToFull(src, n), n }; } return { url: avLayerPng(key, v), n: 1 }; } });
 const avOvId = key => key.replace(':', '__');
 async function avOvSave(key) {
   const pics = AVOD.pics; try { if (!Object.keys(pics).length) await B.del('avOv/' + avOvId(key)); else { const n = {}, ms = {}, fms = {}; Object.keys(pics).forEach(d => { n[d] = AVOD.n[d] || 1; ms[d] = AVOD.ms[d] || 220; if (AVOD.fms[d]) fms[d] = AVOD.fms[d]; }); await B.set('avOv/' + avOvId(key), { key, pics, n, ms, fms, at: Date.now() }); } AVOD = null; closeModal(); toast(Object.keys(pics).length ? '저장 완료! 모든 토큰에 적용됨' : '원래 그림으로 돌림'); } catch (e) { toast('실패: ' + (e.code || e.message)); }
@@ -732,7 +740,7 @@ async function avPresetPic(pk, key, d) { const [src, kk] = pk.split('|'), to = a
   if (src === 'o') { const cfg = avOvCfg(kk), [k] = kk.split(':'), ck = AVCOLKEY[avKind(k) === 'outer' ? 'outer' : k] || (k === 'hairF' || k === 'hairB' ? 'hairCol' : null); if (ck) cfg[ck] = to;
     const c = document.createElement('canvas'); c.width = AVW; c.height = AVH; const P2 = avP2(c.getContext('2d'), cfg, d, 0); if (kk !== 'body') P2.noArms = avNoArms(d); avDrawLayer(P2, kk); return { url: c.toDataURL('image/png'), n: 1 }; }
   const o = AVOV[kk], u = o && o.pics && o.pics[d]; if (!u) return null; await avLoadUrls([u]); const from = avLayerCol(kk, avOvCfg(kk))[0], im = avRecolor(u, from, to); if (!im) return null;
-  const c = document.createElement('canvas'); c.width = im.width; c.height = im.height; c.getContext('2d').drawImage(im, 0, 0); return { url: c.toDataURL('image/png'), n: (o.n || {})[d] || 1, ms: (o.ms || {})[d] }; }
+  const c = document.createElement('canvas'); c.width = im.width; c.height = im.height; c.getContext('2d').drawImage(im, 0, 0); const n = (o.n || {})[d] || 1; return { url: await avToFull(c.toDataURL('image/png'), n), n, ms: (o.ms || {})[d] }; }
 function avPresetPick(key) { const L = avPresetList(key);
   modal(`<h2 style="color:var(--gold2);margin-top:0">📂 프리셋 불러오기</h2><p class="muted" style="font-size:.82rem;margin:0 0 6px">고른 그림으로 이 층을 바꿈 · 저장해야 적용</p>
     <select id="apK" style="width:100%">${L.map(([g, it]) => `<optgroup label="${g}">${it.map(([v, n]) => `<option value="${v}" ${v === 'o|' + key ? 'selected' : ''}>${esc(n)}</option>`).join('')}</optgroup>`).join('')}</select>
