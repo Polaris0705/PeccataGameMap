@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#13100e">
+<script>try{const t=JSON.parse(localStorage.getItem('peccata_theme')||'null');if(t&&t.bg){const r=document.documentElement;r.style.setProperty('--bg',t.bg);if(t.panel)r.style.setProperty('--panel',t.panel);if(t.text)r.style.setProperty('--text',t.text);r.style.background=t.bg;document.querySelector('meta[name=theme-color]').content=t.bg;}}catch(e){}</script>
 <link rel="manifest" href="manifest.json">
 <link rel="icon" href="icon-192.png">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
@@ -564,6 +565,7 @@ const uname=u=>u?(u.name||u.email):'?';
 
 /* ================= 시작 ================= */
 (async function init(){
+  await 0;try{applyTheme(lastTheme()||THEME_DEF);}catch(e){console.warn(e)}   // 로그인 전에도 이 기기에서 마지막으로 쓴 테마
   try{B=DEMO?makeMock():await makeFirebase();}
   catch(e){$('#app').innerHTML=`<div class="panel"><h2>연결 실패</h2><p>Firebase를 불러오지 못함. 설정값과 인터넷 연결을 확인하기.</p><p class="muted">${esc(e.message||e)}</p></div>`;return;}
   B.onAuth(onAuth);
@@ -580,7 +582,7 @@ async function onAuth(u){
   if(typeof gamesOnAuth==='function')gamesOnAuth(null);
   if(typeof partyOnAuth==='function')partyOnAuth(null);
   if(typeof roomOnAuth==='function')roomOnAuth(null);
-  if(!u){THEME_GLOBAL=null;applyTheme(THEME_DEF);render();return;}
+  if(!u){THEME_GLOBAL=null;applyTheme(lastTheme()||THEME_DEF);render();return;}
   if(!DEMO){try{const ad=await B.get('config/admins');if(ad&&Array.isArray(ad.emails))ad.emails.forEach(e=>{e=String(e).trim().toLowerCase();if(e&&!ADMINS.includes(e))ADMINS.push(e);});}catch(e){console.warn('config/admins',e);}}
   if(seq!==AUTH_SEQ)return;
   IS_ADMIN=isAdminEmail(u.email);
@@ -862,8 +864,9 @@ const lum=h=>{const [r,g,b]=hx(h).map(v=>v/255);return .2126*r+.7152*g+.0722*b;}
 const loadedFonts=new Set(['serif','pixel']);
 const oldTheme=o=>{if(!o||'ui' in o)return o;const r=Object.assign({},o);delete r.font;return r;};
 function effTheme(){const g=Object.assign({},THEME_DEF,oldTheme(THEME_GLOBAL)||{});const m=P&&P.theme;return (m&&m.on)?Object.assign({},g,oldTheme(m)):g;}
+const lastTheme=()=>{try{return JSON.parse(localStorage.getItem('peccata_theme')||'null');}catch(e){return null;}};
 function applyTheme(t){
-  t=t||effTheme();const r=document.documentElement.style,dark=lum(t.bg)<.5,set=(k,v)=>r.setProperty('--'+k,v);
+  const eff=!t;t=t||effTheme();if(eff&&P&&ME)try{localStorage.setItem('peccata_theme',JSON.stringify(t));}catch(e){}const r=document.documentElement.style,dark=lum(t.bg)<.5,set=(k,v)=>r.setProperty('--'+k,v);   // 로그인 화면용으로 기억 (미리보기는 빼고)
   set('bg',t.bg);set('panel',t.panel);set('panel2',mix(t.panel,t.text,.07));set('line',mix(t.panel,t.text,.22));
   set('text',t.text);set('muted',mix(t.text,t.bg,.38));set('text2',mix(t.text,t.bg,.12));set('paren',mix(t.text,t.bg,.5));
   set('gold',t.accent);set('gold2',mix(t.accent,dark?'#ffffff':'#000000',.3));set('ontext',lum(t.accent)>.5?'#1a140e':'#ffffff');
