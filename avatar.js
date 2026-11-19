@@ -612,8 +612,8 @@ const AV_OV_GROUPS = () => [['몸', [['body', '기본 몸 · 얼굴형'], ['pose
 let AVOV_OPEN = '';
 function avOvSection() {
   return `<div class="panel"><h2>🎨 기본 그림 고치기</h2><p class="muted" style="margin:0 0 6px;font-size:.82rem">기본 그림 수정 · 전체 토큰 적용 · 원래 색 부분은 색 바꾸기 유지</p>
-    ${AV_OV_GROUPS().map(([gn, list, gsl]) => `<details ${AVOV_OPEN === gn ? 'open' : ''} ontoggle="if(this.open)AVOV_OPEN='${gn}'"><summary><b>${gn}</b> <span class="muted">${list.filter(([k]) => AVOV[k]).length ? '· 고친 것 ' + list.filter(([k]) => AVOV[k]).length : ''}</span></summary>
-      ${list.map(([k, n]) => `<div class="item" style="margin:3px 0"><div style="display:flex;align-items:center;gap:8px"><canvas class="avovp" data-k="${k}" width="${AVW}" height="${AVH}" style="width:32px;image-rendering:pixelated;background:#2a2420"></canvas><span>${esc(n)}${AVOV[k] ? ' <span class="badge live">바꿈</span>' : ''}</span></div>
+    ${AV_OV_GROUPS().map(([gn, list, gsl]) => `<details ${AVOV_OPEN === gn ? 'open' : ''} ontoggle="if(this.open)AVOV_OPEN='${gn}'"><summary><b>${gn}</b></summary>
+      ${list.map(([k, n]) => `<div class="item" style="margin:3px 0"><div style="display:flex;align-items:center;gap:8px"><canvas class="avovp" data-k="${k}" width="${AVW}" height="${AVH}" style="width:32px;image-rendering:pixelated;background:#2a2420"></canvas><span>${esc(n)}</span></div>
         <div class="row" style="flex:0 0 auto;gap:4px">${gsl ? `<button class="sm" onclick="avItemInfo('${gsl}','${k.split(':')[1]}')">🏷</button>` : ''}<button class="sm" onclick="avOvEdit('${k}')">✏ 고치기</button>${AVOV[k] ? `<button class="sm" onclick="avOvExport(['${k}'])">📤</button>` : ''}</div></div>`).join('')}
       ${gsl ? `<div class="row" style="margin:4px 0 8px"><button class="sm" onclick="avItemInfo('${gsl}','')">＋ 새 ${esc(AV_SLOTS.find(x => x[0] === gsl)[1])} 추가</button></div>` : ''}</details>`).join('')}
     ${Object.keys(AVOV).length ? `<div class="row" style="margin-top:6px"><button class="sm" onclick="avOvExport(Object.keys(AVOV))">📤 고친 그림 전체 내보내기</button></div>` : ''}</div>`;
@@ -649,7 +649,7 @@ function avOvEdit(key) {
   if (!AVOD || AVOD.key !== key) { const o = AVOV[key] || {}; AVOD = { key, pics: Object.assign({}, o.pics || {}), n: Object.assign({}, o.n || {}), ms: Object.assign({}, o.ms || {}), fms: Object.assign({}, o.fms || {}) }; }
   const nm = (AV_OV_GROUPS().flatMap(g => g[1]).find(x => x[0] === key) || [, key])[1];
   modal(`<h2 style="color:var(--gold2);margin-top:0">🎨 ${esc(nm)} 고치기</h2><p class="muted" style="font-size:.82rem;margin:0 0 6px">오른쪽 = 옆모습 반전</p>
-    ${[[0, '앞모습'], [1, '옆모습 (왼쪽 보기)'], [2, '뒷모습']].map(([d, n]) => `<div class="item" style="margin:4px 0"><div style="display:flex;align-items:center;gap:8px"><img src="${AVOD.pics[d] || avLayerPng(key, d === 1 ? 1 : d)}" style="height:60px;image-rendering:pixelated;background:#2a2420"><div><b>${n}</b> ${(AVOD.n[d] || 1) > 1 ? `<span class="badge">🎞 ${AVOD.n[d]}장</span> ` : ''}${AVOD.pics[d] ? '<span class="badge live">바꿈</span>' : '<span class="muted">원래 그림</span>'}</div></div>
+    ${[[0, '앞모습'], [1, '옆모습 (왼쪽 보기)'], [2, '뒷모습']].map(([d, n]) => `<div class="item" style="margin:4px 0"><div style="display:flex;align-items:center;gap:8px"><img src="${AVOD.pics[d] || avLayerPng(key, d === 1 ? 1 : d)}" style="height:60px;image-rendering:pixelated;background:#2a2420"><div><b>${n}</b> ${(AVOD.n[d] || 1) > 1 ? `<span class="badge">🎞 ${AVOD.n[d]}장</span> ` : ''}</div></div>
       <div class="row" style="flex:0 0 auto;gap:4px"><button class="sm primary" onclick="avOvDraw('${key}',${d})">🎨 그리기</button></div></div>`).join('')}
     <div class="row" style="margin-top:10px"><button onclick="AVOD=null;closeModal()">취소</button><button onclick="avPresetPick('${key}')">📂 프리셋</button><button class="primary" onclick="avOvSave('${key}')">저장</button></div>`);
 }
