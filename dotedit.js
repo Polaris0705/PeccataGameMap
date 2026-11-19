@@ -32,6 +32,8 @@ function dotEdit(o) {
   const root = document.createElement('div'); root.id = 'dotEd';
   root.innerHTML = `<style>
     #dotEd{position:fixed;inset:0;z-index:38;background:#15100c;display:flex;flex-direction:column;color:var(--text);touch-action:none;user-select:none;-webkit-user-select:none}
+    #dotEd .dtop,#dotEd .dbar,#dotEd #deOpts,#dotEd #deCols{flex-shrink:0}
+    #dotEd input,#dotEd select{font-size:16px}
     #dotEd .dtop{display:flex;align-items:center;gap:6px;padding:calc(6px + env(safe-area-inset-top)) 8px 6px;border-bottom:1px solid var(--line)}
     #dotEd .dtop b{flex:1;font-size:.95rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
     #dotEd .dwrap{flex:1;position:relative;min-height:0}
@@ -63,7 +65,12 @@ function dotEdit(o) {
   else { if (dr) deDraftDel(); if (o.src) deLoadSrc(o.src); }
   deUI(); deFit(); deBind(); deDraw();
   DE.saveT = setInterval(deDraftSave, 4000);
+  deVV();
 }
+/* 키보드·확대·주소창 때문에 보이는 화면이 움직여도 편집기를 보이는 화면에 딱 맞춤 (위쪽 바가 화면 밖으로 밀리지 않게) */
+function deVV() { const vv = window.visualViewport; if (!vv || !DE) return; const fit = () => { const r = document.getElementById('dotEd'); if (!r || !DE) { vv.removeEventListener('resize', fit); vv.removeEventListener('scroll', fit); return; }
+    r.style.top = vv.offsetTop + 'px'; r.style.left = vv.offsetLeft + 'px'; r.style.width = vv.width + 'px'; r.style.height = vv.height + 'px'; r.style.right = 'auto'; r.style.bottom = 'auto'; };
+  vv.addEventListener('resize', fit); vv.addEventListener('scroll', fit); fit(); window.scrollTo(0, 0); }
 function deClose(save) {
   if (!DE) return; const o = DE.o;
   if (!save && DE.dirty && !confirm('그린 것을 저장하지 않고 닫을까요?')) return;
