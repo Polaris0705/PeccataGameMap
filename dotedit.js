@@ -147,6 +147,11 @@ async function deLayerFromUrl(url, n, name) { if (!DE) return; if (DE.layers.len
   DE.layers.splice(DE.li + 1, 0, { name: (name || '불러온 그림').slice(0, 20), vis: true, lock: false, op: 1, frames }); deStruct(); DE.sheet = ''; $('#deSheet').style.display = 'none'; deLayerGo(DE.li + 1); toast('새 레이어로 불러옴'); }
 async function deLimpGo() { const S = DE.o.layerSrc; if (!S) return; const key = $('#deLiK').value, v = +$('#deLiV').value, nm = ($('#deLiK').selectedOptions[0] || {}).textContent || key;
   toast('불러오는 중'); try { const r = await S.get(key, v); if (!r || !r.url) return toast('그림 없음'); deLayerFromUrl(r.url, r.n, nm + ' · ' + S.views[v]); } catch (e) { toast('불러오기 실패'); } }
+async function dePreGo() { const S = DE.o.presets, pk = $('#dePreK').value; if (!S || !confirm('지금 그림을 이 프리셋으로 바꿀까요? 레이어와 장면이 하나로 정리됨.')) return;
+  let r; try { r = await S.get(pk); } catch (e) {} if (!DE) return; if (!r || !r.url) return toast('그림 없음');
+  const fr = await deDecode(r.url, r.n || 1); if (!DE || !fr) return toast('불러오기 실패');
+  deStop(); DE.float = null; DE.sel = null; DE.layers = [{ name: '프리셋', vis: true, lock: false, op: 1, frames: fr }]; DE.li = 0; DE.fi = 0; if (r.n > 1 && r.ms) DE.ms = r.ms;
+  deSync(); deStruct(); DE.sheet = ''; $('#deSheet').style.display = 'none'; deUI(); deDraw(); deCols(); toast('프리셋 불러옴'); }
 function deLimpFile() { const inp = document.createElement('input'); inp.type = 'file'; inp.accept = 'image/*';
   inp.onchange = () => { const f = inp.files[0]; if (!f) return; const rd = new FileReader(); rd.onload = () => { const n = Math.max(1, +(($('#deLiN') || {}).value || 1)); deLayerFromUrl(rd.result, n, f.name.replace(/\.[^.]+$/, '')); }; rd.readAsDataURL(f); }; inp.click(); }
 function deLayerDel() { if (DE.layers.length <= 1) return toast('레이어는 하나 이상 있어야 함'); if (!confirm(`「${deL().name}」 레이어를 지울까요?`)) return; DE.layers.splice(DE.li, 1); deStruct(); deLayerGo(Math.max(0, DE.li - 1)); }
@@ -178,7 +183,7 @@ function deUI() {
   const ref = DE.ref ? `<button class="${DE.ref.on ? 'on' : ''}" onclick="DE.ref.on=!DE.ref.on;deUI();deDraw()">👁 밑그림</button><span class="muted">투명</span><input type="range" min="5" max="100" value="${Math.round(DE.ref.a * 100)}" oninput="DE.ref.a=this.value/100;deDraw()">
     <span class="muted">크기</span><input type="range" min="5" max="400" value="${Math.round(DE.ref.s * 100)}" oninput="deRefScale(this.value/100)"><button onclick="deRefFit()">맞추기</button><button onclick="deSheet('conv')">🧩 도트로 바꾸기</button><button onclick="DE.ref=null;deUI();deDraw()">🗑</button>` : '';
   const gd = DE.guide ? `<button class="${DE.guide.on ? 'on' : ''}" onclick="DE.guide.on=!DE.guide.on;deUI();deDraw()">👁 ${DE.guide.name}</button><input type="range" min="5" max="100" value="${Math.round(DE.guide.a * 100)}" oninput="DE.guide.a=this.value/100;deDraw()">` : '';
-  $('#deOpts').innerHTML = `${gd}${DE.o.orig ? '<button onclick="deToOrig()">↺ 원래 도트로</button>' : ''}${sz}${dith}${grad}${scope}${shp}${sel}<button class="${DE.mirror ? 'on' : ''}" onclick="DE.mirror=!DE.mirror;deUI();deDraw()">⇿ 좌우 대칭</button><button class="${DE.grid ? 'on' : ''}" onclick="DE.grid=!DE.grid;deUI();deDraw()"># 격자</button><button onclick="deFit()">⤢ 화면 맞춤</button>
+  $('#deOpts').innerHTML = `${gd}${DE.o.presets ? `<button class="${DE.sheet === 'pre' ? 'on' : ''}" onclick="deSheet('pre')">📂 프리셋</button>` : DE.o.orig ? '<button onclick="deToOrig()">↺ 원래 도트로</button>' : ''}${sz}${dith}${grad}${scope}${shp}${sel}<button class="${DE.mirror ? 'on' : ''}" onclick="DE.mirror=!DE.mirror;deUI();deDraw()">⇿ 좌우 대칭</button><button class="${DE.grid ? 'on' : ''}" onclick="DE.grid=!DE.grid;deUI();deDraw()"># 격자</button><button onclick="deFit()">⤢ 화면 맞춤</button>
     <button class="${DE.sheet === 'bg' ? 'on' : ''}" onclick="deSheet('bg')">🖼 배경</button><button class="${DE.sheet === 'room' ? 'on' : ''}" onclick="deSheet('room')">🏠 방에서 보기</button><button class="${DE.sheet === 'fx' ? 'on' : ''}" onclick="deSheet('fx')">✨ 외곽선·그림자</button><button onclick="deRefPick()">📷 밑그림 올리기</button>${ref}<button onclick="deSheet('imp')">🪑 가구 불러오기</button><button onclick="deFlipAll()">⇋ 전체 뒤집기</button><button onclick="deClearAll()">🗑 이 레이어 지우기</button>`;
   deCols();
 }
@@ -190,6 +195,7 @@ function deCols() {
     <label class="sw ${DE.col2 ? '' : 'none'}" style="${DE.col2 ? 'background:' + DE.col2 + ';' : ''}position:relative;flex-basis:22px;width:22px;height:22px" title="보조색"><input type="color" value="${DE.col2 || '#ffffff'}" style="opacity:0;position:absolute;inset:0;width:100%;height:100%" oninput="DE.col2=this.value.toLowerCase();deCols()"></label>
     <button onclick="[DE.col,DE.col2]=[DE.col2||DE.col,DE.col];deCols()" title="주색↔보조색">⇄</button><button onclick="DE.col2=null;deCols()" title="보조색 없애기">⌀</button>
     <button class="${DE.sheet === 'pal' ? 'on' : ''}" onclick="deSheet('pal')">🎨 ${pal ? esc(pal.name) : '팔레트'}</button>
+    ${DE.o.cols && DE.o.cols.cols.length ? `<span class="muted" style="font-size:.72rem;white-space:nowrap">${esc(DE.o.cols.name)}</span>${DE.o.cols.cols.map(c => `<span class="sw ${c === DE.col ? 'on' : ''}" style="background:${c}" onclick="deSetCol('${c}')" oncontextmenu="event.preventDefault();DE.col2='${c}';deCols()"></span>`).join('')}<span class="muted">|</span>` : ''}
     ${DE.guide && DE.guide.cols && DE.guide.cols.length ? `<span class="muted" style="font-size:.72rem;white-space:nowrap">${esc(DE.guide.name)} 색</span>${DE.guide.cols.map(c => `<span class="sw ${c === DE.col ? 'on' : ''}" style="background:${c}" onclick="deSetCol('${c}')" oncontextmenu="event.preventDefault();DE.col2='${c}';deCols()"></span>`).join('')}<span class="muted">|</span>` : ''}
     ${all.map(c => `<span class="sw ${c === DE.col ? 'on' : ''}" style="background:${c}" onclick="deSetCol('${c}')" oncontextmenu="event.preventDefault();DE.col2='${c}';deCols()"></span>`).join('')}`;
 }
@@ -238,6 +244,10 @@ function deSheetBody() {
     <div class="row" style="align-items:center;gap:6px;flex-wrap:wrap"><span>색 수</span><select id="deCn">${[4, 8, 12, 16, 24, 32].map(n => `<option ${n === 16 ? 'selected' : ''}>${n}</option>`).join('')}</select>
     <label><input type="checkbox" id="deBg" checked> 배경 지우기</label><label><input type="checkbox" id="deOl"> 테두리 진하게</label></div>
     <div class="row" style="margin-top:8px">${close}<button class="primary" onclick="deConvert()">바꾸기</button></div>`;
+  if (k === 'pre') { const S = DE.o.presets;
+    sh.innerHTML = `<div class="row" style="justify-content:space-between;align-items:center"><b>📂 프리셋 불러오기</b>${close}</div><p class="muted" style="margin:4px 0;font-size:.8rem">지금 그림을 고른 그림으로 바꿈 (레이어·장면은 하나로 정리)</p>
+      <select id="dePreK" style="width:100%">${S.list.map(([g, items]) => `<optgroup label="${esc(g)}">${items.map(([kk, n]) => `<option value="${kk}">${esc(n)}</option>`).join('')}</optgroup>`).join('')}</select>
+      <div class="row" style="margin-top:6px"><button class="primary" onclick="dePreGo()">불러오기</button></div>`; return; }
   if (k === 'limp') { const S = DE.o.layerSrc;
     sh.innerHTML = `<div class="row" style="justify-content:space-between;align-items:center"><b>📥 새 레이어로 불러오기</b>${close}</div><p class="muted" style="margin:4px 0;font-size:.8rem">지금 레이어 위에 같은 자리로 · 위치는 이동 도구로</p>
       ${S ? `<select id="deLiK" style="width:100%">${S.list.map(([g, items]) => `<optgroup label="${esc(g)}">${items.map(([kk, n]) => `<option value="${kk}">${esc(n)}</option>`).join('')}</optgroup>`).join('')}</select>

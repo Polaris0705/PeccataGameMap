@@ -22,6 +22,12 @@ const AV_ITEMS = {
   hat: { fedora: ['중절모', 60, '#3a3030'], cap: ['학생모', 40, '#1e1e28'], ribbon: ['큰 리본', 30, '#c03050'], bonnet: ['헤드드레스', 40, '#f8f4ea'] },
   acc: { glasses: ['동그란 안경', 30, '#c8a040'], muffler: ['목도리', 40, '#a83a3a'], flower: ['꽃핀', 20, '#f08ab0'], monocle: ['외눈 안경', 40, '#c8a040'] }
 };
+/* KP가 연구실에서 추가한 기본템 · 바꾼 이름/가격 — avOv/_items { add:{부위:{id:{name,cost,col}}}, names:{부위:{id:이름}}, cost:{부위:{id:가격}} } */
+const AV_ITEMS_BASE = JSON.parse(JSON.stringify(AV_ITEMS));
+let AVX = {};
+function avApplyX() { for (const sl in AV_ITEMS_BASE) { const cur = AV_ITEMS[sl]; Object.keys(cur).forEach(k => delete cur[k]); Object.entries(AV_ITEMS_BASE[sl]).forEach(([k, v]) => { cur[k] = v.slice(); });
+  Object.entries((AVX.add || {})[sl] || {}).forEach(([k, v]) => { cur[k] = [v.name || '새 템', v.cost | 0, v.col || '#888888', 1]; });   // 넷째 칸 1 = 추가한 템
+  Object.entries((AVX.names || {})[sl] || {}).forEach(([k, n]) => { if (cur[k] && n) cur[k][0] = n; }); Object.entries((AVX.cost || {})[sl] || {}).forEach(([k, c]) => { if (cur[k]) cur[k][1] = c | 0; }); } }
 const AV_DEF = { skin: SKINS[0], eye: 'round', eyeCol: '#3a2a20', hair: 'bob', hairCol: '#3a2418', top: 'shirt', topCol: '#f4f0e6', bottom: 'pants', botCol: '#3a3a44', shoes: 'shoes', shoeCol: '#3a2418', one: '', oneCol: '', outer: '', outerCol: '', hat: '', hatCol: '', acc: '', accCol: '' };
 const avCfgOf = p => { if (!p || !p.avatar) return null; const c = Object.assign({}, AV_DEF, p.avatar); if (c.one === 'coat') { c.outer = 'coat'; c.outerCol = c.oneCol; c.one = ''; } return c; };   // 인버네스 코트: 한 벌 → 겉옷
 const avOwns = (p, slot, id) => { if (!id) return true; if (id.startsWith('w:')) return (p.wardrobe || []).includes(id) || avTitleWear(p).includes(id) || (WEAR.find(w => 'w:' + w.id === id) || {}).by === (p === P ? ME.uid : p.id); const it = (AV_ITEMS[slot] || {})[id]; return !!it && (it[1] === 0 || (p.wardrobe || []).includes(slot + ':' + id) || (slot === 'outer' && id === 'coat' && (p.wardrobe || []).includes('one:coat'))); };
@@ -599,16 +605,17 @@ function avRandCfg() { const pick = o => { const k = Object.keys(o); return k[Ma
   const one = Math.random() < .4 ? pick(AV_ITEMS.one) : ''; return Object.assign({}, AV_DEF, { skin: SKINS[Math.floor(Math.random() * 5)], eye: pick(AV_ITEMS.eye), hair: pick(AV_ITEMS.hair), hairCol: rc(), top: pick(AV_ITEMS.top), topCol: rc(), bottom: pick(AV_ITEMS.bottom), botCol: rc(), shoes: pick(AV_ITEMS.shoes), one, oneCol: one ? rc() : '', hat: Math.random() < .4 ? pick(AV_ITEMS.hat) : '', hatCol: rc(), acc: Math.random() < .4 ? pick(AV_ITEMS.acc) : '', accCol: '#c8a040' }); }
 function avFake(n) { AVFAKE.length = 0; for (let i = 0; i < n; i++) { const x = OX + 60 + i * 120, y = FY + 120 + i * 40; AVFAKE.push({ id: 'fake' + i, cfg: avRandCfg(), x, y, tx: x, ty: y, t0: Date.now(), dir: 0 }); } render(); }
 function avPwTry() { const v = ($('#avPw') || {}).value || ''; if (v.trim() === '1117') { try { sessionStorage.setItem('peccata_avpw', '1'); } catch (e) {} render(); } else { sfx('bad'); toast('비밀번호 오류'); } }
-const AV_OV_GROUPS = () => [['몸', [['body', '기본 몸 · 얼굴형'], ['pose:sit', '앉은 다리 (안 고치면 자동)']]], ['눈', Object.entries(AV_ITEMS.eye).map(([k, v]) => ['eye:' + k, v[0]])],
-  ['머리', Object.entries(AV_ITEMS.hair).map(([k, v]) => ['hairF:' + k, v[0]])], ['늘어진 머리 (앞·옆: 몸 뒤 / 뒤: 몸 위)', Object.entries(AV_ITEMS.hair).map(([k, v]) => ['hairB:' + k, v[0] + ' · 늘어진 머리'])],
-  ...['top', 'bottom', 'one', 'outer', 'shoes', 'hat', 'acc'].map(sl => [AV_SLOTS.find(x => x[0] === sl)[1], Object.entries(AV_ITEMS[sl]).map(([k, v]) => [sl + ':' + k, v[0]])]),
-  ['겉옷 (원피스 위)', Object.entries(AV_ITEMS.outer).map(([k, v]) => ['outerD:' + k, v[0] + ' · 드레스 위'])]];
+const AV_OV_GROUPS = () => [['몸', [['body', '기본 몸 · 얼굴형'], ['pose:sit', '앉은 다리 (안 고치면 자동)']]], ['눈', Object.entries(AV_ITEMS.eye).map(([k, v]) => ['eye:' + k, v[0]]), 'eye'],
+  ['머리', Object.entries(AV_ITEMS.hair).map(([k, v]) => ['hairF:' + k, v[0]]), 'hair'], ['늘어진 머리 (앞·옆: 몸 뒤 / 뒤: 몸 위)', Object.entries(AV_ITEMS.hair).map(([k, v]) => ['hairB:' + k, v[0] + ' · 늘어진 머리']), 'hair'],
+  ...['top', 'bottom', 'one', 'outer', 'shoes', 'hat', 'acc'].map(sl => [AV_SLOTS.find(x => x[0] === sl)[1], Object.entries(AV_ITEMS[sl]).map(([k, v]) => [sl + ':' + k, v[0]]), sl]),
+  ['겉옷 (원피스 위)', Object.entries(AV_ITEMS.outer).map(([k, v]) => ['outerD:' + k, v[0] + ' · 드레스 위']), 'outer']];
 let AVOV_OPEN = '';
 function avOvSection() {
   return `<div class="panel"><h2>🎨 기본 그림 고치기</h2><p class="muted" style="margin:0 0 6px;font-size:.82rem">기본 그림 수정 · 전체 토큰 적용 · 원래 색 부분은 색 바꾸기 유지</p>
-    ${AV_OV_GROUPS().map(([gn, list]) => `<details ${AVOV_OPEN === gn ? 'open' : ''} ontoggle="if(this.open)AVOV_OPEN='${gn}'"><summary><b>${gn}</b> <span class="muted">${list.filter(([k]) => AVOV[k]).length ? '· 고친 것 ' + list.filter(([k]) => AVOV[k]).length : ''}</span></summary>
+    ${AV_OV_GROUPS().map(([gn, list, gsl]) => `<details ${AVOV_OPEN === gn ? 'open' : ''} ontoggle="if(this.open)AVOV_OPEN='${gn}'"><summary><b>${gn}</b> <span class="muted">${list.filter(([k]) => AVOV[k]).length ? '· 고친 것 ' + list.filter(([k]) => AVOV[k]).length : ''}</span></summary>
       ${list.map(([k, n]) => `<div class="item" style="margin:3px 0"><div style="display:flex;align-items:center;gap:8px"><canvas class="avovp" data-k="${k}" width="${AVW}" height="${AVH}" style="width:32px;image-rendering:pixelated;background:#2a2420"></canvas><span>${esc(n)}${AVOV[k] ? ' <span class="badge live">바꿈</span>' : ''}</span></div>
-        <div class="row" style="flex:0 0 auto;gap:4px"><button class="sm" onclick="avOvEdit('${k}')">✏ 고치기</button>${AVOV[k] ? `<button class="sm" onclick="avOvExport(['${k}'])">📤</button><button class="sm" onclick="avOvReset('${k}')">↺ 원래대로</button>` : ''}</div></div>`).join('')}</details>`).join('')}
+        <div class="row" style="flex:0 0 auto;gap:4px">${gsl ? `<button class="sm" onclick="avItemInfo('${gsl}','${k.split(':')[1]}')">🏷</button>` : ''}<button class="sm" onclick="avOvEdit('${k}')">✏ 고치기</button>${AVOV[k] ? `<button class="sm" onclick="avOvExport(['${k}'])">📤</button>` : ''}</div></div>`).join('')}
+      ${gsl ? `<div class="row" style="margin:4px 0 8px"><button class="sm" onclick="avItemInfo('${gsl}','')">＋ 새 ${esc(AV_SLOTS.find(x => x[0] === gsl)[1])} 추가</button></div>` : ''}</details>`).join('')}
     ${Object.keys(AVOV).length ? `<div class="row" style="margin-top:6px"><button class="sm" onclick="avOvExport(Object.keys(AVOV))">📤 고친 그림 전체 내보내기</button></div>` : ''}</div>`;
 }
 /* 내보내기: 층별 앞·옆·뒤 원본(48×68) + 맨 아래 줄에 지금 토큰 전체 모습. 왼쪽에 이름표 */
@@ -643,8 +650,8 @@ function avOvEdit(key) {
   const nm = (AV_OV_GROUPS().flatMap(g => g[1]).find(x => x[0] === key) || [, key])[1];
   modal(`<h2 style="color:var(--gold2);margin-top:0">🎨 ${esc(nm)} 고치기</h2><p class="muted" style="font-size:.82rem;margin:0 0 6px">오른쪽 = 옆모습 반전</p>
     ${[[0, '앞모습'], [1, '옆모습 (왼쪽 보기)'], [2, '뒷모습']].map(([d, n]) => `<div class="item" style="margin:4px 0"><div style="display:flex;align-items:center;gap:8px"><img src="${AVOD.pics[d] || avLayerPng(key, d === 1 ? 1 : d)}" style="height:60px;image-rendering:pixelated;background:#2a2420"><div><b>${n}</b> ${(AVOD.n[d] || 1) > 1 ? `<span class="badge">🎞 ${AVOD.n[d]}장</span> ` : ''}${AVOD.pics[d] ? '<span class="badge live">바꿈</span>' : '<span class="muted">원래 그림</span>'}</div></div>
-      <div class="row" style="flex:0 0 auto;gap:4px"><button class="sm primary" onclick="avOvDraw('${key}',${d})">🎨 그리기</button>${AVOD.pics[d] ? `<button class="sm" onclick="delete AVOD.pics[${d}];delete AVOD.n[${d}];delete AVOD.ms[${d}];delete AVOD.fms[${d}];avOvEdit('${key}')">↺</button>` : ''}</div></div>`).join('')}
-    <div class="row" style="margin-top:10px"><button onclick="AVOD=null;closeModal()">취소</button><button class="primary" onclick="avOvSave('${key}')">저장</button></div>`);
+      <div class="row" style="flex:0 0 auto;gap:4px"><button class="sm primary" onclick="avOvDraw('${key}',${d})">🎨 그리기</button></div></div>`).join('')}
+    <div class="row" style="margin-top:10px"><button onclick="AVOD=null;closeModal()">취소</button><button onclick="avPresetPick('${key}')">📂 프리셋</button><button class="primary" onclick="avOvSave('${key}')">저장</button></div>`);
 }
 /* 밑그림: 고친 그림(저장 전 포함)을 다 불러온 뒤 그림. skip = 지금 그리는 층은 빼기 */
 const avClr = () => Object.keys(AVC).forEach(k => delete AVC[k]);
@@ -666,7 +673,8 @@ async function avOvDraw(key, d) {
   const orig = avLayerPng(key, d), cfg = avOvCfg(key);
   const base = await avRefUrl(cfg, d, { key, pend: AVOD.pics, skip: key });
   const guide = d ? await avRefUrl(cfg, 0, { key, pend: AVOD.pics }) : null;
-  dotEdit({ W: AVW, H: AVH, src: AVOD.pics[d] || orig, orig, key: 'avov_' + key + '_' + d, title: key + ' · ' + ['앞', '옆', '뒤'][d], guide, guideName: '앞모습', allowEmpty: key !== 'body', layerSrc: AV_LSRC(),   // 다 지우고 저장하면 그 층을 안 그림 (원래대로는 ↺)
+  dotEdit({ W: AVW, H: AVH, src: AVOD.pics[d] || orig, orig, key: 'avov_' + key + '_' + d, title: key + ' · ' + ['앞', '옆', '뒤'][d], guide, guideName: '앞모습', allowEmpty: key !== 'body', layerSrc: AV_LSRC(), presets: { list: avPresetList(key), get: pk => pk === 'o|' + key ? Promise.resolve({ url: orig, n: 1 }) : avPresetPic(pk, key, d) },
+    cols: (() => { const b = avLayerCol(key, cfg)[0]; if (!b || key === 'body') return null; const r = ramp(b); return { name: '색 바꾸기 색', cols: [r.L, r.l, r.t, r.f, r.d, r.o] }; })(),   // 다 지우고 저장하면 그 층을 안 그림 (원래대로는 ↺)
     n: AVOD.pics[d] ? AVOD.n[d] || 1 : 1, ms: AVOD.ms[d], fms: AVOD.fms[d],
     onSave: (url, m) => { if (url) { AVOD.pics[d] = url; AVOD.n[d] = m.n; AVOD.ms[d] = m.ms; if (m.fms) AVOD.fms[d] = m.fms; else delete AVOD.fms[d]; } else { delete AVOD.pics[d]; delete AVOD.n[d]; delete AVOD.ms[d]; delete AVOD.fms[d]; } avOvEdit(key); }, onCancel: () => avOvEdit(key) });
   avSetRef(base, .45);
@@ -679,6 +687,42 @@ const avOvId = key => key.replace(':', '__');
 async function avOvSave(key) {
   const pics = AVOD.pics; try { if (!Object.keys(pics).length) await B.del('avOv/' + avOvId(key)); else { const n = {}, ms = {}, fms = {}; Object.keys(pics).forEach(d => { n[d] = AVOD.n[d] || 1; ms[d] = AVOD.ms[d] || 220; if (AVOD.fms[d]) fms[d] = AVOD.fms[d]; }); await B.set('avOv/' + avOvId(key), { key, pics, n, ms, fms, at: Date.now() }); } AVOD = null; closeModal(); toast(Object.keys(pics).length ? '저장 완료! 모든 토큰에 적용됨' : '원래 그림으로 돌림'); } catch (e) { toast('실패: ' + (e.code || e.message)); }
 }
+function avItemInfo(sl, id) { const it = id ? AV_ITEMS[sl][id] : null, added = !id || (it && it[3]), sn = AV_SLOTS.find(x => x[0] === sl)[1];
+  modal(`<h2 style="color:var(--gold2);margin-top:0">🏷 ${id ? esc(it[0]) : '새 ' + sn}</h2>
+    <label class="f">이름</label><input id="aiN" maxlength="20" value="${esc(it ? it[0] : '')}" placeholder="예: 땋은 머리">
+    <label class="f">가격 (은화 · 0이면 공짜)</label><input id="aiC" type="number" min="0" value="${it ? it[1] : 0}">
+    ${added ? `<label class="f">색 바꾸기 기준색</label><div class="row" style="gap:8px;align-items:center"><input id="aiK" type="color" value="${it ? it[2] : '#888888'}" style="width:60px"><span class="muted" style="font-size:.78rem">이 색과 그 밝기 단계로 그린 부분이 토큰 색에 따라 바뀜 · 도트 편집기 색 줄 맨 앞에 나옴</span></div>`
+      : `<p class="muted" style="font-size:.78rem">원래 이름: ${esc(AV_ITEMS_BASE[sl][id][0])}</p>`}
+    <div class="row" style="margin-top:10px"><button onclick="closeModal()">취소</button>${id && added ? `<button class="danger" onclick="avItemDel('${sl}','${id}')">🗑 지우기</button>` : ''}<button class="primary" onclick="avItemSave('${sl}','${id}')">저장</button></div>`);
+}
+async function avItemSave(sl, id) { const nm = $('#aiN').value.trim().slice(0, 20), cost = Math.max(0, +$('#aiC').value || 0), k = $('#aiK'); if (!nm) return toast('이름 입력 필요');
+  const X = { add: JSON.parse(JSON.stringify(AVX.add || {})), names: JSON.parse(JSON.stringify(AVX.names || {})), cost: JSON.parse(JSON.stringify(AVX.cost || {})) };
+  if (!id || (AV_ITEMS[sl][id] || [])[3]) { id = id || ('x' + Date.now().toString(36)); X.add[sl] = X.add[sl] || {}; X.add[sl][id] = { name: nm, cost, col: k ? k.value : '#888888' }; }
+  else { const b = AV_ITEMS_BASE[sl][id]; X.names[sl] = X.names[sl] || {}; X.cost[sl] = X.cost[sl] || {}; if (nm === b[0]) delete X.names[sl][id]; else X.names[sl][id] = nm; if (cost === b[1]) delete X.cost[sl][id]; else X.cost[sl][id] = cost; }
+  try { await B.set('avOv/_items', Object.assign(X, { at: Date.now() })); closeModal(); toast('저장 완료'); } catch (e) { toast('실패: ' + (e.code || e.message)); } }
+async function avItemDel(sl, id) { if (!confirm('이 템을 지울까요? 입고 있던 토큰에서는 사라짐.')) return;
+  const X = { add: JSON.parse(JSON.stringify(AVX.add || {})), names: AVX.names || {}, cost: AVX.cost || {} }; if (X.add[sl]) delete X.add[sl][id];
+  const keys = sl === 'hair' ? ['hairF:' + id, 'hairB:' + id] : sl === 'outer' ? ['outer:' + id, 'outerD:' + id] : [sl + ':' + id];
+  try { await B.set('avOv/_items', Object.assign(X, { at: Date.now() })); for (const k of keys) if (AVOV[k]) await B.del('avOv/' + avOvId(k)); closeModal(); toast('지우기 완료'); } catch (e) { toast('실패: ' + (e.code || e.message)); } }
+/* 프리셋: 같은 종류 층의 원래 그림(원본 데이터) + 고친 그림. 이 층 기준색으로 맞춰서 */
+const avKind = k => k === 'outerD' ? 'outer' : k;
+function avPresetList(key) { const [k] = key.split(':'), groups = AV_OV_GROUPS().filter(([, l]) => l.some(([kk]) => avKind(kk.split(':')[0]) === avKind(k)));
+  const items = groups.flatMap(([g, l]) => l.filter(([kk]) => avKind(kk.split(':')[0]) === avKind(k)).map(([kk, n]) => [kk, n]));
+  return [['원본 데이터', items.map(([kk, n]) => ['o|' + kk, n + (kk === key ? ' (이 템 원본)' : '')])], ['고친 그림', items.filter(([kk]) => AVOV[kk] && AVOV[kk].pics).map(([kk, n]) => ['e|' + kk, n])]].filter(g => g[1].length); }
+async function avPresetPic(pk, key, d) { const [src, kk] = pk.split('|'), to = avLayerCol(key, avOvCfg(key))[0] || '#888888';
+  if (src === 'o') { const cfg = avOvCfg(kk), [k] = kk.split(':'), ck = AVCOLKEY[avKind(k) === 'outer' ? 'outer' : k] || (k === 'hairF' || k === 'hairB' ? 'hairCol' : null); if (ck) cfg[ck] = to;
+    const c = document.createElement('canvas'); c.width = AVW; c.height = AVH; const P2 = avP2(c.getContext('2d'), cfg, d, 0); if (kk !== 'body') P2.noArms = avNoArms(d); avDrawLayer(P2, kk); return { url: c.toDataURL('image/png'), n: 1 }; }
+  const o = AVOV[kk], u = o && o.pics && o.pics[d]; if (!u) return null; await avLoadUrls([u]); const from = avLayerCol(kk, avOvCfg(kk))[0], im = avRecolor(u, from, to); if (!im) return null;
+  const c = document.createElement('canvas'); c.width = im.width; c.height = im.height; c.getContext('2d').drawImage(im, 0, 0); return { url: c.toDataURL('image/png'), n: (o.n || {})[d] || 1, ms: (o.ms || {})[d] }; }
+function avPresetPick(key) { const L = avPresetList(key);
+  modal(`<h2 style="color:var(--gold2);margin-top:0">📂 프리셋 불러오기</h2><p class="muted" style="font-size:.82rem;margin:0 0 6px">고른 그림으로 이 층을 바꿈 · 저장해야 적용</p>
+    <select id="apK" style="width:100%">${L.map(([g, it]) => `<optgroup label="${g}">${it.map(([v, n]) => `<option value="${v}" ${v === 'o|' + key ? 'selected' : ''}>${esc(n)}</option>`).join('')}</optgroup>`).join('')}</select>
+    <label class="f">방향</label><select id="apD"><option value="a">앞·옆·뒤 전부</option><option value="0">앞모습만</option><option value="1">옆모습만</option><option value="2">뒷모습만</option></select>
+    <div class="row" style="margin-top:10px"><button onclick="avOvEdit('${key}')">취소</button><button class="primary" onclick="avPresetGo('${key}')">불러오기</button></div>`); }
+async function avPresetGo(key) { const pk = $('#apK').value, dv = $('#apD').value, ds = dv === 'a' ? [0, 1, 2] : [+dv];
+  for (const d of ds) { if (pk === 'o|' + key) { delete AVOD.pics[d]; delete AVOD.n[d]; delete AVOD.ms[d]; delete AVOD.fms[d]; continue; }   // 이 템 원본 = 원래대로
+    const r = await avPresetPic(pk, key, d); if (!r) continue; AVOD.pics[d] = r.url; AVOD.n[d] = r.n || 1; if (r.ms) AVOD.ms[d] = r.ms; delete AVOD.fms[d]; }
+  toast('프리셋 불러옴 · 저장해야 적용'); avOvEdit(key); }
 async function avOvReset(key) { if (!confirm('원래 그림으로 되돌릴까요?')) return; try { await B.del('avOv/' + avOvId(key)); toast('복구 완료'); } catch (e) { toast('실패: ' + (e.code || e.message)); } }
 VIEWS.kavatar = () => {
   if (!IS_ADMIN) return '<div class="panel">KP만 볼 수 있음.</div>';
@@ -708,7 +752,7 @@ function avOnAuth(sub) {
   sub(B.onDoc('settings/avatar', d => { AVCFG = Object.assign({ open: false }, d || {}); softRender(); }));
   sub(B.onCol('wear', l => { WEAR = l; Object.keys(AVC).forEach(k => delete AVC[k]); softRender(); }));
   sub(B.onCol('avpos', l => { AVPOS = l; }));
-  sub(B.onCol('avOv', l => { AVOV = {}; l.forEach(d => { if (d.key) AVOV[d.key] = d; }); Object.keys(AVC).forEach(k => delete AVC[k]); Object.keys(AVRC).forEach(k => delete AVRC[k]); softRender(); }));
+  sub(B.onCol('avOv', l => { AVOV = {}; AVX = {}; l.forEach(d => { if (d.id === '_items') AVX = d; else if (d.key) AVOV[d.key] = d; }); avApplyX(); Object.keys(AVC).forEach(k => delete AVC[k]); Object.keys(AVRC).forEach(k => delete AVRC[k]); softRender(); }));
 }
 /* 처음 공개됐을 때 PL에게 만들기 권하기 */
 setInterval(() => { try { if (!ME || !AVCFG.open || IS_ADMIN || !PROF || !PROF.ho || !P || avCfgOf(P) || tab !== 'room' || document.querySelector('#modal[style*="flex"]')) return; if (sessionStorage.getItem('peccata_avask')) return; sessionStorage.setItem('peccata_avask', '1');
