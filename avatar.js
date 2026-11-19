@@ -10,20 +10,21 @@ let AVCFG = { open: false }, WEAR = [], AVPOS = [];
 const AVW = 64, AVH = 72;
 const avOn = () => !!AVCFG.open;   // 공개 전에는 시험실에서만 보임
 const SKINS = ['#fbe3cf', '#f6d2b4', '#ecc29e', '#d9a47c', '#b07a52', '#7a4e32'];
-const AV_SLOTS = [['hair', '머리'], ['eye', '눈'], ['top', '상의'], ['bottom', '하의'], ['one', '한 벌'], ['shoes', '신발'], ['hat', '모자'], ['acc', '액세서리']];
+const AV_SLOTS = [['hair', '머리'], ['eye', '눈'], ['top', '상의'], ['bottom', '하의'], ['one', '한 벌'], ['outer', '겉옷'], ['shoes', '신발'], ['hat', '모자'], ['acc', '액세서리']];
 const AV_ITEMS = {
   hair: { bob: ['단발', 0, '#3a2418'], long: ['긴 생머리', 0, '#24160e'], braids: ['양갈래 땋기', 0, '#5a3a24'], short: ['짧은 머리', 0, '#2a1e18'], pony: ['포니테일', 0, '#8a5530'], bun: ['올림머리', 0, '#3a2418'], wavy: ['웨이브', 0, '#c89a5a'] },
   eye: { round: ['눈', 0, '#3a2a20'] },   // 눈은 한 가지 + 자동 깜빡임
   top: { shirt: ['셔츠', 0, '#f4f0e6'], blouse: ['리본 블라우스', 0, '#f8f4ea'], vest: ['셔츠와 조끼', 40, '#5a3a2a'], yagasuri: ['화살깃 기모노', 60, '#8a3a6a'], gakuran: ['학생복 상의', 50, '#24242e'], knit: ['니트', 40, '#8a6a4a'] },
   bottom: { pants: ['바지', 0, '#3a3a44'], skirt: ['스커트', 0, '#3a4a6a'], hakama: ['하카마', 60, '#6a2a3a'], shorts: ['반바지', 30, '#6a5a4a'], long: ['롱스커트', 50, '#2e2a3a'] },
-  one: { maid: ['메이드복', 90, '#2a2a34'], kimono: ['기모노', 120, '#a83a4a'], dress: ['드레스', 110, '#5a2a6a'], coat: ['인버네스 코트', 100, '#5a4a3a'], butler: ['연미복', 100, '#1e1e28'] },
+  one: { maid: ['메이드복', 90, '#2a2a34'], kimono: ['기모노', 120, '#a83a4a'], dress: ['드레스', 110, '#5a2a6a'], butler: ['연미복', 100, '#1e1e28'] },
+  outer: { cardigan: ['가디건', 40, '#c8a878'], blazer: ['재킷', 60, '#2e3448'], longcoat: ['긴 코트', 90, '#5a4636'], cape: ['망토', 70, '#4a2a3a'], coat: ['인버네스 코트', 100, '#5a4a3a'] },   // 겉옷: 원피스 위에 입으면 outerD 그림
   shoes: { shoes: ['구두', 0, '#3a2418'], boots: ['부츠', 40, '#5a3a24'], geta: ['게타', 30, '#a87a4a'], mary: ['메리제인', 40, '#24161e'] },
   hat: { fedora: ['중절모', 60, '#3a3030'], cap: ['학생모', 40, '#1e1e28'], ribbon: ['큰 리본', 30, '#c03050'], bonnet: ['헤드드레스', 40, '#f8f4ea'] },
   acc: { glasses: ['동그란 안경', 30, '#c8a040'], muffler: ['목도리', 40, '#a83a3a'], flower: ['꽃핀', 20, '#f08ab0'], monocle: ['외눈 안경', 40, '#c8a040'] }
 };
-const AV_DEF = { skin: SKINS[0], eye: 'round', eyeCol: '#3a2a20', hair: 'bob', hairCol: '#3a2418', top: 'shirt', topCol: '#f4f0e6', bottom: 'pants', botCol: '#3a3a44', shoes: 'shoes', shoeCol: '#3a2418', one: '', oneCol: '', hat: '', hatCol: '', acc: '', accCol: '' };
-const avCfgOf = p => p && p.avatar ? Object.assign({}, AV_DEF, p.avatar) : null;
-const avOwns = (p, slot, id) => { if (!id) return true; if (id.startsWith('w:')) return (p.wardrobe || []).includes(id) || avTitleWear(p).includes(id) || (WEAR.find(w => 'w:' + w.id === id) || {}).by === (p === P ? ME.uid : p.id); const it = (AV_ITEMS[slot] || {})[id]; return !!it && (it[1] === 0 || (p.wardrobe || []).includes(slot + ':' + id)); };
+const AV_DEF = { skin: SKINS[0], eye: 'round', eyeCol: '#3a2a20', hair: 'bob', hairCol: '#3a2418', top: 'shirt', topCol: '#f4f0e6', bottom: 'pants', botCol: '#3a3a44', shoes: 'shoes', shoeCol: '#3a2418', one: '', oneCol: '', outer: '', outerCol: '', hat: '', hatCol: '', acc: '', accCol: '' };
+const avCfgOf = p => { if (!p || !p.avatar) return null; const c = Object.assign({}, AV_DEF, p.avatar); if (c.one === 'coat') { c.outer = 'coat'; c.outerCol = c.oneCol; c.one = ''; } return c; };   // 인버네스 코트: 한 벌 → 겉옷
+const avOwns = (p, slot, id) => { if (!id) return true; if (id.startsWith('w:')) return (p.wardrobe || []).includes(id) || avTitleWear(p).includes(id) || (WEAR.find(w => 'w:' + w.id === id) || {}).by === (p === P ? ME.uid : p.id); const it = (AV_ITEMS[slot] || {})[id]; return !!it && (it[1] === 0 || (p.wardrobe || []).includes(slot + ':' + id) || (slot === 'outer' && id === 'coat' && (p.wardrobe || []).includes('one:coat'))); };
 function avTitleWear(p) { try { return (typeof KT !== 'undefined' ? KT : []).filter(d => d.wear && ktHas(p, d.id)).map(d => 'w:' + d.wear); } catch (e) { return []; } }
 
 /* ---------- 그리기 (부위별 층 · KP가 덮어쓴 그림이 있으면 그걸로) ---------- */
@@ -194,6 +195,23 @@ const AV_DRAW = {
     if (o === 'butler') { legs.forEach(([x, w, l]) => { R(x, 56, w, 4, C.t); R(x + w - 1, 56, 1, 4, C.d); }); body(C.t); P2.torso(C.t, 53, 55); P2.arm(C.t);
       if (!side) { R(17, 53, 3, 5, C.t); R(28, 53, 3, 5, C.t); } if (back) R(19, 53, 10, 5, C.t);
       if (front) { R(21, 46, 6, 5, '#f8f4ea'); R(21, 46, 6, 2, '#24242e'); R(23, 48, 2, 1, '#24242e'); R(20, 46, 1, 6, C.l); R(27, 46, 1, 6, C.l); } } },
+  outer(P2, o, C, D) { const { R, H, M, side, back } = P2, front = !back && !side, sk = r => side ? r - 2 : r, T = side ? AV_TROWS : AV_TROW;
+    const row = (y, col, gap) => { const t = T[Math.min(55, Math.max(46, y))]; if (!gap || !front) return R(t[0], y, t[1] - t[0] + 1, 1, col); R(t[0], y, gap[0] - t[0], 1, col); R(gap[1] + 1, y, t[1] - gap[1], 1, col); };
+    const skirt = (y0, rows, col) => rows.forEach((h, i) => H(y0 + i, sk(h), col));
+    if (o === 'cardigan') { for (let y = 46; y <= 55; y++) row(y, C.t, y === 46 ? [21, 26] : [22, 25]); P2.arm(C.t, 4);
+      if (front) { R(21, 47, 1, 9, C.l); R(26, 47, 1, 9, C.l); } else if (side) R(20, 47, 1, 9, C.l);
+      row(55, C.f, [22, 25]); if (!P2.noArms) { if (side) R(22, 54, 3, 1, C.f); else M(17, 54, 2, 1, C.f); } }
+    if (o === 'blazer') { const V = { 46: [21, 26], 47: [22, 25], 48: [22, 25], 49: [23, 24] }; for (let y = 46; y <= 55; y++) row(y, C.t, V[y]); H(56, side ? 4 : 6, C.t); P2.arm(C.t, 4);
+      if (front) { R(20, 46, 1, 3, C.d); R(27, 46, 1, 3, C.d); R(21, 49, 2, 1, C.d); R(25, 49, 2, 1, C.d); R(24, 50, 1, 7, C.f); R(23, 51, 1, 1, C.d); R(23, 53, 1, 1, C.d); R(18, 54, 3, 1, C.f); R(27, 54, 3, 1, C.f); }
+      else if (side) { R(20, 46, 2, 3, C.d); R(21, 54, 3, 1, C.f); } else R(24, 53, 1, 4, C.f); H(56, side ? 4 : 6, C.f); }
+    if (o === 'longcoat') { for (let y = 46; y <= 55; y++) row(y, C.t); P2.arm(C.t, 4); const sr = D ? [7, 8, 8, 9, 9, 10, 10, 10, 10] : [7, 7, 7, 8, 8, 8, 8], y0 = D ? 52 : 54; skirt(y0, sr, C.t); H(y0 + sr.length - 1, sk(sr[sr.length - 1]), C.f);
+      for (let y = 46; y < 48; y++) H(y, side ? 6 : 8, C.l); H(48, side ? 5 : 7, C.f);
+      if (front) { R(23, 50, 2, y0 + sr.length - 50, C.d); [50, 53].forEach(y => { R(21, y, 1, 1, C.d); R(26, y, 1, 1, C.d); }); } else if (back) R(24, 56, 1, y0 + sr.length - 56, C.f); else R(20, 50, 1, y0 + sr.length - 50, C.d); }
+    if (o === 'cape') { const hw = [7, 8, 9, 9, 10, 10, 10, 10, 10]; hw.forEach((h, i) => H(46 + i, sk(h), C.t)); H(54, sk(10), C.f); H(46, sk(7), C.l);
+      if (front) { R(24, 48, 1, 6, C.d); R(23, 46, 2, 2, '#e0b050'); } else for (let x = side ? 18 : 16; x < (side ? 30 : 33); x += 4) R(x, 49, 1, 5, C.f); }
+    if (o === 'coat') { for (let y = 46; y <= 55; y++) row(y, C.t); P2.arm(C.t); const sr = D ? [8, 8, 9, 9, 10, 10, 10] : [7, 7, 7, 8, 8, 8]; skirt(52, sr, C.t); H(52 + sr.length, sk(sr[sr.length - 1]), C.f);
+      for (let y = 46; y < 50; y++) H(y, side ? 6 : 8, C.l); H(49, side ? 6 : 8, C.f);
+      if (front) { R(23, 50, 2, sr.length + 3, C.d); R(26, 51, 2, 1, '#e0b050'); R(26, 54, 2, 1, '#e0b050'); } } },
   hat(P2, h, C) { const { side, back } = P2, R = (x, y, w, hh, c) => P2.R(x, y + 2, w, hh, c), H = (y, hw, c, o) => P2.H(y + 2, hw, c, o);
     if (h === 'fedora') { H(11, 22, C.t); H(12, 20, C.d); for (let y = 1; y < 11; y++) H(y, y < 3 ? 11 : 13, C.t); H(8, 13, '#24161e'); H(9, 13, '#24161e'); R(15, 3, 6, 1, C.l); }
     if (h === 'cap') { for (let y = 3; y < 12; y++) H(y, y < 5 ? 15 : 19, C.t); H(3, 15, C.l); H(10, 19, C.d); if (!back) { if (side) R(1, 12, 12, 2, '#14141a'); else { H(12, 15, '#14141a'); H(13, 12, '#14141a'); } R(22, 5, 4, 4, '#e0b050'); } }
@@ -219,16 +237,17 @@ function avDrawLayer(P2, key) {
   if (k === 'eye') return AV_FACE(P2, id, ramp(c.eyeCol || '#3a2a20'));
   if (k === 'hairB') return AVH_HAIR.back(P2, id, ramp(c.hairCol));
   if (k === 'hairF') return AVH_HAIR.front(P2, id, ramp(c.hairCol));
-  const colKey = { top: 'topCol', bottom: 'botCol', one: 'oneCol', shoes: 'shoeCol', hat: 'hatCol', acc: 'accCol' }[k];
+  if (k === 'outerD') return AV_DRAW.outer(P2, id, ramp(c.outerCol || (AV_ITEMS.outer[id] || [])[2] || '#888888'), 1);   // 원피스 위에 입은 겉옷
+  const colKey = { top: 'topCol', bottom: 'botCol', one: 'oneCol', outer: 'outerCol', shoes: 'shoeCol', hat: 'hatCol', acc: 'accCol' }[k];
   return AV_DRAW[k] && AV_DRAW[k](P2, id, ramp(c[colKey] || (AV_ITEMS[k][id] || [])[2] || '#888888'));
 }
 /* 층의 기본 색 (덮어쓴 그림의 색 바꾸기 기준) */
 function avLayerCol(key, cfg) {
-  const [k, id] = key.split(':');
+  let [k, id] = key.split(':'); if (k === 'outerD') k = 'outer';
   if (k === 'body' || k === 'pose') return [SKINS[0], cfg.skin];
   if (k === 'eye') return [AV_ITEMS.eye[id] ? AV_ITEMS.eye[id][2] : '#3a2a20', cfg.eyeCol];
   if (k === 'hairB' || k === 'hairF') return [AV_ITEMS.hair[id] ? AV_ITEMS.hair[id][2] : '#3a2418', cfg.hairCol];
-  const colKey = { top: 'topCol', bottom: 'botCol', one: 'oneCol', shoes: 'shoeCol', hat: 'hatCol', acc: 'accCol' }[k];
+  const colKey = { top: 'topCol', bottom: 'botCol', one: 'oneCol', outer: 'outerCol', shoes: 'shoeCol', hat: 'hatCol', acc: 'accCol' }[k];
   return [(AV_ITEMS[k] && AV_ITEMS[k][id] || [])[2], cfg[colKey]];
 }
 const AVRC = {};
@@ -273,19 +292,21 @@ function avSprite(cfg, dir, step) {
   const fc = vw === 1 && bsrc && bp[0] ? avBodyCut(0, bp[0]) : null; if (vw === 1 && bsrc && bp[0] && !fc) pending = true;
   P2.noArms = !!(vw === 1 ? fc && fc.noArms : bc && bc.noArms);
   const cutAll = bc ? bc.cut : null;
-  const masked = (lk, fn, img) => { const cut = img || !P2.noArms ? cutAll : null; if (!cut || !/^(top|one)\b/.test(lk)) return fn();
+  const masked = (lk, fn, img) => { const cut = img || !P2.noArms ? cutAll : null; if (!cut || !/^(top|one|outer)/.test(lk)) return fn();
     const t = document.createElement('canvas'); t.width = AVW; t.height = AVH; const tg = t.getContext('2d'); G = tg; PP = avP2(tg, cfg, dir, step); PP.noArms = P2.noArms; fn(); G = g; PP = P2;
     const d = tg.getImageData(0, 0, AVW, AVH); for (let i = 0; i < cut.length; i++) if (cut[i]) d.data[i * 4 + 3] = 0; tg.putImageData(d, 0, 0); g.drawImage(t, 0, 0); };
   const layer = lk => { if (AV_SKIP && lk === AV_SKIP) return; masked(lk, () => { const ov = AVOV[lk], src = ov && ov.pics && ov.pics[vw];
     if (src) { const [f, t] = avLayerCol(lk, cfg), im = avRecolor(src, f, t); if (!im) { pending = true; return; } const n = (ov.n || {})[vw]; avPic(G, im, 0, 0, animFrame(n, (ov.ms || {})[vw], (ov.fms || {})[vw]), n); return; }
     avDrawLayer(PP, lk); }, !!(AVOV[lk] && AVOV[lk].pics && AVOV[lk].pics[vw])); };
-  const custom = slot => { const id = cfg[slot]; if (!id || !id.startsWith('w:')) return false; const w = WEAR.find(x => 'w:' + x.id === id); if (!w) { pending = true; return true; } const pics = w.pics || {}, src = vw === 2 && pics[2] ? pics[2] : vw === 1 && pics[1] ? pics[1] : pics[0], im = cfImg(src);
+  const custom = slot => { const id = cfg[slot]; if (!id || !id.startsWith('w:')) return false; const w = WEAR.find(x => 'w:' + x.id === id); if (!w) { pending = true; return true; } const p0 = w.pics || {}, dp = slot === 'outer' && cfg.one && p0[3] ? { 0: p0[3], 1: p0[4], 2: p0[5] } : null, pics = dp || p0, src = vw === 2 && pics[2] ? pics[2] : vw === 1 && pics[1] ? pics[1] : pics[0], im = cfImg(src);   // 겉옷: 원피스 위 그림(3~5)이 있으면 그걸로
     if (!im) pending = true; else masked(slot, () => avPic(G, im), true); return true; };
   const item = slot => { if (!cfg[slot]) return; if (!custom(slot)) layer(slot + ':' + cfg[slot]); };
   if (cfg.hair) layer('hairB:' + cfg.hair);
   layer('body');
   item('shoes');
   if (cfg.one) item('one'); else { item('bottom'); item('top'); }
+  if (cfg.outer && !custom('outer')) { const id = cfg.outer, dk = 'outerD:' + id, nk = 'outer:' + id, has = k => AVOV[k] && AVOV[k].pics && AVOV[k].pics[vw];   // 원피스 위면 드레스용 그림 (없으면 고친 보통 그림 → 원래 그림)
+    layer(cfg.one && (has(dk) || !has(nk)) ? dk : nk); }
   if (vw !== 2) { const ek = 'eye:round', eo = AVOV[ek], anim = eo && eo.n && eo.n[vw] > 1;
     if (cfg.blink && !anim) {   // 깜빡임: 눈 그림을 세로 한 줄(아래에서 둘째 칸)로 눌러 감은 눈으로
       const t = document.createElement('canvas'); t.width = AVW; t.height = AVH; const tg = t.getContext('2d'), sg = G; G = tg; PP = avP2(tg, cfg, dir, step); layer(ek); G = sg; PP = P2;
@@ -450,7 +471,7 @@ function avDrawPose(g, a) {
   put(sp, 0, 0, sp.width, sp.height, p.px - AVW * AV_RS / 2, p.py - 61 * AV_RS, AVW * AV_RS, AVH * AV_RS);
 }
 /* ---------- 옷 걸어 두기 (옷 걸이대 · 옷 마네킹) ---------- */
-const AV_HANG_SLOTS = ['top', 'one', 'bottom', 'hat', 'acc', 'shoes'];
+const AV_HANG_SLOTS = ['top', 'one', 'outer', 'bottom', 'hat', 'acc', 'shoes'];
 function avHangTap(owner, it) {
   const f = FURN[it.k]; if (!f || !f.hang) return false; if (!avOn() && owner !== AVTEST_ROOM) return false; if (owner !== ME.uid && owner !== AVTEST_ROOM) return false;
   const room = myRoom(), real = room.items.find(x => x.id === it.id) || it; AV_HANG_IT = real;
@@ -461,12 +482,12 @@ function avHangTap(owner, it) {
   return true;
 }
 let AV_HANG_IT = null;
-const avHangCol = (sl, id) => { const ck = { top: 'topCol', bottom: 'botCol', one: 'oneCol', shoes: 'shoeCol', hat: 'hatCol', acc: 'accCol' }[sl], c = avCfgOf(P) || {}; return c[sl] === id && c[ck] ? c[ck] : ((AV_ITEMS[sl] || {})[id] || [])[2] || null; };
+const avHangCol = (sl, id) => { const ck = { top: 'topCol', bottom: 'botCol', one: 'oneCol', outer: 'outerCol', shoes: 'shoeCol', hat: 'hatCol', acc: 'accCol' }[sl], c = avCfgOf(P) || {}; return c[sl] === id && c[ck] ? c[ck] : ((AV_ITEMS[sl] || {})[id] || [])[2] || null; };
 function avHangSet(sl, id) { const it = AV_HANG_IT; if (!it) return; if (sl) it.wear = { slot: sl, id, col: avHangCol(sl, id) }; else delete it.wear; saveP(); closeModal(); toast(sl ? '옷 걸기 완료' : '비우기 완료'); render(); }
 const AVHANGC = {};
 function avHangPng(w) {
   const k = JSON.stringify(w) + (AVOV[w.slot + ':' + w.id] ? 'o' : ''); if (AVHANGC[k]) return AVHANGC[k];
-  const ck = { top: 'topCol', bottom: 'botCol', one: 'oneCol', shoes: 'shoeCol', hat: 'hatCol', acc: 'accCol' }[w.slot], cfg = Object.assign({}, AV_DEF, { [w.slot]: w.id }); if (w.col) cfg[ck] = w.col;
+  const ck = { top: 'topCol', bottom: 'botCol', one: 'oneCol', outer: 'outerCol', shoes: 'shoeCol', hat: 'hatCol', acc: 'accCol' }[w.slot], cfg = Object.assign({}, AV_DEF, { [w.slot]: w.id }); if (w.col) cfg[ck] = w.col;
   const c = document.createElement('canvas'); c.width = AVW; c.height = AVH; const g = c.getContext('2d'), P2 = avP2(g, cfg, 0, 0); let ok = true;
   if (w.id.startsWith('w:')) { const cw = WEAR.find(x => 'w:' + x.id === w.id), im = cw && cfImg((cw.pics || {})[0]); if (im) avPic(g, im); else ok = false; }
   else { const lk = w.slot + ':' + w.id, ov = AVOV[lk], src = ov && ov.pics && ov.pics[0]; if (src) { const [f, t] = avLayerCol(lk, cfg), im = avRecolor(src, f, t); if (im) avPic(g, im, 0, 0, 0, (ov.n || {})[0]); else ok = false; } else avDrawLayer(P2, lk); }
@@ -478,7 +499,7 @@ function avHangPng(w) {
 /* 걸린 옷 그리기: 옷 부분(설계 줄 44~64)을 잘라 걸이 위치에 */
 function avDrawHung(g, it, b, kind) {
   if (!avOn() && AV_PAINT_OWNER !== AVTEST_ROOM) return; const w = it.wear; if (!w || !w.id) return;
-  const im = avHangPng(w), S = g._S || 1, [sy, sh] = w.slot === 'hat' ? [4, 22] : w.slot === 'shoes' ? [60, 8] : w.slot === 'one' ? [48, 24] : w.slot === 'bottom' ? [55, 16] : [48, 18];   // 캔버스 줄
+  const im = avHangPng(w), S = g._S || 1, [sy, sh] = w.slot === 'hat' ? [4, 22] : w.slot === 'shoes' ? [60, 8] : w.slot === 'one' || w.slot === 'outer' ? [48, 24] : w.slot === 'bottom' ? [55, 16] : [48, 18];   // 캔버스 줄
   const cx = b.x + b.w / 2, top = kind === 'form' ? b.y + 11 : b.y + 15, dw = AVW, dh = sh;   // 걸린 옷은 토큰보다 2배로 (가구 크기에 맞춤)
   g.save(); g.setTransform(1, 0, 0, 1, 0, 0); g.imageSmoothingEnabled = S < 2;
   g.drawImage(im, 0, sy, AVW, sh, Math.round((cx - dw / 2) * S), Math.round(top * S), Math.round(dw * S), Math.round(dh * S)); g.restore();
@@ -502,10 +523,10 @@ function avItemsOf(slot) {
   if (slot === 'eye') return Object.entries(AV_ITEMS.eye).map(([k, v]) => ({ id: k, name: v[0], cost: 0, col: v[2] }));
   const base = Object.entries(AV_ITEMS[slot] || {}).map(([k, v]) => ({ id: k, name: v[0], cost: v[1], col: v[2] }));
   const cw = WEAR.filter(w => w.slot === slot && (w.kind === 'kp' ? w.sell !== false || avOwns(P, slot, 'w:' + w.id) : (w.by === ME.uid || avOwns(P, slot, 'w:' + w.id))) && !w.del).map(w => ({ id: 'w:' + w.id, name: w.name, cost: w.kind === 'kp' ? w.cost || 0 : 0, custom: w }));
-  const none = ['hat', 'acc', 'one', 'top', 'bottom', 'shoes'].includes(slot) ? [{ id: '', name: '없음', cost: 0 }] : [];
+  const none = ['hat', 'acc', 'one', 'outer', 'top', 'bottom', 'shoes'].includes(slot) ? [{ id: '', name: '없음', cost: 0 }] : [];
   return [...none, ...base, ...cw];
 }
-const AVCOLKEY = { hair: 'hairCol', eye: 'eyeCol', top: 'topCol', bottom: 'botCol', one: 'oneCol', shoes: 'shoeCol', hat: 'hatCol', acc: 'accCol' };
+const AVCOLKEY = { hair: 'hairCol', eye: 'eyeCol', top: 'topCol', bottom: 'botCol', one: 'oneCol', outer: 'outerCol', shoes: 'shoeCol', hat: 'hatCol', acc: 'accCol' };
 function avEditDraw() {
   const c = AVE.cfg, slot = AVE.slot, list = avItemsOf(slot), colKey = AVCOLKEY[slot], room = typeof myRoom === 'function' && P.room ? myRoom() : { dye: 0 };
   modal(`<h2 style="color:var(--gold2);margin-top:0">🎎 토큰 꾸미기</h2>
@@ -540,18 +561,18 @@ function wfForm() {
   const d = WFD, kp = d.kind === 'kp';
   modal(`<h2 style="color:var(--gold2);margin-top:0">✏ 옷 ${d.id ? '고치기' : '만들기'}</h2>
    <label class="f">이름</label><input id="wfN" value="${esc(d.name)}" maxlength="20" placeholder="예: 별무늬 망토">
-   <label class="f">부위</label><select id="wfS">${AV_SLOTS.filter(([k]) => !['hair', 'eye'].includes(k)).map(([k, n]) => `<option value="${k}" ${d.slot === k ? 'selected' : ''}>${n}</option>`).join('')}</select>
+   <label class="f">부위</label><select id="wfS" onchange="wfRead();wfForm()">${AV_SLOTS.filter(([k]) => !['hair', 'eye'].includes(k)).map(([k, n]) => `<option value="${k}" ${d.slot === k ? 'selected' : ''}>${n}</option>`).join('')}</select>
    ${kp ? `<div class="row" style="gap:6px"><div style="flex:1"><label class="f">가격</label><input id="wfC" type="number" min="0" value="${d.cost || 0}"></div><label style="flex:1;margin-top:22px"><input type="checkbox" id="wfSell" ${d.sell !== false ? 'checked' : ''} style="width:auto;margin-right:6px">옷가게에서 팔기</label></div>` : ''}
    <p class="muted" style="font-size:.8rem">옷 부분만 그리기 · 옆/뒤 생략 가능</p>
-   ${[[0, '앞모습'], [1, '옆모습 (왼쪽 보기)'], [2, '뒷모습']].map(([k, n]) => `<div class="item" style="margin:4px 0"><div style="display:flex;align-items:center;gap:8px">${d.pics[k] ? `<img src="${d.pics[k]}" style="height:54px;image-rendering:pixelated;background:#2a2420">` : '<span class="muted" style="width:36px;text-align:center">없음</span>'}<b>${n}</b></div><button class="sm primary" onclick="wfDraw(${k})">🎨 그리기</button></div>`).join('')}
+   ${[[0, '앞모습'], [1, '옆모습 (왼쪽 보기)'], [2, '뒷모습']].concat(d.slot === 'outer' ? [[3, '원피스 위 · 앞'], [4, '원피스 위 · 옆'], [5, '원피스 위 · 뒤']] : []).map(([k, n]) => `<div class="item" style="margin:4px 0"><div style="display:flex;align-items:center;gap:8px">${d.pics[k] ? `<img src="${d.pics[k]}" style="height:54px;image-rendering:pixelated;background:#2a2420">` : '<span class="muted" style="width:36px;text-align:center">없음</span>'}<b>${n}</b></div><button class="sm primary" onclick="wfDraw(${k})">🎨 그리기</button></div>`).join('')}
    <div class="row" style="margin-top:10px"><button onclick="WFD=null;closeModal()">취소</button><button class="primary" onclick="wfSave()">저장</button></div>`);
 }
 function wfRead() { const n = $('#wfN'); if (!n) return; WFD.name = n.value.trim(); WFD.slot = $('#wfS').value; if (WFD.kind === 'kp') { WFD.cost = Math.max(0, +$('#wfC').value || 0); WFD.sell = $('#wfSell').checked; } }
 async function wfDraw(k) {
-  wfRead(); const base = Object.assign({}, AV_DEF, { hair: 'short', top: '', bottom: '', shoes: '', one: '', hat: '', acc: '' }), dir = k === 1 ? 1 : k === 2 ? 2 : 0;
+  wfRead(); const base = Object.assign({}, AV_DEF, { hair: 'short', top: '', bottom: '', shoes: '', one: k >= 3 ? 'dress' : '', outer: '', hat: '', acc: '' }), dir = k % 3 === 1 ? 1 : k % 3 === 2 ? 2 : 0;   // 3~5: 원피스 위 겉옷 (드레스 밑그림)
   toast('밑그림 준비 중');
-  const ref = await avRefUrl(base, dir), guide = k && WFD.pics[0] ? await avRefUrl(base, 0, { extra: [WFD.pics[0]] }) : null;
-  dotEdit({ W: AVW, H: AVH, src: WFD.pics[k] || null, key: 'wear_' + (WFD.id || 'new') + '_' + k, title: (WFD.name || '새 옷') + ' · ' + ['앞', '옆', '뒤'][k], guide, guideName: '앞모습',
+  const ref = await avRefUrl(base, dir), guide = k % 3 && WFD.pics[k - k % 3] ? await avRefUrl(base, 0, { extra: [WFD.pics[k - k % 3]] }) : null;
+  dotEdit({ W: AVW, H: AVH, src: WFD.pics[k] || null, key: 'wear_' + (WFD.id || 'new') + '_' + k, title: (WFD.name || '새 옷') + ' · ' + (k >= 3 ? '드레스 위 ' : '') + ['앞', '옆', '뒤'][k % 3], guide, guideName: '앞모습',
     onSave: url => { if (url) WFD.pics[k] = url; else delete WFD.pics[k]; wfForm(); }, onCancel: () => wfForm() });
   avSetRef(ref, .5);
 }
@@ -577,7 +598,8 @@ function avFake(n) { AVFAKE.length = 0; for (let i = 0; i < n; i++) { const x = 
 function avPwTry() { const v = ($('#avPw') || {}).value || ''; if (v.trim() === '1117') { try { sessionStorage.setItem('peccata_avpw', '1'); } catch (e) {} render(); } else { sfx('bad'); toast('비밀번호 오류'); } }
 const AV_OV_GROUPS = () => [['몸', [['body', '기본 몸 · 얼굴형'], ['pose:sit', '앉은 다리 (안 고치면 자동)']]], ['눈', Object.entries(AV_ITEMS.eye).map(([k, v]) => ['eye:' + k, v[0]])],
   ['머리 (앞)', Object.entries(AV_ITEMS.hair).map(([k, v]) => ['hairF:' + k, v[0] + ' 앞머리'])], ['머리 (뒤)', Object.entries(AV_ITEMS.hair).map(([k, v]) => ['hairB:' + k, v[0] + ' 뒷머리'])],
-  ...['top', 'bottom', 'one', 'shoes', 'hat', 'acc'].map(sl => [AV_SLOTS.find(x => x[0] === sl)[1], Object.entries(AV_ITEMS[sl]).map(([k, v]) => [sl + ':' + k, v[0]])])];
+  ...['top', 'bottom', 'one', 'outer', 'shoes', 'hat', 'acc'].map(sl => [AV_SLOTS.find(x => x[0] === sl)[1], Object.entries(AV_ITEMS[sl]).map(([k, v]) => [sl + ':' + k, v[0]])]),
+  ['겉옷 (원피스 위)', Object.entries(AV_ITEMS.outer).map(([k, v]) => ['outerD:' + k, v[0] + ' · 드레스 위'])]];
 let AVOV_OPEN = '';
 function avOvSection() {
   return `<div class="panel"><h2>🎨 기본 그림 고치기</h2><p class="muted" style="margin:0 0 6px;font-size:.82rem">기본 그림 수정 · 전체 토큰 적용 · 원래 색 부분은 색 바꾸기 유지</p>
@@ -608,8 +630,8 @@ async function avOvExport(keys) {
     try { if (navigator.canShare && navigator.canShare({ files: [f] })) { await navigator.share({ files: [f], title: name }); return; } } catch (e) { if (e && e.name === 'AbortError') return; }
     const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = name; document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 4000); toast('내보내기 완료'); }, 'image/png');
 }
-function avOvCfg(key) { const [k, id] = key.split(':'), c = Object.assign({}, AV_DEF); if (k === 'eye') c.eye = id; if (k === 'hairB' || k === 'hairF') { c.hair = id; c.hairCol = AV_ITEMS.hair[id][2]; }
-  if (AV_ITEMS[k] && k !== 'eye' && k !== 'hair') { if (k === 'one') { c.one = id; } else c[k] = id; const ck = { top: 'topCol', bottom: 'botCol', one: 'oneCol', shoes: 'shoeCol', hat: 'hatCol', acc: 'accCol' }[k]; c[ck] = AV_ITEMS[k][id][2]; } return c; }
+function avOvCfg(key) { const [k, id] = key.split(':'), c = Object.assign({}, AV_DEF); if (k === 'outerD') { Object.assign(c, { one: 'dress', oneCol: AV_ITEMS.one.dress[2], outer: id, outerCol: AV_ITEMS.outer[id][2] }); return c; } if (k === 'eye') c.eye = id; if (k === 'hairB' || k === 'hairF') { c.hair = id; c.hairCol = AV_ITEMS.hair[id][2]; }
+  if (AV_ITEMS[k] && k !== 'eye' && k !== 'hair') { if (k === 'one') { c.one = id; } else c[k] = id; const ck = { top: 'topCol', bottom: 'botCol', one: 'oneCol', outer: 'outerCol', shoes: 'shoeCol', hat: 'hatCol', acc: 'accCol' }[k]; c[ck] = AV_ITEMS[k][id][2]; } return c; }
 function avNoArms(vw) { const bp = AVOV.body && AVOV.body.pics || {}; if (!bp[vw]) return false; const r = avBodyCut(vw === 1 ? 0 : vw, vw === 1 ? bp[0] || '' : bp[vw]); return !!(r && r.noArms); }
 function avLayerPng(key, view, raw) { const c = document.createElement('canvas'); c.width = AVW; c.height = AVH; const g = c.getContext('2d'), P2 = avP2(g, avOvCfg(key), view, 0); if (key !== 'body') P2.noArms = avNoArms(view); avDrawLayer(P2, key); return raw ? c : c.toDataURL('image/png'); }
 let AVOD = null;
