@@ -24,6 +24,7 @@ function dotEdit(o) {
     tool: 'pen', col: '#24160e', col2: null, size: 1, fillShape: false, mirror: false, grid: true, dith: 0, scopeF: false, scopeL: false,
     z: 4, ox: 0, oy: 0, undo: [], redo: [], ref: null, sel: null, float: null, drag: null, ptr: new Map(), recent: [], sheet: '', dirty: false, pal: -1, origPx: null };
   DE.layers = [deNewLayer('레이어 1', 1)]; DE.px = DE.layers[0].frames[0];
+  deRefLoadSaved();   // 이 층·방향에 올려 둔 밑그림 다시 깔기
   if (o.guide) { const gi = new Image(); gi.onload = () => { if (!DE || DE.o !== o) return; const c = document.createElement('canvas'); c.width = gi.width; c.height = gi.height; const g = c.getContext('2d'); g.drawImage(gi, 0, 0);
     const d = g.getImageData(0, 0, c.width, c.height), q = d.data, orig = new Uint8ClampedArray(q); for (let i = 0; i < q.length; i += 4) { if (!q[i + 3]) continue; const v = (q[i] * .3 + q[i + 1] * .59 + q[i + 2] * .11) / 255; q[i] = 40 + v * 90; q[i + 1] = 150 + v * 90; q[i + 2] = 230; } g.putImageData(d, 0, 0);
     const cs = {}; for (let i = 0; i < orig.length; i += 4) if (orig[i + 3] > 100) { const h = deToHex(orig[i], orig[i + 1], orig[i + 2]); cs[h] = (cs[h] || 0) + 1; }
@@ -66,6 +67,7 @@ function dotEdit(o) {
 function deClose(save) {
   if (!DE) return; const o = DE.o;
   if (!save && DE.dirty && !confirm('그린 것을 저장하지 않고 닫을까요?')) return;
+  deRefSave();
   if (save && !DE.opWarned) { const lo = DE.layers.filter(L => L.vis !== false && (L.op == null ? 1 : L.op) < 1); DE.opWarned = 1;   // 투명도 100% 아닌 레이어: 저장 때 한 번만 확인
     if (lo.length && !confirm(`투명도가 100%가 아닌 레이어가 있습니다.\n${lo.map(L => `· ${L.name} (${Math.round(L.op * 100)}%)`).join('\n')}\n\n그대로 저장할까요?`)) return; }
   let url = null, meta = null;
@@ -180,8 +182,8 @@ function deUI() {
   const shp = ['rect', 'oval'].includes(t) ? `<button class="${DE.fillShape ? 'on' : ''}" onclick="DE.fillShape=!DE.fillShape;deUI()">${DE.fillShape ? '■ 채움' : '□ 테두리'}</button>` : '';
   const sel = t === 'sel' || DE.float ? (DE.float ? `<button class="on" onclick="deCommitFloat()">✔ 여기에 붙이기</button><button onclick="deFloatX('h')">⇋ 좌우</button><button onclick="deFloatX('v')">⇵ 상하</button><button onclick="deFloatX('r')">⟳ 90°</button><button onclick="deFloatX('2')">×2</button><button onclick="deFloatX('h2')">×½</button><button onclick="DE.float=null;deUI();deDraw()">✕ 취소</button>`
     : `<button onclick="deLift()" ${DE.sel ? '' : 'disabled'}>🖐 들어 옮기기</button><button onclick="deCopy(false)" ${DE.sel ? '' : 'disabled'}>📄 복사</button><button onclick="deCopy(true)" ${DE.sel ? '' : 'disabled'}>✂ 잘라내기</button><button onclick="deClearSel()" ${DE.sel ? '' : 'disabled'}>🧹 지우기</button><button onclick="dePaste()" ${DECLIP ? '' : 'disabled'}>📋 붙여넣기</button>${DE.sel ? '<button onclick="DE.sel=null;deUI();deDraw()">선택 풀기</button>' : ''}`) : '';
-  const ref = DE.ref ? `<button class="${DE.ref.on ? 'on' : ''}" onclick="DE.ref.on=!DE.ref.on;deUI();deDraw()">👁 밑그림</button><span class="muted">투명</span><input type="range" min="5" max="100" value="${Math.round(DE.ref.a * 100)}" oninput="DE.ref.a=this.value/100;deDraw()">
-    <span class="muted">크기</span><input type="range" min="5" max="400" value="${Math.round(DE.ref.s * 100)}" oninput="deRefScale(this.value/100)"><button onclick="deRefFit()">맞추기</button><button onclick="deSheet('conv')">🧩 도트로 바꾸기</button><button onclick="DE.ref=null;deUI();deDraw()">🗑</button>` : '';
+  const ref = DE.ref ? `<button class="${DE.ref.on ? 'on' : ''}" onclick="DE.ref.on=!DE.ref.on;deUI();deDraw()">👁 밑그림</button><span class="muted">투명</span><input type="range" min="5" max="100" value="${Math.round(DE.ref.a * 100)}" oninput="DE.ref.a=this.value/100;deDraw()" onchange="deRefSave()">
+    <span class="muted">크기</span><input type="range" min="5" max="400" value="${Math.round(DE.ref.s * 100)}" oninput="deRefScale(this.value/100)" onchange="deRefSave()"><button onclick="deRefFit()">맞추기</button><button onclick="deSheet('conv')">🧩 도트로 바꾸기</button><button onclick="deRefForget()">🗑</button>` : '';
   const gd = DE.guide ? `<button class="${DE.guide.on ? 'on' : ''}" onclick="DE.guide.on=!DE.guide.on;deUI();deDraw()">👁 ${DE.guide.name}</button><input type="range" min="5" max="100" value="${Math.round(DE.guide.a * 100)}" oninput="DE.guide.a=this.value/100;deDraw()">` : '';
   $('#deOpts').innerHTML = `${gd}${DE.o.presets ? `<button class="${DE.sheet === 'pre' ? 'on' : ''}" onclick="deSheet('pre')">📂 프리셋</button>` : DE.o.orig ? '<button onclick="deToOrig()">↺ 원래 도트로</button>' : ''}${sz}${dith}${grad}${scope}${shp}${sel}<button class="${DE.mirror ? 'on' : ''}" onclick="DE.mirror=!DE.mirror;deUI();deDraw()">⇿ 좌우 대칭</button><button class="${DE.grid ? 'on' : ''}" onclick="DE.grid=!DE.grid;deUI();deDraw()"># 격자</button><button onclick="deFit()">⤢ 화면 맞춤</button>
     <button class="${DE.sheet === 'bg' ? 'on' : ''}" onclick="deSheet('bg')">🖼 배경</button><button class="${DE.sheet === 'room' ? 'on' : ''}" onclick="deSheet('room')">🏠 방에서 보기</button><button class="${DE.sheet === 'fx' ? 'on' : ''}" onclick="deSheet('fx')">✨ 외곽선·그림자</button><button onclick="deRefPick()">📷 밑그림 올리기</button>${ref}<button onclick="deSheet('imp')">🪑 가구 불러오기</button><button onclick="deFlipAll()">⇋ 전체 뒤집기</button><button onclick="deClearAll()">🗑 이 레이어 지우기</button>`;
@@ -418,14 +420,27 @@ function dePalAdd(i) { const l = dePals().slice(), p = l[i]; if (!p) return; if 
 function dePalDel(i) { const l = dePals().slice(); if (!confirm(`「${l[i].name}」 팔레트를 지울까요?`)) return; l.splice(i, 1); dePalsSave(l); DE.pal = -1; deSheetBody(); deCols(); }
 
 /* ---------- 밑그림 ---------- */
+/* 올린 밑그림은 이 기기에 층·방향(편집기 key)마다 기억: 그림 + 자리·크기·투명도 (최대 40개, 오래된 것부터 지움) */
+const deRefKey = () => 'peccata_deref_' + (DE.o.key || (DE.o.title || 'x')) + '_' + DE.W + 'x' + DE.H;
+function deRefShrink(im) { const M = 640, k = Math.min(1, M / Math.max(im.width, im.height)), c = document.createElement('canvas'); c.width = Math.max(1, Math.round(im.width * k)); c.height = Math.max(1, Math.round(im.height * k));
+  const g = c.getContext('2d'); g.imageSmoothingEnabled = k < 1; g.drawImage(im, 0, 0, c.width, c.height); let url = c.toDataURL('image/png'); if (url.length > 450000) url = c.toDataURL('image/jpeg', .85); return { img: c, url }; }
+function deRefSave() { if (!DE || !DE.ref || !DE.ref.user || !DE.ref.url) return; const R = DE.ref, k = deRefKey();
+  const put = () => localStorage.setItem(k, JSON.stringify({ url: R.url, a: R.a, x: R.x, y: R.y, s: R.s, on: R.on, crisp: !!R.crisp, at: Date.now() }));
+  try { let ix = []; try { ix = JSON.parse(localStorage.getItem('peccata_deref_ix') || '[]'); } catch (e) {} ix = ix.filter(x => x !== k); ix.push(k);
+    while (ix.length > 40) localStorage.removeItem(ix.shift());
+    for (;;) { try { put(); break; } catch (e) { if (ix.length <= 1) throw e; localStorage.removeItem(ix.shift()); } }   // 공간이 모자라면 오래된 밑그림부터 지움
+    localStorage.setItem('peccata_deref_ix', JSON.stringify(ix)); } catch (e) { toast('밑그림 기억 실패 (저장 공간 부족)'); } }
+function deRefLoadSaved() { let v = null; try { v = JSON.parse(localStorage.getItem(deRefKey()) || 'null'); } catch (e) {} if (!v || !v.url) return; DE.userRef = true; const o = DE.o, im = new Image();
+  im.onload = () => { if (!DE || DE.o !== o) return; DE.ref = { img: im, url: v.url, user: true, data: null, a: v.a || .45, on: v.on !== false, x: v.x || 0, y: v.y || 0, s: v.s || 1, crisp: !!v.crisp }; deUI(); deDraw(); }; im.src = v.url; }
+function deRefForget() { if (!DE) return; if (DE.ref && DE.ref.user) { try { localStorage.removeItem(deRefKey()); } catch (e) {} DE.userRef = false; toast('밑그림 지움 · 기억도 지움'); } DE.ref = null; deUI(); deDraw(); }
 function deRefPick() {
   const inp = document.createElement('input'); inp.type = 'file'; inp.accept = 'image/*';
   inp.onchange = () => { const f = inp.files[0]; if (!f) return; const rd = new FileReader(); rd.onload = () => { const im = new Image(); im.onload = () => {
     const c = document.createElement('canvas'); c.width = im.width; c.height = im.height; const g = c.getContext('2d'); g.drawImage(im, 0, 0); let data = null; try { data = g.getImageData(0, 0, im.width, im.height).data; } catch (e) {}
-    DE.ref = { img: im, data, a: .45, on: true, x: 0, y: 0, s: 1 }; deRefFit(); DE.tool = 'ref'; deUI(); toast('밑그림을 깖. 「밑그림 옮기기」로 위치를 맞춤'); }; im.src = rd.result; }; rd.readAsDataURL(f); };
+    const sm = deRefShrink(im); DE.userRef = true; DE.ref = { img: sm.img, url: sm.url, user: true, data: null, a: .45, on: true, x: 0, y: 0, s: 1 }; deRefFit(); deRefSave(); DE.tool = 'ref'; deUI(); toast('밑그림을 깖 · 이 층에 기억됨'); }; im.src = rd.result; }; rd.readAsDataURL(f); };
   inp.click();
 }
-function deRefFit() { const R = DE.ref; if (!R) return; R.s = Math.min(DE.W / R.img.width, DE.H / R.img.height); R.x = (DE.W - R.img.width * R.s) / 2; R.y = DE.H - R.img.height * R.s; deUI(); deDraw(); }
+function deRefFit() { const R = DE.ref; if (!R) return; R.s = Math.min(DE.W / R.img.width, DE.H / R.img.height); R.x = (DE.W - R.img.width * R.s) / 2; R.y = DE.H - R.img.height * R.s; deRefSave(); deUI(); deDraw(); }
 function deRefScale(s) { const R = DE.ref; if (!R) return; const cx = R.x + R.img.width * R.s / 2, by = R.y + R.img.height * R.s; R.s = Math.max(.02, s); R.x = cx - R.img.width * R.s / 2; R.y = by - R.img.height * R.s; deDraw(); }
 function deConvert() {
   const R = DE.ref; if (!R || !deEditable()) return; const n = +$('#deCn').value, bg = $('#deBg').checked, ol = $('#deOl').checked, { W, H } = DE;
@@ -504,6 +519,7 @@ function deBind() {
     if (d && d.grad) { DE.drag = null; deGradient(d.a, d.b || d.a); return; }
     if (d && d.last) deCols();
     if (d && d.sel) deUI();
+    if (d && d.ref) deRefSave();
     DE.drag = null; deDraw();
   };
   cv.addEventListener('pointerup', up); cv.addEventListener('pointercancel', up);
