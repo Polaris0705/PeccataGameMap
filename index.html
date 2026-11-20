@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#ffffff">
-<script>try{const t=JSON.parse(localStorage.getItem('peccata_theme')||'null')||{bg:'#ffffff',panel:'#f6f1ec',text:'#2a221c'};if(t&&t.bg){const r=document.documentElement;r.style.setProperty('--bg',t.bg);if(t.panel)r.style.setProperty('--panel',t.panel);if(t.text)r.style.setProperty('--text',t.text);r.style.background=t.bg;document.querySelector('meta[name=theme-color]').content=t.bg;}}catch(e){}</script>
+<script>try{const t=JSON.parse(localStorage.getItem('peccata_theme')||'null')||{bg:'#ffffff',panel:'#f6f1ec',text:'#2a221c'};if(t&&t.bg){const r=document.documentElement;r.style.setProperty('--bg',t.bg);if(t.panel)r.style.setProperty('--panel',t.panel);if(t.text)r.style.setProperty('--text',t.text);if(t.deco==='shadow')r.classList.add('th-shadow');r.style.background=t.bg;document.querySelector('meta[name=theme-color]').content=t.bg;}}catch(e){}</script>
 <link rel="manifest" href="manifest.json">
 <link rel="icon" href="icon-192.png">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
@@ -341,6 +341,27 @@ i.pxi{display:inline-block;width:1.15em;height:1.15em;vertical-align:-.2em;backg
 button i.pxi{margin-right:1px}
 .plot .icon i.pxi,.noimg i.pxi{width:1em;height:1em}
 
+
+/* 🎭 그림자 인형극 무대 장식 */
+#stageTop,#stageSil,.stageSide{display:none;pointer-events:none}
+html.th-shadow{background:radial-gradient(ellipse 80% 60% at 50% 30%,color-mix(in srgb,var(--gold) 16%,var(--bg)) 0%,var(--bg) 70%) fixed!important}
+html.th-shadow body{background:transparent}
+html.th-shadow body::before{content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;background:radial-gradient(ellipse 60% 45% at 50% 32%,color-mix(in srgb,var(--gold) 22%,transparent),transparent 70%),radial-gradient(ellipse at center,transparent 55%,rgba(0,0,0,.55) 100%);animation:lampflick 5s ease-in-out infinite}
+@keyframes lampflick{0%,100%{opacity:1}20%{opacity:.88}23%{opacity:.97}55%{opacity:.9}60%{opacity:1}80%{opacity:.93}}
+@media(prefers-reduced-motion:reduce){html.th-shadow body::before{animation:none}}
+html.th-shadow .wrap{position:relative;padding-top:calc(40px + env(safe-area-inset-top))}
+html.th-shadow #stageTop{display:block;position:absolute;top:0;left:0;right:0;height:26px;z-index:1;background:var(--gold);-webkit-mask:url("data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 40 20%27%3E%3Cpath d=%27M0 0H40V10A10 10 0 0 1 20 10A10 10 0 0 1 0 10Z%27/%3E%3C/svg%3E") repeat-x 0 0/40px 20px;mask:url("data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 40 20%27%3E%3Cpath d=%27M0 0H40V10A10 10 0 0 1 20 10A10 10 0 0 1 0 10Z%27/%3E%3C/svg%3E") repeat-x 0 0/40px 20px;transform:translateY(3px)}
+html.th-shadow #stageTop::before{content:"";position:absolute;inset:0 0 3px;background:linear-gradient(var(--wine),color-mix(in srgb,var(--wine) 70%,#000));-webkit-mask:url("data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 40 20%27%3E%3Cpath d=%27M0 0H40V10A10 10 0 0 1 20 10A10 10 0 0 1 0 10Z%27/%3E%3C/svg%3E") repeat-x 0 -3px/40px 20px;mask:url("data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 40 20%27%3E%3Cpath d=%27M0 0H40V10A10 10 0 0 1 20 10A10 10 0 0 1 0 10Z%27/%3E%3C/svg%3E") repeat-x 0 -3px/40px 20px;transform:translateY(-3px)}
+html.th-shadow.px #stageTop{-webkit-mask-image:url("data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 40 20%27 shape-rendering=%27crispEdges%27%3E%3Cpath d=%27M0 0H40V10H0Z M2 10H18V14H2Z M4 14H16V17H4Z M7 17H13V20H7Z M22 10H38V14H22Z M24 14H36V17H24Z M27 17H33V20H27Z%27/%3E%3C/svg%3E");mask-image:url("data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 40 20%27 shape-rendering=%27crispEdges%27%3E%3Cpath d=%27M0 0H40V10H0Z M2 10H18V14H2Z M4 14H16V17H4Z M7 17H13V20H7Z M22 10H38V14H22Z M24 14H36V17H24Z M27 17H33V20H27Z%27/%3E%3C/svg%3E")}
+html.th-shadow.px #stageTop::before{-webkit-mask-image:url("data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 40 20%27 shape-rendering=%27crispEdges%27%3E%3Cpath d=%27M0 0H40V10H0Z M2 10H18V14H2Z M4 14H16V17H4Z M7 17H13V20H7Z M22 10H38V14H22Z M24 14H36V17H24Z M27 17H33V20H27Z%27/%3E%3C/svg%3E");mask-image:url("data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 40 20%27 shape-rendering=%27crispEdges%27%3E%3Cpath d=%27M0 0H40V10H0Z M2 10H18V14H2Z M4 14H16V17H4Z M7 17H13V20H7Z M22 10H38V14H22Z M24 14H36V17H24Z M27 17H33V20H27Z%27/%3E%3C/svg%3E")}
+html.th-shadow #stageSil{display:block;position:relative;height:90px;margin:-30px auto 0;max-width:900px;background:radial-gradient(ellipse 60% 100% at 50% 100%,color-mix(in srgb,var(--gold) 38%,transparent),transparent 75%)}
+html.th-shadow #stageSil::after{content:"";position:absolute;left:0;right:0;bottom:0;height:72px;background:#050302;-webkit-mask:url("data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 400 80%27%3E%3Cpath d=%27M0 80V70Q50 62 100 68T200 66T300 68T400 66V80Z%27/%3E%3Crect x=%2738%27 y=%2740%27 width=%275%27 height=%2728%27/%3E%3Ccircle cx=%2740%27 cy=%2732%27 r=%2714%27/%3E%3Ccircle cx=%2729%27 cy=%2741%27 r=%2710%27/%3E%3Ccircle cx=%2752%27 cy=%2741%27 r=%2710%27/%3E%3Crect x=%27110%27 y=%2750%27 width=%2730%27 height=%2718%27/%3E%3Cpath d=%27M105 51L125 35L145 51Z%27/%3E%3Crect x=%27134%27 y=%2738%27 width=%274%27 height=%279%27/%3E%3Cellipse cx=%27220%27 cy=%2760%27 rx=%279%27 ry=%278%27/%3E%3Ccircle cx=%27220%27 cy=%2749%27 r=%275%27/%3E%3Cpath d=%27M215.5 47L216.5 41L219.5 45.5Z M220.5 45.5L223.5 41L224.5 47Z M227 65Q237 62 233 52L231 53Q234 61 226 62Z%27/%3E%3Cellipse cx=%27300%27 cy=%2730%27 rx=%2710%27 ry=%275%27/%3E%3Ccircle cx=%27309%27 cy=%2727%27 r=%273.6%27/%3E%3Cpath d=%27M312 25.5L318 27L312 28.5Z M295 29L302 17L306 29Z M291 30L283 25L284 34Z%27/%3E%3Crect x=%27299.3%27 y=%2734%27 width=%271.4%27 height=%2746%27/%3E%3Cpath d=%27M365 16A11 11 0 1 0 374 34A9 9 0 1 1 365 16Z%27/%3E%3Crect x=%27368%27 y=%2734%27 width=%271.4%27 height=%2746%27/%3E%3C/svg%3E") no-repeat center bottom/auto 100%;mask:url("data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 400 80%27%3E%3Cpath d=%27M0 80V70Q50 62 100 68T200 66T300 68T400 66V80Z%27/%3E%3Crect x=%2738%27 y=%2740%27 width=%275%27 height=%2728%27/%3E%3Ccircle cx=%2740%27 cy=%2732%27 r=%2714%27/%3E%3Ccircle cx=%2729%27 cy=%2741%27 r=%2710%27/%3E%3Ccircle cx=%2752%27 cy=%2741%27 r=%2710%27/%3E%3Crect x=%27110%27 y=%2750%27 width=%2730%27 height=%2718%27/%3E%3Cpath d=%27M105 51L125 35L145 51Z%27/%3E%3Crect x=%27134%27 y=%2738%27 width=%274%27 height=%279%27/%3E%3Cellipse cx=%27220%27 cy=%2760%27 rx=%279%27 ry=%278%27/%3E%3Ccircle cx=%27220%27 cy=%2749%27 r=%275%27/%3E%3Cpath d=%27M215.5 47L216.5 41L219.5 45.5Z M220.5 45.5L223.5 41L224.5 47Z M227 65Q237 62 233 52L231 53Q234 61 226 62Z%27/%3E%3Cellipse cx=%27300%27 cy=%2730%27 rx=%2710%27 ry=%275%27/%3E%3Ccircle cx=%27309%27 cy=%2727%27 r=%273.6%27/%3E%3Cpath d=%27M312 25.5L318 27L312 28.5Z M295 29L302 17L306 29Z M291 30L283 25L284 34Z%27/%3E%3Crect x=%27299.3%27 y=%2734%27 width=%271.4%27 height=%2746%27/%3E%3Cpath d=%27M365 16A11 11 0 1 0 374 34A9 9 0 1 1 365 16Z%27/%3E%3Crect x=%27368%27 y=%2734%27 width=%271.4%27 height=%2746%27/%3E%3C/svg%3E") no-repeat center bottom/auto 100%;}
+html.th-shadow .panel{box-shadow:inset 0 0 36px color-mix(in srgb,var(--gold) 9%,transparent),0 6px 18px rgba(0,0,0,.35)}
+html.th-shadow header.top h1{text-shadow:0 0 12px color-mix(in srgb,var(--gold) 55%,transparent)}
+html.th-shadow.px header.top h1{text-shadow:2px 2px 0 var(--wine),0 0 12px color-mix(in srgb,var(--gold) 45%,transparent)}
+@media(min-width:1180px){html.th-shadow body:not(.kp) .stageSide{display:block;position:fixed;top:0;bottom:0;width:min(130px,calc((100vw - 940px)/2));z-index:0;background:repeating-linear-gradient(90deg,color-mix(in srgb,var(--wine) 75%,#000) 0 6px,var(--wine) 6px 16px,color-mix(in srgb,var(--wine) 85%,#fff) 16px 19px,var(--wine) 19px 26px);box-shadow:0 0 30px rgba(0,0,0,.6)}
+ html.th-shadow .stageSide.l{left:0;border-radius:0 0 60% 0} html.th-shadow .stageSide.r{right:0;border-radius:0 0 0 60%}
+ html.th-shadow.px .stageSide{border-radius:0!important;clip-path:polygon(0 0,100% 0,100% 80%,70% 86%,40% 92%,0 100%)} html.th-shadow.px .stageSide.r{clip-path:polygon(0 0,100% 0,100% 100%,60% 92%,30% 86%,0 80%)}}
 /* UI 다듬기 */
 p.muted.empty{text-align:center;padding:18px 10px;margin:8px 0;border:1px dashed var(--line);border-radius:8px;opacity:.85}
 p.muted.empty::before{content:"· · ·";display:block;letter-spacing:.3em;opacity:.5;margin-bottom:4px}
@@ -352,7 +373,7 @@ body.chat-on.dock-mob.sheet-open #chatDock{visibility:visible;transition:transfo
 </head>
 <body>
 <div id="callBar"><div class="in"><div>🔔 <b id="callMsg"></b><div class="muted" style="color:#f3d6d9" id="callSub"></div></div><span id="callBtns" class="row" style="flex:0 0 auto;gap:6px"></span></div></div>
-<div class="wrap"><div id="app"><div class="panel">불러오는 중…</div></div></div>
+<div class="stageSide l"></div><div class="stageSide r"></div><div class="wrap"><div id="stageTop"></div><div id="app"><div class="panel">불러오는 중…</div></div><div id="stageSil"></div></div>
 <div id="schedWrap"></div>
 <div id="modal"><div class="box" id="mbox"></div></div>
 <div id="toast"></div>
@@ -856,7 +877,7 @@ const FONTS={
   pen:{n:'나눔손글씨 펜',f:"'Nanum Pen Script',cursive",g:'Nanum+Pen+Script',scale:1.28}
 };
 const LOGIN_DEF={bg:'#ffffff',panel:'#f6f1ec',text:'#2a221c',accent:'#b07a50',point:'#c0506a',font:'pixel',scale:1,ui:'px',frame:''};   // 처음 여는 기기의 로그인 화면 (테마가 안 닿는 곳은 흰 바탕)
-const THEME_DEF={bg:'#13100e',panel:'#1e1916',text:'#e9e1d4',accent:'#c9a96a',point:'#8a2433',font:'pixel',scale:1,ui:'px',frame:''};
+const THEME_DEF={bg:'#13100e',panel:'#1e1916',text:'#e9e1d4',accent:'#c9a96a',point:'#8a2433',font:'pixel',scale:1,ui:'px',frame:'',deco:''};
 const PRESETS={
   pxmanor:{name:'저택 도트 (기본)',bg:'#13100e',panel:'#1e1916',text:'#e9e1d4',accent:'#c9a96a',point:'#8a2433',frame:'',ui:'px',font:'pixel'},
   rpg:{name:'고전 RPG',bg:'#05061a',panel:'#1a2470',text:'#ffffff',accent:'#ffd84a',point:'#c8303c',frame:'#ffffff',ui:'px',font:'pixel'},
@@ -864,6 +885,7 @@ const PRESETS={
   parch:{name:'양피지',bg:'#e9dfc8',panel:'#f7f0e0',text:'#2f2418',accent:'#8b5e2a',point:'#9b2f3a'},
   night:{name:'심야',bg:'#0d1220',panel:'#172036',text:'#dfe6f3',accent:'#8fb3e8',point:'#3e57a6'},
   forest:{name:'숲',bg:'#0e1510',panel:'#18231b',text:'#e2eadf',accent:'#a7c98f',point:'#3f6b3a'},
+  shadow:{name:'🎭 그림자 인형극',bg:'#0b0705',panel:'#1c120b',text:'#f4dfb6',accent:'#efa24a',point:'#7e1f17',frame:'#4a2c17',deco:'shadow'},
   blood:{name:'핏빛',bg:'#120a0b',panel:'#1f1113',text:'#f0dede',accent:'#e09a9a',point:'#8a1626'},
   lily:{name:'백합',bg:'#f3f1f5',panel:'#ffffff',text:'#2b2633',accent:'#7a5aa6',point:'#b4466b'}
 };
@@ -888,6 +910,7 @@ function applyTheme(t){
   set('frame',t.frame||mix(t.panel,t.text,.4));
   if(typeof PXI_URL!=='undefined')set('coinimg',PXI_URL.coin);
   const px=t.ui!=='classic';if(document.documentElement.classList.contains('px')!==px){document.documentElement.classList.toggle('px',px);if(typeof pxRefresh==='function')pxRefresh();}
+  document.documentElement.classList.toggle('th-shadow',t.deco==='shadow');
   const m=document.querySelector('meta[name=theme-color]');if(m)m.content=t.bg;
 }
 function openTheme(){const mine=!!(P.theme&&P.theme.on);TF=Object.assign({},effTheme(),{mode:mine?'mine':'kp'});themeModal();}
@@ -898,6 +921,7 @@ function themeModal(){
    <div class="toggles"><button class="${!mineOn?'on':''}" onclick="themeKP()">KP 기본값 따르기</button><button class="${mineOn?'on':''}" onclick="TF.mode='mine';themeModal()">내 테마 쓰기</button></div>
    <label class="f">스타일</label><div class="toggles"><button class="sm ${TF.ui!=='classic'?'on':''}" onclick="TF.ui='px';if(TF.font!=='pixel'&&confirm('글꼴도 갈무리11(도트)로 바꿀까요?'))TF.font='pixel';themeMine();themeModal()">👾 도트</button><button class="sm ${TF.ui==='classic'?'on':''}" onclick="TF.ui='classic';if(TF.font==='pixel')TF.font='serif';themeMine();themeModal()">📜 클래식</button></div>
    <label class="f">프리셋</label><div class="toggles">${Object.entries(PRESETS).map(([id,p])=>`<button class="sm" onclick="themePreset('${id}')"><span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:${p.bg};border:2px solid ${p.accent};margin-right:5px;vertical-align:-1px"></span>${p.name}</button>`).join('')}</div>
+   <label class="f">무대 장식</label><div class="toggles"><button class="sm ${TF.deco!=='shadow'?'on':''}" onclick="TF.deco='';themeMine();themeModal()">없음</button><button class="sm ${TF.deco==='shadow'?'on':''}" onclick="TF.deco='shadow';themeMine();themeModal()">🎭 그림자 인형극</button></div>
    <label class="f">색 직접 고르기</label><div class="grid g2">${keys.map(([k,l])=>`<label class="colrow"><span>${l}</span><input type="color" value="${TF[k]||(k==='frame'?mix(TF.panel,TF.text,.4):'#000000')}" oninput="TF['${k}']=this.value;themeMine()"></label>`).join('')}</div>
    <label class="f">글꼴</label><select onchange="TF.font=this.value;themeMine()">${Object.entries(FONTS).map(([id,f])=>`<option value="${id}" ${TF.font===id?'selected':''}>${f.n}</option>`).join('')}</select>
    <label class="f">글자 크기</label><div class="toggles">${[[.9,'작게'],[1,'보통'],[1.12,'크게'],[1.25,'아주 크게']].map(([v,n])=>`<button class="sm ${(+TF.scale||1)==v?'on':''}" onclick="TF.scale=${v};themeMine();themeModal()">${n}</button>`).join('')}</div>
@@ -907,8 +931,8 @@ function themeModal(){
 }
 function themeMine(){if(TF.mode!=='mine'){TF.mode='mine';const b=$('#mbox .toggles');if(b){b.children[0].classList.remove('on');b.children[1].classList.add('on');}}applyTheme(TF);}
 function themeKP(){Object.assign(TF,THEME_DEF,THEME_GLOBAL||{},{mode:'kp'});themeModal();}
-function themePreset(id){const p=PRESETS[id];['bg','panel','text','accent','point'].forEach(k=>TF[k]=p[k]);TF.frame=p.frame||'';if(p.ui)TF.ui=p.ui;if(p.font)TF.font=p.font;TF.mode='mine';themeModal();}
-const themeOf=t=>({bg:t.bg,panel:t.panel,text:t.text,accent:t.accent,point:t.point,font:t.font,scale:+t.scale||1,ui:t.ui==='classic'?'classic':'px',frame:t.frame||''});
+function themePreset(id){const p=PRESETS[id];['bg','panel','text','accent','point'].forEach(k=>TF[k]=p[k]);TF.frame=p.frame||'';TF.deco=p.deco||'';if(p.ui)TF.ui=p.ui;if(p.font)TF.font=p.font;TF.mode='mine';themeModal();}
+const themeOf=t=>({bg:t.bg,panel:t.panel,text:t.text,accent:t.accent,point:t.point,font:t.font,scale:+t.scale||1,ui:t.ui==='classic'?'classic':'px',frame:t.frame||'',deco:t.deco||''});
 function saveTheme(){P.theme=TF.mode==='mine'?Object.assign({on:true},themeOf(TF)):{on:false};saveP();TF=null;closeModal();applyTheme();toast('테마 저장 완료');}
 async function saveThemeGlobal(){const t=themeOf(TF);try{await B.set('settings/theme',t);}catch(e){return toast('저장 실패: '+(e.code||e.message));}
   THEME_GLOBAL=t;P.theme={on:false};saveP();TF=null;closeModal();applyTheme();toast('모두의 기본 테마로 저장 완료');}
