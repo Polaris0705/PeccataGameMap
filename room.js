@@ -2218,7 +2218,7 @@ function openFurnShop() {
   } else {
     list = Object.entries(FURN).filter(([k, f]) => f.cat === SHOPTAB && !f.hidden).map(([k, f]) => `<div class="item" style="margin:6px 0">
       <div style="width:84px;text-align:center;flex:0 0 84px">${fprev(k, null, 84)}</div>
-      <div style="flex:1;margin-left:8px"><b>${f.name}</b><span class="muted"> (${f.wall ? f.w + '칸' : fw(k) + '×' + fd(k) + '칸'}${f.dirs ? ' · 4방향' : ''})</span>${owned(k) ? ` <span class="badge">보유 ${owned(k)}</span>` : ''}
+      <div style="flex:1;margin-left:8px"><b>${f.name}</b>${owned(k) ? ` <span class="badge">보유 ${owned(k)}</span>` : ''}<div class="muted" style="font-size:.8rem;line-height:1.3">${f.wall ? f.w + '칸' : fw(k) + '×' + fd(k) + '칸'}${f.dirs ? ' · 4방향' : ''}</div>
       ${f.eff ? `<div style="color:var(--gold2);font-size:.85rem">✨ ${f.eff}</div>` : ''}${Object.keys(f.parts || {}).length ? `<div class="muted" style="font-size:.78rem">색: ${Object.values(f.parts || {}).map(([n]) => PN[n] || n).join(' · ')}</div>` : f.custom ? '<div class="muted" style="font-size:.78rem">✏ 저택에서 만든 가구</div>' : ''}</div>
       <button onclick="buyFurn('${k}')" ${P.coins < price(f.cost) ? 'disabled' : ''}>${price(f.cost)} 은화</button></div>`).join('');
   }

@@ -100,7 +100,7 @@ table{width:100%;border-collapse:collapse;font-size:.88rem}td,th{border-bottom:1
 #schedWrap{display:none;padding:0 14px 20px}
 #schedWrap iframe{width:100%;height:calc(100vh - 170px);min-height:560px;border:1px solid var(--line);border-radius:10px;background:#fff}
 .story{white-space:pre-line}
-.auth{max-width:420px;margin:30px auto}
+.auth{max-width:420px;margin:max(30px,10vh) auto 30px}
 .mapbox{position:relative}
 
 .odot{display:inline-block;width:8px;height:8px;border-radius:50%;background:#4cd964;box-shadow:0 0 0 1px #0a0806,0 0 4px #4cd964;margin:0 3px;vertical-align:middle}.odot.off{background:#6a6058;box-shadow:0 0 0 1px #0a0806}
@@ -340,6 +340,14 @@ html.px .pxstage{margin-top:6px}
 i.pxi{display:inline-block;width:1.15em;height:1.15em;vertical-align:-.2em;background:center/contain no-repeat;image-rendering:pixelated;font-style:normal}
 button i.pxi{margin-right:1px}
 .plot .icon i.pxi,.noimg i.pxi{width:1em;height:1em}
+
+/* UI 다듬기 */
+p.muted.empty{text-align:center;padding:18px 10px;margin:8px 0;border:1px dashed var(--line);border-radius:8px;opacity:.85}
+p.muted.empty::before{content:"· · ·";display:block;letter-spacing:.3em;opacity:.5;margin-bottom:4px}
+body.chat-on.dock-mob #app{padding-bottom:calc(84px + env(safe-area-inset-bottom))}
+body.chat-on.dock-mob #chatDock{visibility:hidden;transition:transform .25s,visibility 0s .25s}
+body.chat-on.dock-mob.sheet-open #chatDock{visibility:visible;transition:transform .25s}
+@media(max-width:560px){nav{display:grid;grid-template-columns:repeat(4,1fr)}nav button{min-width:0;padding:8px 2px!important;font-size:.84rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}html.px nav button.on::before{display:none}}
 </style>
 </head>
 <body>
@@ -630,10 +638,10 @@ async function onAuth(u){
 }
 
 /* ================= 렌더 ================= */
-const PL_TABS=[['저택',[['room','🏠 내 방'],['map','🗺 저택 지도'],['book','조사 예약'],['items','소지품'],['memo','메모'],['cal','📅 일정'],['news','📰 소식지'],['lobby','내 정보']]]];
+const PL_TABS=[['저택',[['room','🏠 내 방'],['map','🗺 저택 지도'],['book','🔎 조사 예약'],['items','🎒 소지품'],['memo','📝 메모'],['cal','📅 일정'],['news','📰 소식지'],['lobby','👤 내 정보']]]];
 const KP_TABS=[['KP',[['kdash','🧭 대시보드'],['sched','스케줄러'],['kqueue','호출·대기열'],['kitems','아이템'],['memo','메모'],['players','플레이어'],['cal','📅 일정'],['news','📰 소식지']]],
                ['여가',[['garden','온실'],['riddle','수수께끼'],['shop','상점'],['rank','랭킹']]]];
-const kpTabs=()=>PROF&&PROF.ho?[KP_TABS[0],['내 HO',[['room','🏠 내 방'],['map','🗺 저택 지도'],['book','조사 예약'],['items','소지품'],['lobby','내 정보']]]]:[KP_TABS[0],['저택',[['map','🗺 저택 지도']]]];
+const kpTabs=()=>PROF&&PROF.ho?[KP_TABS[0],['내 HO',[['room','🏠 내 방'],['map','🗺 저택 지도'],['book','조사 예약'],['items','소지품'],['lobby','👤 내 정보']]]]:[KP_TABS[0],['저택',[['map','🗺 저택 지도']]]];
 function softRender(){
   if(window.GAME_LOCK){pendingRender=true;return;}
   const a=document.activeElement;
@@ -661,12 +669,14 @@ function render(){
   };
   app.innerHTML=headerHtml()+groups.map((g,gi)=>`${groups.length>1?`<div class="navlabel">${g[0]}</div>`:''}<nav class="${gi===groups.length-1?'sub':''}">${g[1].map(([k,v])=>`<button class="${tab===k?'on':''}" onclick="go('${k}')">${v}${badge(k)}</button>`).join('')}</nav>`).join('')+
     `${typeof FEATS!=='undefined'&&FEATS[tab]?`<div style="margin:-4px 0 10px">${tab==='lockpick'?`<button class="sm" onclick="${typeof LP_T!=='undefined'&&LP_T?`RV='${LP_T.owner}';`:''}go('visit')">← 방으로</button>`:`<button class="sm" onclick="go('map')">← 저택 지도로</button>`}${MAP_PLACE?` <span class="muted">📍 ${esc(MAP_PLACE)}</span>`:''}</div>`:''}<div id="view">${(VIEWS[tab]||(()=>''))()}</div>`;
+  markEmpty(app);
   $('#schedWrap').style.display=(IS_ADMIN&&tab==='sched')?'block':'none';
   document.body.classList.toggle('insched',IS_ADMIN&&tab==='sched');
   if(tab==='map')drawPlMap();
   if(typeof roomAfter==='function')roomAfter();
   if(typeof layoutDock==='function')layoutDock();
 }
+function markEmpty(r){(r||document).querySelectorAll('p.muted').forEach(p=>{if(!p.children.length&&/없음[.)]?$/.test(p.textContent.trim())&&p.textContent.length<40)p.classList.add('empty');});}
 let MENU=false;
 function headerHtml(){
   const av=PROF.avatar?`<img src="${PROF.avatar}" alt="">`:esc((PROF.name||'?').slice(0,1));
@@ -739,7 +749,7 @@ function hoView(){
   const taken=c=>usersWithHo(c).filter(u=>u.id!==ME.uid);
   return `<div class="panel"><h2>손님 명부</h2><p class="muted">${esc(CONFIG.butler)}가 명부를 내밉니다. "어느 방의 손님이신지?"<br>내 HO를 고르기.</p>
    <div class="grid g3">${HO_CODES.map(c=>{const t=taken(c),s=sinOf(c),h=HOS.find(x=>x.id===s);
-     return `<button style="padding:10px;text-align:left" ${t.length?'disabled':''} onclick="pickHo('${c}')"><b>${esc(cname(c))}</b><br><small class="muted">${c}${s?' · '+sinName(s):''}</small>${h?`<br><small class="muted">${esc(h.perk)}</small>`:''}${t.length?`<br><small>(${esc(uname(t[0]))} 선택)</small>`:''}</button>`;}).join('')}</div></div>`;
+     return `<button style="padding:10px;text-align:left" ${t.length?'disabled':''} onclick="pickHo('${c}')"><b>${esc(cname(c))}</b>${cname(c)!==c?` <small class="muted">${c}</small>`:''}${s?`<br><small class="muted">${sinName(s)}</small>`:''}${h?`<br><small class="muted">${esc(h.perk)}</small>`:''}${t.length?`<br><small>(${esc(uname(t[0]))} 선택)</small>`:''}</button>`;}).join('')}</div></div>`;
 }
 function pickHo(c){B.update('users/'+ME.uid,{ho:c});}
 
