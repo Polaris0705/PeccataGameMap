@@ -661,6 +661,7 @@ async function onAuth(u){
   if(typeof partyOnAuth==='function')partyOnAuth(u);
   sub(B.onDoc('settings/hos',d=>{if(typeof hoNamesApply==='function')hoNamesApply(d&&d.names);softRender();}));
   sub(B.onDoc('settings/titles',d=>{KT=(d&&d.list)||[];softRender();}));
+  sub(B.onDoc('settings/shop',d=>{if(typeof shopApply==='function')shopApply(d);softRender();}));
   if(typeof furnOnAuth==='function')furnOnAuth(sub);
   if(typeof socialOnAuth==='function')socialOnAuth(sub);
   if(typeof avOnAuth==='function')avOnAuth(sub);
@@ -719,7 +720,7 @@ function headerHtml(){
      <button onclick="MENU=false;render();openTheme()">🎨 테마 · 글꼴</button>
      <button onclick="MENU=false;render();openAppModal()">📱 앱 · 알림</button>
      <button onclick="MENU=false;toggleSfx();render()">${SFX_ON?'🔇 효과음 끄기':'🔊 효과음 켜기'}</button>
-     ${IS_ADMIN?'<button onclick="MENU=false;render();openGameSettings()">⚙ 저택 설정 (KP)</button><button onclick="MENU=false;render();txToggle(true)">✏ 글자 고치기 (KP)</button><button onclick="MENU=false;go(\'kdata\')">🗂 데이터 관리 (KP)</button><button onclick="MENU=false;go(\'ktitle\')">🎖 칭호 · HO 이름 (KP)</button><button onclick="MENU=false;go(\'kfurn\')">🪑 가구 관리 (KP)</button><button onclick="MENU=false;go(\'kavatar\')">🎎 토큰 시험실 (KP)</button>':''}
+     ${IS_ADMIN?'<button onclick="MENU=false;render();openGameSettings()">⚙ 저택 설정 (KP)</button><button onclick="MENU=false;render();txToggle(true)">✏ 글자 고치기 (KP)</button><button onclick="MENU=false;go(\'kdata\')">🗂 데이터 관리 (KP)</button><button onclick="MENU=false;go(\'ktitle\')">🏷 HO 이름 (KP)</button><button onclick="MENU=false;go(\'kfurn\')">🪑 가구 관리 (KP)</button><button onclick="MENU=false;go(\'kavatar\')">🎎 토큰 시험실 (KP)</button>':''}
      <hr><button class="danger" onclick="MENU=false;logout()">로그아웃</button></div>`:''}</div></div></header>`;
 }
 document.addEventListener('click',()=>{if(MENU){MENU=false;render();}});
@@ -1554,8 +1555,8 @@ VIEWS.shop=()=>{
   const row=it=>{const own=P.owned.includes(it.id),eq=(it.kind==='title'?P.title:P.frame)===it.id;
     const btn=own?(eq?'<button disabled>착용 중</button>':`<button onclick="equip('${it.id}')">착용</button>`):(it.cost<0?'<button disabled>비밀</button>':`<button onclick="buy('${it.id}')" ${P.coins<price(it)?'disabled':''}>${price(it)} 은화</button>`);
     return `<div class="item"><div><b>${it.kind==='title'?'「'+esc(it.name)+'」':esc(it.name)}</b></div>${btn}</div>`;};
-  return `${ktShopHtml()}<div class="panel"><h2>칭호</h2>${mySin()==='envy'?`<p class="muted">${sinName('envy')} 특전: 10% 할인 적용 중</p>`:''}<div class="grid" style="gap:6px">${SHOP.filter(x=>x.kind==='title').map(row).join('')}</div></div>
-   <div class="panel"><h2>이름표 테두리</h2><div class="grid" style="gap:6px">${SHOP.filter(x=>x.kind==='frame').map(row).join('')}${P.frame?`<button onclick="P.frame='';saveP();render()">테두리 벗기</button>`:''}</div></div>`;
+  return `${ktShopHtml()}<div class="panel"><h2>칭호</h2>${mySin()==='envy'?`<p class="muted">${sinName('envy')} 특전: 10% 할인 적용 중</p>`:''}<div class="grid" style="gap:6px">${SHOP.filter(x=>x.kind==='title'&&(typeof shopShow!=='function'||shopShow(x))).map(row).join('')}</div></div>
+   <div class="panel"><h2>이름표 테두리</h2><div class="grid" style="gap:6px">${SHOP.filter(x=>x.kind==='frame'&&(typeof shopShow!=='function'||shopShow(x))).map(row).join('')}${P.frame?`<button onclick="P.frame='';saveP();render()">테두리 벗기</button>`:''}</div></div>`;
 };
 function buy(id){const it=SHOP.find(x=>x.id===id);if(!spend(Math.round(it.cost*shopMul())))return;P.owned.push(id);equip(id);toast(`${it.name} 구매!`);}
 function equip(id){const it=SHOP.find(x=>x.id===id);if(it.kind==='title')P.title=id;else P.frame=id;saveP();render();}
