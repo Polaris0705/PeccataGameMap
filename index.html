@@ -368,6 +368,9 @@ html.th-shadow.th-light .panel{box-shadow:0 3px 12px rgba(0,0,0,.08)}
 html.th-shadow.th-light header.top h1{text-shadow:none}
 html.th-shadow.th-light.px header.top h1{text-shadow:2px 2px 0 color-mix(in srgb,var(--text) 18%,transparent)}
 
+/* 커튼 잠시 끔 — 다시 켜려면 이 두 줄 삭제 */
+html.th-shadow #stageTop,html.th-shadow body .stageSide{display:none!important}
+html.th-shadow .wrap{padding-top:calc(14px + env(safe-area-inset-top))!important}
 /* UI 다듬기 */
 p.muted.empty{text-align:center;padding:18px 10px;margin:8px 0;border:1px dashed var(--line);border-radius:8px;opacity:.85}
 p.muted.empty::before{content:"· · ·";display:block;letter-spacing:.3em;opacity:.5;margin-bottom:4px}
@@ -928,7 +931,7 @@ function themeModal(){
    <div class="toggles"><button class="${!mineOn?'on':''}" onclick="themeKP()">KP 기본값 따르기</button><button class="${mineOn?'on':''}" onclick="TF.mode='mine';themeModal()">내 테마 쓰기</button></div>
    <label class="f">스타일</label><div class="toggles"><button class="sm ${TF.ui!=='classic'?'on':''}" onclick="TF.ui='px';if(TF.font!=='pixel'&&confirm('글꼴도 갈무리11(도트)로 바꿀까요?'))TF.font='pixel';themeMine();themeModal()">👾 도트</button><button class="sm ${TF.ui==='classic'?'on':''}" onclick="TF.ui='classic';if(TF.font==='pixel')TF.font='serif';themeMine();themeModal()">📜 클래식</button></div>
    <label class="f">프리셋</label><div class="toggles">${Object.entries(PRESETS).map(([id,p])=>`<button class="sm" onclick="themePreset('${id}')"><span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:${p.bg};border:2px solid ${p.accent};margin-right:5px;vertical-align:-1px"></span>${p.name}</button>`).join('')}</div>
-   <label class="f">무대 장식</label><div class="toggles"><button class="sm ${TF.deco!=='shadow'?'on':''}" onclick="TF.deco='';themeMine();themeModal()">없음</button><button class="sm ${TF.deco==='shadow'?'on':''}" onclick="TF.deco='shadow';themeMine();themeModal()">🎭 무대 커튼</button></div>
+   <label class="f" style="display:none">무대 장식</label><div class="toggles" style="display:none"><button class="sm ${TF.deco!=='shadow'?'on':''}" onclick="TF.deco='';themeMine();themeModal()">없음</button><button class="sm ${TF.deco==='shadow'?'on':''}" onclick="TF.deco='shadow';themeMine();themeModal()">🎭 무대 커튼</button></div>
    <label class="f">색 직접 고르기</label><div class="grid g2">${keys.map(([k,l])=>`<label class="colrow"><span>${l}</span><input type="color" value="${TF[k]||(k==='frame'?mix(TF.panel,TF.text,.4):'#000000')}" oninput="TF['${k}']=this.value;themeMine()"></label>`).join('')}</div>
    <label class="f">글꼴</label><select onchange="TF.font=this.value;themeMine()">${Object.entries(FONTS).map(([id,f])=>`<option value="${id}" ${TF.font===id?'selected':''}>${f.n}</option>`).join('')}</select>
    <label class="f">글자 크기</label><div class="toggles">${[[.9,'작게'],[1,'보통'],[1.12,'크게'],[1.25,'아주 크게']].map(([v,n])=>`<button class="sm ${(+TF.scale||1)==v?'on':''}" onclick="TF.scale=${v};themeMine();themeModal()">${n}</button>`).join('')}</div>
