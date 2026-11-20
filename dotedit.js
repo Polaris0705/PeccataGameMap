@@ -309,7 +309,7 @@ let DE_TMP = null; function deTmp() { if (!DE_TMP || DE_TMP.width !== DE.W || DE
 function deRoomPrev() {
   const c1 = document.getElementById('deRm1'), c2 = document.getElementById('deRm2'); if (!c1 || !DE) { if (DE) clearInterval(DE.roomT); return; }
   const fi = deN() > 1 ? Math.floor(Date.now() / DE.ms) % deN() : DE.fi, im = document.createElement('canvas'); im.width = DE.W; im.height = DE.H; im.getContext('2d').putImageData(new ImageData(fi === DE.fi ? deComp(fi, DE.px) : deComp(fi), DE.W, DE.H), 0, 0);
-  const w = DE.W / 2, h = DE.H / 2, foot = (DE.o.foot || 0) / 2, cw = Math.max(w + 64, 128), wallH = 64, floorH = Math.max(64, foot + 40), ch = Math.max(wallH + floorH, h + 40);
+  const rs = DE.o.rs || .5, w = DE.W * rs, h = DE.H * rs, foot = (DE.o.foot || 0) * rs, cw = Math.max(w + 64, 128), wallH = 64, floorH = Math.max(64, foot + 40), ch = Math.max(wallH + floorH, h + 40);
   [[c1, 1], [c2, 2]].forEach(([c, s]) => { c.width = cw * s; c.height = ch * s; const g = c.getContext('2d'); g.imageSmoothingEnabled = false; g.setTransform(s, 0, 0, s, 0, 0);
     const wy = ch - floorH; g.fillStyle = '#4a3a2e'; g.fillRect(0, 0, cw, wy); g.fillStyle = '#433428'; for (let x = 0; x < cw; x += 16) g.fillRect(x, 0, 1, wy);
     g.fillStyle = '#6a4a30'; g.fillRect(0, wy - 5, cw, 5); g.fillStyle = '#c48a55'; g.fillRect(0, wy, cw, floorH);

@@ -6,14 +6,14 @@
    progress.holds: { 경매id: 걸어 둔 은화 }  · progress.aucDone: [정산한 경매id]
 =================================================================== */
 const FCATS_BASE = FCATS.map(x => x.slice());
-Object.entries(FURN).forEach(([k, f]) => { f._cat = f.cat; });
+Object.entries(FURN).forEach(([k, f]) => { f._cat = f.cat; f._name = f.name; f._cost = f.cost; });
 let FCFG = { cats: null, move: {}, hidden: [], plMax: 5 }, CFURN = [], AUCS = [], AUC_READY = false;
 
 function furnCfgApply(d) {
   FCFG = Object.assign({ cats: null, move: {}, hidden: [], plMax: 5 }, d || {});
   const cats = (FCFG.cats && FCFG.cats.length ? FCFG.cats : FCATS_BASE).map(x => [x[0], x[1]]);
   FCATS.length = 0; cats.forEach(x => FCATS.push(x));
-  Object.entries(FURN).forEach(([k, f]) => { if (f.custom && f.custom.kind === 'pl') return; const base = f.custom ? f.custom.cat : f._cat; f.cat = FCFG.move[k] || base; f.hidden = (FCFG.hidden || []).includes(k) || (f.custom && f.custom.sell === false); });
+  Object.entries(FURN).forEach(([k, f]) => { if (f.custom && f.custom.kind === 'pl') return; const base = f.custom ? f.custom.cat : f._cat; f.cat = FCFG.move[k] || base; if (!f.custom) { const nm = (FCFG.names || {})[k], ct = (FCFG.costs || {})[k]; f.name = nm || f._name; f.cost = ct == null || ct === '' ? f._cost : +ct; } f.hidden = (FCFG.hidden || []).includes(k) || (f.custom && f.custom.sell === false); });
   if (typeof SHOPTAB !== 'undefined' && !FCATS.some(x => x[0] === SHOPTAB) && !['wp', 'fl', 'dye', 'mine', 'auc'].includes(SHOPTAB)) SHOPTAB = (FCATS[0] || ['bed'])[0];
 }
 
@@ -64,6 +64,10 @@ let ORIG_DS = null;
    furnOv/{가구} : { pics:{0:앞,1:옆(왼쪽),2:뒤}, at }   안 그린 방향은 원래 그림
    PL이 바꾼 색은 유지: 원래 기본색의 명암 6단계와 똑같은 도트를 고른 색의 명암으로 바꿈 */
 let FOV = {};
+const FZ = 2;   // 가구 도트 2배로 쪼갬 (방 1 = 그림 4점). 방에 그릴 때는 그림 크기와 상관없이 가구 칸에 맞춰 그림
+/* 예전 크기(가로 W/2) 그림을 2배로 늘린 주소 · n장 세로 띠도 */
+async function fToFull(url, n, W) { if (!url) return url; n = Math.max(1, n || 1); const im = await new Promise(r => { const i = new Image(); i.onload = () => r(i); i.onerror = () => r(null); i.src = url; }); if (!im) return url;
+  if (im.width * FZ !== W) return url; const c = document.createElement('canvas'); c.width = im.width * FZ; c.height = im.height * FZ; const g = c.getContext('2d'); g.imageSmoothingEnabled = false; g.drawImage(im, 0, 0, c.width, c.height); return c.toDataURL('image/png'); }
 function ovPic(k, dir) { const o = FOV[k]; if (!o || !o.pics) return null; dir = dir || 0; const pk = dir === 2 ? 2 : dir % 2 ? 1 : 0; return o.pics[pk] ? pk + 1 : null; }   // 1~3 (0이면 없음)
 const OVC = {};
 function ovRecolored(k, url, col) {
@@ -106,12 +110,41 @@ function ovMotion(g, k, x, y, col, dir, t) {
 function stripThumb(url, n, hgt) { n = Math.max(1, n || 1); return `<span style="display:inline-block;height:${hgt}px;width:${hgt}px;background:#2a2420 url('${url}') no-repeat center top/contain;image-rendering:pixelated;${n > 1 ? `background-size:auto ${hgt * n}px;` : ''}"></span>${n > 1 ? `<span class="badge" style="margin-left:-14px">${n}</span>` : ''}`; }
 /* 원래 그림을 도트 그림(PNG)으로 */
 function ovOrigPng(k, dir) {
-  const dm = dimsOf(k, dir), w = dm.w * 64, h = Math.max(2, Math.round(dm.h * 2)), c = document.createElement('canvas'); c.width = w; c.height = h;
-  const g = c.getContext('2d'); g.imageSmoothingEnabled = false; snapCtx(g, 2); ORIG_DS(g, k, 0, 0, 0, null, null, dir);
+  const dm = dimsOf(k, dir), w = dm.w * 64 * FZ, h = Math.max(2, Math.round(dm.h * 2 * FZ)), c = document.createElement('canvas'); c.width = w; c.height = h;
+  const g = c.getContext('2d'); g.imageSmoothingEnabled = false; snapCtx(g, 2 * FZ); ORIG_DS(g, k, 0, 0, 0, null, null, dir);
   const d = g.getImageData(0, 0, w, h); for (let i = 0; i < d.data.length; i += 4) if (d.data[i + 3] < 128) d.data[i + 3] = 0; else d.data[i + 3] = 255;
   g.putImageData(d, 0, 0); return c.toDataURL('image/png');
 }
 let OVD = null;
+const fBuiltins = () => Object.entries(FURN).filter(([k, f]) => !f.custom);
+const fDirOf = (k, d) => { const f = FURN[k]; return f && !f.wall && f.dirs ? d : 0; };
+function fPresetList(self) { return [['원본 데이터', fBuiltins().map(([k, f]) => ['o|' + k, f.name + (k === self ? ' (이 가구 원본)' : '')])],
+  ['바꾼 그림', fBuiltins().filter(([k]) => FOV[k] && FOV[k].pics).map(([k, f]) => ['e|' + k, f.name])], ['만든 가구', CFURN.filter(x => !x.del).map(x => ['c|' + x.id, x.name])]].filter(g => g[1].length); }
+async function fPresetPic(pk, d, W) { const [src, id] = pk.split('|');
+  if (src === 'o') return { url: ovOrigPng(id, fDirOf(id, d)), n: 1 };
+  const o = src === 'e' ? FOV[id] : CFURN.find(x => x.id === id), dd = src === 'e' ? fDirOf(id, d) : d, pics = (o && o.pics) || {}, pk2 = pics[dd] ? dd : 0, u = pics[pk2]; if (!u) return null;
+  const dm = src === 'e' ? dimsOf(id, dd) : null, w = dm ? dm.w * 64 * FZ : ((dd === 1 ? o.d : o.w) || 1) * 64 * FZ, n = (o.picN || {})[pk2] || 1; return { url: await fToFull(u, n, w), n, ms: (o.picMs || {})[pk2] }; }
+const fLayerSrc = W => ({ views: ['앞모습', '옆모습', '뒷모습'], list: fPresetList(null), get: (key, v) => fPresetPic(key, v, W) });
+function ovPresetPick(k) { const L = fPresetList(k);
+  modal(`<h2 style="color:var(--gold2);margin-top:0">📂 프리셋 불러오기</h2><p class="muted" style="font-size:.82rem;margin:0 0 6px">고른 그림으로 이 가구 그림을 바꿈 · 저장해야 적용 · 크기가 다른 가구는 아래 가운데에 맞춤</p>
+    <select id="fpK" style="width:100%">${L.map(([g, it]) => `<optgroup label="${g}">${it.map(([v, n]) => `<option value="${v}" ${v === 'o|' + k ? 'selected' : ''}>${esc(n)}</option>`).join('')}</optgroup>`).join('')}</select>
+    ${ovDirs(k).length > 1 ? `<label class="f">방향</label><select id="fpD"><option value="a">전부</option>${ovDirs(k).map(([d, n]) => `<option value="${d}">${n}만</option>`).join('')}</select>` : ''}
+    <div class="row" style="margin-top:10px"><button onclick="ovEdit('${k}')">취소</button><button class="primary" onclick="ovPresetGo('${k}')">불러오기</button></div>`); }
+async function ovPresetGo(k) { const pk = $('#fpK').value, dv = ($('#fpD') || {}).value || 'a', ds = dv === 'a' ? ovDirs(k).map(x => x[0]) : [+dv];
+  for (const d of ds) { if (pk === 'o|' + k) { delete OVD.pics[d]; delete OVD.picN[d]; delete OVD.picMs[d]; delete OVD.picFms[d]; continue; }   // 이 가구 원본 = 원래대로
+    const s = dimsOf(k, d), W = s.w * 64 * FZ, H = Math.round(s.h * 2 * FZ), r = await fPresetPic(pk, d, W); if (!r || !r.url) continue;
+    OVD.pics[d] = await fFit(r.url, r.n || 1, W, H); OVD.picN[d] = r.n || 1; if (r.ms) OVD.picMs[d] = r.ms; delete OVD.picFms[d]; }
+  toast('프리셋 불러옴 · 저장해야 적용'); ovEdit(k); }
+/* 다른 크기 그림을 이 칸(W×H) 아래 가운데에 맞춤 */
+async function fFit(url, n, W, H) { const im = await new Promise(r => { const i = new Image(); i.onload = () => r(i); i.onerror = () => r(null); i.src = url; }); if (!im) return url; const fh = im.height / n; if (im.width === W && fh === H) return url;
+  const c = document.createElement('canvas'); c.width = W; c.height = H * n; const g = c.getContext('2d'); for (let i = 0; i < n; i++) g.drawImage(im, 0, i * fh, im.width, fh, Math.round((W - im.width) / 2), i * H + H - fh, im.width, fh); return c.toDataURL('image/png'); }
+/* 이름 · 가격 (기본 가구) */
+function fItemInfo(k) { const f = FURN[k]; if (!f || f.custom) return;
+  modal(`<h2 style="color:var(--gold2);margin-top:0">🏷 ${esc(f.name)}</h2><label class="f">이름</label><input id="fiN" maxlength="20" value="${esc(f.name)}">
+    <label class="f">가격 (은화)</label><input id="fiC" type="number" min="0" value="${f.cost}"><p class="muted" style="font-size:.78rem">원래: ${esc(f._name)} · ${f._cost} 은화</p>
+    <div class="row" style="margin-top:10px"><button onclick="closeModal()">취소</button><button class="primary" onclick="fItemSave('${k}')">저장</button></div>`); }
+async function fItemSave(k) { const f = FURN[k], nm = $('#fiN').value.trim().slice(0, 20), c = Math.max(0, +$('#fiC').value || 0);
+  try { await B.set('settings/furn', { names: { [k]: nm && nm !== f._name ? nm : '' }, costs: { [k]: c === f._cost ? null : c } }, true); closeModal(); toast('저장 완료'); } catch (e) { toast('실패: ' + (e.code || e.message)); } }
 const ovDirs = k => { const f = FURN[k]; return f.wall || !f.dirs ? [[0, '그림']] : [[0, '앞모습'], [1, '옆모습 (왼쪽 보기)'], [2, '뒷모습']]; };
 function ovEdit(k) {
   const f = FURN[k]; if (!f || f.custom) return; if (!OVD || OVD.k !== k) { const o = FOV[k] || {}; OVD = { k, pics: Object.assign({}, o.pics || {}), picN: Object.assign({}, o.picN || {}), picMs: Object.assign({}, o.picMs || {}), picFms: Object.assign({}, o.picFms || {}), anim: o.anim !== false }; }
@@ -119,17 +152,20 @@ function ovEdit(k) {
   modal(`<h2 style="color:var(--gold2);margin-top:0">🎨 ${esc(f.name)} 그림 바꾸기</h2>
    <p class="muted" style="font-size:.85rem;margin:0 0 6px">원래 그림을 불러와서 고침. 저장하면 이미 놓인 것까지 모든 방에서 바뀜. 안 그린 방향은 원래 그림.${Object.keys(f.parts || {}).length ? '<br>PL이 바꾼 색도 유지됨. 원래 색(명암 그대로)으로 칠한 부분이 바뀜.' : ''}${f.pic ? '<br>⚠ 이 가구는 PL이 넣은 그림 대신 이 그림이 보임.' : ''}</p>
    ${ovDirs(k).map(([d, n]) => { const s = dimsOf(k, d); return `<div class="item" style="margin:4px 0"><div style="display:flex;align-items:center;gap:8px">${OVD.pics[d] ? stripThumb(OVD.pics[d], OVD.picN[d], 56) : `<span style="width:56px;text-align:center">${fprev(k, null, 56, d === 1 ? 1 : d)}</span>`}<div><b>${n}</b> ${OVD.pics[d] ? '<span class="badge live">바꿈</span>' : '<span class="muted">원래 그림</span>'}<div class="muted" style="font-size:.75rem">${s.w * 64}×${Math.round(s.h * 2)}${(OVD.picN[d] || 1) > 1 ? ` · 장면 ${OVD.picN[d]}장` : ''}</div></div></div>
-     <div class="row" style="flex:0 0 auto;gap:4px"><button class="sm primary" onclick="ovDraw1('${k}',${d})">🎨 그리기</button>${OVD.pics[d] ? `<button class="sm" onclick="delete OVD.pics[${d}];delete OVD.picN[${d}];delete OVD.picMs[${d}];delete OVD.picFms[${d}];ovEdit('${k}')">↺</button>` : ''}</div></div>`; }).join('')}
+     <div class="row" style="flex:0 0 auto;gap:4px"><button class="sm primary" onclick="ovDraw1('${k}',${d})">🎨 그리기</button></div></div>`; }).join('')}
    ${hasAnim ? `<label style="display:block;margin-top:8px"><input type="checkbox" style="width:auto;margin:0 6px 0 0;vertical-align:middle" ${OVD.anim ? 'checked' : ''} onchange="OVD.anim=this.checked"> ✨ 원래 움직임(불꽃·김 등) 겹치기</label><p class="muted" style="font-size:.75rem;margin:2px 0 0">원래 움직임 겹치기 · 모양이 많이 다르면 끄기</p>` : ''}
-   <div class="row" style="margin-top:10px"><button onclick="OVD=null;closeModal()">취소</button>${FOV[k] ? `<button class="danger" onclick="ovReset('${k}')">전부 원래대로</button>` : ''}<button class="primary" onclick="ovSave('${k}')">저장</button></div>`);
+   <div class="row" style="margin-top:10px"><button onclick="OVD=null;closeModal()">취소</button><button onclick="ovPresetPick('${k}')">📂 프리셋</button><button class="primary" onclick="ovSave('${k}')">저장</button></div>`);
   document.querySelectorAll('#mbox canvas.fprev').forEach(c => { c.style.imageRendering = 'pixelated'; paintPreview(c); });
 }
-function ovDraw1(k, d) {
-  const s = dimsOf(k, d), f = FURN[k];
-  const orig = ovOrigPng(k, d);
-  dotEdit({ W: s.w * 64, H: Math.round(s.h * 2), src: OVD.pics[d] || orig, orig, key: 'ov_' + k + '_' + d, n: OVD.pics[d] ? OVD.picN[d] || 1 : 1, ms: OVD.picMs[d], fms: OVD.picFms[d], foot: f.wall ? 0 : s.d * 32 + 8, title: f.name + ' · ' + ovDirs(k).find(x => x[0] === d)[1],
+async function ovDraw1(k, d) {
+  const s = dimsOf(k, d), f = FURN[k], W = s.w * 64 * FZ, H = Math.round(s.h * 2 * FZ);
+  const orig = ovOrigPng(k, d), src = OVD.pics[d] ? await fToFull(OVD.pics[d], OVD.picN[d], W) : orig;
+  dotEdit({ W, H, src, orig, key: 'ov_' + k + '_' + d, n: OVD.pics[d] ? OVD.picN[d] || 1 : 1, ms: OVD.picMs[d], fms: OVD.picFms[d], foot: f.wall ? 0 : (s.d * 32 + 8) * FZ, rs: .5 / FZ,
+    presets: { list: fPresetList(k), get: pk => fPresetPic(pk, d, W) }, layerSrc: fLayerSrc(W), title: f.name + ' · ' + ovDirs(k).find(x => x[0] === d)[1],
     onSave: (url, m) => { if (url) { OVD.pics[d] = url; OVD.picN[d] = m.n; OVD.picMs[d] = m.ms; if (m.fms) OVD.picFms[d] = m.fms; else delete OVD.picFms[d]; } else { delete OVD.pics[d]; delete OVD.picN[d]; delete OVD.picMs[d]; delete OVD.picFms[d]; } ovEdit(k); }, onCancel: () => ovEdit(k) });
+  fSetBase(orig, '원래');
 }
+function fSetBase(url, name) { const im = new Image(), o = DE && DE.o; im.onload = () => { if (DE && DE.o === o) { DE.base = { img: im, a: .3, on: true, name }; deUI(); deDraw(); } }; im.src = url; }   // 도트 편집기 밑그림 (켜기·투명도 따로)
 async function ovSave(k) {
   const pics = OVD.pics; if (!Object.keys(pics).length) return ovReset(k, true);
   if (JSON.stringify(pics).length > 900000) return toast('그림이 너무 큼');
@@ -165,7 +201,7 @@ function cfFormRead() {
   if (CFD.kind === 'kp') { CFD.cost = Math.max(0, +v('cfCost') || 0); CFD.cat = v('cfCat'); CFD.sell = document.getElementById('cfSell').checked; }
 }
 function cfDirs() { return CFD.wall ? [[0, '그림']] : [[0, '앞모습'], [1, '옆모습 (왼쪽 보기)'], [2, '뒷모습']]; }
-function cfSize(dir) { return { W: (dir === 1 ? CFD.d : CFD.w) * 64, H: CFD.H }; }
+function cfSize(dir) { return { W: (dir === 1 ? CFD.d : CFD.w) * 64 * FZ, H: CFD.H * FZ }; }
 function cfForm() {
   const d = CFD, maxH = d.wall ? (WALL_H - 12) * 2 : 300, kp = d.kind === 'kp';
   modal(`<h2 style="color:var(--gold2);margin-top:0">✏ ${d.id ? '가구 고치기' : '가구 만들기'}</h2>
@@ -182,16 +218,20 @@ function cfForm() {
    <p class="muted" style="font-size:.78rem">옆모습 = 4방향 회전 · 장면 추가 = 움직이는 가구 (최대 4장)</p>
    <div class="row" style="margin-top:10px"><button onclick="CFD=null;closeModal();${kp ? "go('kfurn')" : 'openFurnShop()'}">취소</button><button class="primary" onclick="cfSave()">저장</button></div>`);
 }
-function cfDraw1(k) {
+async function cfDraw1(k) {
   cfFormRead(); const s = cfSize(k);
   CFD.picN = CFD.picN || {}; CFD.picMs = CFD.picMs || {}; CFD.picFms = CFD.picFms || {};
-  dotEdit({ W: s.W, H: s.H, src: CFD.pics[k] || null, key: 'cf_' + (CFD.id || 'new') + '_' + k, n: CFD.picN[k] || 1, ms: CFD.picMs[k], fms: CFD.picFms[k], foot: CFD.wall ? 0 : (k === 1 ? CFD.w : CFD.d) * 64 / 2 + 8, title: (CFD.name || '새 가구') + ' · ' + cfDirs().find(x => x[0] === k)[1],
+  const src = CFD.pics[k] ? await fToFull(CFD.pics[k], CFD.picN[k], s.W) : null;
+  dotEdit({ W: s.W, H: s.H, src, key: 'cf_' + (CFD.id || 'new') + '_' + k, n: CFD.picN[k] || 1, ms: CFD.picMs[k], fms: CFD.picFms[k], foot: CFD.wall ? 0 : ((k === 1 ? CFD.w : CFD.d) * 64 / 2 + 8) * FZ, rs: .5 / FZ,
+    presets: { list: fPresetList(null), get: pk => fPresetPic(pk, k, s.W) }, layerSrc: fLayerSrc(s.W), title: (CFD.name || '새 가구') + ' · ' + cfDirs().find(x => x[0] === k)[1],
     onSave: (url, m) => { if (url) { CFD.pics[k] = url; CFD.picN[k] = m.n; CFD.picMs[k] = m.ms; if (m.fms) CFD.picFms[k] = m.fms; else delete CFD.picFms[k]; } else { delete CFD.pics[k]; delete CFD.picN[k]; delete CFD.picMs[k]; delete CFD.picFms[k]; } cfForm(); }, onCancel: () => cfForm() });
 }
 async function cfSave() {
   cfFormRead(); const d = CFD; if (!d.name) return toast('이름을 넣기'); if (!d.pics[0]) return toast(d.wall ? '그림을 그리기' : '앞모습은 꼭 그리기');
   // 크기가 바뀌었으면 맞지 않는 그림은 다시 그려야 함
-  const bad = []; await Promise.all(Object.keys(d.pics).map(k => new Promise(r => { const im = new Image(); im.onload = () => { const s = cfSize(+k), n = ((d.picN || {})[k] || 1); if (im.width !== s.W || im.height !== s.H * n) bad.push(+k); r(); }; im.onerror = r; im.src = d.pics[k]; })));
+  const bad = []; await Promise.all(Object.keys(d.pics).map(k => new Promise(r => { const im = new Image(); im.onload = () => { const s = cfSize(+k), n = ((d.picN || {})[k] || 1); if (im.width * FZ === s.W && im.height * FZ === s.H * n) bad.push(-1 - k); else if (im.width !== s.W || im.height !== s.H * n) bad.push(+k); r(); }; im.onerror = r; im.src = d.pics[k]; })));
+  for (const b of bad.filter(x => x < 0)) { const k = -1 - b; d.pics[k] = await fToFull(d.pics[k], (d.picN || {})[k] || 1, cfSize(k).W); }   // 예전 크기 → 2배
+  bad.splice(0, bad.length, ...bad.filter(x => x >= 0));
   if (bad.length) { if (!confirm('크기를 바꿔서 그림 크기가 맞지 않음. 그림을 새 크기에 맞춰 늘리지 않고 아래에 맞춰 둘까요?')) return; for (const k of bad) d.pics[k] = await cfRefit(d.pics[k], cfSize(k), (d.picN || {})[k] || 1); }
   const doc = { name: d.name.slice(0, 24), kind: d.kind, by: d.by || ME.uid, byName: d.byName || PROF.name || '', wall: !!d.wall, w: d.w, d: d.wall ? 0 : d.d, H: d.H, wy: d.wy == null ? null : d.wy, pics: d.pics, picN: d.picN || {}, picMs: d.picMs || {}, picFms: d.picFms || {}, at: d.at || Date.now(), upd: Date.now() };
   if (d.kind === 'kp') Object.assign(doc, { cost: d.cost, cat: d.cat, sell: d.sell !== false });
@@ -309,8 +349,8 @@ VIEWS.kfurn = () => {
     <div class="row" style="gap:6px;margin-top:6px"><button onclick="kfCatAdd()">+ 분류 추가</button><button class="primary" onclick="kfCatSave()">분류 저장</button><button onclick="if(confirm('처음 분류로 되돌릴까요?'))B.set('settings/furn',{cats:null},true)">기본으로</button></div></div>
    <div class="panel"><h2>🪑 가구 옮기기 · 숨기기</h2><p class="muted" style="margin:0 0 6px">숨김 = 가구점 미표시 (보유분 유지) · 🎨 기본 그림 수정</p>
     ${FCATS.map(([ck, cv]) => { const items = all.filter(([k, f]) => f.cat === ck); return `<details ${KF_OPEN === ck ? 'open' : ''} ontoggle="if(this.open)KF_OPEN='${ck}'"><summary><b>${esc(cv)}</b> <span class="muted">${items.length}</span></summary>
-      ${items.map(([k, f]) => `<div class="item" style="margin:3px 0"><div style="display:flex;align-items:center;gap:6px"><span style="width:44px;text-align:center">${fprev(k, null, 40)}</span><span>${esc(f.name)}${f.custom ? ' ✏' : ''}${FOV[k] ? ' <span class="badge live">그림 바꿈</span>' : ''}</span></div>
-        <div class="row" style="flex:0 0 auto;gap:4px"><select onchange="kfMove('${k}',this.value)">${FCATS.map(([a, b]) => `<option value="${a}" ${a === ck ? 'selected' : ''}>${esc(b)}</option>`).join('')}</select>${f.custom ? '' : `<button class="sm" onclick="ovEdit('${k}')">🎨 그림</button>${FOV[k] ? `<button class="sm" onclick="ovReset('${k}')">↺ 원래대로</button>` : ''}`}<button class="sm ${f.hidden ? 'danger' : ''}" onclick="kfHide('${k}')">${f.hidden ? '🙈 숨김' : '👁 보임'}</button></div></div>`).join('') || '<p class="muted">비어 있음.</p>'}</details>`; }).join('')}</div>
+      ${items.map(([k, f]) => `<div class="item" style="margin:3px 0;flex-wrap:wrap;gap:6px"><div style="display:flex;align-items:center;gap:6px;min-width:0;flex:1 1 140px"><span style="width:44px;flex:0 0 44px;text-align:center">${fprev(k, null, 40)}</span><span style="min-width:0;overflow-wrap:anywhere">${esc(f.name)}${f.custom ? ' ✏' : ''}</span></div>
+        <div class="row" style="flex:1 1 220px;gap:4px;flex-wrap:wrap;justify-content:flex-end;min-width:0"><select style="flex:1 1 90px;min-width:0;width:auto" onchange="kfMove('${k}',this.value)">${FCATS.map(([a, b]) => `<option value="${a}" ${a === ck ? 'selected' : ''}>${esc(b)}</option>`).join('')}</select>${f.custom ? '' : `<button class="sm" onclick="fItemInfo('${k}')">🏷</button><button class="sm" onclick="ovEdit('${k}')">🎨 그림</button>`}<button class="sm ${f.hidden ? 'danger' : ''}" onclick="kfHide('${k}')">${f.hidden ? '🙈 숨김' : '👁 보임'}</button></div></div>`).join('') || '<p class="muted">비어 있음.</p>'}</details>`; }).join('')}</div>
    <div class="panel"><div class="row" style="justify-content:space-between"><h2 style="margin:0">✏ KP가 만든 가구</h2><button class="primary" style="flex:0 0 auto" onclick="cfNew('kp')">+ 새 가구</button></div>
     ${kp.map(d => `<div class="item" style="margin:6px 0"><div style="display:flex;align-items:center;gap:6px"><span style="width:64px;text-align:center">${fprev('cf_' + d.id, null, 60)}</span><div><b>${esc(d.name)}</b><div class="muted" style="font-size:.78rem">${d.cost} 은화 · ${esc((FCATS.find(x => x[0] === d.cat) || [, '?'])[1])}${d.sell === false ? ' · 판매 안 함' : ''}</div></div></div>
       <div class="row" style="flex:0 0 auto;gap:4px"><button class="sm" onclick="kfGiveAsk('${d.id}')">🎁 주기</button><button class="sm" onclick="cfEdit('${d.id}')">고치기</button><button class="sm danger" onclick="cfDelete('${d.id}')">지우기</button></div></div>`).join('') || '<p class="muted">아직 없음.</p>'}</div>
