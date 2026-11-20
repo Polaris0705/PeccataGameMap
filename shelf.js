@@ -49,7 +49,7 @@ function booksStart() {
   b.innerHTML = `<div class="row" style="justify-content:space-between;margin-bottom:6px;gap:6px;flex-wrap:wrap"><b id="ghud"></b><button class="sm" onclick="shQuit()">그만두기</button></div>
    <canvas id="gcv" style="width:100%;max-width:420px;aspect-ratio:${W}/${H};touch-action:none;display:block;margin:auto;border-radius:8px;background:#2a1a10"></canvas>
    <div class="row" style="gap:6px;margin-top:8px;max-width:420px;margin-left:auto;margin-right:auto"><button style="flex:1" id="shU" onclick="shUndo()"></button><button style="flex:1" id="shS" onclick="shShuffle()"></button><button style="flex:1" id="shH" onclick="shHint()"></button></div>`;
-  const cv = $('#gcv'), cw = cv.clientWidth || 360, S = Math.max(2, Math.round(cw / W * (window.devicePixelRatio || 1)) || 2);
+  const cv = $('#gcv'), cw = cv.clientWidth || 360, S = Math.max(2, 2 * Math.round(cw / W * (window.devicePixelRatio || 1) / 2) || 2);   // 짝수배 → 반 칸 도트
   cv.width = W * S; cv.height = H * S; const g = cv.getContext('2d'); g.imageSmoothingEnabled = false;
   SH = { lv, boxes: B.boxes, C: B.C, cols, BW, BH, W, H, S, g, cv, undo: 3, shuf: 1, hint: Math.max(0, 2 + (typeof fortHint === 'function' ? fortHint() : 0)), hist: [], score: 0, moves: 0, combo: 0, lastClr: -9, fx: [], pops: [], drag: null, sel: null, hl: null, over: false, t0: performance.now() };
   shBind(); shHud();
@@ -142,12 +142,15 @@ function shEnd(win) {
 /* ---------- 그리기 ---------- */
 function shDraw() {
   const s = SH; if (!s || !document.body.contains(s.cv)) return; const g = s.g, S = s.S, now = performance.now();
-  const px = (x, y, w, h, c) => { g.fillStyle = c; g.fillRect(Math.round(x * S), Math.round(y * S), Math.max(1, Math.round(w * S)), Math.max(1, Math.round(h * S))); };
-  px(0, 0, s.W, s.H, '#2a1a10'); for (let y = 0; y < s.H; y += 6) px(0, y, s.W, 1, '#24160c');
+  const hs = S / 2, q = v => Math.round(v * 2) * hs;
+  const px = (x, y, w, h, c) => { g.fillStyle = c; const X = q(x), Y = q(y); g.fillRect(X, Y, Math.max(hs, q(x + w) - X), Math.max(hs, q(y + h) - Y)); };
+  px(0, 0, s.W, s.H, '#2a1a10'); for (let y = 0; y < s.H; y += 6) { px(0, y, s.W, .5, '#24160c'); px(0, y + .5, s.W, .5, '#321f13'); }
   s.boxes.forEach((bx, i) => { const b = shBox(i);
     // 칸 (나무 상자)
-    px(b.x, b.y, s.BW - 2, s.BH - 2, '#5a3a22'); px(b.x + 2, b.y + 2, s.BW - 6, s.BH - 8, '#3a2414'); px(b.x + 2, b.y + 2, s.BW - 6, 2, '#2a180c');
-    px(b.x, b.y + s.BH - 7, s.BW - 2, 5, '#8a5a32'); px(b.x, b.y + s.BH - 7, s.BW - 2, 1, '#b07a48'); px(b.x, b.y + s.BH - 3, s.BW - 2, 1, '#3a2414');
+    px(b.x, b.y, s.BW - 2, s.BH - 2, '#5a3a22'); px(b.x, b.y, s.BW - 2, .5, '#7a5232'); px(b.x, b.y, .5, s.BH - 2, '#6a4628'); px(b.x + s.BW - 2.5, b.y, .5, s.BH - 2, '#3a2414');
+    px(b.x + 2, b.y + 2, s.BW - 6, s.BH - 8, '#3a2414'); px(b.x + 2, b.y + 2, s.BW - 6, 1.5, '#24150a'); px(b.x + 2, b.y + 3.5, s.BW - 6, .5, '#2e1c10'); px(b.x + 2, b.y + 2, .5, s.BH - 8, '#2a180c'); px(b.x + s.BW - 4.5, b.y + 2, .5, s.BH - 8, '#46301c');
+    px(b.x, b.y + s.BH - 7, s.BW - 2, 5, '#8a5a32'); px(b.x, b.y + s.BH - 7, s.BW - 2, .5, '#d09a60'); px(b.x, b.y + s.BH - 6.5, s.BW - 2, .5, '#b07a48'); px(b.x, b.y + s.BH - 3.5, s.BW - 2, .5, '#6a4426'); px(b.x, b.y + s.BH - 3, s.BW - 2, 1, '#3a2414');
+    for (let gx = b.x + 5; gx < b.x + s.BW - 6; gx += 9) px(gx, b.y + s.BH - 5, 3, .5, '#7a4e2a');
     // 뒷줄 (한 줄만, 어둡게 · 살짝 위로)
     if (bx[1]) bx[1].forEach((v, k) => { if (v == null) return; const p = shSlot(i, k); shItem(px, v, p.x + 1, p.y - 5, true); });
     if (bx.length > 2) for (let d = 0; d < Math.min(4, bx.length - 1); d++) px(b.x + s.BW - 7, b.y + 4 + d * 3, 3, 2, '#c9a036');
@@ -166,7 +169,13 @@ function shDraw() {
 /* 물건 16 × 22 (도트) */
 function shItem(px, t, x, y, dim) {
   const D = c => dim ? shDark(c) : c, r = (a, b, w, h, c) => px(x + a, y + b, w, h, D(c));
-  const book = (c1, c2, c3) => { r(3, 2, 10, 20, '#1a1010'); r(4, 3, 8, 18, c1); r(4, 3, 2, 18, c2); r(11, 3, 1, 18, c3); r(4, 6, 8, 1, '#e0b050'); r(4, 17, 8, 1, '#e0b050'); r(6, 9, 4, 5, c3); r(7, 10, 2, 3, '#e0b050'); };
+  const book = (c1, c2, c3) => {   // 반 칸 도트: 얇은 테두리 · 둥근 등 · 금박 띠 · 표제 딱지
+    r(3.5, 2, 9, 20, '#1a1010'); r(3, 2.5, 10, 19.5, '#1a1010');
+    r(3.5, 2.5, 9, 19, c1); r(3.5, 2.5, 1.5, 19, c2); r(5, 2.5, .5, 19, c1); r(4, 3, .5, 18, 'rgba(255,255,255,.2)'); r(11.5, 2.5, 1, 19, c3); r(11, 2.5, .5, 19, shMix(c1, c3));
+    r(3.5, 5.5, 9, 1, '#e0b050'); r(3.5, 5.5, 9, .5, '#fff0b0'); r(3.5, 7, 9, .5, '#a07028');
+    r(3.5, 17, 9, 1, '#e0b050'); r(3.5, 17, 9, .5, '#fff0b0'); r(3.5, 18.5, 9, .5, '#a07028');
+    r(5.5, 9, 5, 6, '#1a1010'); r(6, 9.5, 4, 5, '#f0e2c0'); r(6, 9.5, 4, .5, '#fffaf0'); r(6.5, 10.5, 3, .5, '#6a4a30'); r(6.5, 11.5, 2.5, .5, '#6a4a30'); r(6.5, 12.5, 3, .5, '#6a4a30'); r(7, 13.5, 2, .5, '#a08060');
+    r(3.5, 20.5, 9, 1, c3); r(4, 21, 8, .5, '#1a1010'); };
   switch (t) {
     case 0: book('#b8344a', '#e06070', '#6a1424'); break;
     case 1: book('#3a5aa8', '#6a8ad8', '#1a2a5a'); break;
@@ -181,5 +190,18 @@ function shItem(px, t, x, y, dim) {
     case 10: r(6, 2, 6, 6, '#8a6010'); r(7, 3, 4, 4, '#e0b050'); r(8, 4, 2, 2, '#2a1a10'); r(8, 8, 2, 13, '#e0b050'); r(8, 8, 1, 13, '#fff0b0'); r(10, 16, 3, 2, '#e0b050'); r(10, 19, 2, 2, '#e0b050'); break;
     case 11: r(7, 1, 2, 3, '#c9a036'); r(6, 0, 4, 1, '#c9a036'); r(2, 4, 12, 13, '#8a6010'); r(3, 5, 10, 11, '#e0b050'); r(4, 6, 8, 9, '#f8f0dc'); r(7, 7, 2, 4, '#2a1a10'); r(8, 10, 3, 1, '#2a1a10'); r(4, 6, 2, 1, '#fff'); r(5, 17, 6, 4, 'rgba(0,0,0,0)'); break;
   }
+  if (SH_FINE[t]) SH_FINE[t](r);
 }
+const SH_FINE = {   // 반 칸 도트 덧그림 (물건별)
+  4: r => { r(1, 7, 3, .5, '#8a6a40'); r(1, 20.5, 3, .5, '#8a6a40'); r(12, 7, 3, .5, '#8a6a40'); r(12, 20.5, 3, .5, '#8a6a40'); r(3.5, 7, .5, 14, '#a08050'); r(14.5, 7, .5, 14, '#a08050');
+    r(4, 12, 1.5, .5, '#8a7050'); r(4, 13.5, 1.5, .5, '#8a7050'); r(9.5, 12, 2.5, .5, '#8a7050'); r(9.5, 13.5, 2, .5, '#8a7050'); r(9.5, 15, 2.5, .5, '#8a7050'); r(6, 9, .5, 10, '#6a1424'); },
+  5: r => { r(4.5, 13.5, .5, 6, '#8aa8d8'); r(4, 20.5, 7, .5, '#141c30'); r(10.5, 2, .5, 6, '#ffffff'); r(11.5, 3, .5, 5, '#a8a090'); r(12.5, 4, .5, 3.5, '#a8a090'); r(9.5, 9, .5, 3, '#4a3a2a'); },
+  6: r => { r(7.5, 1.5, 1, 1.5, '#ffffff'); r(6.5, .5, .5, 1, '#ff8020'); r(9, .5, .5, 1, '#ff8020'); r(5, 8, .5, 2.5, '#e8dcc0'); r(10.5, 9, .5, 3, '#d8ccb0'); r(4, 21.5, 8, .5, '#8a6010'); },
+  7: r => { r(3, 2, 10, .5, '#8a5a32'); r(3, 21.5, 10, .5, '#3a2414'); r(7.5, 9, 1, 3, '#e8c070'); r(7.5, 12, .5, 4, '#e8c070'); r(5.5, 4.5, .5, 1.5, '#ffffff'); r(5.5, 15.5, .5, 2, '#ffffff'); r(5, 16.5, 6, .5, '#c89a40'); },
+  8: r => { r(7.5, 3, .5, 11, '#2a5a88'); r(3, 8, 10, .5, '#2a5a88'); r(5, 4, .5, 9, '#2f669a'); r(10, 4, .5, 9, '#2f669a'); r(4, 4, 1, .5, '#ffffff'); r(4, 4.5, .5, 1, '#ffffff'); r(4.5, 6, 2, .5, '#7ac07a'); r(5, 20.5, 6, .5, '#3a2414'); },
+  9: r => { r(2, 8, 6, .5, '#c8b898'); r(8, 8, 6, .5, '#c8b898'); r(2.5, 8.5, .5, 4, '#c8b898'); r(13, 8.5, .5, 4, '#c8b898'); r(4, 12.5, 2.5, .5, '#c8b898'); r(9.5, 12.5, 2.5, .5, '#c8b898'); r(6.5, 11.5, 1, .5, '#ffa0b0'); r(6, 14.5, 4, .5, '#6a1424'); },
+  10: r => { r(7, 3.5, 1, .5, '#fff0b0'); r(6.5, 4, .5, 2, '#fff0b0'); r(9.5, 6.5, 1, .5, '#8a6010'); r(9.5, 8, .5, 13, '#a07028'); r(12, 16.5, 1, .5, '#fff0b0'); r(11.5, 19.5, .5, 1.5, '#8a6010'); },
+  11: r => { r(7.5, 6.5, 1, .5, '#8a6010'); r(7.5, 14, 1, .5, '#8a6010'); r(4.5, 10, .5, 1, '#8a6010'); r(11, 10, .5, 1, '#8a6010'); r(3, 5, 10, .5, '#ffe08a'); r(2.5, 5, .5, 11, '#c89030'); r(8, 10.5, .5, .5, '#c8303a'); r(4, 16.5, 8, .5, '#6a4808'); }
+};
+function shMix(a, b) { const A = parseInt(a.slice(1), 16), B = parseInt(b.slice(1), 16), m = (s) => Math.round((((A >> s) & 255) + ((B >> s) & 255)) / 2); return '#' + [16, 8, 0].map(k => m(k).toString(16).padStart(2, '0')).join(''); }
 function shDark(c) { if (!c || c[0] !== '#') return c; const n = parseInt(c.slice(1), 16), L = ((n >> 16) & 255) * .3 + ((n >> 8) & 255) * .59 + (n & 255) * .11; return `rgb(${Math.round(L * .3 + 26)},${Math.round(L * .22 + 16)},${Math.round(L * .14 + 10)})`; }   // 뒷줄: 갈색 그림자

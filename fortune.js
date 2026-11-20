@@ -32,19 +32,19 @@ const fortName = t => `${FORT_NUM[t.card]} ${sinName(FORT_SINS[t.card])}${t.rev 
 
 /* ---------- 카드 그림 (48×80 도트) ---------- */
 function fortPaint(cv, card, rev, back) {
-  const W = 48, H = 80, g = cv.getContext('2d'); cv.width = W; cv.height = H; g.imageSmoothingEnabled = false; g.clearRect(0, 0, W, H);
+  const W = 48, H = 80, g = cv.getContext('2d'); cv.width = W * 2; cv.height = H * 2; g.imageSmoothingEnabled = false; g.setTransform(2, 0, 0, 2, 0, 0); g.clearRect(0, 0, W, H);   // 2배 촘촘 (반 칸 = 도트 하나)
   const r = (x, y, w, h, c) => { g.fillStyle = c; g.fillRect(x, y, w, h); }, GOLD = '#d8b25a', GOLD2 = '#f4dc90', DK = '#140e1c';
-  const circ = (cx, cy, rr, c, ry) => { ry = ry || rr; for (let y = -ry; y <= ry; y++) { const w = Math.round(rr * Math.sqrt(Math.max(0, 1 - (y / ry) ** 2))); r(cx - w, cy + y, w * 2 + 1, 1, c); } };
-  r(1, 0, W - 2, H, GOLD); r(0, 1, W, H - 2, GOLD); r(2, 2, W - 4, H - 4, DK);
-  if (back) { for (let y = 4; y < H - 4; y += 4) for (let x = 4 + ((y >> 2) % 2) * 2; x < W - 4; x += 4) r(x, y, 1, 1, '#3a2a50');
+  const circ = (cx, cy, rr, c, ry) => { ry = ry || rr; for (let y = -ry - .5; y <= ry + .5; y += .5) { const m = y + .25, w = Math.round(2 * (rr + .5) * Math.sqrt(Math.max(0, 1 - (m / (ry + .5)) ** 2))) / 2; if (w > 0) r(cx + .5 - w, cy + y, w * 2, .5, c); } };
+  r(1, 0, W - 2, H, GOLD); r(.5, .5, W - 1, H - 1, GOLD); r(0, 1, W, H - 2, GOLD); r(1, 1, W - 2, .5, GOLD2); r(1, 1, .5, H - 2, GOLD2); r(W - 1.5, 1, .5, H - 2, '#a08040'); r(1, H - 1.5, W - 2, .5, '#a08040'); r(2, 2, W - 4, H - 4, DK); r(3, 3, W - 6, .5, '#5a4530'); r(3, H - 3.5, W - 6, .5, '#5a4530'); r(3, 3, .5, H - 6, '#5a4530'); r(W - 3.5, 3, .5, H - 6, '#5a4530');
+  if (back) { for (let y = 4; y < H - 4; y += 2) for (let x = 4 + ((y >> 1) % 2); x < W - 4; x += 2) r(x, y, .5, .5, (x + y) % 4 ? '#2e2240' : '#4a3866');
     circ(24, 40, 10, '#2a1e3c'); circ(24, 40, 7, DK); r(23, 30, 2, 20, GOLD); r(14, 39, 20, 2, GOLD); circ(24, 40, 2, GOLD2); r(5, 5, W - 10, 1, '#5a4530'); r(5, H - 6, W - 10, 1, '#5a4530'); return; }
   if (rev) { g.save(); g.translate(W, H); g.rotate(Math.PI); }
   const s = FORT_SINS[card], base = FORT_COL[s];
   const mix = (a, b, t) => { const p = h => [1, 3, 5].map(i => parseInt(h.substr(i, 2), 16)); const A = p(a), B2 = p(b); return '#' + A.map((v, i) => Math.round(v + (B2[i] - v) * t).toString(16).padStart(2, '0')).join(''); };
-  for (let y = 4; y < 62; y++) r(4, y, W - 8, 1, mix(base, DK, Math.abs(y - 36) / 34));
-  for (let i = 0; i < 9; i++) r(6 + (i * 13) % 36, 6 + (i * 7) % 20, 1, 1, '#ffffff55');
-  r(4, 62, W - 8, 1, GOLD); r(4, 63, W - 8, 13, '#1e1628'); r(4, 76, W - 8, 1, GOLD);
-  [[5, 5], [W - 7, 5], [5, H - 7], [W - 7, H - 7]].forEach(([x, y]) => { r(x, y, 2, 2, GOLD2); });
+  for (let y = 4; y < 62; y += .5) r(4, y, W - 8, .5, mix(base, DK, Math.abs(y - 36) / 34));
+  for (let i = 0; i < 14; i++) { const x = 6 + (i * 13) % 36, y = 6 + (i * 7) % 22; r(x, y, .5, .5, '#ffffffaa'); if (i % 3 === 0) { r(x - .5, y, 1.5, .5, '#ffffff44'); r(x, y - .5, .5, 1.5, '#ffffff44'); } }
+  r(4, 62, W - 8, 1, GOLD); r(4, 62, W - 8, .5, GOLD2); r(4, 63, W - 8, 13, '#1e1628'); r(4, 63, W - 8, .5, '#0e0a14'); r(4, 76, W - 8, 1, GOLD); r(4, 76.5, W - 8, .5, '#a08040');
+  [[5, 5], [W - 7, 5], [5, H - 7], [W - 7, H - 7]].forEach(([x, y]) => { r(x + .5, y, 1, 2, GOLD); r(x, y + .5, 2, 1, GOLD); r(x + .5, y + .5, 1, 1, GOLD2); r(x + .5, y + .5, .5, .5, '#fff'); });
   // 숫자 (I~VII) 도트
   const n = card + 1, roman = FORT_NUM[card]; let x0 = 24 - Math.round(roman.length * 2.5); [...roman].forEach(ch => { if (ch === 'I') { r(x0, 66, 1, 7, GOLD2); x0 += 3; } else { for (let i = 0; i < 7; i++) { r(x0 + Math.round(i * .4), 66 + i, 1, 1, GOLD2); r(x0 + 4 - Math.round(i * .4), 66 + i, 1, 1, GOLD2); } x0 += 7; } });
   const cx = 24, cy = 34;

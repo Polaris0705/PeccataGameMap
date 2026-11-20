@@ -114,9 +114,10 @@ async function silverStart() {
    <div id="rgOver" style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.55);border-radius:6px 6px 0 0"><button class="primary" id="rgGo" style="padding:14px 22px;font-size:1.15rem" disabled>${song ? '영상 불러오는 중…' : '▶ 시작'}</button></div></div>
    <div class="row" style="max-width:360px;margin:0 auto;gap:4px;flex-wrap:nowrap;touch-action:none">${LANE_IC.slice(0, N).map((e, i) => `<button class="rgbtn" data-l="${i}" style="flex:1;min-width:0;padding:0;height:74px;font-size:${N > 3 ? 1.4 : 1.8}rem;border-radius:0 0 ${i === 0 ? '0 10px' : i === N - 1 ? '10px 0' : '0 0'};touch-action:none">${e}<div style="font-size:.6rem;opacity:.6">${esc(keyName(rKeys()[i]))}</div></button>`).join('')}</div>
    <p class="muted" style="text-align:center;font-size:.75rem;margin:4px 0">PC: ${rKeys().map(keyName).join(' · ')} 키</p>`;
-  const cv = $('#gcv'), cw = cv.clientWidth || 300, S = Math.max(2, Math.round(cw / W * (window.devicePixelRatio || 1)));
+  const cv = $('#gcv'), cw = cv.clientWidth || 300, S = Math.max(2, 2 * Math.round(cw / W * (window.devicePixelRatio || 1) / 2));   // 짝수배 → 반 칸 도트
   cv.width = W * S; cv.height = H * S; const g = cv.getContext('2d'); g.imageSmoothingEnabled = false;
-  const px = (x, y, w, h, c) => { g.fillStyle = c; g.fillRect(Math.round(x * S), Math.round(y * S), Math.max(1, Math.round(w * S)), Math.max(1, Math.round(h * S))); };
+  const hs = S / 2, q = v => Math.round(v * 2) * hs;
+  const px = (x, y, w, h, c) => { g.fillStyle = c; const X = q(x), Y = q(y); g.fillRect(X, Y, Math.max(hs, q(x + w) - X), Math.max(hs, q(y + h) - Y)); };
   const txt = (s, x, y, c, sz) => { g.font = `700 ${Math.round(sz * S)}px Galmuri11, monospace`; g.textAlign = 'center'; g.fillStyle = '#140c06'; g.fillText(s, (x + .6) * S, (y + .6) * S); g.fillStyle = c; g.fillText(s, x * S, y * S); };
   const t0 = song ? +song.start || 0 : 0, t1 = song ? t0 + (+song.len || 60) : 40;
   const R = RG = { song, diff, notes: rChart(song, diff, t0, t1, N), score: 0, combo: 0, best: 0, per: 0, good: 0, miss: 0, fx: [], bub: [], flash: Array(N).fill(0), judge: null, over: false, started: false, pl: null, clk: null, tick: -1 };
@@ -159,17 +160,17 @@ async function silverStart() {
     if (R.started) R.notes.forEach(n => { if (!n.done && now - n.t > D.good) { n.done = true; n.miss = true; R.miss++; R.combo = 0; R.judge = { s: 'MISS', c: '#ff7a7a', t: 0 }; } });
     // 똑딱 (노래 없을 때)
     if (R.started && !song && beat) { const bi = Math.floor((now - off) / beat); if (bi !== R.tick && bi >= 0) { R.tick = bi; rTick(bi % 4 === 0); } }
-    if (song) { g.clearRect(0, 0, cv.width, cv.height); px(0, 0, W, H, 'rgba(26,14,8,.5)'); } else { px(0, 0, W, H, '#3a2418'); for (let y = 0; y < H; y += 12) px(0, y, W, 1, '#4a2e1e'); }
-    LX.forEach((x, i) => { px(x - LW / 2, 0, LW, H, i % 2 ? 'rgba(240,232,214,.07)' : 'rgba(240,232,214,.11)'); px(x - LW / 2, 0, 1, H, 'rgba(0,0,0,.28)');
+    if (song) { g.clearRect(0, 0, cv.width, cv.height); px(0, 0, W, H, 'rgba(26,14,8,.5)'); } else { px(0, 0, W, H, '#3a2418'); for (let y = 0; y < H; y += 12) { px(0, y, W, .5, '#4a2e1e'); px(0, y + .5, W, .5, '#2e1c12'); } for (let x = 7; x < W; x += 23) for (let y = 3; y < H; y += 12) px(x + (y % 24 ? 0 : 11), y, 3, .5, '#44291b'); }
+    LX.forEach((x, i) => { px(x - LW / 2, 0, LW, H, i % 2 ? 'rgba(240,232,214,.07)' : 'rgba(240,232,214,.11)'); px(x - LW / 2, 0, .5, H, 'rgba(0,0,0,.32)'); px(x - LW / 2 + .5, 0, .5, H, 'rgba(255,240,210,.06)');
       if (R.flash[i] > 0) { px(x - LW / 2, 0, LW, H, `rgba(255,230,150,${R.flash[i] * 1.6})`); R.flash[i] -= dt; } });
     const pulse = beat && R.started ? Math.max(0, 1 - (((now - off) / beat) % 1) * 4) : 0;
-    px(0, HIT - 7, W, 14, `rgba(201,160,54,${.12 + pulse * .18})`); px(2, HIT - 1.5, W - 4, 3, '#c9a036'); px(2, HIT - 1.5, W - 4, 1, '#ffe08a');
-    LX.forEach(x => { const hw = LW / 2 - 4; px(x - hw, HIT - 6, hw * 2, 12, 'rgba(255,224,138,.16)'); px(x - hw, HIT - 6, hw * 2, 1, '#ffe08a'); px(x - hw, HIT + 5, hw * 2, 1, '#ffe08a'); });
+    px(0, HIT - 7, W, 14, `rgba(201,160,54,${.12 + pulse * .18})`); px(2, HIT - 1.5, W - 4, 3, '#c9a036'); px(2, HIT - 1.5, W - 4, .5, '#fff2c0'); px(2, HIT - 1, W - 4, .5, '#ffe08a'); px(2, HIT + 1, W - 4, .5, '#8a6a20');
+    LX.forEach(x => { const hw = LW / 2 - 4; px(x - hw, HIT - 6, hw * 2, 12, 'rgba(255,224,138,.16)'); px(x - hw, HIT - 6, hw * 2, .5, '#ffe08a'); px(x - hw, HIT + 5.5, hw * 2, .5, '#ffe08a'); px(x - hw, HIT - 6, .5, 12, 'rgba(255,224,138,.5)'); px(x + hw - .5, HIT - 6, .5, 12, 'rgba(255,224,138,.5)'); });
     R.notes.forEach(n => { if (n.done) return; const y = HIT - (n.t - now) / D.fall * (HIT - TOP); if (y < TOP - 10 || y > H + 10) return; const x = LX[n.l], near = Math.abs(n.t - now) <= D.good;
       const h = NW / 2; if (near) px(x - h - 2, y - 8, NW + 4, 16, 'rgba(255,240,180,.5)');
-      px(x - h, y - 5, NW, 10, '#4a4a40'); px(x - h + 2, y - 7, NW - 4, 14, '#4a4a40'); px(x - h + 3, y - 4, NW - 6, 6, near ? '#9a9a70' : '#6a6a58'); px(x - h + 5, y - 3, 3, 2, '#b0b090'); });
+      rStain(px, x, y, NW, near, n.t); });
     rFoam(g, S, W, H, HIT, now, dt, R, LX);
-    R.fx.forEach(f => { f.x += f.vx * dt; f.y += f.vy * dt; f.vy += 80 * dt; f.t -= dt; px(f.x, f.y, 1.4, 1.4, '#fff6c0'); }); R.fx = R.fx.filter(f => f.t > 0);
+    R.fx.forEach(f => { f.x += f.vx * dt; f.y += f.vy * dt; f.vy += 80 * dt; f.t -= dt; px(f.x, f.y, 1, 1, '#fff6c0'); px(f.x + .25, f.y + .25, .5, .5, '#ffffff'); }); R.fx = R.fx.filter(f => f.t > 0);
     if (R.judge) { R.judge.t += dt; const a = R.judge.t; if (a < .55) txt(R.judge.s, 60, HIT - 22 - a * 14, R.judge.c, R.judge.s.length > 6 ? 9 : 10); else R.judge = null; }
     if (R.combo > 2) txt(`${R.combo} 콤보`, 60, 18, R.combo >= 20 ? '#ffe08a' : '#ffb070', 8);
     const prog = Math.max(0, Math.min(1, (now - t0) / (t1 - t0))); px(4, 4, 112, 3, '#1a1010'); px(4, 4, 112 * prog, 3, '#e8ecf4');
@@ -178,6 +179,19 @@ async function silverStart() {
     raf = requestAnimationFrame(loop); };
   const G = lockGame(() => { cancelAnimationFrame(raf); document.removeEventListener('keydown', kd); if (R.pl) { try { R.pl.destroy(); } catch (e) {} } });
   raf = requestAnimationFrame(loop); setTimeout(() => { const p = b.closest('.panel'); if (p) p.scrollIntoView({ block: 'start', behavior: 'smooth' }); }, 50);
+}
+/* 얼룩 (반 칸 도트): 둥근 덩어리 + 가장자리 번짐 + 물기 반짝임 */
+function rStain(px, x, y, NW, near, seed) {
+  const h = NW / 2, k = Math.floor(seed * 7) % 3, D = '#3a3a32', M = near ? '#8a8a66' : '#5e5e4e', L = near ? '#b4b48a' : '#7c7c66';
+  const RY = 6.5, row = (dy, r) => Math.round(2 * r * Math.sqrt(Math.max(0, 1 - (dy * dy) / (RY * RY))) + (Math.sin(dy * 1.7 + k * 2) > .6 ? 1 : 0)) / 2;
+  for (let dy = -RY; dy < RY; dy += .5) { const w = row(dy + .25, h + .5); if (w > 0) px(x - w, y + dy, w * 2, .5, D); }
+  for (let dy = -RY + 1; dy < RY - 1; dy += .5) { const w = row(dy + .25, h - .5) - .5; if (w > 0) px(x - w, y + dy, w * 2, .5, M); }
+  px(x - h * .55, y - 3.5, h * .5, .5, L); px(x - h * .65, y - 3, h * .45, .5, L); px(x - h * .7, y - 2.5, .5, 1.5, L);
+  px(x + h * .25, y + 1.5, 1, .5, 'rgba(0,0,0,.25)'); px(x - h * .2, y + 2.5, 1.5, .5, 'rgba(0,0,0,.2)');
+  px(x - h * .3, y - 2.5, .5, .5, '#e8e8d0');
+  if (k === 0) { px(x + h + .5, y - 2, 1, 1, D); px(x + h + 1, y + 2.5, .5, .5, D); }
+  else if (k === 1) { px(x - h - 1.5, y + 1, 1, 1, D); px(x - h - 1, y - 3, .5, .5, D); }
+  else { px(x - 1, y + 7, 1.5, 1, D); px(x + h * .6, y - 6.5, 1, .5, D); }
 }
 function silverQuit() { stopGame(); RG = null; render(); }
 function rEnd(total) {

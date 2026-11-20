@@ -151,8 +151,9 @@ function dropMount() {
   const b = gbox(), D = DROP; if (!b || !D) return;
   b.innerHTML = `<div class="row" style="justify-content:space-between;margin-bottom:6px;gap:6px"><b id="dhud">점수 ${D.score}</b><span>${D.s === 'envy' ? '<button class="sm" onclick="dropHold()">보관</button> ' : ''}<button class="sm" onclick="dropQuit()">그만두기</button></span></div>
    <canvas id="dcv" style="width:100%;max-width:420px;aspect-ratio:${DRW}/${DRH};touch-action:none;display:block;margin:auto;border-radius:8px;background:#1c120c"></canvas>`;
-  const cv = $('#dcv'), dpr = window.devicePixelRatio || 1, cw = cv.clientWidth || 360; cv.width = Math.round(cw * dpr); cv.height = Math.round(cw * dpr * DRH / DRW);
-  const g = cv.getContext('2d'), S = cv.width / DRW; D.cv = cv; D.g = g; D.S = S;
+  const cv = $('#dcv'), dpr = window.devicePixelRatio || 1, cw = cv.clientWidth || 360, S = Math.max(2, 2 * Math.round(cw * dpr / DRW / 2));   // 짝수배 → 반 칸 도트
+  cv.width = DRW * S; cv.height = DRH * S; cv.style.imageRendering = 'pixelated';
+  const g = cv.getContext('2d'); D.cv = cv; D.g = g; D.S = S;
   const px = e => { const r = cv.getBoundingClientRect(); return (e.clientX - r.left) / r.width * DRW; };
   cv.onpointerdown = e => { D.aim = px(e); D.down = true; try { cv.setPointerCapture(e.pointerId); } catch (x) {} };
   cv.onpointermove = e => { D.aim = px(e); };
@@ -224,6 +225,9 @@ function dropDraw() {
   g.fillStyle = fev ? '#3a2a14' : '#2e1f15'; g.fillRect(DL, DDANGER - 18, DR - DL, DF - DDANGER + 18);
   g.fillStyle = '#5a3a22'; g.fillRect(DL - 6, DDANGER - 18, 6, DF - DDANGER + 24); g.fillRect(DR, DDANGER - 18, 6, DF - DDANGER + 24); g.fillRect(DL - 6, DF, DR - DL + 12, 6);
   g.fillStyle = '#7a5232'; g.fillRect(DL - 6, DDANGER - 18, 2, DF - DDANGER + 24); g.fillRect(DR, DDANGER - 18, 2, DF - DDANGER + 24);
+  g.fillStyle = '#9a6a40'; g.fillRect(DL - 6, DDANGER - 18, .5, DF - DDANGER + 24); g.fillRect(DR, DDANGER - 18, .5, DF - DDANGER + 24); g.fillRect(DL - 6, DF, DR - DL + 12, .5);
+  g.fillStyle = '#3a2414'; g.fillRect(DL - .5, DDANGER - 18, .5, DF - DDANGER + 18); g.fillRect(DR + 5.5, DDANGER - 18, .5, DF - DDANGER + 24); g.fillRect(DL - 6, DF + 5.5, DR - DL + 12, .5);
+  g.fillStyle = '#4a2e1a'; for (let y = DDANGER - 10; y < DF; y += 14) { g.fillRect(DL - 4, y, 2, .5); g.fillRect(DR + 2, y + 7, 2, .5); }
   // 선
   const wf = D.warn > 0 ? (Math.sin(now * 20) > 0 ? 1 : .4) : .55; g.globalAlpha = wf; g.fillStyle = '#e05050'; for (let x = DL; x < DR; x += 8) g.fillRect(x, DDANGER, 5, 1.5); g.globalAlpha = 1;
   // 조준
@@ -242,13 +246,19 @@ function dropDraw() {
   const hud = $('#dhud'); if (hud) hud.textContent = `점수 ${D.score} · 최고 ${Math.max((P.best || {}).sins || 0, D.score)}`;
   g.setTransform(1, 0, 0, 1, 0, 0);
 }
+function dropDisc(g, x, y, r, col) {   // 반 칸 도트 원
+  g.fillStyle = col; for (let dy = -r; dy < r; dy += .5) { const m = dy + .25, w = Math.round(2 * Math.sqrt(Math.max(0, r * r - m * m))) / 2; if (w > 0) g.fillRect(x - w, y + dy, w * 2, .5); }
+}
 function dropBall(g, x, y, t, r, gold, ov, mini) {
   const T = DROP_T[t], col = gold ? '#e8c048' : T[3];
-  g.beginPath(); g.arc(x, y, r, 0, 6.2832); g.fillStyle = ov > 0 && Math.sin(DROP.t * 25) > 0 ? '#ff7a7a' : col; g.fill();
-  g.lineWidth = mini ? .8 : 1.4; g.strokeStyle = gold ? '#8a6010' : 'rgba(40,20,10,.75)'; g.stroke();
-  g.beginPath(); g.arc(x - r * .35, y - r * .38, r * .28, 0, 6.2832); g.fillStyle = 'rgba(255,255,255,.35)'; g.fill();
+  x = Math.round(x * 2) / 2; y = Math.round(y * 2) / 2; r = Math.round(r * 2) / 2;
+  dropDisc(g, x, y, r + .5, gold ? '#8a6010' : '#2a160c');
+  const base = ov > 0 && Math.sin(DROP.t * 25) > 0 ? '#ff7a7a' : col;
+  dropDisc(g, x, y, r, base); if (!mini) { g.globalAlpha = .28; dropDisc(g, x, y, r, '#000'); g.globalAlpha = 1; dropDisc(g, x - .5, y - .5, r - .5, base); }
+  dropDisc(g, x - r * .38, y - r * .4, Math.max(.5, Math.round(r * .26 * 2) / 2), 'rgba(255,255,255,.42)');
+  if (!mini) { g.fillStyle = 'rgba(255,255,255,.8)'; g.fillRect(Math.round((x - r * .5) * 2) / 2, Math.round((y - r * .5) * 2) / 2, .5, .5); }
   g.font = `${Math.round(r * 1.25)}px "Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji",sans-serif`; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText(T[1], x, y + r * .06);
-  if (gold && !mini) { g.fillStyle = '#fff6c0'; const a = DROP.t * 3 + x; g.fillRect(x + Math.cos(a) * r * .8 - .8, y + Math.sin(a) * r * .8 - .8, 1.6, 1.6); }
+  if (gold && !mini) { g.fillStyle = '#fff6c0'; const a = DROP.t * 3 + x; g.fillRect(Math.round((x + Math.cos(a) * r * .8) * 2) / 2 - .5, Math.round((y + Math.sin(a) * r * .8) * 2) / 2 - .5, 1, 1); }
 }
 function dropEnd(quit) {
   const D = DROP; if (!D || D.over) return; D.over = true; stopGame();

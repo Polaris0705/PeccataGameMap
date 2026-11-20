@@ -4,7 +4,7 @@
    디저트는 진열장에서 골라 오븐에 굽고, 다 구워지면 꺼냄 (너무 오래 두면 탐)
    진행: P.tea = {v:2, day, cash(£), kettle, slots, oven, decor, menu, best, stars:{}}
    ========================================================= */
-const TY_W = 192, TY_H = 272, TY_S = 3;
+const TY_W = 192, TY_H = 272, TY_S = 4;   // 1칸 = 4px, 반 칸(0.5) = 도트 한 개 (2배 촘촘)
 const TY_LEAF = { black: { n: '홍차', c: '#8a3a1a', m: '#c08a5a' }, green: { n: '녹차', c: '#7aa040', m: '#b8d08a' }, herb: { n: '허브', c: '#c8a040', m: '#e0c890' } };
 const TY_RECIPES = [
   { id: 'black', n: '홍차', leaf: 'black', adds: [], p: 5, tier: 0 },
@@ -32,9 +32,10 @@ function tyLv() {
 
 /* ---------- 도트 도구 ---------- */
 function tyPen(g) {
-  const c = (x, y, w, h, col) => { if (w <= 0 || h <= 0) return; g.fillStyle = col; g.fillRect(Math.round(x), Math.round(y), Math.round(w), Math.round(h)); };
-  const o = (x, y, w, h, f, l) => { c(x, y, w, h, l || '#2a1a12'); c(x + 1, y + 1, w - 2, h - 2, f); };
-  const el = (cx, cy, rx, ry, col) => { for (let y = -ry; y <= ry; y++) { const w = Math.round(rx * Math.sqrt(Math.max(0, 1 - (y * y) / (ry * ry + .01)))); c(cx - w, cy + y, w * 2, 1, col); } };
+  const H = v => Math.round(v * 2) / 2;   // 반 칸 단위로 맞춤
+  const c = (x, y, w, h, col) => { if (w <= 0 || h <= 0) return; g.fillStyle = col; const X = H(x), Y = H(y); g.fillRect(X, Y, Math.max(.5, H(x + w) - X), Math.max(.5, H(y + h) - Y)); };
+  const o = (x, y, w, h, f, l) => { c(x, y, w, h, l || '#2a1a12'); c(x + .5, y + .5, w - 1, h - 1, f); };   // 테두리는 반 칸
+  const el = (cx, cy, rx, ry, col) => { for (let y = -ry; y < ry + .5; y += .5) { const w = Math.round(2 * rx * Math.sqrt(Math.max(0, 1 - ((y + .25) * (y + .25)) / (ry * ry + .01)))) / 2; if (w > 0) c(cx - w, cy + y, w * 2, .5, col); } };
   const tx = (s, x, y, col, size, align, bold) => { g.font = `${bold ? '700 ' : ''}${size || 8}px 'Galmuri11',monospace`; g.textAlign = align || 'left'; g.textBaseline = 'top'; g.fillStyle = '#140c06'; g.fillText(s, x + .5, y + .5); g.fillStyle = col || '#fff'; g.fillText(s, x, y); };
   return { c, o, el, tx, g };
 }
@@ -43,7 +44,8 @@ function tyCup(p, x, y, cup, t) {
   const { c, o, el } = p;
   el(x + 8, y + 12, 8, 2, '#d8d0c0'); el(x + 8, y + 12, 6, 1, '#f4f0e8');
   o(x + 2, y + 3, 12, 9, '#f8f4ec', '#8a8478'); c(x + 13, y + 5, 3, 1, '#8a8478'); c(x + 15, y + 5, 1, 4, '#8a8478'); c(x + 13, y + 8, 3, 1, '#8a8478');
-  c(x + 3, y + 9, 10, 1, '#3a5a8a');
+  c(x + 3, y + 9, 10, 1, '#3a5a8a'); c(x + 3, y + 9.5, 10, .5, '#2a4a7a'); c(x + 3, y + 3.5, 1, 5, '#ffffff'); c(x + 12, y + 3.5, .5, 5.5, '#d8d0c4');
+  for (let i = 0; i < 3; i++) c(x + 5 + i * 3, y + 10.5, .5, .5, '#c8a040');
   if (cup && cup.leaf) {
     const L = TY_LEAF[cup.leaf], milky = cup.adds && cup.adds.includes('milk');
     let col = cup.water ? (milky ? L.m : L.c) : '#5a3a20';
@@ -77,21 +79,39 @@ function tyIcon(p, k, x, y, t) {   // 재료·디저트 아이콘 (약 14×14)
 const TY_SKIN = ['#f0c8a0', '#d8a878', '#a8784e', '#f6dcc4'], TY_HAIR = ['#2a1a10', '#6a4020', '#c89040', '#e8e0d0', '#8a2a2a', '#3a3a5a'];
 const TY_CLOTH = ['#3a5a8a', '#7e2236', '#3f6b3a', '#5a3a7a', '#2a2a32', '#a8603a', '#6a8a9a'];
 function tyGuest(p, g, cx, by, mood, t) {
-  const { c, o } = p, x = Math.round(cx - 10), y = by - 30, bob = (t >> 4) % 2;
-  const sk = TY_SKIN[g.sk], hr = TY_HAIR[g.hr], cl = TY_CLOTH[g.cl];
-  o(x + 2, y + 15 + bob, 16, 15, cl, '#1a1210'); c(x + 3, y + 16 + bob, 14, 2, 'rgba(255,255,255,.18)'); c(x + 8, y + 16 + bob, 4, 5, g.vip ? '#ffe27a' : '#f4f0e8'); c(x + 9, y + 18 + bob, 2, 2, g.vip ? '#a07028' : cl);
-  o(x + 5, y + 4 + bob, 10, 12, sk, '#5a3a24');
-  if (g.st === 0) { c(x + 4, y + 3 + bob, 12, 4, hr); c(x + 4, y + 3 + bob, 2, 8, hr); c(x + 14, y + 3 + bob, 2, 8, hr); }
-  else if (g.st === 1) { c(x + 4, y + 3 + bob, 12, 3, hr); c(x + 3, y + 5 + bob, 3, 11, hr); c(x + 14, y + 5 + bob, 3, 11, hr); }
-  else { c(x + 5, y + 3 + bob, 10, 3, hr); c(x + 15, y + 5 + bob, 2, 3, hr); }
-  if (g.hat === 1) { o(x + 6, y - 4 + bob, 8, 8, '#1a1a1e', '#000'); c(x + 3, y + 3 + bob, 14, 2, '#1a1a1e'); c(x + 7, y + 1 + bob, 6, 1, '#8a2433'); }
-  if (g.hat === 2) { c(x + 3, y + 1 + bob, 14, 4, '#f4f0e8'); c(x + 4, y + 0 + bob, 12, 1, '#f4f0e8'); c(x + 13, y + 2 + bob, 3, 2, '#f08ab0'); }
-  if (g.vip) { c(x + 6, y + 1 + bob, 8, 2, '#ffe27a'); c(x + 6, y + bob, 1, 1, '#ffe27a'); c(x + 9, y - 1 + bob, 2, 2, '#ffe27a'); c(x + 13, y + bob, 1, 1, '#ffe27a'); }
-  const ey = y + 9 + bob;
-  if (mood === 'happy') { c(x + 7, ey, 2, 1, '#2a1a10'); c(x + 11, ey, 2, 1, '#2a1a10'); c(x + 8, ey + 3, 4, 1, '#a04040'); c(x + 7, ey + 2, 1, 1, '#a04040'); c(x + 12, ey + 2, 1, 1, '#a04040'); }
-  else if (mood === 'angry') { c(x + 7, ey - 1, 2, 1, '#2a1a10'); c(x + 11, ey - 1, 2, 1, '#2a1a10'); c(x + 7, ey, 2, 2, '#2a1a10'); c(x + 11, ey, 2, 2, '#2a1a10'); c(x + 8, ey + 4, 4, 1, '#2a1a10'); c(x + 5, ey + 1, 2, 1, 'rgba(220,60,60,.6)'); c(x + 13, ey + 1, 2, 1, 'rgba(220,60,60,.6)'); }
-  else { c(x + 7, ey, 2, 2, '#2a1a10'); c(x + 11, ey, 2, 2, '#2a1a10'); c(x + 9, ey + 3, 2, 1, '#a06050'); }
-  if (mood === 'angry' && (t >> 3) % 2) { c(x + 16, y + bob, 3, 1, '#e83a3a'); c(x + 17, y - 1 + bob, 1, 3, '#e83a3a'); }
+  const { c, o, el } = p, x = Math.round(cx - 10), y = by - 30, bob = (t >> 4) % 2 * .5;
+  const sk = TY_SKIN[g.sk], hr = TY_HAIR[g.hr], cl = TY_CLOTH[g.cl], Y = y + bob;
+  const dk = (h, k) => { const n = parseInt(h.slice(1), 16), f = v => Math.max(0, Math.min(255, Math.round(v * k))); return `rgb(${f(n >> 16)},${f((n >> 8) & 255)},${f(n & 255)})`; };
+  // 몸 (어깨 둥글게 · 옷 주름 · 깃)
+  c(x + 3, Y + 15.5, 14, 14.5, '#1a1210'); c(x + 2.5, Y + 17, 15, 13, '#1a1210');
+  c(x + 3.5, Y + 16, 13, 14, cl); c(x + 3, Y + 17.5, 14, 12.5, cl);
+  c(x + 3.5, Y + 16, 13, 1, 'rgba(255,255,255,.22)'); c(x + 3.5, Y + 17, 1, 12, 'rgba(255,255,255,.12)'); c(x + 15.5, Y + 17, 1, 13, 'rgba(0,0,0,.22)');
+  c(x + 6, Y + 21, .5, 8, 'rgba(0,0,0,.2)'); c(x + 13.5, Y + 21, .5, 8, 'rgba(0,0,0,.2)');
+  const sh = g.vip ? '#ffe27a' : '#f4f0e8'; c(x + 8, Y + 16, 4, 5, sh); c(x + 7.5, Y + 16, 1.5, 1.5, sh); c(x + 11, Y + 16, 1.5, 1.5, sh); c(x + 9.5, Y + 17.5, 1, 3.5, 'rgba(0,0,0,.12)');
+  c(x + 9, Y + 18, 2, 1.5, g.vip ? '#a07028' : dk(cl, .7)); c(x + 9.5, Y + 19.5, 1, 1.5, g.vip ? '#a07028' : dk(cl, .7));
+  // 목 · 얼굴 (둥근 볼)
+  c(x + 8.5, Y + 14.5, 3, 1.5, dk(sk, .82));
+  c(x + 5.5, Y + 4, 9, 11.5, '#5a3a24'); c(x + 5, Y + 5, 10, 9.5, '#5a3a24');
+  c(x + 6, Y + 4.5, 8, 10.5, sk); c(x + 5.5, Y + 5.5, 9, 8.5, sk);
+  c(x + 6, Y + 13, 8, 1.5, dk(sk, .9)); c(x + 6.5, Y + 5, 2, 1, 'rgba(255,255,255,.25)');
+  c(x + 4.5, Y + 9, 1, 2, sk); c(x + 14.5, Y + 9, 1, 2, sk); c(x + 4.5, Y + 9, .5, 2, '#5a3a24'); c(x + 15, Y + 9, .5, 2, '#5a3a24');
+  // 머리
+  const hl = dk(hr, 1.35);
+  if (g.st === 0) { c(x + 5, Y + 3, 10, 3.5, hr); c(x + 4.5, Y + 3.5, 1.5, 7.5, hr); c(x + 14, Y + 3.5, 1.5, 7.5, hr); c(x + 6, Y + 2.5, 8, 1, hr); c(x + 7, Y + 6, 2, 1, hr); c(x + 11, Y + 6, 1.5, .5, hr); c(x + 7, Y + 3, 3, .5, hl); }
+  else if (g.st === 1) { c(x + 5, Y + 3, 10, 3, hr); c(x + 3.5, Y + 4.5, 2.5, 11.5, hr); c(x + 14, Y + 4.5, 2.5, 11.5, hr); c(x + 6, Y + 2.5, 8, 1, hr); c(x + 6, Y + 5.5, 3, 1, hr); c(x + 4, Y + 6, .5, 8, hl); c(x + 15.5, Y + 6, .5, 8, 'rgba(0,0,0,.2)'); c(x + 7.5, Y + 3, 3, .5, hl); }
+  else { c(x + 5.5, Y + 3, 9, 2.5, hr); c(x + 6.5, Y + 2.5, 7, 1, hr); c(x + 14.5, Y + 4.5, 1.5, 3, hr); c(x + 7, Y + 3, 2.5, .5, hl); }
+  if (g.hat === 1) { o(x + 6, Y - 4, 8, 8, '#1a1a1e', '#000'); c(x + 6.5, Y - 3.5, 1, 7, '#34343c'); c(x + 3, Y + 3, 14, 1.5, '#1a1a1e'); c(x + 3.5, Y + 4, 13, .5, '#000'); c(x + 6.5, Y + 1, 7, 1, '#8a2433'); c(x + 6.5, Y + 1, 7, .5, '#a83a4a'); }
+  if (g.hat === 2) { el(x + 10, Y + 2.5, 7, 2, '#f4f0e8'); c(x + 4, Y + .5, 12, 2, '#f4f0e8'); c(x + 4.5, Y + 2, 11, .5, '#d8d0c0'); el(x + 14, Y + 2.5, 1.5, 1, '#f08ab0'); c(x + 13.5, Y + 2, .5, .5, '#ffd0e0'); }
+  if (g.vip) { c(x + 6.5, Y + 1, 7, 1.5, '#ffe27a'); c(x + 6.5, Y + 2, 7, .5, '#c8a040'); c(x + 6.5, Y, 1, 1, '#ffe27a'); c(x + 9.5, Y - 1, 1, 2, '#ffe27a'); c(x + 12.5, Y, 1, 1, '#ffe27a'); c(x + 9.5, Y - .5, .5, .5, '#fff'); }
+  // 얼굴 표정 (반 칸 도트)
+  const ey = Y + 8.5, E = '#2a1a10';
+  c(x + 6.5, ey + 2.5, 1.5, 1, 'rgba(230,110,110,.35)'); c(x + 12, ey + 2.5, 1.5, 1, 'rgba(230,110,110,.35)');
+  if (mood === 'happy') { c(x + 7, ey + .5, .5, .5, E); c(x + 7.5, ey, 1, .5, E); c(x + 8.5, ey + .5, .5, .5, E); c(x + 11, ey + .5, .5, .5, E); c(x + 11.5, ey, 1, .5, E); c(x + 12.5, ey + .5, .5, .5, E);
+    c(x + 8.5, ey + 3, 3, 1, '#a04040'); c(x + 9, ey + 3.5, 2, .5, '#e88080'); c(x + 8, ey + 2.5, .5, .5, '#a04040'); c(x + 11.5, ey + 2.5, .5, .5, '#a04040'); }
+  else if (mood === 'angry') { c(x + 6.5, ey - 1, 1, .5, E); c(x + 7.5, ey - .5, 1, .5, E); c(x + 12.5, ey - 1, 1, .5, E); c(x + 11.5, ey - .5, 1, .5, E);
+    c(x + 7, ey + .5, 1.5, 1.5, E); c(x + 11.5, ey + .5, 1.5, 1.5, E); c(x + 8.5, ey + 3.5, 3, .5, E); c(x + 8, ey + 4, .5, .5, E); c(x + 11.5, ey + 4, .5, .5, E); c(x + 5, ey + 2, 2, .5, 'rgba(220,60,60,.6)'); c(x + 13, ey + 2, 2, .5, 'rgba(220,60,60,.6)'); }
+  else { c(x + 7, ey, 1.5, 2, E); c(x + 11.5, ey, 1.5, 2, E); c(x + 7, ey, .5, .5, '#fff'); c(x + 11.5, ey, .5, .5, '#fff'); c(x + 9.5, ey + 3, 1, .5, '#a06050'); }
+  if (mood === 'angry' && (t >> 3) % 2) { c(x + 16, Y, 3, 1, '#e83a3a'); c(x + 17, Y - 1, 1, 3, '#e83a3a'); c(x + 16.5, Y + .5, 2, .5, '#ff8a8a'); }
 }
 
 /* ---------- 장면 ---------- */
