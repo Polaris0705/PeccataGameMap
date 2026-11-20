@@ -116,6 +116,42 @@ function ovOrigPng(k, dir) {
   g.putImageData(d, 0, 0); return c.toDataURL('image/png');
 }
 let OVD = null;
+/* ✨ 자동 다듬기 (1차): 원래 그림 → 2배 도트로 늘릴 때 계단을 부드럽게(Scale2x) + 코지 게임풍 명암
+   - 바깥 테두리: 같은 색의 2단계 진한 색 (검정 아님)   - 윗면: 1단계 밝게   - 아랫면: 1단계 어둡게
+   - 색 바꾸기 되는 부분은 그 색의 명암 6단계 안에서만 바꿔서 PL이 바꾼 색도 그대로 먹음 */
+const FR_STEPS = ['L', 'l', 't', 'f', 'd', 'o'];
+function fRefinePng(k, dir) {
+  const dm = dimsOf(k, dir), w = dm.w * 64, h = Math.max(2, Math.round(dm.h * 2)), c = document.createElement('canvas'); c.width = w; c.height = h;
+  const g = c.getContext('2d'); g.imageSmoothingEnabled = false; snapCtx(g, 2); ORIG_DS(g, k, 0, 0, 0, null, null, dir);
+  const src = g.getImageData(0, 0, w, h).data, P = new Uint32Array(w * h);
+  for (let i = 0; i < w * h; i++) P[i] = src[i * 4 + 3] < 128 ? 0 : ((src[i * 4] << 16) | (src[i * 4 + 1] << 8) | src[i * 4 + 2]) + 0x1000000;   // 0 = 빈칸
+  // Scale2x
+  const W = w * 2, H = h * 2, Q = new Uint32Array(W * H), at = (x, y) => x < 0 || y < 0 || x >= w || y >= h ? 0 : P[y * w + x];
+  for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) { const E = P[y * w + x], A = at(x, y - 1), B = at(x + 1, y), C = at(x - 1, y), D = at(x, y + 1);
+    let e0 = E, e1 = E, e2 = E, e3 = E; if (C === A && C !== D && A !== B) e0 = A; if (A === B && A !== C && B !== D) e1 = B; if (D === C && D !== B && C !== A) e2 = C; if (B === D && B !== A && D !== C) e3 = D;
+    if (!E) { e0 = e1 = e2 = e3 = 0; }   // 빈칸은 늘리지 않음 (테두리가 밖으로 번지지 않게)
+    Q[(2 * y) * W + 2 * x] = e0; Q[(2 * y) * W + 2 * x + 1] = e1; Q[(2 * y + 1) * W + 2 * x] = e2; Q[(2 * y + 1) * W + 2 * x + 1] = e3; }
+  // 색 → (명암 단계표, 몇 번째)
+  const R = {}; Object.values(defCol(k)).forEach(hex => { const rp = ramp(hex); FR_STEPS.forEach((q, i) => { const v = parseInt(rp[q].slice(1), 16) + 0x1000000; if (!(v in R)) R[v] = { rp, i }; }); });
+  const mix = (v, to, t) => { const a = [(v >> 16) & 255, (v >> 8) & 255, v & 255], b = [(to >> 16) & 255, (to >> 8) & 255, to & 255], o = a.map((x, i) => Math.round(x + (b[i] - x) * t)); return ((o[0] << 16) | (o[1] << 8) | o[2]) + 0x1000000; };
+  const step = (v, d) => { const r = R[v]; if (r) { const j = Math.max(0, Math.min(5, r.i + d)); return parseInt(r.rp[FR_STEPS[j]].slice(1), 16) + 0x1000000; } return d < 0 ? mix(v - 0x1000000, 0xfff0d0, .2 * -d) : mix(v - 0x1000000, 0x3a1e2a, .2 * d); };   // 색 바꾸기 안 되는 색: 따뜻하게 밝게 / 보랏빛 그늘
+  const O = Q.slice(), q = (x, y) => x < 0 || y < 0 || x >= W || y >= H ? 0 : Q[y * W + x];
+  for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) { const v = Q[y * W + x]; if (!v) continue;
+    if (!q(x - 1, y) || !q(x + 1, y) || !q(x, y - 1) || !q(x, y + 1)) { O[y * W + x] = step(v, 2); continue; }   // 바깥 테두리
+    const up = q(x, y - 1), dn = q(x, y + 1); if (up !== v && dn === v) O[y * W + x] = step(v, -1); else if (dn !== v && up === v) O[y * W + x] = step(v, 1); }
+  const oc = document.createElement('canvas'); oc.width = W; oc.height = H; const og = oc.getContext('2d'), id = og.createImageData(W, H);
+  for (let i = 0; i < W * H; i++) { const v = O[i]; if (!v) continue; const n = v - 0x1000000; id.data[i * 4] = (n >> 16) & 255; id.data[i * 4 + 1] = (n >> 8) & 255; id.data[i * 4 + 2] = n & 255; id.data[i * 4 + 3] = 255; }
+  og.putImageData(id, 0, 0); return oc.toDataURL('image/png'); }
+/* 시간대(낮·밤)에 따라 그림이 바뀌는 가구(창문 등)는 그림으로 굳히면 안 됨 */
+function fTodDep(k) { if (typeof PUB === 'undefined') return false; const P0 = PUB, oc = P0 && P0.clock;
+  const png = t => { if (!PUB) PUB = {}; PUB.clock = Object.assign({}, oc || {}, { tod: t }); try { return ovOrigPng(k, 0); } finally { if (P0) P0.clock = oc; else PUB = P0; } };
+  try { return png('day') !== png('night'); } catch (e) { return false; } }
+function ovAutoOne(k) { if (fTodDep(k)) return toast('시간대에 따라 바뀌는 가구라 자동 다듬기 안 됨'); ovDirs(k).forEach(([d]) => { OVD.pics[d] = fRefinePng(k, d); OVD.picN[d] = 1; delete OVD.picMs[d]; delete OVD.picFms[d]; }); toast('자동 다듬기 · 저장해야 적용'); ovEdit(k); }
+async function ovAutoAll(force) { const list = Object.entries(FURN).filter(([k, f]) => !f.custom && (force || !FOV[k]) && !fTodDep(k));
+  if (!list.length) return toast('다듬을 가구 없음'); if (!confirm(`가구 ${list.length}개를 자동으로 다듬어서 '바꾼 그림'으로 저장할까요?${force ? '\n이미 바꾼 그림도 덮어씀.' : '\n이미 바꾼 가구는 건너뜀.'}\n(프리셋 '이 가구 원본'으로 하나씩 되돌릴 수 있음)`)) return;
+  let ok = 0, bad = 0; for (const [k] of list) { try { const pics = {}, picN = {}, picMs = {}; ovDirs(k).forEach(([d]) => { pics[d] = fRefinePng(k, d); picN[d] = 1; picMs[d] = 220; });
+      if (JSON.stringify(pics).length > 900000) { bad++; continue; } await B.set('furnOv/' + k, { pics, picN, picMs, picFms: {}, anim: true, auto: 1, at: Date.now() }); ok++; if (ok % 10 === 0) toast(`다듬는 중 ${ok}/${list.length}`); } catch (e) { bad++; } }
+  toast(`자동 다듬기 완료 ${ok}개${bad ? ' · 실패 ' + bad : ''}`); render(); }
 const fBuiltins = () => Object.entries(FURN).filter(([k, f]) => !f.custom);
 const fDirOf = (k, d) => { const f = FURN[k]; return f && !f.wall && f.dirs ? d : 0; };
 function fPresetList(self) { return [['원본 데이터', fBuiltins().map(([k, f]) => ['o|' + k, f.name + (k === self ? ' (이 가구 원본)' : '')])],
@@ -154,7 +190,7 @@ function ovEdit(k) {
    ${ovDirs(k).map(([d, n]) => { const s = dimsOf(k, d); return `<div class="item" style="margin:4px 0"><div style="display:flex;align-items:center;gap:8px">${OVD.pics[d] ? stripThumb(OVD.pics[d], OVD.picN[d], 56) : `<span style="width:56px;text-align:center">${fprev(k, null, 56, d === 1 ? 1 : d)}</span>`}<div><b>${n}</b> ${OVD.pics[d] ? '<span class="badge live">바꿈</span>' : '<span class="muted">원래 그림</span>'}<div class="muted" style="font-size:.75rem">${s.w * 64}×${Math.round(s.h * 2)}${(OVD.picN[d] || 1) > 1 ? ` · 장면 ${OVD.picN[d]}장` : ''}</div></div></div>
      <div class="row" style="flex:0 0 auto;gap:4px"><button class="sm primary" onclick="ovDraw1('${k}',${d})">🎨 그리기</button></div></div>`; }).join('')}
    ${hasAnim ? `<label style="display:block;margin-top:8px"><input type="checkbox" style="width:auto;margin:0 6px 0 0;vertical-align:middle" ${OVD.anim ? 'checked' : ''} onchange="OVD.anim=this.checked"> ✨ 원래 움직임(불꽃·김 등) 겹치기</label><p class="muted" style="font-size:.75rem;margin:2px 0 0">원래 움직임 겹치기 · 모양이 많이 다르면 끄기</p>` : ''}
-   <div class="row" style="margin-top:10px"><button onclick="OVD=null;closeModal()">취소</button><button onclick="ovPresetPick('${k}')">📂 프리셋</button><button class="primary" onclick="ovSave('${k}')">저장</button></div>`);
+   <div class="row" style="margin-top:10px"><button onclick="OVD=null;closeModal()">취소</button><button onclick="ovPresetPick('${k}')">📂 프리셋</button><button onclick="ovAutoOne('${k}')">✨ 자동 다듬기</button><button class="primary" onclick="ovSave('${k}')">저장</button></div>`);
   document.querySelectorAll('#mbox canvas.fprev').forEach(c => { c.style.imageRendering = 'pixelated'; paintPreview(c); });
 }
 async function ovDraw1(k, d) {
@@ -348,6 +384,7 @@ VIEWS.kfurn = () => {
     <div id="kfCats">${FCATS.map(([k, v], i) => `<div class="row" style="gap:4px;margin:3px 0"><input data-k="${k}" value="${esc(v)}" style="flex:1"><button class="sm" onclick="kfCatMove(${i},-1)">▲</button><button class="sm" onclick="kfCatMove(${i},1)">▼</button><button class="sm danger" onclick="kfCatDel(${i})">🗑</button></div>`).join('')}</div>
     <div class="row" style="gap:6px;margin-top:6px"><button onclick="kfCatAdd()">+ 분류 추가</button><button class="primary" onclick="kfCatSave()">분류 저장</button><button onclick="if(confirm('처음 분류로 되돌릴까요?'))B.set('settings/furn',{cats:null},true)">기본으로</button></div></div>
    <div class="panel"><h2>🪑 가구 옮기기 · 숨기기</h2><p class="muted" style="margin:0 0 6px">숨김 = 가구점 미표시 (보유분 유지) · 🎨 기본 그림 수정</p>
+    <div class="row" style="gap:6px;flex-wrap:wrap;margin:0 0 8px"><button onclick="ovAutoAll(false)">✨ 전부 자동 다듬기 (안 바꾼 것만)</button><button class="sm" onclick="ovAutoAll(true)">바꾼 것까지 다시</button></div>
     ${FCATS.map(([ck, cv]) => { const items = all.filter(([k, f]) => f.cat === ck); return `<details ${KF_OPEN === ck ? 'open' : ''} ontoggle="if(this.open)KF_OPEN='${ck}'"><summary><b>${esc(cv)}</b> <span class="muted">${items.length}</span></summary>
       ${items.map(([k, f]) => `<div class="item" style="margin:3px 0;flex-wrap:wrap;gap:6px"><div style="display:flex;align-items:center;gap:6px;min-width:0;flex:1 1 140px"><span style="width:44px;flex:0 0 44px;text-align:center">${fprev(k, null, 40)}</span><span style="min-width:0;overflow-wrap:anywhere">${esc(f.name)}${f.custom ? ' ✏' : ''}</span></div>
         <div class="row" style="flex:1 1 220px;gap:4px;flex-wrap:wrap;justify-content:flex-end;min-width:0"><select style="flex:1 1 90px;min-width:0;width:auto" onchange="kfMove('${k}',this.value)">${FCATS.map(([a, b]) => `<option value="${a}" ${a === ck ? 'selected' : ''}>${esc(b)}</option>`).join('')}</select>${f.custom ? '' : `<button class="sm" onclick="fItemInfo('${k}')">🏷</button><button class="sm" onclick="ovEdit('${k}')">🎨 그림</button>`}<button class="sm ${f.hidden ? 'danger' : ''}" onclick="kfHide('${k}')">${f.hidden ? '🙈 숨김' : '👁 보임'}</button></div></div>`).join('') || '<p class="muted">비어 있음.</p>'}</details>`; }).join('')}</div>
