@@ -92,8 +92,8 @@ function todSky(p, t, x, y, w, h) {
 const PN = { cushion: '쿠션', sheet: '시트', pattern: '무늬', border: '테두리', rose: '장미', runner: '러너', cloth: '천', wood: '나무', metal: '장식', stone: '돌', leaf: '잎', pot: '화분', glass: '유리', curtain: '커튼', frame: '틀', body: '몸', fur: '털', paper: '종이', light: '불빛', hair: '머리카락', face: '얼굴', gold: '금박', thread: '실' };
 const FURN = {
   /* ===== 침실 ===== */
-  bed: { name: '침대', cat: 'bed', cost: 60, hi: true, dirs: [0, 1, 2, 3], grow: { 0: 1, 2: 1 }, dims: d => d % 2 ? { w: 3, d: 2, h: 75 } : { w: 3, d: 3, h: 110 },
-    parts: { a: ['cloth', '#a8344a'], b: ['wood', '#8a5530'], c: ['sheet', '#f1e6cc'] }, drawHi(p, t, C, dir) { if (dir % 2) BEDHI.side(p, t, C); else BEDHI.front(p, t, C, dir === 2); } },
+  bed: { name: '침대', cat: 'bed', cost: 60, hi: true, dirs: [0, 1, 2, 3], dims: d => d % 2 ? { w: 3, d: 2, h: 75 } : { w: 3, d: 3, h: 110 },
+    parts: { a: ['cloth', '#a8344a'], b: ['wood', '#8a5530'], c: ['sheet', '#f1e6cc'] }, drawHi(p, t, C, dir) { if (dir % 2) BEDHI.side(p, t, C); else BEDHI.front(p, t, C, dir === 2, 192); } },
   canopy: { name: '천개 침대', cat: 'bed', cost: 220, hi: true, dims: () => ({ w: 3, d: 3, h: 150 }), parts: { a: ['curtain', '#6a2a5a'], b: ['wood', '#5a3a24'], c: ['sheet', '#f1e6cc'] }, drawHi(p, t, C) { CANOPYHI(p, t, C); } },
   sbed: { name: '작은 침대', cat: 'bed', cost: 40, hi: true, dims: () => ({ w: 1, d: 3, h: 104 }), parts: { a: ['cloth', '#3a5a8a'], b: ['wood', '#c4864e'], c: ['sheet', '#f1e6cc'] }, drawHi(p, t, C) { SBEDHI(p, t, C); } },
   nstand: { name: '협탁', cat: 'bed', cost: 20, hi: true, dims: () => ({ w: 1, d: 1, h: 44 }), parts: { b: ['wood', '#8a5530'], a: ['light', '#f1e6cc'] }, drawHi(p, t, C) { NSTANDHI(p, t, C); } },
@@ -254,28 +254,28 @@ function hpost(p, x, y, h, B, M) { const { c, orr, el } = p;
   orr(x, y, 14, h, B.f, B.o, 3); c(x + 2, y + 2, 3, h - 4, B.l); c(x + 3, y + 2, 1, h - 4, B.L); c(x + 10, y + 2, 2, h - 4, B.d);
   c(x, y + 10, 14, 3, B.o); c(x + 1, y + 11, 12, 1, B.l); el(x + 7, y - 2, 8, 7, B.o); el(x + 7, y - 2, 7, 6, B.t); el(x + 5, y - 4, 3, 3, B.L); c(x + 6, y - 9, 2, 3, M.t); }
 const BEDHI = {
-  front(p, t, C, back) { const { c, orr, el } = p, A = C.a, B = C.b, S = C.c, M = ramp(GOLD);
+  front(p, t, C, back, W) { const { c, orr, el } = p, A = C.a, B = C.b, S = C.c, M = ramp(GOLD); W = W || 128; const X = W - 128, m = W / 2;   // W: 그림 폭 (2칸 128 · 3칸 192), 가운데 기준으로 고르게 넓힘
     if (!back) { // 머리판
-      orr(8, 4, 112, 58, B.t, B.o, 16); c(18, 7, 92, 3, B.L); c(12, 12, 104, 2, B.l);
-      orr(20, 16, 88, 40, B.f, B.d, 10); orr(23, 19, 82, 34, B.t, B.d, 8); hgrain(p, 26, 22, 76, 28, B, 3);
-      el(64, 30, 12, 7, B.o); el(64, 30, 11, 6, M.t); el(62, 28, 6, 3, M.L); c(52, 30, 24, 1, M.f); c(40, 22, 2, 2, M.t); c(86, 22, 2, 2, M.t);
-      hpost(p, 0, 8, 54, B, M); hpost(p, 114, 8, 54, B, M);
+      orr(8, 4, 112 + X, 58, B.t, B.o, 16); c(18, 7, 92 + X, 3, B.L); c(12, 12, 104 + X, 2, B.l);
+      orr(20, 16, 88 + X, 40, B.f, B.d, 10); orr(23, 19, 82 + X, 34, B.t, B.d, 8); hgrain(p, 26, 22, 76 + X, 28, B, 3);
+      el(m, 30, 12, 7, B.o); el(m, 30, 11, 6, M.t); el(m - 2, 28, 6, 3, M.L); c(m - 12, 30, 24, 1, M.f); c(40 + X / 4, 22, 2, 2, M.t); c(86 + X * 3 / 4, 22, 2, 2, M.t);
+      hpost(p, 0, 8, 54, B, M); hpost(p, 114 + X, 8, 54, B, M);
     }
     // 프레임 · 매트리스
-    c(4, 50, 120, 150, B.o); c(6, 50, 116, 148, B.f); hgrain(p, 6, 60, 4, 130, B, 9, true); hgrain(p, 118, 60, 4, 130, B, 11, true);
-    p.rr(10, back ? 70 : 52, 108, back ? 112 : 132, S.f, 6); p.rr(11, back ? 71 : 53, 106, back ? 110 : 130, S.t, 5); c(13, back ? 72 : 54, 102, 2, S.L);
-    if (!back) { hpillow(p, 11, 53, 52, 38, S); hpillow(p, 65, 53, 52, 38, S); }
+    c(4, 50, 120 + X, 150, B.o); c(6, 50, 116 + X, 148, B.f); hgrain(p, 6, 60, 4, 130, B, 9, true); hgrain(p, 118 + X, 60, 4, 130, B, 11, true);
+    p.rr(10, back ? 70 : 52, 108 + X, back ? 112 : 132, S.f, 6); p.rr(11, back ? 71 : 53, 106 + X, back ? 110 : 130, S.t, 5); c(13, back ? 72 : 54, 102 + X, 2, S.L);
+    if (!back) { const pw = 52 + X / 2; hpillow(p, 11, 53, pw, 38, S); hpillow(p, 13 + pw, 53, pw, 38, S); }
     // 이불
-    const top = back ? 76 : 94; hblanket(p, 1, top, 126, 196 - top, A, 0);
-    if (!back) hfold(p, 3, top - 2, 122, S);
-    if (back) { orr(0, 48, 128, 26, B.t, B.o, 5); c(4, 50, 120, 3, B.L); c(3, 60, 122, 10, B.f); hgrain(p, 8, 62, 112, 6, B, 23); hpost(p, 0, 50, 26, B, M); hpost(p, 114, 50, 26, B, M); }
+    const top = back ? 76 : 94; hblanket(p, 1, top, 126 + X, 196 - top, A, 0);
+    if (!back) hfold(p, 3, top - 2, 122 + X, S);
+    if (back) { orr(0, 48, 128 + X, 26, B.t, B.o, 5); c(4, 50, 120 + X, 3, B.L); c(3, 60, 122 + X, 10, B.f); hgrain(p, 8, 62, 112 + X, 6, B, 23); hpost(p, 0, 50, 26, B, M); hpost(p, 114 + X, 50, 26, B, M); }
     // 발판
-    if (!back) { orr(0, 186, 128, 30, B.t, B.o, 5); c(4, 188, 120, 3, B.L); } c(3, 200, 122, 12, B.f); c(3, 200, 122, 1, B.d); hgrain(p, 8, 202, 112, 8, B, 21);
-    orr(54, 192, 20, 7, M.t, M.o, 2); c(56, 193, 8, 2, M.L);
-    c(4, 214, 9, 6, B.o); c(115, 214, 9, 6, B.o);
+    if (!back) { orr(0, 186, 128 + X, 30, B.t, B.o, 5); c(4, 188, 120 + X, 3, B.L); } c(3, 200, 122 + X, 12, B.f); c(3, 200, 122 + X, 1, B.d); hgrain(p, 8, 202, 112 + X, 8, B, 21);
+    orr(m - 10, 192, 20, 7, M.t, M.o, 2); c(m - 8, 193, 8, 2, M.L);
+    c(4, 214, 9, 6, B.o); c(115 + X, 214, 9, 6, B.o);
     if (back) { // 뒤에서 본 높은 머리판
-      orr(6, 150, 116, 66, B.f, B.o, 14); for (let x = 12; x < 118; x += 13) { c(x, 156, 11, 56, B.t); c(x, 156, 2, 56, B.l); c(x + 10, 156, 1, 56, B.d); }
-      c(10, 154, 108, 3, B.L); hpost(p, 0, 156, 62, B, M); hpost(p, 114, 156, 62, B, M); c(4, 214, 120, 4, B.d); }
+      orr(6, 150, 116 + X, 66, B.f, B.o, 14); for (let x = 12; x < 118 + X; x += 13) { c(x, 156, 11, 56, B.t); c(x, 156, 2, 56, B.l); c(x + 10, 156, 1, 56, B.d); }
+      c(10, 154, 108 + X, 3, B.L); hpost(p, 0, 156, 62, B, M); hpost(p, 114 + X, 156, 62, B, M); c(4, 214, 120 + X, 4, B.d); }
   },
   side(p, t, C) { const { c, orr, el } = p, A = C.a, B = C.b, S = C.c, M = ramp(GOLD);    // 머리가 왼쪽, 192×150
     c(10, 40, 172, 82, B.o); c(12, 40, 168, 80, B.f);
