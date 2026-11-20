@@ -366,7 +366,7 @@ const AVLOCAL = {};   // uid → { x, y, tx, ty, t0, dir }
 const AVFAKE = [];    // KP 시험용 손님
 function avPosNow(s) { if (!s) return null; const dx = s.tx - s.x, dy = s.ty - s.y, d = Math.hypot(dx, dy); if (d < .5) return { x: s.tx, y: s.ty, moving: false, dir: s.pose ? s.pose.dir : s.dir || 0, pose: s.pose || null }; const k = Math.min(1, (Date.now() - s.t0) / 1000 * AVSPD / d);
   return { x: s.x + dx * k, y: s.y + dy * k, moving: k < 1, dir: k >= 1 && s.pose ? s.pose.dir : Math.abs(dx) > Math.abs(dy) ? (dx < 0 ? 1 : 3) : (dy < 0 ? 2 : 0), pose: k >= 1 ? s.pose || null : null }; }
-const avHome = () => ({ x: OX + COLS * T / 2, y: FY + ROWS * T * .62 });
+const avHome = () => ({ x: OX + COLS * T / 2, y: FY + 6 * T * .62 });   // 가운데 (가장 작은 방 안)
 /* 이 방에 그릴 토큰들 */
 function avRoomList(room, owner) {
   if (!owner || (!avOn() && owner !== AVTEST_ROOM)) return []; const out = [], now = Date.now();
@@ -392,7 +392,8 @@ function avDrawList(g, list, maxDepth) {
     g.restore(); });
 }
 function avWalkTo(owner, x, y) {
-  x = Math.max(OX + 8, Math.min(OX + COLS * T - 8, x)); y = Math.max(FY + 6, Math.min(FY + ROWS * T - 2, y));
+  const rb = typeof roomBounds === 'function' ? roomBounds(owner === AVTEST_ROOM ? (AVTEST_SRC && PROGS.some(p => p.id === AVTEST_SRC) ? hoRoom(AVTEST_SRC) : PROF.ho ? myRoom() : hoRoom('__avtest')) : hoRoom(owner)) : { c0: 0, cols: COLS, rows: ROWS }, X0 = OX + rb.c0 * T;
+  x = Math.max(X0 + 8, Math.min(X0 + rb.cols * T - 8, x)); y = Math.max(FY + 6, Math.min(FY + rb.rows * T - 2, y));
   const cur = avPosNow(AVLOCAL[ME.uid]) || (AVLOCAL[ME.uid] = null, avStartPos(owner)); const dir = Math.abs(x - cur.x) > Math.abs(y - cur.y) ? (x < cur.x ? 1 : 3) : (y < cur.y ? 2 : 0);
   AVLOCAL[ME.uid] = { x: cur.x, y: cur.y, tx: x, ty: y, t0: Date.now(), dir, room: owner };
   if (owner === ME.uid && P.avatar) { P.avatar.home = { x: Math.round(x), y: Math.round(y) }; clearTimeout(avWalkTo.sv); avWalkTo.sv = setTimeout(saveP, 3000); }
@@ -406,7 +407,7 @@ setInterval(() => {
   if (where && where !== AV_HERE) { AV_HERE = where; const st = avStartPos(where); AVLOCAL[ME.uid] = { x: st.x, y: st.y, tx: st.x, ty: st.y, t0: Date.now(), dir: 0, room: where }; avPush(where); }
   else if (!where && AV_HERE) { AV_HERE = null; B.set('avpos/' + ME.uid, { room: null, seen: Date.now() }).catch(() => {}); }
   else if (where && Date.now() - ((AVPOS.find(a => a.id === ME.uid) || {}).seen || 0) > 25000) avPush(where);
-  AVFAKE.forEach(f => { const p = avPosNow(f); if (!p.moving && Math.random() < .25) { const cur = p; f.x = cur.x; f.y = cur.y; f.tx = OX + 20 + Math.random() * (COLS * T - 40); f.ty = FY + 10 + Math.random() * (ROWS * T - 16); f.t0 = Date.now(); } });
+  AVFAKE.forEach(f => { const p = avPosNow(f); if (!p.moving && Math.random() < .25) { const cur = p; f.x = cur.x; f.y = cur.y; const rb = roomBounds(AVTEST_RC ? AVTEST_RC.room : PROF.ho ? myRoom() : hoRoom('__avtest')); f.tx = OX + rb.c0 * T + 20 + Math.random() * (rb.cols * T - 40); f.ty = FY + 10 + Math.random() * (rb.rows * T - 16); f.t0 = Date.now(); } });
 }, 1000);
 const avMoving = list => list.some(a => a.step);
 /* 방 탭 → 빈 바닥이면 걸어가기 */
@@ -769,7 +770,7 @@ VIEWS.kavatar = () => {
     <button class="${AVCFG.open ? 'danger' : ''}" onclick="avOpenToggle()">${AVCFG.open ? '🔒 다시 KP만 보기' : '🌐 모두에게 공개'}</button></div>
     <div class="row" style="gap:6px;align-items:center;margin:8px 0 4px"><span class="muted" style="font-size:.8rem;flex:0 0 auto">시험할 방</span><select onchange="AVTEST_SRC=this.value;AVLOCAL[ME.uid]&&(AVLOCAL[ME.uid].pose=null);AVFAKE.forEach(f=>f.pose=null)">${avTestRooms().map(([v, n]) => `<option value="${v}" ${AVTEST_SRC === v ? 'selected' : ''}>${esc(n)}</option>`).join('')}</select></div>
     <p class="muted" style="font-size:.8rem;margin:0 0 4px">바닥 터치 → 이동 · PL 방은 가구 배치만 빌려와서 보기만 함 (그 방엔 아무것도 안 남음)</p>
-    <canvas id="avTestCv" class="roomcv" width="${RW * 2}" height="${RH * 2}"></canvas></div>
+    ${roomCvHtml(AVTEST_SRC && PROGS.some(p => p.id === AVTEST_SRC) ? hoRoom(AVTEST_SRC) : PROF.ho ? myRoom() : hoRoom('__avtest'), 'roomcv', 'avTestCv')}</div>
    <div class="panel"><div class="row" style="justify-content:space-between;align-items:center"><h2 style="margin:0">🧥 KP가 만든 옷</h2><button class="primary" style="flex:0 0 auto" onclick="wfNew('one','kp')">＋ 새 옷</button></div>
     ${kpW.map(w => `<div class="item" style="margin:4px 0"><div style="display:flex;align-items:center;gap:8px"><img src="${(w.pics || {})[0] || ''}" style="height:48px;image-rendering:pixelated;background:#2a2420"><div><b>${esc(w.name)}</b><div class="muted" style="font-size:.78rem">${esc((AV_SLOTS.find(s => s[0] === w.slot) || [, ''])[1])} · ${w.cost || 0} 은화${w.sell === false ? ' · 판매 안 함' : ''}</div></div></div><div class="row" style="flex:0 0 auto;gap:4px"><button class="sm" onclick="wfEdit('${w.id}')">고치기</button><button class="sm danger" onclick="wfDel('${w.id}')">지우기</button></div></div>`).join('') || '<p class="muted">없음</p>'}</div>
    ${avOvSection()}

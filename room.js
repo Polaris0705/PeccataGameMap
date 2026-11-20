@@ -6,6 +6,19 @@
    ============================================================ */
 const T = 32, COLS = 12, ROWS = 9, OX = 12, OY = 12, WALL_H = 120;
 const FY = OY + WALL_H, RW = OX * 2 + COLS * T, RH = FY + ROWS * T + OY;   // 408 × 444
+/* 방 크기: 처음엔 작게, 가구점 '증축 공사'로 넓힘 (가장 큰 방 = 12×9) — 방은 가운데에 놓이고 화면은 방에 맞춰 확대 */
+const ROOM_SIZES = [[8, 6], [9, 7], [10, 7], [11, 8], [12, 9]], ROOM_EXT_COST = [0, 300, 500, 800, 1200];
+function roomFitsLv(room, lv) { const [cols, rows] = ROOM_SIZES[lv], c0 = Math.floor((COLS - cols) / 2);
+  return (room.items || []).every(i => { if (!FURN[i.k]) return true; const w = fw(i.k, i.dir); if (i.c < c0 || i.c + w > c0 + cols) return false; return i.r < 0 || i.r + fd(i.k, i.dir) <= rows; }); }
+function roomLv(room) { const lv = room && room.sz != null ? room.sz : room && room.ext != null ? room.ext : 4; return Math.max(0, Math.min(4, lv | 0)); }
+function roomBounds(room) { const [cols, rows] = ROOM_SIZES[roomLv(room)]; return { c0: Math.floor((COLS - cols) / 2), cols, rows }; }
+let RB = { c0: 0, cols: COLS, rows: ROWS };   // 지금 그리는 방 경계 (그리기 함수용)
+/* 화면에 보일 범위(방 + 테두리) */
+function roomView(room) { const b = roomBounds(room), x = OX + b.c0 * T - 10, w = b.cols * T + 20, h = FY + b.rows * T + 10; return { x, y: 0, w, h }; }
+/* 방 캔버스: 방 크기에 맞춰 잘라 보이게 (캔버스는 그대로, 바깥 틀이 잘라냄) */
+function roomCvHtml(room, cls, id) { const v = roomView(room), r = v => +v.toFixed(4);
+  return `<div class="rcwrap" style="position:relative;overflow:hidden;width:100%;max-width:540px;margin:10px auto 0;aspect-ratio:${r(v.w)}/${r(v.h)};border:2px solid var(--line);border-radius:6px;background:#120c08">
+    <canvas id="${id || 'roomCv'}" class="${cls}" width="${RW * 2}" height="${RH * 2}" style="position:absolute;max-width:none;margin:0;border:0;border-radius:0;width:${r(RW / v.w * 100)}%;left:${r(-v.x / v.w * 100)}%;top:${r(-v.y / v.h * 100)}%"></canvas></div>`; }
 
 /* ---------- 색 · 램프 ---------- */
 const OL = '#24160e', K = OL, GOLD = '#e0b050', GOLD2 = '#ffe27a', GOLDD = '#a07028';
@@ -1713,7 +1726,7 @@ const FLOORS = {
   marble: { name: '대리석', cost: 100, col: '#e4e0d8' }, hex: { name: '육각 타일', cost: 60, col: '#4f8a7a' }, darkwood: { name: '어두운 마루', cost: 50, col: '#5a3a28' },
 };
 function drawWall(g, k, t, col) {
-  const R = (x, y, w, h, c) => { g.fillStyle = c; g.fillRect(x, y, w, h); }, X = OX, Y = OY, W = COLS * T, H = WALL_H;
+  const R = (x, y, w, h, c) => { g.fillStyle = c; g.fillRect(x, y, w, h); }, X = OX + RB.c0 * T, Y = OY, W = RB.cols * T, H = WALL_H;
   const C = ramp(col || (WALLS[k] || WALLS.plain).col);
   R(X, Y, W, H, C.t);
   if (k === 'plain') for (let x = X; x < X + W; x += 24) { R(x, Y, 2, H, C.f); R(x + 2, Y, 1, H, C.l); }
@@ -1731,8 +1744,8 @@ function drawWall(g, k, t, col) {
   R(X, Y, W, 6, 'rgba(0,0,0,.22)'); R(X, Y + H - 10, W, 10, '#93592f'); R(X, Y + H - 10, W, 2, '#dca468'); R(X, Y + H - 2, W, 2, '#5a3a24');
 }
 function drawFloor(g, k, col) {
-  const R = (x, y, w, h, c) => { g.fillStyle = c; g.fillRect(x, y, w, h); }, X = OX, Y = FY, W = COLS * T, H = ROWS * T;
-  const C = ramp(col || (FLOORS[k] || FLOORS.plank).col);
+  const R = (x, y, w, h, c) => { g.fillStyle = c; g.fillRect(x, y, w, h); }, X = OX + RB.c0 * T, Y = FY, W = RB.cols * T, H = RB.rows * T;
+  const C = floorCalm(ramp(col || (FLOORS[k] || FLOORS.plank).col));
   if (k === 'checker') { const L2 = ramp(hslHex(hexHsl(C.t)[0], .12, .86)); for (let y = 0; y < H; y += 24) for (let x = 0; x < W; x += 24) { const d = ((x + y) / 24) % 2; R(X + x, Y + y, 24, 24, d ? C.t : L2.t); R(X + x, Y + y, 24, 2, d ? C.l : L2.L); R(X + x, Y + y + 22, 24, 2, d ? C.f : L2.f); } }
   else if (k === 'carpet') { R(X, Y, W, H, C.t); for (let y = 8; y < H; y += 24) for (let x = (y % 48 > 24 ? 12 : 0); x < W; x += 24) { R(X + x + 4, Y + y, 4, 2, C.l); R(X + x + 2, Y + y + 2, 8, 2, C.l); R(X + x + 4, Y + y + 4, 4, 2, C.l); } R(X, Y + 4, W, 4, '#c9a96a'); R(X, Y + H - 8, W, 4, '#c9a96a'); for (let i = 0; i < 300; i++) R(X + hsh(i, 1) % W, Y + hsh(i, 2) % H, 1, 1, C.f); }
   else if (k === 'stone') { R(X, Y, W, H, C.d); for (let y = 0, r = 0; y < H; y += 24, r++) for (let x = (r % 2) * -24; x < W; x += 48) { const v = hsh(x, r) % 3, cs = [C.t, C.l, C.f][v], xx = Math.max(0, x + 2), ww = Math.min(46, W - xx); R(X + xx, Y + y + 2, ww, 22, cs); R(X + xx, Y + y + 2, ww, 2, C.L); if (hsh(r, x) % 4 === 0) R(X + xx + 12, Y + y + 12, 6, 1, C.d); } }
@@ -1742,12 +1755,19 @@ function drawFloor(g, k, col) {
   else if (k === 'hex') { R(X, Y, W, H, C.d); for (let y = 0, r = 0; y < H + 16; y += 16, r++) for (let x = (r % 2) * 14 - 14; x < W; x += 28) { for (let i = 0; i < 14; i++) { const ww = 12 + (i < 4 ? i * 2 : i > 9 ? (13 - i) * 2 : 8); const yy = y + i, xx = x + 14 - Math.round(ww / 2); if (yy >= 0 && yy < H) R(X + Math.max(0, xx), Y + yy, Math.min(ww, W - Math.max(0, xx)), 1, i < 2 ? C.l : (hsh(x, r) % 3 ? C.t : C.f)); } } }
   else { const dark = k === 'darkwood'; R(X, Y, W, H, C.t); for (let x = 0, cI = 0; x < W; x += 24, cI++) { R(X + x, Y, 2, H, C.f); R(X + x + 2, Y, 1, H, C.l);
       for (let y = (cI * 37) % 80; y < H; y += 80) R(X + x, Y + y, 24, 2, C.f); for (let i = 0; i < 10; i++) R(X + x + 5 + (i % 4) * 4, Y + hsh(cI, i) % H, 1, 4 + (i % 3) * 2, dark ? C.d : C.f); } }
-  R(X, Y, W, 6, 'rgba(0,0,0,.18)'); R(X, Y + 6, W, 3, 'rgba(0,0,0,.08)');
+  // 벽 아래 그늘 (벽에서 바닥으로 번지는 어둠)
+  for (let i = 0; i < 6; i++) R(X, Y + i * 3, W, 3, `rgba(20,10,4,${(.26 - i * .04).toFixed(2)})`);
 }
+/* 바닥 차분하게: 명암 단계 사이를 좁히고 채도·밝기를 조금 낮춤 (이음매가 덜 튐) */
+function floorCalm(C) { const m = (a, b, t) => { const A = [1, 3, 5].map(i => parseInt(a.slice(i, i + 2), 16)), B = [1, 3, 5].map(i => parseInt(b.slice(i, i + 2), 16)); return '#' + A.map((v, i) => Math.round(v + (B[i] - v) * t).toString(16).padStart(2, '0')).join(''); };
+  const base = m(C.t, '#5a4a40', .14), o = {}; Object.keys(C).forEach(k => { o[k] = typeof C[k] === 'string' && C[k][0] === '#' ? m(m(C[k], base, .45), '#5a4a40', .1) : C[k]; }); o.t = base; return o; }
+/* 방 가장자리를 살짝 어둡게 (비네팅) */
+function drawVignette(g) { const X = OX + RB.c0 * T, W = RB.cols * T, Y = OY, H = WALL_H + RB.rows * T;
+  for (let i = 0; i < 10; i++) { const a = (.12 - i * .012).toFixed(3), c = `rgba(18,8,2,${a})`; g.fillStyle = c; g.fillRect(X + i * 2, Y, 2, H); g.fillRect(X + W - (i + 1) * 2, Y, 2, H); g.fillRect(X, Y + H - (i + 1) * 2, W, 2); } }
 function drawFrame(g, col) {
-  const R = (x, y, w, h, c) => { g.fillStyle = c; g.fillRect(x, y, w, h); }, C = ramp(col || '#5a3a22');
-  R(0, 0, RW, RH, '#120c08'); R(OX - 8, OY - 8, COLS * T + 16, WALL_H + ROWS * T + 16, C.t); R(OX - 7, OY - 7, COLS * T + 14, 2, C.L); R(OX - 8, OY + WALL_H + ROWS * T + 6, COLS * T + 16, 2, C.d);
-  R(OX - 2, OY - 2, COLS * T + 4, WALL_H + ROWS * T + 4, C.o);
+  const R = (x, y, w, h, c) => { g.fillStyle = c; g.fillRect(x, y, w, h); }, C = ramp(col || '#5a3a22'), X = OX + RB.c0 * T, W = RB.cols * T, H = WALL_H + RB.rows * T;
+  R(0, 0, RW, RH, '#120c08'); R(X - 8, OY - 8, W + 16, H + 16, C.t); R(X - 7, OY - 7, W + 14, 2, C.L); R(X - 8, OY + H + 6, W + 16, 2, C.d);
+  R(X - 2, OY - 2, W + 4, H + 4, C.o);
 }
 
 /* ---------- 방 데이터 ---------- */
@@ -1775,7 +1795,7 @@ function defCol(k) { const f = FURN[k], o = {}; if (f && f.parts) Object.entries
 function colsOf(it) { const d = defCol(it.k), m = Object.assign({}, d, it.col || {}), o = {}; ['a', 'b', 'c'].forEach(s => o[s] = ramp(m[s] || d.a || '#888888')); return o; }
 function defaultRoom() {
   return { v: 4, wall: 'plain', floor: 'plank', ow: ['plain', 'plank'], cols: { wall: {}, floor: {}, frame: '' }, arc: { wall: {}, floor: {}, frame: 0 }, inv: {}, invc: [], dye: 0,
-    items: [{ id: rmId(), k: 'bed', c: 0, r: 0 }, { id: rmId(), k: 'desk', c: 8, r: 0 }, { id: rmId(), k: 'chair', c: 9, r: 1 }, { id: rmId(), k: 'window', c: 4, r: -1 }] };
+    ext: 0, sz: 0, items: [{ id: rmId(), k: 'bed', c: 2, r: 0 }, { id: rmId(), k: 'desk', c: 7, r: 0 }, { id: rmId(), k: 'chair', c: 8, r: 1 }, { id: rmId(), k: 'window', c: 5, r: -1 }] };
 }
 function dimsOf(k, dir) { const f = FURN[k]; if (!f) return { w: 1, d: 1, h: 0 }; if (f.dims) return f.dims(dir || 0); return { w: f.w || 1, d: f.wall ? 0 : (f.d || 1), h: f.h }; }
 const fw = (k, dir) => dimsOf(k, dir).w, fd = (k, dir) => (FURN[k] || {}).wall ? 0 : dimsOf(k, dir).d;
@@ -1793,13 +1813,15 @@ function migrateRoom(r) {
     r.cols = r.cols || { wall: {}, floor: {}, frame: '' }; r.arc = r.arc || { wall: {}, floor: {}, frame: 0 }; r.dye = r.dye || 0;
     // 새 크기에서 자리가 안 맞는 가구는 보관함으로
     const keep = []; r.items.forEach(i => { if (!FURN[i.k]) return; const tmp = { items: keep }; if (fits(tmp, i.k, i.c, i.r)) keep.push(i); else { const s = nearFree(tmp, i.k, i.c, i.r); if (s) keep.push(Object.assign(i, s)); else r.invc.push({ id: rmId(), k: i.k, col: i.col || null, rc: i.rc || 0 }); } }); r.items = keep; }
+  if (r.ext == null) { let lv = 0; while (lv < 4 && !roomFitsLv(r, lv)) lv++; r.ext = lv; r.sz = lv; ch = true; }   // 방 크기 (예전 방은 가구가 다 들어가는 크기로)
   r.cols = r.cols || { wall: {}, floor: {}, frame: '' }; r.cols.wall = r.cols.wall || {}; r.cols.floor = r.cols.floor || {}; r.arc = r.arc || { wall: {}, floor: {}, frame: 0 }; r.arc.wall = r.arc.wall || {}; r.arc.floor = r.arc.floor || {}; r.invc = r.invc || []; r.dye = r.dye || 0;
   return ch;
 }
 function nearFree(room, k, c0, r0, dir, skip) {
   const f = FURN[k]; if (!f) return null; const cand = [], W = fw(k, dir);
-  if (f.wall) { for (let c = 0; c <= COLS - W; c++) cand.push({ c, r: -1, d: Math.abs(c - c0) }); }
-  else for (let r = 0; r <= ROWS - fd(k, dir); r++) for (let c = 0; c <= COLS - W; c++) cand.push({ c, r, d: Math.abs(c - c0) + Math.abs(r - r0) * 1.2 });
+  const b = roomBounds(room);
+  if (f.wall) { for (let c = b.c0; c <= b.c0 + b.cols - W; c++) cand.push({ c, r: -1, d: Math.abs(c - c0) }); }
+  else for (let r = 0; r <= b.rows - fd(k, dir); r++) for (let c = b.c0; c <= b.c0 + b.cols - W; c++) cand.push({ c, r, d: Math.abs(c - c0) + Math.abs(r - r0) * 1.2 });
   cand.sort((a, b) => a.d - b.d); return cand.find(s => fits(room, k, s.c, s.r, skip, dir)) || null;
 }
 let ROOM_SAVE_T = 0;
@@ -1830,18 +1852,18 @@ const layerOf = f => f.wall ? 0 : f.flat ? 1 : f.top ? 3 : 2;
 const SEATS = { chair: 1, stool: 1, armchair: 1 }, TABLES = { desk: 1, ctable: 1, rtable: 1, dtable: 1, teaset: 1, dresser: 1 };
 const canOverlap = (a, b) => (SEATS[a] && TABLES[b]) || (SEATS[b] && TABLES[a]);
 function fits(room, k, c, r, skipId, dir) {
-  const f = FURN[k]; if (!f) return false; const w = fw(k, dir);
-  if (c < 0 || c + w > COLS) return false;
+  const f = FURN[k]; if (!f) return false; const w = fw(k, dir), b = room.items && room.sz == null && room.ext == null && !room.v ? { c0: 0, cols: COLS, rows: ROWS } : roomBounds(room);
+  if (c < b.c0 || c + w > b.c0 + b.cols) return false;
   if (f.wall) return r === -1 && !room.items.some(i => { if (i.id === skipId || i.r !== -1 || !FURN[i.k]) return false; return c < i.c + fw(i.k, i.dir) && i.c < c + w; });
-  const d = fd(k, dir); if (r < 0 || r + d > ROWS) return false;
+  const d = fd(k, dir); if (r < 0 || r + d > b.rows) return false;
   return !room.items.some(i => { if (i.id === skipId || i.r < 0) return false; const g = FURN[i.k]; if (!g || g.wall || layerOf(g) !== layerOf(f) || canOverlap(k, i.k)) return false;
     return c < i.c + fw(i.k, i.dir) && i.c < c + w && r < i.r + fd(i.k, i.dir) && i.r < r + d; });
 }
-function spotAt(k, x, y, dir) {
-  const f = FURN[k]; if (!f) return null; const W = fw(k, dir), D = fd(k, dir);
-  const c = Math.max(0, Math.min(COLS - W, Math.round((x - OX) / T - W / 2)));
+function spotAt(k, x, y, dir, room) {
+  const f = FURN[k]; if (!f) return null; const W = fw(k, dir), D = fd(k, dir), b = room ? roomBounds(room) : { c0: 0, cols: COLS, rows: ROWS };
+  const c = Math.max(b.c0, Math.min(b.c0 + b.cols - W, Math.round((x - OX) / T - W / 2)));
   if (f.wall) return { c, r: -1 };
-  return { c, r: Math.max(0, Math.min(ROWS - D, Math.round((y - FY) / T - D / 2))) };
+  return { c, r: Math.max(0, Math.min(b.rows - D, Math.round((y - FY) / T - D / 2))) };
 }
 function itemBox(i, room) {
   const f = FURN[i.k]; if (!f) return null; const dm = dimsOf(i.k, i.dir);
@@ -1912,11 +1934,11 @@ function roomSig(cv, room, opts) {
 function paintRoomLazy(cv, room, opts) { if (!cv) return; const cssW = cv.clientWidth || RW * 2, want = Math.max(RW, Math.round(cssW * (window.devicePixelRatio || 1)));
   if (Math.abs(cv.width - want) > 1 || cv._sig !== roomSig(cv, room, opts)) paintRoom(cv, room, opts); }
 function paintRoomTo(cv, g, room, opts) {
-  g.imageSmoothingEnabled = false; const S = cv.width / RW; snapCtx(g, S);
+  RB = roomBounds(room); g.imageSmoothingEnabled = false; const S = cv.width / RW; snapCtx(g, S);
   const t = RM.t, edit = opts && opts.edit;
   drawFrame(g, room.cols.frame); drawWall(g, WALLS[room.wall] ? room.wall : 'plain', t, wallCol(room)); drawFloor(g, FLOORS[room.floor] ? room.floor : 'plank', floorCol(room));
-  if (edit) { g.fillStyle = 'rgba(255,255,255,.09)'; for (let c = 0; c <= COLS; c++) g.fillRect(OX + c * T, FY, 1, ROWS * T); for (let r = 0; r <= ROWS; r++) g.fillRect(OX, FY + r * T, COLS * T, 1);
-    for (let c = 0; c <= COLS; c++) g.fillRect(OX + c * T, OY + 4, 1, WALL_H - 16); }
+  if (edit) { g.fillStyle = 'rgba(255,255,255,.09)'; const X0 = OX + RB.c0 * T; for (let c = 0; c <= RB.cols; c++) g.fillRect(X0 + c * T, FY, 1, RB.rows * T); for (let r = 0; r <= RB.rows; r++) g.fillRect(X0, FY + r * T, RB.cols * T, 1);
+    for (let c = 0; c <= RB.cols; c++) g.fillRect(X0 + c * T, OY + 4, 1, WALL_H - 16); }
   const dragId = RM.drag && RM.drag.moved ? RM.drag.id : null;
   const OWN = AV_PAINT_OWNER || (cv.id === 'roomCv' ? (tab === 'room' ? ME.uid : RV) : null), CUO = !edit && !cv.classList.contains('rthumb') ? OWN : null;
   const AVL = (typeof avRoomList === 'function' && !edit && !cv.classList.contains('rthumb')) ? avRoomList(room, OWN) : [];
@@ -1936,6 +1958,7 @@ function paintRoomTo(cv, g, room, opts) {
     drawSprite(g, k, b.x, b.y, t, .65, RM.hover.col, s.dir);
   }
   if (AVL.length) avDrawList(g, AVL, 1e9);
+  if (!cv.classList.contains('rthumb')) drawVignette(g);
   if (CUO) { const ws = room.items.filter(i => CURT_K[i.k] && i.k !== 'canopy'), n = ws.filter(i => curtOn(CUO, i)).length;   // 창문 커튼을 친 만큼 방이 살짝 어두워짐
     if (n) { g.fillStyle = `rgba(14,8,24,${(.24 * n / ws.length).toFixed(3)})`; g.fillRect(0, 0, RW, RH); } }
 }
@@ -1969,9 +1992,9 @@ VIEWS.room = () => {
    <div class="row" style="justify-content:space-between;align-items:center;flex-wrap:wrap;gap:6px">
      <h2 style="margin:0">🏠 ${esc(roomTitle(ME.uid))}</h2>
      <span class="muted">❤ ${likes} · 📖 ${GUESTBOOK.filter(g => g.owner === ME.uid).length} · 🎨 염료 ${room.dye}</span>${typeof fortBadge === 'function' ? fortBadge(P, true) : ''}</div>
-   <canvas id="roomCv" class="roomcv${RM.edit ? ' editing' : ''}" width="${RW * 2}" height="${RH * 2}"></canvas>
+   ${roomCvHtml(room, 'roomcv' + (RM.edit ? ' editing' : ''))}
    <div class="row" style="flex-wrap:wrap;gap:6px;margin-top:8px">
-     <button class="${RM.edit ? 'primary' : ''}" onclick="roomEdit(${!RM.edit})">${RM.edit ? '✔ 꾸미기 끝' : '✏ 꾸미기'}</button>
+     <button class="${RM.edit ? 'primary' : ''}" onclick="roomEdit(${!RM.edit})">${RM.edit ? '✔ 꾸미기 끝' : '✏ 꾸미기'}</button>${RM.edit && (room.ext | 0) > 0 ? `<span class="muted" style="align-self:center;font-size:.85rem">📐 방 크기</span>${ROOM_SIZES.slice(0, (room.ext | 0) + 1).map(([c, r], lv) => `<button class="sm ${roomLv(room) === lv ? 'on' : ''}" onclick="roomSizeSet(${lv})">${c}×${r}</button>`).join('')}` : ''}
      <button onclick="openFurnShop()">🛒 가구점</button>
      <button onclick="SHOPTAB='mine';openFurnShop()">✏ 가구 그리기</button>
      <button onclick="SHOPTAB='auc';openFurnShop()">🔨 경매장</button>
@@ -1998,7 +2021,7 @@ VIEWS.visit = () => {
      <div class="panel roompanel"><div class="row" style="justify-content:space-between;align-items:center;flex-wrap:wrap;gap:6px">
       <h2 style="margin:0">🚪 ${esc(roomTitle(RV))}</h2>
       ${RV === ME.uid ? `<span class="muted">❤ ${likes.length}</span>` : `<div class="row" style="gap:4px;flex:0 0 auto"><button class="${liked ? 'primary' : ''}" onclick="roomLike('${RV}')">${liked ? '❤' : '🤍'} ${likes.length}</button><button onclick="diaryOpen('${RV}')">📔 일기장</button><button onclick="giftOpen('${RV}')">🎁 선물</button></div>`}</div>
-      ${typeof fortBadge === 'function' ? `<div style="margin:4px 0">${fortBadge(PROGS.find(p => p.id === RV), RV === ME.uid)}</div>` : ''}<canvas id="roomCv" class="roomcv" width="${RW * 2}" height="${RH * 2}"></canvas>${effectsHtml(room)}
+      ${typeof fortBadge === 'function' ? `<div style="margin:4px 0">${fortBadge(PROGS.find(p => p.id === RV), RV === ME.uid)}</div>` : ''}${roomCvHtml(room, 'roomcv')}${effectsHtml(room)}
       ${likes.length ? `<p class="muted" style="margin:6px 0 0">❤ ${likes.map(l => esc(l.name || '')).join(', ')}</p>` : ''}</div>${gbHtml(RV)}`;
   }
   const us = USERS.filter(u => u.ho).sort((a, b) => String(a.ho).localeCompare(String(b.ho)));
@@ -2015,7 +2038,7 @@ let ROOM_CV = null;
 function roomAfter() {
   if (tab !== 'room' && tab !== 'visit') { document.querySelectorAll('#view canvas.fprev').forEach(c => { c.style.imageRendering = 'pixelated'; paintPreview(c); }); return; }
   let cv = document.getElementById('roomCv');
-  if (cv && ROOM_CV && ROOM_CV !== cv && ROOM_CV.dataset.tab === tab) { ROOM_CV.className = cv.className; cv.replaceWith(ROOM_CV); cv = ROOM_CV; }   // 다시 그릴 때 방 캔버스를 그대로 옮겨 씀 (빈 캔버스가 잠깐 보이며 깜빡이지 않게)
+  if (cv && ROOM_CV && ROOM_CV !== cv && ROOM_CV.dataset.tab === tab) { ROOM_CV.className = cv.className; ROOM_CV.style.cssText = cv.style.cssText; cv.replaceWith(ROOM_CV); cv = ROOM_CV; }   // 다시 그릴 때 방 캔버스를 그대로 옮겨 씀 (빈 캔버스가 잠깐 보이며 깜빡이지 않게)
   if (cv) { ROOM_CV = cv; cv.dataset.tab = tab; }
   if (cv) { const uid = tab === 'room' ? ME.uid : RV; paintRoomLazy(cv, hoRoom(uid), { edit: tab === 'room' && RM.edit }); if (tab === 'room') bindRoomCv(cv); else bindViewCv(cv, uid); }
   document.querySelectorAll('canvas.rthumb').forEach(c => paintRoomLazy(c, hoRoom(c.dataset.uid)));
@@ -2062,17 +2085,17 @@ function bindRoomCv(cv) {
     if (!RM.edit) return; const p = cvPos(cv, ev), room = myRoom();
     if (RM.drag && RM.drag.id) {
       if (Math.abs(p.x - RM.drag.x0) + Math.abs(p.y - RM.drag.y0) > 10) RM.drag.moved = true;
-      if (RM.drag.moved) { const it = room.items.find(i => i.id === RM.drag.id); const s = spotAt(it.k, p.x, p.y, it.dir); RM.hover = { k: it.k, c: s.c, r: s.r, skip: it.id, col: it.col, dir: it.dir }; paintRoom(cv, room, { edit: true }); }
-    } else { const x = selInvOf(room); if (x && ev.pointerType === 'mouse') { const s = spotAt(x.k, p.x, p.y, x.dir); RM.hover = { k: x.k, c: s.c, r: s.r, col: x.col, dir: x.dir }; paintRoom(cv, room, { edit: true }); } }
+      if (RM.drag.moved) { const it = room.items.find(i => i.id === RM.drag.id); const s = spotAt(it.k, p.x, p.y, it.dir, room); RM.hover = { k: it.k, c: s.c, r: s.r, skip: it.id, col: it.col, dir: it.dir }; paintRoom(cv, room, { edit: true }); }
+    } else { const x = selInvOf(room); if (x && ev.pointerType === 'mouse') { const s = spotAt(x.k, p.x, p.y, x.dir, room); RM.hover = { k: x.k, c: s.c, r: s.r, col: x.col, dir: x.dir }; paintRoom(cv, room, { edit: true }); } }
   };
   cv.onpointerleave = () => { if (RM.edit && !(RM.drag && RM.drag.id) && RM.hover) { RM.hover = null; paintRoom(cv, myRoom(), { edit: true }); } };
   cv.onpointerup = ev => {
     if (!RM.edit) return; const p = cvPos(cv, ev), room = myRoom(), d = RM.drag; RM.drag = null; window.GAME_LOCK = false;
-    if (d && d.id && d.moved) { const it = room.items.find(i => i.id === d.id); const s = spotAt(it.k, p.x, p.y, it.dir); RM.hover = null; RM.sel = 'id:' + it.id; moveItem(it, s); return; }
-    const inv = selInvOf(room); if (inv) { placeInv(inv, spotAt(inv.k, p.x, p.y, inv.dir)); return; }
+    if (d && d.id && d.moved) { const it = room.items.find(i => i.id === d.id); const s = spotAt(it.k, p.x, p.y, it.dir, room); RM.hover = null; RM.sel = 'id:' + it.id; moveItem(it, s); return; }
+    const inv = selInvOf(room); if (inv) { placeInv(inv, spotAt(inv.k, p.x, p.y, inv.dir, room)); return; }
     const hit = itemAt(room, p.x, p.y);
     if (hit) { RM.sel = RM.sel === 'id:' + hit.id ? null : 'id:' + hit.id; sfx('tap'); render(); return; }
-    if (RM.sel && RM.sel.startsWith('id:')) { const it = room.items.find(i => 'id:' + i.id === RM.sel); if (it) moveItem(it, spotAt(it.k, p.x, p.y, it.dir)); return; }
+    if (RM.sel && RM.sel.startsWith('id:')) { const it = room.items.find(i => 'id:' + i.id === RM.sel); if (it) moveItem(it, spotAt(it.k, p.x, p.y, it.dir, room)); return; }
     render();
   };
   cv.onpointercancel = () => { RM.drag = null; RM.hover = null; window.GAME_LOCK = false; render(); };
@@ -2122,6 +2145,9 @@ function rotateItem(id, inInv) {
     const s = nearFree(room, it.k, it.c, it.r, nd, it.id); if (s && Math.abs(s.c - it.c) + Math.abs(s.r - it.r) <= 3) { it.dir = nd; it.c = s.c; it.r = s.r; sfx('tap'); saveP(); render(); return; } }
   sfx('bad'); toast('돌릴 자리가 없음');
 }
+function roomSizeSet(lv) { const room = myRoom(); if (lv > (room.ext | 0)) return; if (!roomFitsLv(room, lv)) return toast('바깥쪽 가구를 먼저 안쪽으로 옮기기'); room.sz = lv; saveP(); render(); }
+function roomExtBuy() { const room = myRoom(), nx = (room.ext | 0) + 1; if (nx >= ROOM_SIZES.length) return; const c = price(ROOM_EXT_COST[nx]); if (!confirm(`방을 ${ROOM_SIZES[nx].join('×')}칸으로 넓힐까요? (${c} 은화)`)) return; if (!spend(c)) return;
+  room.ext = nx; room.sz = nx; saveP(); sfx('ok'); toast('증축 완료 · ' + ROOM_SIZES[nx].join('×') + '칸'); openFurnShop(); render(); }
 function roomEdit(on) { RM.edit = on; RM.sel = null; RM.hover = null; render(); }
 function roomSet(slot, k) { const room = myRoom(); room[slot] = k; sfx('tap'); saveP(); render(); }
 
@@ -2173,11 +2199,14 @@ let SHOPTAB = 'bed';
 const price = c => Math.round(c * (typeof shopMul === 'function' ? shopMul() : 1));
 function openFurnShop() {
   const room = myRoom();
-  const tabs = [...FCATS, ['wp', '벽지'], ['fl', '바닥'], ['dye', '염료']];
+  const tabs = [...FCATS, ['wp', '벽지'], ['fl', '바닥'], ['dye', '염료'], ['ext', '🔨 증축']];
   if (!tabs.some(([k]) => k === SHOPTAB) && !['mine', 'auc'].includes(SHOPTAB)) SHOPTAB = (FCATS[0] || ['bed'])[0];
   const owned = k => room.invc.filter(x => x.k === k).length + room.items.filter(i => i.k === k).length;
   let list = '';
-  if (SHOPTAB === 'dye') {
+  if (SHOPTAB === 'ext') { const lv = room.ext | 0;
+    list = ROOM_SIZES.map(([c, r], i) => `<div class="item" style="margin:6px 0"><div style="flex:1"><b>${c}×${r}칸</b>${i === lv ? ' <span class="badge live">지금</span>' : i < lv ? ' <span class="muted">완료</span>' : ''}</div>${i === lv + 1 ? `<button onclick="roomExtBuy()" ${P.coins < price(ROOM_EXT_COST[i]) ? 'disabled' : ''}>${price(ROOM_EXT_COST[i])} 은화</button>` : i > lv + 1 ? `<span class="muted">${price(ROOM_EXT_COST[i])} 은화</span>` : ''}</div>`).join('')
+      + '<p class="muted" style="font-size:.82rem">한 단계씩 넓힘 · 넓힌 뒤에도 꾸미기에서 작은 크기로 돌릴 수 있음</p>';
+  } else if (SHOPTAB === 'dye') {
     list = `<div class="item" style="margin:6px 0"><div style="flex:1"><b>🎨 염료</b><div class="muted" style="font-size:.85rem">색을 다시 바꿀 때 1개씩 씀 (첫 한 번은 무료).</div><div>보유 <b>${room.dye}</b>개</div></div>
       <div style="display:flex;flex-direction:column;gap:4px"><button onclick="buyDye(1)" ${P.coins < price(DYE_COST) ? 'disabled' : ''}>1개 · ${price(DYE_COST)} 은화</button><button onclick="buyDye(5)" ${P.coins < price(DYE5_COST) ? 'disabled' : ''}>5개 · ${price(DYE5_COST)} 은화</button></div></div>`;
   } else if (SHOPTAB === 'wp' || SHOPTAB === 'fl') {
