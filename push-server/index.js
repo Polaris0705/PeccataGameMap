@@ -84,7 +84,9 @@ async function sessionTick() {
       for (const [k, [title, body]] of Object.entries(upd)) {
         await doc.ref.update({ ['sent.' + k]: true });
         const skip = new Set(Object.entries(s.rsvp || {}).filter(([, v]) => v === 'n').map(([u]) => u));
-        await Promise.all(everyone.filter(u => !skip.has(u)).map(uid => sendTo(uid, { title, body, tag: 'sess', url: './' }).catch(() => {})));
+        // 참가자를 고른 일정(who: HO 코드 목록)은 그 HO + KP에게만
+        const to = Array.isArray(s.who) && s.who.length ? [...new Set([...s.who.flatMap(c => hos[c] || []), ...admins])] : everyone;
+        await Promise.all(to.filter(u => !skip.has(u)).map(uid => sendTo(uid, { title, body, tag: 'sess', url: './' }).catch(() => {})));
       }
     }
   } catch (e) { lastError = 'sessions: ' + e.message; console.error(lastError); }

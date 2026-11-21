@@ -1,5 +1,5 @@
 /* ================= 세션 밖 보조 기능 =================
-   📅 세션 일정·참석 응답·알림      sessions/{id}      { title, at, memo, by, rsvp:{uid:'y'|'n'|'?'}, sent:{h1,st} }
+   📅 세션 일정·참석 응답·알림      sessions/{id}      { title, at, memo, by, who:[HO 코드] (비면 모두), rsvp:{uid:'y'|'n'|'?'}, sent:{h1,st} }
    🗓 일정 조율(체크 = 안 되는 날)   availMonths/{YYYY-MM} { y, m, notice, prenote }
                                     availRows/{YYYY-MM_코드} { ym, code, x:[날], q:[날] }   x = 안 됨, q = 애매
    🧭 KP 대시보드
@@ -27,47 +27,56 @@ function socialOnAuth(sub) {
 }
 
 /* ================= 📅 세션 일정 ================= */
-const nextSess = () => SESS.find(s => s.at > Date.now() - 3 * 3600e3);
+/* 참가자: who(HO 코드 목록)가 비면 모두. KP는 늘 볼 수 있고 알림도 받음 */
+const sessWho = s => Array.isArray(s.who) && s.who.length ? s.who : null;
+const sessFor = (s, uid) => { const w = sessWho(s); if (!w) return true; const u = userOf(uid || ME.uid); return !!(u && u.ho && w.includes(u.ho)); };
+const sessUids = s => { const w = sessWho(s); return w ? USERS.filter(u => u.ho && w.includes(u.ho)).map(u => u.id).concat(USERS.filter(u => isAdminUser(u)).map(u => u.id)) : allUids(); };
+const isAdminUser = u => !!(u && u.email && isAdminEmail(u.email));
+const nextSess = () => SESS.find(s => s.at > Date.now() - 3 * 3600e3 && (IS_ADMIN || sessFor(s)));
 function sessCard(s, big) {
   const r = s.rsvp || {}, my = r[ME.uid], cnt = k => Object.values(r).filter(v => v === k).length, who = k => Object.entries(r).filter(([, v]) => v === k).map(([u]) => esc(uname(userOf(u)))).join(', ');
   const past = s.at < Date.now() - 3 * 3600e3;
-  return `<div class="card" style="${big ? 'border-color:var(--gold)' : ''}"><div class="row" style="justify-content:space-between;align-items:flex-start"><div><b style="font-size:${big ? '1.05rem' : '.95rem'}">📅 ${esc(s.title || '세션')}</b>
+  const w = sessWho(s), mine = sessFor(s);
+  return `<div class="card" style="${big ? 'border-color:var(--gold)' : ''}${w && !mine ? ';opacity:.65' : ''}"><div class="row" style="justify-content:space-between;align-items:flex-start"><div><b style="font-size:${big ? '1.05rem' : '.95rem'}">📅 ${esc(s.title || '세션')}</b>${w ? `<div style="font-size:.8rem;margin:2px 0"><span class="badge ${mine ? 'approved' : ''}">👥 ${w.map(c => esc(hoName(c))).join(' · ')}</span>${mine ? '' : ' <span class="muted">참가 대상 아님</span>'}</div>` : ''}
     <div style="color:var(--gold2)">${dfmt(s.at)} <span class="muted">· ${past ? '지난 세션' : leftTxt(s.at)}</span></div>${s.memo ? `<div class="muted" style="font-size:.85rem;white-space:pre-wrap">${esc(s.memo)}</div>` : ''}</div>
     ${IS_ADMIN ? `<div class="row" style="flex:0 0 auto;gap:4px"><button class="sm" onclick="sessEdit('${s.id}')">✏</button><button class="sm danger" onclick="sessDel('${s.id}')">🗑</button></div>` : ''}</div>
-    ${past ? '' : `<div class="row" style="gap:4px;margin-top:6px">${[['y', '👍 가능'], ['q', '🤔 미정'], ['n', '🙅 불가']].map(([k, t]) => `<button class="sm ${my === k ? 'primary' : ''}" onclick="sessRsvp('${s.id}','${k}')">${t}</button>`).join('')}</div>`}
+    ${past || (w && !mine && !IS_ADMIN) ? '' : `<div class="row" style="gap:4px;margin-top:6px">${[['y', '👍 가능'], ['q', '🤔 미정'], ['n', '🙅 불가']].map(([k, t]) => `<button class="sm ${my === k ? 'primary' : ''}" onclick="sessRsvp('${s.id}','${k}')">${t}</button>`).join('')}</div>`}
     <div class="muted" style="font-size:.8rem;margin-top:4px">👍 ${cnt('y')}${cnt('y') ? ` (${who('y')})` : ''} · 🤔 ${cnt('q')}${cnt('q') ? ` (${who('q')})` : ''} · 🙅 ${cnt('n')}${cnt('n') ? ` (${who('n')})` : ''}</div></div>`;
 }
 async function sessRsvp(id, k) { const s = SESS.find(x => x.id === id); if (!s) return; const r = Object.assign({}, s.rsvp || {}); r[ME.uid] = r[ME.uid] === k ? null : k; if (!r[ME.uid]) delete r[ME.uid];
   try { await B.update('sessions/' + id, { rsvp: r }); } catch (e) { toast('실패: ' + (e.code || e.message)); } }
+function ssWhoTog(c, el) { const w = new Set(window._ssWho || []); w.has(c) ? w.delete(c) : w.add(c); window._ssWho = [...w]; el.classList.toggle('on', w.has(c)); }
 function sessEdit(id) {
-  const s = SESS.find(x => x.id === id) || {}, d = new Date(s.at || Date.now() + 864e5); if (!s.at) { d.setHours(20, 0, 0, 0); }
+  const s0 = SESS.find(x => x.id === id); window._ssWho = s0 ? (sessWho(s0) || []).slice() : (AV_PICK.length ? AV_PICK.filter(c => c !== 'KP') : []);
+  const s = s0 || {}, d = new Date(s.at || Date.now() + 864e5); if (!s.at) { d.setHours(20, 0, 0, 0); }
   const dv = `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`, tv = `${pad2(d.getHours())}:${pad2(d.getMinutes())}`;
   modal(`<h2 style="color:var(--gold2);margin-top:0">📅 ${id ? '세션 고치기' : '세션 일정 추가'}</h2>
     <label class="f">제목</label><input id="ssT" value="${esc(s.title || '')}" placeholder="예: 2부 세션">
     <div class="row" style="gap:6px"><div style="flex:1"><label class="f">날짜</label><input id="ssD" type="date" value="${dv}"></div><div style="flex:1"><label class="f">시간</label><input id="ssH" type="time" value="${tv}"></div></div>
     <label class="f">메모 (선택)</label><textarea id="ssM" rows="3" placeholder="장소·준비물 등">${esc(s.memo || '')}</textarea>
-    <p class="muted" style="font-size:.8rem">1시간 전과 시작 시간에 모두에게 알림이 감.</p>
+    <label class="f">참가자 <span class="muted">(안 고르면 모두)</span></label><div class="toggles" id="ssWho">${HO_CODES.filter(c => USERS.some(u => u.ho === c)).map(c => `<span class="chip ${(window._ssWho || []).includes(c) ? 'on' : ''}" onclick="ssWhoTog('${c}',this)">${esc(hoName(c))}</span>`).join('')}<span class="chip" onclick="window._ssWho=[];document.querySelectorAll('#ssWho .chip').forEach(x=>x.classList.remove('on'))">모두</span></div>
+    <p class="muted" style="font-size:.8rem">1시간 전과 시작 시간에 참가자에게 알림이 감.</p>
     <div class="row" style="margin-top:10px"><button onclick="closeModal()">취소</button><button class="primary" onclick="sessSave('${id || ''}')">저장</button></div>`);
 }
 async function sessSave(id) {
   const t = $('#ssT').value.trim() || '세션', dv = $('#ssD').value, tv = $('#ssH').value; if (!dv || !tv) return toast('날짜와 시간을 넣기');
   const at = new Date(dv + 'T' + tv).getTime(); if (!at) return toast('날짜를 확인하기');
-  const old = SESS.find(x => x.id === id), doc = { title: t, at, memo: $('#ssM').value.trim(), by: PROF.name || 'KP' };
+  const old = SESS.find(x => x.id === id), who = (window._ssWho || []).filter(c => HO_CODES.includes(c)), doc = { title: t, at, memo: $('#ssM').value.trim(), by: PROF.name || 'KP', who };
   if (!old || old.at !== at) doc.sent = { h1: false, st: false };
-  try { if (id) await B.update('sessions/' + id, doc); else { await B.add('sessions', Object.assign(doc, { rsvp: {} })); sPing(allUids(), '📅 세션 일정이 잡힘', `${t} · ${dfmt(at)}`, 'sess'); }
+  try { if (id) await B.update('sessions/' + id, doc); else { await B.add('sessions', Object.assign(doc, { rsvp: {} })); sPing(sessUids(doc), who.length ? '📅 일정이 잡힘 (참가자: ' + who.map(hoName).join('·') + ')' : '📅 세션 일정이 잡힘', `${t} · ${dfmt(at)}`, 'sess'); }
     closeModal(); toast('저장 완료'); } catch (e) { toast('실패: ' + (e.code || e.message)); }
 }
 async function sessDel(id) { if (!confirm('이 세션 일정을 지울까요?')) return; try { await B.del('sessions/' + id); } catch (e) { toast('실패: ' + (e.code || e.message)); } }
 /* 앱을 켜 두면 앱 안에서도 알려 줌 (푸시는 서버가 보냄) */
 function sessTick() {
-  const now = Date.now(); SESS.forEach(s => { [['h1', s.at - 3600e3, '⏰ 1시간 뒤 세션'], ['st', s.at, '🎲 세션 시작 시간']].forEach(([k, t, msg]) => {
+  const now = Date.now(); SESS.forEach(s => { if (!IS_ADMIN && !sessFor(s)) return; [['h1', s.at - 3600e3, '⏰ 1시간 뒤 세션'], ['st', s.at, '🎲 세션 시작 시간']].forEach(([k, t, msg]) => {
     const key = 'peccata_sess_' + s.id + '_' + k + '_' + s.at; if (now < t || now - t > 15 * 60e3) return; try { if (localStorage.getItem(key)) return; localStorage.setItem(key, '1'); } catch (e) { return; }
     sfx('ok'); modal(`<h2 style="color:var(--gold2);margin-top:0">${msg}</h2><p><b>${esc(s.title || '세션')}</b><br>${dfmt(s.at)}</p>${s.memo ? `<p class="muted" style="white-space:pre-wrap">${esc(s.memo)}</p>` : ''}<button class="primary" style="width:100%" onclick="closeModal()">확인</button>`); }); });
 }
 setInterval(() => { try { if (ME) sessTick(); } catch (e) {} }, 30000);
 
 /* ================= 🗓 일정 조율 ================= */
-let AV_YM = '';
+let AV_YM = '', AV_PICK = [];   // AV_PICK: 공통 날을 볼 사람만 고름 (비면 모두)
 const avRowsOf = ym => ['KP', ...HO_CODES.filter(c => USERS.some(u => u.ho === c))];
 const avRow = (ym, code) => AVR.find(r => r.id === ym + '_' + code) || { x: [], q: [] };
 const canEditRow = code => IS_ADMIN || myHo() === code;
@@ -77,16 +86,19 @@ function avGrid(ym) {
   const sessDays = new Set(SESS.filter(s => { const d = new Date(s.at); return d.getFullYear() === y && d.getMonth() + 1 === m; }).map(s => new Date(s.at).getDate()));
   const cell = (code, d) => { const r = avRow(ym, code), x = (r.x || []).includes(d), q = (r.q || []).includes(d), mine = canEditRow(code);
     return `<td class="avc ${x ? 'x' : q ? 'q' : ''} ${mine ? 'me' : ''}" ${mine ? `onclick="calAvTap('${ym}','${code}',${d})"` : ''}>${x ? '✕' : q ? '△' : ''}</td>`; };
-  const sum = d => { const nx = rows.filter(c => (avRow(ym, c).x || []).includes(d)).length, nq = rows.filter(c => (avRow(ym, c).q || []).includes(d)).length; return nx ? `<td class="avs" title="안 되는 사람 ${nx}">${nx}</td>` : `<td class="avs ok" title="${nq ? '애매 ' + nq : '모두 가능'}">${nq ? '○' : '●'}</td>`; };
+  const pick = AV_PICK.filter(c => rows.includes(c)), sr = pick.length ? pick : rows;
+  const sum = d => { const nx = sr.filter(c => (avRow(ym, c).x || []).includes(d)).length, nq = sr.filter(c => (avRow(ym, c).q || []).includes(d)).length; return nx ? `<td class="avs" title="안 되는 사람 ${nx}">${nx}</td>` : `<td class="avs ok" title="${nq ? '애매 ' + nq : '모두 가능'}">${nq ? '○' : '●'}</td>`; };
   return `<div class="avwrap"><table class="avt"><tr><th class="avn"></th>${Array.from({ length: days }, (_, i) => `<th class="${isThis && today.getDate() === i + 1 ? 'today' : ''}">${i + 1}${sessDays.has(i + 1) ? '<br>📅' : ''}</th>`).join('')}</tr>
     <tr><th class="avn"></th>${Array.from({ length: days }, (_, i) => { const w = new Date(y, m - 1, i + 1).getDay(); return `<th class="wd${w === 0 ? ' sun' : w === 6 ? ' sat' : ''}">${WD[w]}</th>`; }).join('')}</tr>
-    ${rows.map(c => `<tr class="${canEditRow(c) && (c !== 'KP' || !PROF.ho) ? 'mine' : ''}"><th class="avn">${esc(hoName(c))}</th>${Array.from({ length: days }, (_, i) => cell(c, i + 1)).join('')}</tr>`).join('')}
-    <tr><th class="avn">모두</th>${Array.from({ length: days }, (_, i) => sum(i + 1)).join('')}</tr></table></div>`;
+    ${rows.map(c => `<tr class="${canEditRow(c) && (c !== 'KP' || !PROF.ho) ? 'mine' : ''}${pick.length && !pick.includes(c) ? ' dim' : ''}"><th class="avn">${esc(hoName(c))}</th>${Array.from({ length: days }, (_, i) => cell(c, i + 1)).join('')}</tr>`).join('')}
+    <tr><th class="avn">${pick.length ? '고른 사람' : '모두'}</th>${Array.from({ length: days }, (_, i) => sum(i + 1)).join('')}</tr></table></div>
+    <div class="toggles" style="margin-top:6px;align-items:center"><span class="muted" style="font-size:.8rem">👥 공통 날 볼 사람:</span>${rows.map(c => `<span class="chip ${AV_PICK.includes(c) ? 'on' : ''}" onclick="avPickWho('${c}')">${esc(hoName(c))}</span>`).join('')}${AV_PICK.length ? `<span class="chip" onclick="AV_PICK=[];render()">모두</span>` : ''}${IS_ADMIN && pick.filter(c => c !== 'KP').length ? `<button class="sm primary" onclick="sessEdit()">＋ 이 사람들로 일정</button>` : ''}</div>`;
 }
 const AV_CSS = `<style>.avwrap{overflow-x:auto;-webkit-overflow-scrolling:touch;margin:6px -4px 0}.avt{border-collapse:collapse;font-size:.78rem}.avt th,.avt td{border:1px solid var(--line);min-width:24px;height:26px;text-align:center;padding:0}
   .avt th.avn{position:sticky;left:0;background:var(--panel);z-index:1;min-width:70px;max-width:90px;padding:0 4px;text-align:left;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.avt th.today{color:var(--gold2);text-decoration:underline}
   .avt .wd{font-weight:normal;color:var(--muted)}.avt .sun{color:#e07070}.avt .sat{color:#70a0e0}.avt td.me{cursor:pointer;background:#ffffff08}.avt td.x{background:#55505a;color:#ddd}.avt td.q{background:#6a5a2a;color:#ffe08a}
-  .avt tr.mine th.avn{color:var(--gold2)}.avt td.avs{font-weight:bold;color:#e07070}.avt td.avs.ok{color:#7ad08a}</style>`;
+  .avt tr.mine th.avn{color:var(--gold2)}.avt tr.dim td,.avt tr.dim th{opacity:.35}.avt td.avs{font-weight:bold;color:#e07070}.avt td.avs.ok{color:#7ad08a}</style>`;
+function avPickWho(c) { const w = new Set(AV_PICK); w.has(c) ? w.delete(c) : w.add(c); AV_PICK = [...w]; render(); }
 async function calAvTap(ym, code, d) {
   if (!canEditRow(code)) return; const r = avRow(ym, code), x = new Set(r.x || []), q = new Set(r.q || []);
   if (!x.has(d) && !q.has(d)) x.add(d); else if (x.has(d)) { x.delete(d); q.add(d); } else q.delete(d);
@@ -110,10 +122,10 @@ VIEWS.cal = () => {
   if (!AV_YM || !AVM.some(m => m.id === AV_YM)) { const cur = new Date(), ym = `${cur.getFullYear()}-${pad2(cur.getMonth() + 1)}`; AV_YM = (AVM.find(m => m.id >= ym) || AVM[AVM.length - 1] || {}).id || ''; }
   const mo = AVM.find(m => m.id === AV_YM);
   return `${AV_CSS}<div class="panel"><div class="row" style="justify-content:space-between;align-items:center"><h2 style="margin:0">📅 세션 일정</h2>${IS_ADMIN ? '<button class="primary" style="flex:0 0 auto" onclick="sessEdit()">＋ 일정</button>' : ''}</div>
-    ${up.length ? up.map((s, i) => sessCard(s, i === 0)).join('') : '<p class="muted">잡힌 세션이 없음.</p>'}
+    ${up.length ? up.map(s => sessCard(s, s === up.find(x => IS_ADMIN || sessFor(x)))).join('') : '<p class="muted">잡힌 세션이 없음.</p>'}
     ${past.length ? `<details><summary class="muted">지난 세션 (${past.length})</summary>${past.map(s => sessCard(s)).join('')}</details>` : ''}</div>
    <div class="panel"><div class="row" style="justify-content:space-between;align-items:center"><h2 style="margin:0">🗓 일정 조율</h2>${IS_ADMIN ? '<button style="flex:0 0 auto" onclick="avOpenAsk()">＋ 달 열기</button>' : ''}</div>
-    <p class="muted" style="margin:4px 0;font-size:.82rem">내 줄의 칸을 누를 때마다 <b>✕ 안 됨 → △ 애매 → 비움</b>. 맨 아래 ● 는 모두 되는 날, ○ 는 애매한 사람이 있는 날.</p>
+    <p class="muted" style="margin:4px 0;font-size:.82rem">내 줄의 칸을 누를 때마다 <b>✕ 안 됨 → △ 애매 → 비움</b>. 맨 아래 ● 는 모두 되는 날, ○ 는 애매한 사람이 있는 날. 아래 👥 에서 사람을 고르면 그 사람들 기준으로 봄.</p>
     ${AVM.length ? `<div class="toggles">${AVM.map(m => `<span class="chip ${m.id === AV_YM ? 'on' : ''}" onclick="AV_YM='${m.id}';render()">${m.m}월${m.notice ? ' <b style="color:var(--wine2)">!</b>' : ''}</span>`).join('')}</div>` : '<p class="muted">열린 달 없음' + '</p>'}
     ${mo ? `${mo.notice || IS_ADMIN ? `<div class="card" style="margin-top:6px;${mo.notice ? 'border-color:var(--wine2)' : ''}"><b>${mo.notice ? '❗ ' : ''}KP 공지</b> ${IS_ADMIN ? `<button class="sm" onclick="avNoteEdit('${mo.id}','notice')">✏</button>` : ''}<div style="white-space:pre-wrap">${esc(mo.notice || '') || '<span class="muted">없음</span>'}</div></div>` : ''}
       ${avGrid(mo.id)}
