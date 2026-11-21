@@ -14,9 +14,9 @@ function roomLv(room) { const lv = room && room.sz != null ? room.sz : room && r
 function roomBounds(room) { const [cols, rows] = ROOM_SIZES[roomLv(room)]; return { c0: Math.floor((COLS - cols) / 2), cols, rows }; }
 let RB = { c0: 0, cols: COLS, rows: ROWS };   // 지금 그리는 방 경계 (그리기 함수용)
 /* 화면에 보일 범위(방 + 테두리) */
-function roomView(room) { const b = roomBounds(room), x = OX + b.c0 * T - 10, w = b.cols * T + 20, h = FY + b.rows * T + 10; return { x, y: 0, w, h }; }
+function roomVBox(room) { const b = roomBounds(room), x = OX + b.c0 * T - 10, w = b.cols * T + 20, h = FY + b.rows * T + 10; return { x, y: 0, w, h }; }
 /* 방 캔버스: 방 크기에 맞춰 잘라 보이게 (캔버스는 그대로, 바깥 틀이 잘라냄) */
-function roomCvHtml(room, cls, id) { const v = roomView(room), r = v => +v.toFixed(4);
+function roomCvHtml(room, cls, id) { const v = roomVBox(room), r = v => +v.toFixed(4);
   return `<div class="rcwrap" style="position:relative;overflow:hidden;width:100%;max-width:540px;margin:10px auto 0;aspect-ratio:${r(v.w)}/${r(v.h)};border:2px solid var(--line);border-radius:6px;background:#120c08">
     <canvas id="${id || 'roomCv'}" class="${cls}" width="${RW * 2}" height="${RH * 2}" style="position:absolute;max-width:none;margin:0;border:0;border-radius:0;width:${r(RW / v.w * 100)}%;left:${r(-v.x / v.w * 100)}%;top:${r(-v.y / v.h * 100)}%"></canvas></div>`; }
 

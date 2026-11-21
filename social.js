@@ -76,7 +76,7 @@ function avGrid(ym) {
   const today = new Date(), isThis = today.getFullYear() === y && today.getMonth() + 1 === m;
   const sessDays = new Set(SESS.filter(s => { const d = new Date(s.at); return d.getFullYear() === y && d.getMonth() + 1 === m; }).map(s => new Date(s.at).getDate()));
   const cell = (code, d) => { const r = avRow(ym, code), x = (r.x || []).includes(d), q = (r.q || []).includes(d), mine = canEditRow(code);
-    return `<td class="avc ${x ? 'x' : q ? 'q' : ''} ${mine ? 'me' : ''}" ${mine ? `onclick="avTap('${ym}','${code}',${d})"` : ''}>${x ? '✕' : q ? '△' : ''}</td>`; };
+    return `<td class="avc ${x ? 'x' : q ? 'q' : ''} ${mine ? 'me' : ''}" ${mine ? `onclick="calAvTap('${ym}','${code}',${d})"` : ''}>${x ? '✕' : q ? '△' : ''}</td>`; };
   const sum = d => { const nx = rows.filter(c => (avRow(ym, c).x || []).includes(d)).length, nq = rows.filter(c => (avRow(ym, c).q || []).includes(d)).length; return nx ? `<td class="avs" title="안 되는 사람 ${nx}">${nx}</td>` : `<td class="avs ok" title="${nq ? '애매 ' + nq : '모두 가능'}">${nq ? '○' : '●'}</td>`; };
   return `<div class="avwrap"><table class="avt"><tr><th class="avn"></th>${Array.from({ length: days }, (_, i) => `<th class="${isThis && today.getDate() === i + 1 ? 'today' : ''}">${i + 1}${sessDays.has(i + 1) ? '<br>📅' : ''}</th>`).join('')}</tr>
     <tr><th class="avn"></th>${Array.from({ length: days }, (_, i) => { const w = new Date(y, m - 1, i + 1).getDay(); return `<th class="wd${w === 0 ? ' sun' : w === 6 ? ' sat' : ''}">${WD[w]}</th>`; }).join('')}</tr>
@@ -87,7 +87,7 @@ const AV_CSS = `<style>.avwrap{overflow-x:auto;-webkit-overflow-scrolling:touch;
   .avt th.avn{position:sticky;left:0;background:var(--panel);z-index:1;min-width:70px;max-width:90px;padding:0 4px;text-align:left;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.avt th.today{color:var(--gold2);text-decoration:underline}
   .avt .wd{font-weight:normal;color:var(--muted)}.avt .sun{color:#e07070}.avt .sat{color:#70a0e0}.avt td.me{cursor:pointer;background:#ffffff08}.avt td.x{background:#55505a;color:#ddd}.avt td.q{background:#6a5a2a;color:#ffe08a}
   .avt tr.mine th.avn{color:var(--gold2)}.avt td.avs{font-weight:bold;color:#e07070}.avt td.avs.ok{color:#7ad08a}</style>`;
-async function avTap(ym, code, d) {
+async function calAvTap(ym, code, d) {
   if (!canEditRow(code)) return; const r = avRow(ym, code), x = new Set(r.x || []), q = new Set(r.q || []);
   if (!x.has(d) && !q.has(d)) x.add(d); else if (x.has(d)) { x.delete(d); q.add(d); } else q.delete(d);
   const doc = { ym, code, x: [...x].sort((a, b) => a - b), q: [...q].sort((a, b) => a - b), at: Date.now() };
