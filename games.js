@@ -12,67 +12,14 @@ const FEATS = {
   blackjack:{ n: '살롱 블랙잭',    ic: '♠️', d: '여럿이 은화 걸기' }
 };
 const FEAT_KEYS = Object.keys(FEATS);
-const DAILY_REWARD = 2;
-const dailyCap = () => DAILY_REWARD + (typeof roomCnt === 'function' && roomCnt('gclock') ? 1 : 0);           // 게임별 하루 보상 횟수
 let GAME = null; window.GAME_LOCK = false;
 let BJ = null;
 
 function stopGame() { if (GAME) { try { GAME.stop && GAME.stop(); } catch (e) {} GAME = null; } window.GAME_LOCK = false; }
 function lockGame(stop) { stopGame(); GAME = { stop, alive: true }; window.GAME_LOCK = true; return GAME; }
-function gameDay() { const t = kstDate(); if (!P.gd || P.gd.date !== t) P.gd = { date: t, p: {} }; return P.gd; }
-function playsLeft(id) { return Math.max(0, dailyCap() - (gameDay().p[id] || 0)); }
-function reward(id, coins) {
-  const g = gameDay(); g.p[id] = (g.p[id] || 0) + 1; coins = Math.max(0, Math.round(coins));
-  if (g.p[id] <= dailyCap() && coins > 0) { earn(coins); return `+${coins} 은화`; }
-  saveP(); return coins > 0 ? '오늘 보상 횟수를 다 써서 연습으로 기록됨' : '';
-}
-function finishGame(html) { stopGame(); render(); modal(html); sfx('win'); }
 const rint = n => Math.floor(Math.random() * n);
 const shuffle = a => { a = a.slice(); for (let i = a.length - 1; i > 0; i--) { const j = rint(i + 1); [a[i], a[j]] = [a[j], a[i]]; } return a; };
 const gbox = () => $('#gbox');
-
-/* ================= 티룸 타이쿤 ================= */
-const TEA_D = [['홍차', '🍵', 0], ['커피', '☕', 0], ['허브티', '🌿', 1], ['코코아', '🍫', 2]];
-const TEA_S = [['쿠키', '🍪', 0], ['컵케이크', '🧁', 0], ['케이크', '🍰', 1], ['파이', '🥧', 2]];
-const GUESTS = ['🧑‍🎩', '👩‍🦰', '🧔', '👵', '🧑‍🎨', '👨‍🍳', '🧕', '🧛', '🧙'];
-function teaLv() { P.tea = Object.assign({ cup: 0, menu: 0, decor: 0, best: 0 }, P.tea || {}); return P.tea; }
-VIEWS.tycoon = () => {
-  const L = teaLv();
-  const up = [['cup', '고급 찻잔', '팁 +1', 50 * (L.cup + 1), 5], ['menu', '메뉴 늘리기', '새 음료·디저트', [100, 200][L.menu], 2], ['decor', '실내 장식', '인내심 +2초', 80 * (L.decor + 1), 5]];
-  return `<div class="panel"><h2>🍵 티룸 타이쿤</h2><p class="muted">60초 동안 손님 주문(음료+디저트)을 맞춰 내기. 빨리 낼수록 팁이 큼. 매출의 40%가 내 몫. 오늘 보상 ${playsLeft('tycoon')}회 남음 · 최고 ${L.best}은화</p>
-   <div id="gbox"><button class="primary" style="width:100%" onclick="teaStart()">영업 시작</button></div>
-   <h3>업그레이드</h3>${up.map(([k, n, d, c, max]) => `<div class="item" style="margin:6px 0"><div><b>${n}</b> <span class="muted">Lv.${L[k]} · ${d}</span></div>${c && L[k] < max ? `<button onclick="teaUp('${k}',${c})" ${P.coins < c ? 'disabled' : ''}>${c} 은화</button>` : '<button disabled>최대</button>'}</div>`).join('')}</div>`;
-};
-function teaUp(k, c) { if (!spend(c)) return; teaLv()[k]++; saveP(); render(); }
-function teaStart() {
-  const L = teaLv(), D = TEA_D.filter(x => x[2] <= L.menu), S = TEA_S.filter(x => x[2] <= L.menu);
-  const st = { t: 60, earned: 0, served: 0, tray: {}, g: null };
-  const newG = () => { const m = 12 + L.decor * 2; st.g = { face: GUESTS[rint(GUESTS.length)], d: D[rint(D.length)], s: S[rint(S.length)], pat: m, max: m }; st.tray = {}; };
-  const draw = () => {
-    const b = gbox(); if (!b) return; const g = st.g;
-    b.innerHTML = `<div class="row" style="justify-content:space-between"><b>⏱ ${st.t}초</b><b>◈ ${st.earned}</b><span class="muted">손님 ${st.served}명</span></div>
-     <div class="card" style="text-align:center"><div style="font-size:2.4rem">${g.face}</div><div>"${g.d[0]} ${g.d[1]}이랑 ${g.s[0]} ${g.s[1]} 줘"</div><div class="prog"><i style="width:${g.pat / g.max * 100}%"></i></div></div>
-     <div class="muted">쟁반: ${st.tray.d ? st.tray.d[1] : '·'} ${st.tray.s ? st.tray.s[1] : '·'}</div>
-     <div class="toggles" style="margin:6px 0">${D.map((x, i) => `<button class="${st.tray.d === x ? 'on' : ''}" onclick="teaPick('d',${i})">${x[1]} ${x[0]}</button>`).join('')}</div>
-     <div class="toggles">${S.map((x, i) => `<button class="${st.tray.s === x ? 'on' : ''}" onclick="teaPick('s',${i})">${x[1]} ${x[0]}</button>`).join('')}</div>
-     <button class="primary" style="width:100%;margin-top:8px" onclick="teaServe()">내놓기</button>`;
-  };
-  window.teaPick = (k, i) => { st.tray[k] = (k === 'd' ? D : S)[i]; draw(); };
-  window.teaServe = () => {
-    const g = st.g;
-    if (st.tray.d === g.d && st.tray.s === g.s) { sfx('ok'); const tip = Math.round(3 + L.cup + g.pat / g.max * 3) + (typeof roomCnt === 'function' && roomCnt('teaset') ? 1 : 0); st.earned += tip; st.served++; toast(`감사합니다! +${tip}`); newG(); }
-    else { g.pat = Math.max(0, g.pat - 3); toast('주문과 다름…'); sfx('bad'); }
-    draw();
-  };
-  const iv = setInterval(() => {
-    st.t--; st.g.pat--;
-    if (st.g.pat <= 0) { toast('손님이 기다리다 떠남…'); newG(); }
-    if (st.t <= 0) { clearInterval(iv); L.best = Math.max(L.best, st.earned); const r = reward('tycoon', Math.round(st.earned * 0.4));
-      finishGame(`<h2 style="color:var(--gold2);margin-top:0">🍵 영업 종료</h2><p>손님 ${st.served}명 · 매출 ${st.earned} (내 몫 40%)</p><p class="muted">${r}</p><div class="row"><button class="primary" onclick="closeModal();teaStart()">한 번 더</button><button onclick="closeModal()">닫기</button></div>`); return; }
-    draw();
-  }, 1000);
-  lockGame(() => clearInterval(iv)); newG(); draw();
-}
 
 /* 오늘의 죄 표시용 */
 const SIN_EMB = { wrath: '🔥', greed: '💰', sloth: '💤', gluttony: '🍗', pride: '👑', envy: '👁', lust: '🌹' };
@@ -95,23 +42,6 @@ function memStart() {
   };
   lockGame(() => tos.forEach(clearTimeout)); draw();
 }
-
-/* ================= 타로 운세 ================= */
-const TAROT = [
-  ['0 바보', '두려움 없이 새로운 길로 들어설 때'], ['I 마법사', '가진 재주를 쓸 때가 왔다'], ['II 여사제', '말보다 직감을 믿어라'], ['III 여황제', '풍요와 돌봄이 곁에 있다'],
-  ['IV 황제', '규칙과 질서가 힘이 된다'], ['V 교황', '오래된 지혜에 귀 기울여라'], ['VI 연인', '마음이 끌리는 선택'], ['VII 전차', '밀어붙이면 나아간다'],
-  ['VIII 힘', '부드러움이 거친 것을 이긴다'], ['IX 은둔자', '혼자 생각할 시간이 필요하다'], ['X 운명의 수레바퀴', '흐름이 바뀌는 날'], ['XI 정의', '저울은 공정하게 기운다'],
-  ['XII 매달린 사람', '다른 각도에서 보면 답이 있다'], ['XIII 죽음', '끝은 곧 시작이다'], ['XIV 절제', '서두르지 말고 섞어라'], ['XV 악마', '유혹을 경계하라'],
-  ['XVI 탑', '갑작스러운 깨달음'], ['XVII 별', '희망이 조용히 빛난다'], ['XVIII 달', '보이는 것이 전부가 아니다'], ['XIX 태양', '밝고 따뜻한 하루'],
-  ['XX 심판', '지난 일을 돌아볼 때'], ['XXI 세계', '하나의 이야기가 완성된다']
-];
-VIEWS.tarot = () => {
-  const today = kstDate(), t = P.tarot && P.tarot.date === today ? P.tarot : null;
-  if (t) { const c = TAROT[t.card]; return `<div class="panel"><h2>🔮 타로 운세</h2><div class="card" style="text-align:center;padding:20px"><div style="font-size:3rem">${t.rev ? '🙃' : '🃏'}</div><h2 style="margin:6px 0">${c[0]}${t.rev ? ' (역방향)' : ''}</h2><p class="story">${t.rev ? '조심스럽게… ' : ''}${c[1]}</p><p class="muted">오늘 받은 은화 +${t.coins}</p></div><p class="muted">내일 한국 시간 자정에 다시 뽑을 수 있음.</p></div>`; }
-  return `<div class="panel"><h2>🔮 타로 운세</h2><p class="muted">하루 한 장. 마음이 가는 카드를 고르기.</p><div class="mgrid" style="grid-template-columns:repeat(3,1fr)">${[0, 1, 2].map(i => `<button class="mcell cardf" style="font-size:2.4rem" onclick="tarotPick()">🂠</button>`).join('')}</div></div>`;
-};
-function tarotPick() { const today = kstDate(); if (P.tarot && P.tarot.date === today) return; const card = rint(TAROT.length), rev = Math.random() < .3, coins = 2 + rint(7);
-  P.tarot = { date: today, card, rev, coins }; earn(coins); render(); toast(`🔮 ${TAROT[card][0]} · +${coins} 은화`); }
 
 /* ================= 살롱 블랙잭 (여럿이) ================= */
 const SUITS = ['♠', '♥', '♦', '♣'], RANKS = ['A', '2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K'];

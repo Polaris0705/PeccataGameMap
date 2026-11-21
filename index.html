@@ -670,9 +670,9 @@ async function onAuth(u){
 
 /* ================= 렌더 ================= */
 const PL_TABS=[['저택',[['room','🏠 내 방'],['map','🗺 저택 지도'],['book','🔎 조사 예약'],['items','🎒 소지품'],['memo','📝 메모'],['cal','📅 일정'],['news','📰 소식지'],['lobby','👤 내 정보']]]];
-const KP_TABS=[['KP',[['kdash','🧭 대시보드'],['sched','스케줄러'],['kqueue','호출·대기열'],['kitems','아이템'],['memo','메모'],['players','플레이어'],['cal','📅 일정'],['news','📰 소식지']]],
-               ['여가',[['garden','온실'],['riddle','수수께끼'],['shop','상점'],['rank','랭킹']]]];
-const kpTabs=()=>PROF&&PROF.ho?[KP_TABS[0],['내 HO',[['room','🏠 내 방'],['map','🗺 저택 지도'],['book','조사 예약'],['items','소지품'],['lobby','👤 내 정보']]]]:[KP_TABS[0],['저택',[['map','🗺 저택 지도']]]];
+const KP_TABS=[['KP',[['kdash','🧭 대시보드'],['sched','🗝 스케줄러'],['kitems','📦 아이템'],['memo','📝 메모'],['cal','📅 일정'],['news','📰 소식지']]]];
+const kpTabs=()=>[KP_TABS[0],['저택',PROF&&PROF.ho?[['map','🗺 저택 지도'],['room','🏠 내 방'],['lobby','👤 내 정보']]:[['map','🗺 저택 지도']]]];
+const KP_ALIAS={kqueue:'kdash',players:'kdata',ktitle:'kdata',kavatar:'kfurn'};   // 옛 화면 이름 → 합친 화면
 function softRender(){
   if(window.GAME_LOCK){pendingRender=true;return;}
   const a=document.activeElement;
@@ -690,9 +690,11 @@ function render(){
   if(!IS_ADMIN&&!PROF.ho){app.innerHTML=headerHtml()+hoView();return;}
   const groups=IS_ADMIN?kpTabs():PL_TABS;
   const flat=groups.flatMap(g=>g[1]);
-  if(!flat.find(t=>t[0]===tab)&&!(typeof FEATS!=='undefined'&&FEATS[tab]&&featOpen(tab))&&!(tab==='visit'&&(PROF.ho||IS_ADMIN))&&!(['kdata','ktitle','kfurn','kavatar'].includes(tab)&&IS_ADMIN))tab=flat[0][0];
+  if(IS_ADMIN&&KP_ALIAS[tab]&&!(tab==='kavatar'))tab=KP_ALIAS[tab];
+  if(!flat.find(t=>t[0]===tab)&&!(typeof FEATS!=='undefined'&&FEATS[tab]&&featOpen(tab))&&!(tab==='visit'&&(PROF.ho||IS_ADMIN))&&!(['kdata','kfurn','kavatar'].includes(tab)&&IS_ADMIN))tab=flat[0][0];
   const badge=k=>{
     if(k==='sched'){const n=BOOKINGS.filter(b=>b.status==='pending').length;return n?` <span class="dot"></span>${n}`:'';}
+    if(k==='kdash'){const n=CALLS.filter(c=>c.msg&&!c.ack).length;return n?` <span class="dot"></span>${n}`:'';}
     if(k==='kitems'){const n=ITEMS.filter(i=>i.inspectReq).length;return n?` <span class="dot"></span>${n}`:'';}
     if(k==='items'){const n=ITEMS.filter(i=>i.owner===ME.uid&&!i.seen).length;return n?` <span class="dot"></span>`:'';}
     if(k==='chat')return typeof chatBadge==='function'?chatBadge():'';
@@ -719,8 +721,7 @@ function headerHtml(){
      <button onclick="MENU=false;render();openProfile()">👤 프로필 편집</button>
      <button onclick="MENU=false;render();openTheme()">🎨 테마 · 글꼴</button>
      <button onclick="MENU=false;render();openAppModal()">📱 앱 · 알림</button>
-     <button onclick="MENU=false;toggleSfx();render()">${SFX_ON?'🔇 효과음 끄기':'🔊 효과음 켜기'}</button>
-     ${IS_ADMIN?'<button onclick="MENU=false;render();openGameSettings()">⚙ 저택 설정 (KP)</button><button onclick="MENU=false;render();txToggle(true)">✏ 글자 고치기 (KP)</button><button onclick="MENU=false;go(\'kdata\')">🗂 데이터 관리 (KP)</button><button onclick="MENU=false;go(\'ktitle\')">🏷 HO 이름 (KP)</button><button onclick="MENU=false;go(\'kfurn\')">🪑 가구 관리 (KP)</button><button onclick="MENU=false;go(\'kavatar\')">🎎 토큰 시험실 (KP)</button>':''}
+     ${IS_ADMIN?'<button onclick="MENU=false;render();openGameSettings()">⚙ 저택 설정 (KP)</button><button onclick="MENU=false;go(\'kdata\')">🗂 데이터 관리 (KP)</button><button onclick="MENU=false;go(\'kfurn\')">🪑 가구 · 토큰 (KP)</button>':''}
      <hr><button class="danger" onclick="MENU=false;logout()">로그아웃</button></div>`:''}</div></div></header>`;
 }
 document.addEventListener('click',()=>{if(MENU){MENU=false;render();}});
@@ -852,7 +853,7 @@ function appPanel(){
   if(!CONFIG.vapidPublicKey)push='<p class="muted">푸시 알림은 아직 설정 전.</p>';
   else if(PUSH_ON)push=`<p class="muted">✓ 푸시 알림을 받는 중. 화면이 꺼져도 ${IS_ADMIN?'새 예약·살펴보기 요청이':'호출·예약 결과·새 물건이'} 옴.</p><div class="row"><button class="sm" onclick="testPush()">알림 미리보기</button><button class="sm danger" onclick="disablePush()">이 기기 알림 끄기</button></div>`;
   else push=`<button onclick="enablePush()">🔔 푸시 알림 켜기</button>`;
-  return `<div class="panel"><h2>📱 앱 · 알림</h2>${inst}<div style="margin-top:8px">${push}</div></div>`;
+  return `<div class="panel"><h2>📱 앱 · 알림</h2>${inst}<div style="margin-top:8px">${push}</div><div style="margin-top:8px"><button onclick="toggleSfx();modalOpen()?openAppModal():render()">${SFX_ON?'🔇 효과음 끄기':'🔊 효과음 켜기'}</button></div></div>`;
 }
 
 /* ================= 프로필 ================= */
@@ -971,14 +972,14 @@ async function adminDiag(){
 window.addEventListener('unhandledrejection',e=>{const c=e.reason&&e.reason.code;if(c==='permission-denied'){toast(IS_ADMIN?'저장 권한이 없음 — ⚙ 저택 설정 › KP 권한 진단을 눌러 보기':'저장 권한이 없음');}});
 function openGameSettings(){window._eg=Object.assign({},EGG);gsModal();}
 function gsModal(){const e=window._eg;
-  modal(`<h2 style="color:var(--gold2);margin-top:0">⚙ 저택 설정</h2>${DEMO?'':'<button class="sm" style="float:right;margin-top:-6px" onclick="adminDiag()">🔧 KP 권한 진단</button>'}<h3>지도 이스터에그 은화</h3>
+  modal(`<h2 style="color:var(--gold2);margin-top:0">⚙ 저택 설정</h2><h3>지도 이스터에그 은화</h3>
    <label class="muted" style="display:block"><input type="checkbox" style="width:auto" ${e.on?'checked':''} onchange="_eg.on=this.checked"> 켜기</label>
    <label class="f">숨기는 방식</label><div class="toggles"><button class="${e.mode==='personal'?'on':''}" onclick="_eg.mode='personal';gsModal()">사람마다 따로</button><button class="${e.mode==='shared'?'on':''}" onclick="_eg.mode='shared';gsModal()">모두 같은 자리 (먼저 찾은 사람)</button></div>
    <div class="row" style="margin-top:4px"><label class="f" style="flex:1">하루에 찾을 수 있는 횟수<input type="number" min="1" max="20" value="${e.perDay}" oninput="_eg.perDay=+this.value"></label>
    <label class="f" style="flex:1">한 번에 받는 은화<input type="number" min="1" max="500" value="${e.coins}" oninput="_eg.coins=+this.value"></label></div>
    <button class="sm" style="margin-top:8px" onclick="_eg.salt=rid();toast('저장하면 오늘의 은화가 새 자리에 숨겨짐')">🔀 오늘 은화 다시 숨기기</button>
    <p class="muted">지도에서 장소가 아닌 곳을 누르면 찾음. 매일 자정에 바뀜.</p>
-   <h3>방</h3><button class="sm" onclick="openRoomSettings()">🗺 방 기능 · 세부 지도 설정</button>
+   <h3>방 · 글자</h3><div class="row" style="gap:6px;flex-wrap:wrap"><button class="sm" onclick="openRoomSettings()">🗺 방 기능 · 세부 지도 설정</button><button class="sm" onclick="closeModal();txToggle(true)">✏ 화면 글자 고치기</button></div>
    <div class="row"><button onclick="closeModal()">취소</button><button class="primary" onclick="saveGameSettings()">저장</button></div>`);}
 async function saveGameSettings(){const e=window._eg;e.perDay=Math.max(1,Math.min(20,e.perDay|0||3));e.coins=Math.max(1,Math.min(500,e.coins|0||5));
   try{await B.set('settings/game',{egg:clean(e)},true);}catch(x){return toast('저장 실패: '+(x.code||x.message));}closeModal();toast('저장 완료');}
@@ -1564,9 +1565,6 @@ function rankRows(){
   return players().map(u=>{const p=PROGS.find(x=>x.id===u.id)||{};
     return {u,earned:p.earned||0,coins:p.coins||0,title:titleTxt(p,u),solved:Object.values(p.riddles||{}).filter(r=>r.solved).length};}).sort((a,b)=>b.earned-a.earned);
 }
-VIEWS.rank=()=>`<div class="panel"><h2>오늘의 손님 랭킹</h2><p class="muted">누적 획득 은화 기준.${IS_ADMIN?` ${PROF.ho?'KP도 HO가 있어서 순위에 함께 들어감.':'KP는 HO를 배정받으면 순위에 들어감. (지금 누적: <b>'+P.earned+'</b> 은화)'}`:''}</p><table><tr><th>#</th><th>손님</th><th>HO</th><th>누적</th></tr>
-  ${rankRows().map((r,i)=>`<tr${r.u.id===ME.uid?' style="color:var(--gold2)"':''}><td>${i+1}</td><td>${r.title?`<span class="muted">「${esc(r.title)}」</span> `:''}${esc(uname(r.u))}</td><td>${esc(r.u.ho?cname(r.u.ho):'-')}</td><td>${r.earned}</td></tr>`).join('')}</table></div>`;
-
 /* ================= KP: 스케줄러 연동 ================= */
 let schedWin=null;
 const CLIENT_ID=rid();
@@ -1798,7 +1796,6 @@ VIEWS.players=()=>{
   ${rows.map((r,i)=>`<tr><td>${i+1}</td><td>${esc(uname(r.u))}<div class="muted" style="font-size:.75rem">${esc(r.u.email||'')}</div></td>
    <td><select style="width:auto" onchange="B.update('users/${r.u.id}',{ho:this.value})"><option value="">-</option>${HO_CODES.map(c=>{const t=usersWithHo(c).find(x=>x.id!==r.u.id);return `<option value="${c}" ${r.u.ho===c?'selected':''} ${t?'disabled':''}>${esc(cname(c))}</option>`;}).join('')}</select>${isAdminEmail(r.u.email)?' <span class="badge">KP</span>':''}</td>
    <td>${r.coins}</td><td><b>${r.earned}</b></td><td>${r.solved}/${RIDDLES.length}</td><td style="white-space:nowrap;font-size:.8rem">${isOnline(r.u)?'<span class="odot"></span>접속 중':`<span class="muted">${seenTxt(r.u)}</span>`}</td><td><button class="sm" onclick="callAsk('${r.u.id}')">🔔</button></td></tr>`).join('')}</table></div></div>
-  ${appPanel()}
   <div class="panel"><h2>KP 계정</h2><p class="muted">KP도 HO가 있으면 PL처럼 함께 참여.</p>
    ${USERS.filter(u=>isAdminEmail(u.email)).map(u=>`<div class="row" style="margin:6px 0"><span style="flex:1">${esc(uname(u))} <span class="muted">${esc(u.email)}</span></span>
    <select style="width:auto" onchange="B.update('users/${u.id}',{ho:this.value})"><option value="">HO 없음</option>${HO_CODES.map(c=>{const t=usersWithHo(c).find(x=>x.id!==u.id);return `<option value="${c}" ${u.ho===c?'selected':''} ${t?'disabled':''}>${esc(cname(c))}${t?' ('+esc(uname(t))+')':''}</option>`;}).join('')}</select></div>`).join('')}</div>`;
@@ -1827,5 +1824,6 @@ setInterval(()=>{if(ME&&P&&(tab==='garden'||tab==='lobby')&&!modalOpen())softRen
 <script src="social.js"></script>
 <script src="fortune.js"></script>
 <script src="avatar.js"></script>
+<script src="kpmenu.js"></script>
 </body>
 </html>
