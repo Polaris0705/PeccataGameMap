@@ -798,8 +798,8 @@ function onCall(d){
   CALL=d;const bar=$('#callBar');
   if(d&&!d.ack){
     $('#callMsg').textContent=(d.pre?'⏳ ':'')+(d.msg||'차례!');$('#callSub').textContent=`${d.by||'KP'} · ${ago(d.at)}`;bar.style.display='block';bar.classList.toggle('pre',!!d.pre);
-    const CL=(d.links||[]).filter(l=>l&&l.url),sl=CL.length?(CL.length===1?`<button class="slbtn" onclick="slOpen(0)">🎲 ${esc(CL[0].name||'세션룸')}</button>`:`<button class="slbtn" onclick="slPick()">🎲 세션룸 ${CL.length}</button>`):'';
-    $('#callBtns').innerHTML=d.pre?`<button class="primary" onclick="ackCall('ok')">알겠음</button>${sl}`:`<button class="primary" onclick="ackCall('go');slOpen(0)">지금 갈게${CL.length?' 🎲':''}</button><button onclick="ackCall('5m')">5분만</button><button onclick="ackCall('no')">지금 어려움</button>${sl}`;
+    const CL=(d.links||[]).filter(l=>l&&l.url),sl=CL.length?(CL.length===1?`<button class="slbtn" onclick="slOpen(0)">🔗 ${esc(CL[0].name||'링크')}</button>`:`<button class="slbtn" onclick="slPick()">🔗 링크 ${CL.length}</button>`):'';
+    $('#callBtns').innerHTML=d.pre?`<button class="primary" onclick="ackCall('ok')">알겠음</button>${sl}`:`<button class="primary" onclick="ackCall('go');slOpen(0)">지금 갈게${CL.length?' 🔗':''}</button><button onclick="ackCall('5m')">5분만</button><button onclick="ackCall('no')">지금 어려움</button>${sl}`;
     clearInterval(window.RERING);let n=0;window.RERING=setInterval(()=>{if(!CALL||CALL.ack||n>=3)return clearInterval(window.RERING);n++;beep();try{navigator.vibrate&&navigator.vibrate([200,100,200]);}catch(e){}
       try{if(document.hidden&&window.Notification&&Notification.permission==='granted')new Notification(CONFIG.title,{body:'(다시) '+(CALL.msg||'차례!')});}catch(e){}},150000);   // 확인 안 하면 2분 30초마다 다시 (3번까지)
     if(d.at!==lastCallAt){lastCallAt=d.at;beep();
@@ -956,19 +956,19 @@ async function saveThemeGlobal(){const t=themeOf(TF);try{await B.set('settings/t
 
 /* ================= KP: 저택 설정 ================= */
 let EGG={on:true,mode:'personal',perDay:3,coins:3,salt:''};
-/* 🎲 세션룸 링크 (KP가 저택 설정에서 여러 개 · 첫 번째 = 기본) */
+/* 🔗 호출 링크 (세션룸·음악 등, KP가 저택 설정에 등록 · 호출할 때 골라 붙임) */
 let SLINKS=[];
 const slUrl=u=>/^https?:\/\//i.test(u)?u:'https://'+u;
 /* 호출에 붙은 링크 (없으면 빈 목록) */
 const callLinks=()=>((CALL&&CALL.links)||[]).filter(l=>l&&l.url);
 function slOpenL(l){if(!l)return;try{window.open(slUrl(l.url),'_blank','noopener');}catch(e){location.href=slUrl(l.url);}}
 function slOpen(i){slOpenL(callLinks()[i||0]);}
-function slPick(){const L=callLinks();if(L.length===1)return slOpen(0);modal(`<h2 style="color:var(--gold2);margin-top:0">🎲 세션룸</h2>${L.map((l,i)=>`<button class="${i?'':'primary'}" style="width:100%;margin:4px 0;text-align:left" onclick="closeModal();slOpen(${i})">${esc(l.name||'세션룸')}<div class="muted" style="font-size:.75rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(l.url)}</div></button>`).join('')}<button style="width:100%;margin-top:6px" onclick="closeModal()">닫기</button>`);}
+function slPick(){const L=callLinks();if(L.length===1)return slOpen(0);modal(`<h2 style="color:var(--gold2);margin-top:0">🔗 링크</h2>${L.map((l,i)=>`<button class="${i?'':'primary'}" style="width:100%;margin:4px 0;text-align:left" onclick="closeModal();slOpen(${i})">${esc(l.name||'링크')}<div class="muted" style="font-size:.75rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(l.url)}</div></button>`).join('')}<button style="width:100%;margin-top:6px" onclick="closeModal()">닫기</button>`);}
 /* KP: 호출할 때 붙일 링크 고르기 (지난번 고른 것 기억) */
 function slSelUrls(){try{const v=JSON.parse(localStorage.getItem('peccata_slsel')||'null');if(Array.isArray(v))return v;}catch(e){}return SLINKS.length?[SLINKS[0].url]:[];}
 function slSel(){const u=slSelUrls();return SLINKS.filter(l=>u.includes(l.url)).map(l=>({name:l.name||'',url:l.url}));}
 function slToggle(url,on){const u=slSelUrls().filter(x=>x!==url);if(on)u.push(url);try{localStorage.setItem('peccata_slsel',JSON.stringify(u));}catch(e){}}
-function slChecks(){if(!SLINKS.length)return '';const u=slSelUrls();return `<div class="slchk"><span class="muted">🎲 같이 보낼 세션룸</span>${SLINKS.map(l=>`<label><input type="checkbox" style="width:auto" ${u.includes(l.url)?'checked':''} onchange="slToggle(decodeURIComponent('${encodeURIComponent(l.url)}'),this.checked)"> ${esc(l.name||l.url)}</label>`).join('')}</div>`;}
+function slChecks(){if(!SLINKS.length)return '';const u=slSelUrls();return `<div class="slchk"><span class="muted">🔗 같이 보낼 링크</span>${SLINKS.map(l=>`<label><input type="checkbox" style="width:auto" ${u.includes(l.url)?'checked':''} onchange="slToggle(decodeURIComponent('${encodeURIComponent(l.url)}'),this.checked)"> ${esc(l.name||l.url)}</label>`).join('')}</div>`;}
 /* ---- KP 권한 진단: 앱은 KP로 보는데 Firebase 규칙은 KP로 안 볼 때 원인 찾기 ---- */
 async function adminDiag(){
   const L=[],ok=(b,t)=>L.push(`<p style="margin:6px 0">${b?'✅':'❌'} ${t}</p>`);
@@ -997,7 +997,7 @@ function gsModal(){const e=window._eg;
    <label class="f" style="flex:1">한 번에 받는 은화<input type="number" min="1" max="500" value="${e.coins}" oninput="_eg.coins=+this.value"></label></div>
    <button class="sm" style="margin-top:8px" onclick="_eg.salt=rid();toast('저장하면 오늘의 은화가 새 자리에 숨겨짐')">🔀 오늘 은화 다시 숨기기</button>
    <p class="muted">지도에서 장소가 아닌 곳을 누르면 찾음. 매일 자정에 바뀜.</p>
-   <h3>🎲 세션룸 링크</h3><p class="muted" style="margin:0 0 4px">호출할 때 골라서 붙임 · PL 호출 막대에 뜸 · 고른 것 중 첫 번째 = '지금 갈게' 누르면 바로 열림</p>
+   <h3>🔗 호출 링크</h3><p class="muted" style="margin:0 0 4px">세션룸 · 음악 등 · 호출할 때 골라서 붙임 · PL 호출 막대에 뜸 · 고른 것 중 첫 번째 = '지금 갈게' 누르면 바로 열림</p>
    ${(e.links||[]).map((l,i)=>`<div class="row" style="gap:4px;margin:3px 0"><input style="flex:0 0 7em" placeholder="이름" value="${esc(l.name||'')}" oninput="_eg.links[${i}].name=this.value"><input style="flex:1" placeholder="https://…" value="${esc(l.url||'')}" oninput="_eg.links[${i}].url=this.value.trim()"><button class="sm" onclick="_eg.links.splice(${i},1);gsModal()">✕</button></div>`).join('')}
    ${(e.links||[]).length<5?`<button class="sm" onclick="_eg.links.push({name:'',url:''});gsModal()">+ 링크 추가</button>`:''}
    <h3>방 · 글자</h3><div class="row" style="gap:6px;flex-wrap:wrap"><button class="sm" onclick="openRoomSettings()">🗺 방 기능 · 세부 지도 설정</button><button class="sm" onclick="closeModal();txToggle(true)">✏ 화면 글자 고치기</button></div>
@@ -1290,7 +1290,7 @@ async function gatherSend(){
 }
 function gatherReply(g){
   const c=CALL;if(!c||!String(c.msg||'').startsWith('📣')||(c.at||0)<(g.at||0)-60000)return '';
-  if(!c.ack)return `<div class="row" style="margin-top:8px;gap:6px"><span class="muted" style="flex:0 0 auto">응답:</span><button class="sm primary" onclick="ackCall('go');slOpen(0)">지금 갈게${callLinks().length?' 🎲':''}</button><button class="sm" onclick="ackCall('5m')">5분만</button><button class="sm" onclick="ackCall('no')">어려움</button></div>`;
+  if(!c.ack)return `<div class="row" style="margin-top:8px;gap:6px"><span class="muted" style="flex:0 0 auto">응답:</span><button class="sm primary" onclick="ackCall('go');slOpen(0)">지금 갈게${callLinks().length?' 🔗':''}</button><button class="sm" onclick="ackCall('5m')">5분만</button><button class="sm" onclick="ackCall('no')">어려움</button></div>`;
   return `<p class="muted" style="margin:6px 0 0">내 응답: <b>${REPLY[c.reply]||'확인 ✓'}</b></p>`;
 }
 function clearGather(){B.set('settings/rooms',{gather:null},true);}
@@ -1651,7 +1651,7 @@ function mountScheduler(){
 }
 VIEWS.sched=()=>{const n=BOOKINGS.filter(b=>b.status==='pending').length;
   return `<div class="panel" style="margin-bottom:8px;padding:10px 14px"><div class="row" style="justify-content:space-between"><p class="muted schedinfo" style="margin:0;flex:1 1 300px">PL 예약은 <b style="color:var(--gold2)">점선 칸</b>으로 뜸 (눌러서 승인/거절). 장소 공개는 <b>맵/장소</b> 탭의 <b>👁 PL 공개</b>.</p>
-   <button class="sm ${n?'primary':''}" style="flex:0 0 auto" onclick="openBookList()">📋 예약 목록${n?' · 대기 '+n:''}</button></div>${slChecks().replace('같이 보낼 세션룸','자동 호출에 같이 보낼 세션룸')}</div>`;};
+   <button class="sm ${n?'primary':''}" style="flex:0 0 auto" onclick="openBookList()">📋 예약 목록${n?' · 대기 '+n:''}</button></div>${slChecks().replace('같이 보낼 링크','자동 호출에 같이 보낼 링크')}</div>`;};
 function openBookList(){window._bookList=true;modal(VIEWS.kbook()+'<button style="width:100%" onclick="window._bookList=false;closeModal()">닫기</button>');}
 function refreshBookList(){if(window._bookList&&modalOpen())openBookList();}
 function reviewBooking(id){
