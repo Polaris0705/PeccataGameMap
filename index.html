@@ -25,6 +25,7 @@ body{margin:0;background:radial-gradient(ellipse at top,var(--panel) 0%,var(--bg
 #callBar{padding-top:calc(12px + env(safe-area-inset-top))!important}
 body.kp .wrap{max-width:1400px}
 body.insched .wrap{padding-bottom:4px}
+body.insched #app{padding-bottom:0!important}body.insched #view>.panel:last-child{margin-bottom:6px}
 header.top{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;padding:6px 0 10px;border-bottom:1px solid var(--line);margin-bottom:12px}
 header.top h1{margin:0;font-size:1.3rem;letter-spacing:.1em;color:var(--gold2);font-weight:800}
 .who{display:flex;align-items:center;gap:10px;flex-wrap:wrap;font-size:.9rem}
@@ -704,7 +705,10 @@ function render(){
     if(k==='chat')return typeof chatBadge==='function'?chatBadge():'';
     return '';
   };
-  app.innerHTML=headerHtml()+groups.map((g,gi)=>`${groups.length>1?`<div class="navlabel">${g[0]}</div>`:''}<nav class="${gi===groups.length-1?'sub':''}">${g[1].map(([k,v])=>`<button class="${tab===k?'on':''}" onclick="go('${k}')">${v}${badge(k)}</button>`).join('')}</nav>`).join('')+
+  // 폰: 묶음 이름 없이 한 줄로 합치고, 빈칸이 가장 적게 남는 열 수로
+  const mob=window.matchMedia('(max-width:560px)').matches,ng=mob&&groups.length>1?[['',groups.flatMap(g=>g[1])]]:groups;
+  const nCol=n=>n<=4?n:[4,3,5].reduce((b,c)=>((c-n%c)%c)<((b-n%b)%b)?c:b,4);
+  app.innerHTML=headerHtml()+ng.map((g,gi)=>`${ng.length>1?`<div class="navlabel">${g[0]}</div>`:''}<nav class="${gi===ng.length-1?'sub':''}"${mob?` style="grid-template-columns:repeat(${nCol(g[1].length)},1fr)"`:''}>${g[1].map(([k,v])=>`<button class="${tab===k?'on':''}" onclick="go('${k}')">${v}${badge(k)}</button>`).join('')}</nav>`).join('')+
     `${typeof FEATS!=='undefined'&&FEATS[tab]?`<div style="margin:-4px 0 10px">${tab==='lockpick'?`<button class="sm" onclick="${typeof LP_T!=='undefined'&&LP_T?`RV='${LP_T.owner}';`:''}go('visit')">← 방으로</button>`:`<button class="sm" onclick="go('map')">← 저택 지도로</button>`}${MAP_PLACE?` <span class="muted">📍 ${esc(MAP_PLACE)}</span>`:''}</div>`:''}<div id="view">${(VIEWS[tab]||(()=>''))()}</div>`;
   markEmpty(app);
   $('#schedWrap').style.display=(IS_ADMIN&&tab==='sched')?'block':'none';
@@ -810,6 +814,7 @@ function onCall(d){
 }
 function callPad(){const bar=$('#callBar');document.body.style.paddingTop=bar&&bar.style.display==='block'?bar.offsetHeight+'px':'';}
 window.addEventListener('resize',()=>{try{callPad()}catch(e){}});
+try{window.matchMedia('(max-width:560px)').addEventListener('change',()=>{try{softRender()}catch(e){}});}catch(e){}
 function gatherGo(i){if(CALL&&!CALL.ack&&String(CALL.msg||'').startsWith('📣'))ackCall('go');selectPlace(i);}
 function ackCall(r){if(CALL)B.update('calls/'+ME.uid,{ack:true,reply:r||'ok',ackAt:Date.now()});}
 function askNotify(){if(!window.Notification)return toast('이 브라우저는 알림을 지원하지 않음');Notification.requestPermission().then(p=>toast(p==='granted'?'알림을 켬':'알림이 허용되지 않음'));}
