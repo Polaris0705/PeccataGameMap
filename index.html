@@ -1030,7 +1030,7 @@ function maybeAtt(){if(attChecked||!P||!PROF||(!IS_ADMIN&&!PROF.ho))return;attCh
 function checkAtt(){
   if(!P||!ME)return;const t=kstDate(),a=P.att||{};if(a.last===t)return;
   const y=new Date(Date.now()+9*36e5-864e5).toISOString().slice(0,10),streak=a.last===y?((a.streak||0)%7)+1:1,c=ATT[streak-1]+3*Math.min(2,RC('safe'));
-  P.att={last:t,streak};earn(c);
+  P.att={last:t,streak};const lw=typeof LOG_W!=='undefined'?LOG_W:null;try{LOG_W='att';earn(c);}finally{LOG_W=lw;}
   if(modalOpen())return toast(`📅 출석 ${streak}일째 +${c} 은화`);
   modal(`<div style="text-align:center"><div style="font-size:2.6rem">📅</div><h2 style="color:var(--gold2);margin:4px 0">출석 ${streak}일째</h2><p>오늘의 출석 보상 <b>+${c} 은화</b></p>
    <div class="toggles" style="justify-content:center">${ATT.map((v,i)=>`<span class="chip ${i<streak?'on':''}">${i+1}일 · ${v}</span>`).join('')}</div>
