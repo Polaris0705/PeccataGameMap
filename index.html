@@ -647,7 +647,7 @@ async function onAuth(u){
   sub(B.onDoc('settings/texts',d=>{if(typeof txSetRules==='function')txSetRules((d&&d.rules)||[]);}));
   sub(B.onDoc('settings/theme',d=>{THEME_GLOBAL=d;if(!TF)applyTheme();}));
   sub(B.onDoc('settings/rooms',d=>{ROOMS=Object.assign({rooms:{},gather:null},d||{});softRender();}));
-  sub(B.onDoc('settings/game',d=>{EGG=Object.assign({on:true,mode:'personal',perDay:3,coins:3,salt:''},(d&&d.egg)||{});if(typeof NOTECFG!=='undefined')NOTECFG=Object.assign({on:true,pct:10,perDay:3,hold:3},(d&&d.notes)||{});if(typeof SONGS!=='undefined')SONGS=(d&&d.songs)||[];SLINKS=((d&&d.links)||[]).filter(l=>l&&l.url);softRender();}));
+  sub(B.onDoc('settings/game',d=>{EGG=Object.assign({on:true,mode:'personal',perDay:3,coins:3,salt:''},(d&&d.egg)||{});if(typeof NOTECFG!=='undefined')NOTECFG=Object.assign({on:true,pct:10,perDay:3,hold:3},(d&&d.notes)||{});if(typeof SONGS!=='undefined')SONGS=(d&&d.songs)||[];SLINKS=((d&&d.links)||[]).filter(l=>l&&l.url);if(typeof BOT_NAMES_KP!=='undefined')BOT_NAMES_KP=(d&&d.botNames)||[];softRender();}));
   sub(B.onCol('users',l=>{USERS_RAW=l;testFilter();setTimeout(()=>{try{tkRefresh()}catch(e){}},60);if(tab==='map')setTimeout(drawPlMap,40);if(typeof chatOnUsers==='function')chatOnUsers();softRender();}));
   sub(B.onCol('bookings',l=>{const prev=BK_PREV;BK_PREV={};l.forEach(b=>BK_PREV[b.id]=b);if(prev)bookingNotify(prev,l);BOOKINGS=l.sort((a,b)=>(b.at||0)-(a.at||0));if(IS_ADMIN){pushPending();refreshBookList();}softRender();}));
   sub(B.onCol('items',l=>{ITEMS=l.sort((a,b)=>(a.at||0)-(b.at||0));softRender();if(MODAL_ITEM)refreshItemModal();}));
@@ -993,7 +993,7 @@ async function adminDiag(){
   modal(`<h2 style="color:var(--gold2);margin-top:0">🔧 KP 권한 진단</h2>${L.join('')}<p class="muted">고친 뒤 다시 열어 확인하기 (반영까지 1분쯤).</p><div class="row"><button onclick="adminDiag()">다시 진단</button><button class="primary" onclick="closeModal()">닫기</button></div>`);
 }
 window.addEventListener('unhandledrejection',e=>{const c=e.reason&&e.reason.code;if(c==='permission-denied'){toast(IS_ADMIN?'저장 권한이 없음 — ⚙ 저택 설정 › KP 권한 진단을 눌러 보기':'저장 권한이 없음');}});
-function openGameSettings(){window._eg=Object.assign({},EGG,{links:SLINKS.map(l=>Object.assign({},l))});gsModal();}
+function openGameSettings(){window._eg=Object.assign({},EGG,{links:SLINKS.map(l=>Object.assign({},l)),botNames:BOT_NAMES.map((_,i)=>BOT_NAMES_KP[i]||'')});gsModal();}
 function gsModal(){const e=window._eg;
   modal(`<h2 style="color:var(--gold2);margin-top:0">⚙ 저택 설정</h2><h3>지도 이스터에그 은화</h3>
    <label class="muted" style="display:block"><input type="checkbox" style="width:auto" ${e.on?'checked':''} onchange="_eg.on=this.checked"> 켜기</label>
@@ -1005,11 +1005,13 @@ function gsModal(){const e=window._eg;
    <h3>🔗 호출 링크</h3><p class="muted" style="margin:0 0 4px">세션룸 · 음악 등 · 호출할 때 골라서 붙임 · PL 호출 막대에 뜸 · 고른 것 중 첫 번째 = '지금 갈게' 누르면 바로 열림</p>
    ${(e.links||[]).map((l,i)=>`<div class="row" style="gap:4px;margin:3px 0"><input style="flex:0 0 7em" placeholder="이름" value="${esc(l.name||'')}" oninput="_eg.links[${i}].name=this.value"><input style="flex:1" placeholder="https://…" value="${esc(l.url||'')}" oninput="_eg.links[${i}].url=this.value.trim()"><button class="sm" onclick="_eg.links.splice(${i},1);gsModal()">✕</button></div>`).join('')}
    ${(e.links||[]).length<5?`<button class="sm" onclick="_eg.links.push({name:'',url:''});gsModal()">+ 링크 추가</button>`:''}
+   <h3>🤖 파티 게임 봇 이름</h3><p class="muted" style="margin:0 0 4px">방장이 봇을 추가하면 이 순서대로 붙음 · 비우면 기본 이름</p>
+   <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:4px">${BOT_NAMES.map((n,i)=>`<input placeholder="${esc(n)}" maxlength="12" value="${esc((e.botNames||[])[i]||'')}" oninput="_eg.botNames[${i}]=this.value">`).join('')}</div>
    <h3>방 · 글자</h3><div class="row" style="gap:6px;flex-wrap:wrap"><button class="sm" onclick="openRoomSettings()">🗺 방 기능 · 세부 지도 설정</button><button class="sm" onclick="closeModal();txToggle(true)">✏ 화면 글자 고치기</button></div>
    <div class="row"><button onclick="closeModal()">취소</button><button class="primary" onclick="saveGameSettings()">저장</button></div>`);}
 async function saveGameSettings(){const e=window._eg;e.perDay=Math.max(1,Math.min(20,e.perDay|0||3));e.coins=Math.max(1,Math.min(500,e.coins|0||5));
-  const links=(e.links||[]).map(l=>({name:String(l.name||'').trim().slice(0,20),url:String(l.url||'').trim()})).filter(l=>l.url);delete e.links;
-  try{await B.set('settings/game',{egg:clean(e),links},true);}catch(x){return toast('저장 실패: '+(x.code||x.message));}closeModal();toast('저장 완료');}
+  const links=(e.links||[]).map(l=>({name:String(l.name||'').trim().slice(0,20),url:String(l.url||'').trim()})).filter(l=>l.url);delete e.links;const botNames=(e.botNames||[]).map(n=>String(n||'').trim().slice(0,12));delete e.botNames;
+  try{await B.set('settings/game',{egg:clean(e),links,botNames},true);}catch(x){return toast('저장 실패: '+(x.code||x.message));}closeModal();toast('저장 완료');}
 
 /* ================= 효과음 ================= */
 let SFX_ON=(()=>{try{return localStorage.getItem('peccata_sfx')!=='0';}catch(e){return true;}})();

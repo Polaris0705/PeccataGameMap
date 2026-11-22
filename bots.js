@@ -5,12 +5,14 @@
    ========================================================= */
 const BOT_TYPES = ['nunchi', 'auction', 'liar', 'werewolf'];
 const BOT_NAMES = ['봇 하나', '봇 둘', '봇 셋', '봇 넷', '봇 다섯', '봇 여섯', '봇 일곱', '봇 여덟'];
+let BOT_NAMES_KP = [];   // KP가 저택 설정에서 바꾼 이름 (settings/game.botNames)
+const botName = i => (BOT_NAMES_KP[i] || '').trim() || BOT_NAMES[i];
 const isBot = id => typeof id === 'string' && id.startsWith('bot_');
 const botsOf = r => Object.keys((r && r.players) || {}).filter(isBot);
 function botAdd() {
   rtx(PROOM, x => { if (x.host !== ME.uid || x.status !== 'lobby') return undefined; x.players = x.players || {};
     let i = 1; while (x.players['bot_' + i]) i++; if (i > BOT_NAMES.length) return undefined;
-    x.players['bot_' + i] = { name: '🤖 ' + BOT_NAMES[i - 1], bot: true, at: Date.now() }; return x; });
+    x.players['bot_' + i] = { name: '🤖 ' + botName(i - 1), bot: true, at: Date.now() }; return x; });
 }
 function botDel() {
   rtx(PROOM, x => { if (x.host !== ME.uid || x.status !== 'lobby') return undefined; const b = botsOf(x).pop(); if (!b) return undefined; delete x.players[b]; return x; });
