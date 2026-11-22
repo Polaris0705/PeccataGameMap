@@ -282,3 +282,7 @@
 - 버그 수정 방지: 조율표 사람 고르기 함수 이름이 토큰 쪽과 겹치지 않게 함.
 - `sessions` 문서에 `who`(HO 코드 목록) 추가. **push-server/index.js 도 바뀜 → Railway 다시 배포해야 시작 알림이 참가자에게만 감** (안 하면 예전처럼 모두에게).
 - 적용: `social.js`, `push-server/index.js`, `sw.js`, `README.md`, `CHANGELOG.md` (캐시 v145).
+
+## 🐺 인랑 시간 직접 설정
+- 방장 화면 '시간'에서 낮 토론 · 밤 · 투표 시간을 각각 고름: 자주 쓰는 값 버튼 + 분 · 초 직접 입력 (10초 ~ 30분). 고른 값은 그 판 내내 적용.
+- 적용: `party2.js`, `sw.js`, `CHANGELOG.md` (캐시 v146).

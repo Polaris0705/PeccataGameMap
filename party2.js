@@ -19,7 +19,14 @@ function wwAuto(n) {
   const c = { wolf: n >= 11 ? 3 : n >= 7 ? 2 : 1, seer: 1, knight: n >= 5 ? 1 : 0, medium: n >= 7 ? 1 : 0, mad: n === 6 || n >= 8 ? 1 : 0, vill: 0 };
   c.vill = Math.max(0, n - WW_ORDER.slice(0, 5).reduce((s, k) => s + c[k], 0)); return c;
 }
-let WF = { mode: 'auto', c: null, day: 180 }, WWA = null, WW_ACT = {}, WW_BUSY = false;
+/* 시간 고르기: 자주 쓰는 값 버튼 + 분·초 직접 입력 (10초 ~ 30분) */
+function wwTimeRow(k, label, presets) {
+  const v = WF[k], m = Math.floor(v / 60), sc = v % 60, lab = x => x % 60 ? (x >= 60 ? `${Math.floor(x / 60)}분 ${x % 60}초` : `${x}초`) : `${x / 60}분`;
+  return `<div class="row" style="gap:6px;align-items:center;flex-wrap:wrap;margin:4px 0"><span style="flex:0 0 5.5em">${label}</span><div class="toggles" style="margin:0">${presets.map(x => `<button class="sm ${v === x ? 'on' : ''}" onclick="WF.${k}=${x};render()">${lab(x)}</button>`).join('')}</div>
+    <span class="row" style="gap:3px;align-items:center;flex:0 0 auto"><input type="number" min="0" max="30" value="${m}" style="width:4.4em;padding:6px 4px;text-align:center" onchange="wwTimeSet('${k}',this.value,null)">분<input type="number" min="0" max="59" step="5" value="${sc}" style="width:4.4em;padding:6px 4px;text-align:center" onchange="wwTimeSet('${k}',null,this.value)">초</span></div>`;
+}
+function wwTimeSet(k, m, sc) { const v = WF[k]; m = m === null ? Math.floor(v / 60) : +m || 0; sc = sc === null ? v % 60 : +sc || 0; WF[k] = Math.max(10, Math.min(1800, Math.round(m) * 60 + Math.round(sc))); render(); }
+let WF = { mode: 'auto', c: null, day: 180, night: WW_NIGHT, vote: WW_VOTE }, WWA = null, WW_ACT = {}, WW_BUSY = false;
 const wwSum = c => WW_ORDER.reduce((s, k) => s + (c[k] || 0), 0);
 const wwName = (r, u) => esc(((r.players || {})[u] || {}).name || '?');
 const wwSec = r => PSECRET && PSECRET.round === (r.state || {}).round && PSECRET.ww ? PSECRET : null;
@@ -37,7 +44,7 @@ function wwView(r, host) {
      <h3>역할 (${n}명)</h3><div class="toggles"><button class="sm ${WF.mode === 'auto' ? 'on' : ''}" onclick="WF.mode='auto';render()">인원수에 맞춰 자동</button><button class="sm ${WF.mode === 'manual' ? 'on' : ''}" onclick="WF.mode='manual';WF.c=Object.assign({},wwAuto(${n}));render()">직접 고르기</button></div>
      ${WW_ORDER.map(row).join('')}
      ${WF.mode === 'manual' && wwSum(c) !== n ? `<p style="color:#e88">역할 합계 ${wwSum(c)}명 · 참가자 ${n}명과 같아야 함</p>` : ''}${c.wolf * 2 >= n && n ? '<p style="color:#e88">인랑이 너무 많음 (절반 미만)</p>' : ''}
-     <h3>낮 토론 시간</h3><div class="toggles">${[60, 120, 180, 300].map(s => `<button class="sm ${WF.day === s ? 'on' : ''}" onclick="WF.day=${s};render()">${s / 60}분</button>`).join('')}</div>
+     <h3>시간</h3>${wwTimeRow('day', '☀ 낮 토론', [60, 120, 180, 300])}${wwTimeRow('night', '🌙 밤', [30, 45, 60, 90])}${wwTimeRow('vote', '🗳 투표', [30, 60, 90, 120])}
      ${needMore(r, PARTY_TYPES.werewolf)}<button class="primary" style="margin-top:10px;width:100%" ${n < 4 || !ok ? 'disabled' : ''} onclick="wwStart()">🐺 시작</button>
      <p class="muted" style="font-size:.8rem">방장이 나가면 그 판은 끝남.</p>`;
   }
@@ -91,7 +98,7 @@ async function wwStart() {
   WWA = { round, roles, res: {} };
   const cnt = WW_ORDER.filter(k => c[k]).map(k => `${WW_ROLES[k].ic}${WW_ROLES[k].n} ${c[k]}`).join(' · ');
   rtx(r.id, x => { if (x.host !== ME.uid) return undefined; x.status = 'play';
-    x.state = { round, n: 1, phase: 'night', endAt: Date.now() + WW_NIGHT * 1000, alive: ps, done: {}, ready: {}, votes: {}, msgs: [], log: [`🎭 역할: ${cnt}`], dayLen: WF.day, result: null }; return x; });
+    x.state = { round, n: 1, phase: 'night', endAt: Date.now() + (WF.night || WW_NIGHT) * 1000, nightLen: WF.night || WW_NIGHT, voteLen: WF.vote || WW_VOTE, alive: ps, done: {}, ready: {}, votes: {}, msgs: [], log: [`🎭 역할: ${cnt}`], dayLen: WF.day, result: null }; return x; });
 }
 async function wwAct(t) {
   const r = roomOf(PROOM); if (!r) return; const S = r.state, sec = wwSec(r); if (S.phase !== 'night' || !(S.alive || []).includes(ME.uid)) return;
@@ -138,7 +145,7 @@ async function wwHost() {
     } else if (S.phase === 'dawn' && timeUp) {
       await rtx(r.id, x => { const s = x.state; if (s.phase !== 'dawn') return undefined; s.phase = 'day'; s.ready = {}; s.endAt = Date.now() + (s.dayLen || 180) * 1000; return x; });
     } else if (S.phase === 'day' && (timeUp || alive.every(u => (S.ready || {})[u]))) {
-      await rtx(r.id, x => { const s = x.state; if (s.phase !== 'day') return undefined; s.phase = 'vote'; s.votes = {}; s.endAt = Date.now() + WW_VOTE * 1000; return x; });
+      await rtx(r.id, x => { const s = x.state; if (s.phase !== 'day') return undefined; s.phase = 'vote'; s.votes = {}; s.endAt = Date.now() + (s.voteLen || WW_VOTE) * 1000; return x; });
     } else if (S.phase === 'vote' && (timeUp || alive.every(u => (S.votes || {})[u]))) {
       const cnt = {}; Object.entries(S.votes || {}).forEach(([v, t]) => { if (alive.includes(v) && alive.includes(t)) cnt[t] = (cnt[t] || 0) + 1; });
       const mx = Math.max(0, ...Object.values(cnt)), top = Object.keys(cnt).filter(t => cnt[t] === mx), ex = top.length ? top[rint(top.length)] : null;
@@ -149,7 +156,7 @@ async function wwHost() {
         const w = wwWin(s.alive, R); if (w) { fin(x, w); return x; }
         s.phase = 'exec'; s.endAt = Date.now() + WW_PAUSE * 1000; return x; });
     } else if (S.phase === 'exec' && timeUp) {
-      await rtx(r.id, x => { const s = x.state; if (s.phase !== 'exec') return undefined; s.n++; s.phase = 'night'; s.done = {}; s.endAt = Date.now() + WW_NIGHT * 1000; return x; });
+      await rtx(r.id, x => { const s = x.state; if (s.phase !== 'exec') return undefined; s.n++; s.phase = 'night'; s.done = {}; s.endAt = Date.now() + (s.nightLen || WW_NIGHT) * 1000; return x; });
     }
   } finally { WW_BUSY = false; }
 }
