@@ -118,6 +118,7 @@ service cloud.firestore {
 
     match /pushSubs/{uid} {
       allow read, write: if isMe(uid);
+      allow delete: if isAdmin();
     }
 
     match /channels/{ch} {
@@ -272,6 +273,7 @@ service cloud.firestore {
     match /avpos/{uid} {
       allow read: if signedIn();
       allow write: if isMe(uid);
+      allow delete: if isAdmin();
     }
 
     // 경매 (PL 가구 복제품)
@@ -311,12 +313,13 @@ service cloud.firestore {
       allow read: if signedIn();
       allow write: if signedIn() && request.resource.data.by == request.auth.uid
         && request.resource.data.keys().hasOnly(['c', 'by', 'at']) && request.resource.data.c is map && request.resource.data.c.size() <= 60;
+      allow delete: if isAdmin();
     }
     match /roomLikes/{id} {
       allow read: if signedIn();
       allow create: if signedIn() && request.resource.data.uid == request.auth.uid
         && id == request.resource.data.owner + '_' + request.auth.uid;
-      allow delete: if signedIn() && resource.data.uid == request.auth.uid;
+      allow delete: if isAdmin() || (signedIn() && resource.data.uid == request.auth.uid);
     }
 
     match /guestbook/{id} {

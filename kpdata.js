@@ -71,7 +71,7 @@ VIEWS.kdata = () => {
    ${rows.map(({ u, p }, i) => { const td = today[i]; return `<tr><td>${esc(uname(u))}<div class="muted" style="font-size:.75rem">${esc(u.ho ? cname(u.ho) : 'HO 없음')}</div></td>
     <td>${p.coins || 0}</td><td>${p.earned || 0}</td><td>${td.n ? '+' + td.n : '-'}</td><td>${(p.notes || []).length}</td><td>${Object.values(p.riddles || {}).filter(r => r.solved).length}/${RIDDLES.length}</td>
     <td class="muted" style="font-size:.8rem">${td.last ? fmtT(td.last) : '-'}</td>
-    <td><div class="row" style="gap:4px;flex-wrap:wrap"><button class="sm" onclick="kdCoins('${u.id}')">± 은화</button><button class="sm" onclick="kdGiveNote('${u.id}')">📜 주기</button><button class="sm" onclick="kdTakeNotes('${u.id}')">거두기</button><button class="sm" onclick="kdLog('${u.id}')">기록</button><button class="sm" onclick="kdReset('${u.id}')">초기화</button></div></td></tr>`; }).join('')}
+    <td><div class="row" style="gap:4px;flex-wrap:wrap"><button class="sm" onclick="kdCoins('${u.id}')">± 은화</button><button class="sm" onclick="kdGiveNote('${u.id}')">📜 주기</button><button class="sm" onclick="kdTakeNotes('${u.id}')">거두기</button><button class="sm" onclick="kdLog('${u.id}')">기록</button><button class="sm" onclick="kdReset('${u.id}')">초기화</button>${u.id !== ME.uid ? `<button class="sm danger" onclick="kdDelUser('${u.id}')">🗑 삭제</button>` : ''}</div></td></tr>`; }).join('')}
    </table></div></div>
 
   <div class="panel"><h2>📈 사용량 · 기록</h2><p class="muted">오늘 번 은화 합계 <b>${today.reduce((s, x) => s + x.n, 0)}</b> · 오늘 가장 많이 번 사람 ${(() => { const b = today.slice().sort((a, b) => b.n - a.n)[0]; return b && b.n ? `<b>${esc(uname(b.u))}</b> (+${b.n})` : '-'; })()}</p>
@@ -108,6 +108,31 @@ function kdLog(uid) {
 async function kdReset(uid) {
   const u = USERS.find(x => x.id === uid); if (!confirm(`${uname(u)}의 은화 · 방 · 쪽지 · 수수께끼 · 게임 기록을 처음으로 되돌릴까요?`)) return;
   try { await B.set('progress/' + uid, { reset: Date.now() }); toast('초기화 완료'); } catch (e) { toast('초기화하지 못함'); }
+}
+/* 사용자 삭제: 앱 데이터만 (로그인 계정은 남음 → 다시 로그인하면 처음부터). 남긴 글 · 채팅 · 일기 · 선물 등도 같이 지움 */
+async function kdDelUser(uid) {
+  const u = USERS.find(x => x.id === uid); if (!u || uid === ME.uid) return; const nm = uname(u);
+  if (prompt(`${nm}의 앱 데이터를 모두 지움: 프로필 · 진행(은화 · 방 · 쪽지) · 채팅 · 일기 · 방명록 · 선물함 · 예약 · 만든 가구/옷 · 경매.\n소지품 아이템은 주인 없음으로 돌아감.\n로그인 계정은 남아서 다시 로그인하면 처음부터 시작.\n\n계속하려면 "${nm}" 이라고 적기.`) !== nm) return toast('취소 완료');
+  toast('지우는 중…'); let n = 0, fail = 0;
+  const del = async p => { try { await B.del(p); n++; } catch (e) { fail++; } };
+  const col = async c => { try { return await B.getCol(c); } catch (e) { return []; } };
+  const delWhere = async (c, f) => { for (const d of await col(c)) if (f(d)) await del(c + '/' + d.id); };
+  try {
+    // 채팅: 공용 · 비밀 채널 · 그 사람의 귓속말 방
+    const chans = new Set(['rp', 'ooc', ...(await col('channels')).map(c => c.id)]);
+    for (const ch of chans) { const ms = await col('channels/' + ch + '/msgs'), dm = ch.startsWith('dm_') && ch.split('_').includes(uid); for (const m of ms) if (dm || m.uid === uid) await del(`channels/${ch}/msgs/${m.id}`); if (dm) await del('channels/' + ch); }
+    await delWhere('diaries', d => d.uid === uid); await delWhere('diarySec', d => d.owner === uid);
+    await delWhere('notes', d => d.uid === uid); await delWhere('newsReq', d => d.by === uid);
+    await delWhere('guestbook', d => d.uid === uid || d.owner === uid); await delWhere('roomLikes', d => d.uid === uid || d.owner === uid);
+    await delWhere('bookings', d => d.uid === uid); await delWhere('auctions', d => d.seller === uid);
+    await delWhere('wear', d => d.by === uid && d.kind === 'pl'); await delWhere('furn', d => d.by === uid && d.kind === 'pl');
+    for (const g of await col('giftbox/' + uid + '/in')) await del(`giftbox/${uid}/in/${g.id}`);
+    for (const t of await col('thefts/' + uid + '/log')) await del(`thefts/${uid}/log/${t.id}`);
+    for (const it of await col('items')) if (it.owner === uid) { try { await B.update('items/' + it.id, { owner: '', ownerName: '' }); } catch (e) { fail++; } }
+    for (const s of (typeof SESS !== 'undefined' ? SESS : [])) if (s.rsvp && s.rsvp[uid]) { const r = Object.assign({}, s.rsvp); delete r[uid]; try { await B.update('sessions/' + s.id, { rsvp: r }); } catch (e) {} }
+    for (const p of ['calls/', 'avpos/', 'curt/', 'pushSubs/', 'progress/', 'users/']) await del(p + uid);
+  } catch (e) { fail++; }
+  toast(fail ? `${nm} 삭제: ${fail}개 실패 (Firebase 규칙 확인)` : `${nm} 삭제 완료`); render();
 }
 async function kdResetAll() {
   if (prompt('모든 플레이어 진행을 초기화. 계속하려면 "초기화"라고 적기.') !== '초기화') return toast('취소 완료');
