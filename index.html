@@ -1005,7 +1005,7 @@ function gsModal(){const e=window._eg;
    <h3>🔗 호출 링크</h3><p class="muted" style="margin:0 0 4px">세션룸 · 음악 등 · 호출할 때 골라서 붙임 · PL 호출 막대에 뜸 · 고른 것 중 첫 번째 = '지금 갈게' 누르면 바로 열림</p>
    ${(e.links||[]).map((l,i)=>`<div class="row" style="gap:4px;margin:3px 0"><input style="flex:0 0 7em" placeholder="이름" value="${esc(l.name||'')}" oninput="_eg.links[${i}].name=this.value"><input style="flex:1" placeholder="https://…" value="${esc(l.url||'')}" oninput="_eg.links[${i}].url=this.value.trim()"><button class="sm" onclick="_eg.links.splice(${i},1);gsModal()">✕</button></div>`).join('')}
    ${(e.links||[]).length<5?`<button class="sm" onclick="_eg.links.push({name:'',url:''});gsModal()">+ 링크 추가</button>`:''}
-   <h3>🤖 파티 게임 봇 이름</h3><p class="muted" style="margin:0 0 4px">방장이 봇을 추가하면 이 순서대로 붙음 · 비우면 기본 이름</p>
+   <h3>🤖 파티 게임 봇 이름</h3><p class="muted" style="margin:0 0 4px">방장이 봇을 추가하면 이 중에서 무작위로 붙음 (한 방에 겹치지 않게) · 모자라면 기본 이름</p>
    <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:4px">${BOT_NAMES.map((n,i)=>`<input placeholder="${esc(n)}" maxlength="12" value="${esc((e.botNames||[])[i]||'')}" oninput="_eg.botNames[${i}]=this.value">`).join('')}</div>
    <h3>방 · 글자</h3><div class="row" style="gap:6px;flex-wrap:wrap"><button class="sm" onclick="openRoomSettings()">🗺 방 기능 · 세부 지도 설정</button><button class="sm" onclick="closeModal();txToggle(true)">✏ 화면 글자 고치기</button></div>
    <div class="row"><button onclick="closeModal()">취소</button><button class="primary" onclick="saveGameSettings()">저장</button></div>`);}

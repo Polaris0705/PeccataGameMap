@@ -6,13 +6,19 @@
 const BOT_TYPES = ['nunchi', 'auction', 'liar', 'werewolf'];
 const BOT_NAMES = ['봇 하나', '봇 둘', '봇 셋', '봇 넷', '봇 다섯', '봇 여섯', '봇 일곱', '봇 여덟'];
 let BOT_NAMES_KP = [];   // KP가 저택 설정에서 바꾼 이름 (settings/game.botNames)
-const botName = i => (BOT_NAMES_KP[i] || '').trim() || BOT_NAMES[i];
+/* 정해 둔 이름 중 이 방에서 아직 안 쓴 것을 무작위로. 다 쓰면 기본 이름 */
+function botNamePick(x, i) {
+  const used = new Set(Object.values(x.players || {}).filter(p => p && p.bot).map(p => String(p.name || '').replace(/^🤖 /, '')));
+  const pool = [...new Set(BOT_NAMES_KP.map(n => String(n || '').trim()).filter(Boolean))].filter(n => !used.has(n));
+  if (pool.length) return pool[Math.floor(Math.random() * pool.length)];
+  return BOT_NAMES.find(n => !used.has(n)) || BOT_NAMES[i - 1];
+}
 const isBot = id => typeof id === 'string' && id.startsWith('bot_');
 const botsOf = r => Object.keys((r && r.players) || {}).filter(isBot);
 function botAdd() {
   rtx(PROOM, x => { if (x.host !== ME.uid || x.status !== 'lobby') return undefined; x.players = x.players || {};
     let i = 1; while (x.players['bot_' + i]) i++; if (i > BOT_NAMES.length) return undefined;
-    x.players['bot_' + i] = { name: '🤖 ' + botName(i - 1), bot: true, at: Date.now() }; return x; });
+    x.players['bot_' + i] = { name: '🤖 ' + botNamePick(x, i), bot: true, at: Date.now() }; return x; });
 }
 function botDel() {
   rtx(PROOM, x => { if (x.host !== ME.uid || x.status !== 'lobby') return undefined; const b = botsOf(x).pop(); if (!b) return undefined; delete x.players[b]; return x; });
