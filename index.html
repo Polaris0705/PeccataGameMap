@@ -27,7 +27,15 @@ body.kp .wrap{max-width:1400px}
 body.insched .wrap{padding-bottom:4px}
 body.insched #app{padding-bottom:0!important}body.insched #view>.panel:last-child{margin-bottom:6px}
 header.top{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;padding:6px 0 10px;border-bottom:1px solid var(--line);margin-bottom:12px}
-header.top h1{margin:0;font-size:1.3rem;letter-spacing:.1em;color:var(--gold2);font-weight:800}
+header.top h1{margin:0;font-size:1.3rem;letter-spacing:.1em;color:var(--tcol,var(--gold2));font-family:var(--tfont,inherit);font-weight:800}
+/* 제목 효과 (테마 › 제목) */
+html[data-tfx=none] header.top h1{text-shadow:none!important}
+html[data-tfx=shadow] header.top h1{text-shadow:3px 3px 0 rgba(0,0,0,.38)!important}
+html[data-tfx=outline] header.top h1{text-shadow:-1.5px -1.5px 0 var(--bg),1.5px -1.5px 0 var(--bg),-1.5px 1.5px 0 var(--bg),1.5px 1.5px 0 var(--bg),0 0 0 var(--bg),2.5px 2.5px 0 var(--wine)!important}
+html[data-tfx=glow] header.top h1{text-shadow:0 0 6px color-mix(in srgb,var(--tcol,var(--gold2)) 70%,transparent),0 0 16px color-mix(in srgb,var(--tcol,var(--gold2)) 45%,transparent)!important}
+html[data-tfx=emboss] header.top h1{text-shadow:-1px -1px 0 rgba(255,255,255,.55),1.5px 1.5px 0 rgba(0,0,0,.45)!important}
+html[data-tfx=gold] header.top h1{background:linear-gradient(180deg,#fff6cf 0%,#f0c860 42%,#b07a24 58%,#e9c46a 100%);-webkit-background-clip:text;background-clip:text;color:transparent!important;text-shadow:none!important;filter:drop-shadow(1.5px 1.5px 0 rgba(0,0,0,.4))}
+html[data-tfx=silver] header.top h1{background:linear-gradient(180deg,#ffffff 0%,#d6dbe2 45%,#8a929c 58%,#e6e9ee 100%);-webkit-background-clip:text;background-clip:text;color:transparent!important;text-shadow:none!important;filter:drop-shadow(1.5px 1.5px 0 rgba(0,0,0,.4))}
 .who{display:flex;align-items:center;gap:10px;flex-wrap:wrap;font-size:.9rem}
 .clockb{font-size:.85rem;color:var(--text2);border:1px solid var(--line);padding:2px 8px;margin-right:8px;white-space:nowrap}
 @media(max-width:560px){.clockb{font-size:.75rem;padding:1px 5px;margin-right:4px}}
@@ -928,6 +936,9 @@ function applyTheme(t){
   set('wine',t.point);set('wine2',mix(t.point,dark?'#ffffff':'#000000',.22));set('inbg',mix(t.bg,dark?'#000000':'#ffffff',dark?.28:.55));
   const F=FONTS[t.font]||FONTS.serif;
   if(F.g&&!loadedFonts.has(t.font)){const l=document.createElement('link');l.rel='stylesheet';l.href='https://fonts.googleapis.com/css2?family='+F.g+'&display=swap';document.head.appendChild(l);loadedFonts.add(t.font);}
+  {const TF2=FONTS[t.tfont];if(TF2&&TF2.g&&!loadedFonts.has(t.tfont)){const l=document.createElement('link');l.rel='stylesheet';l.href='https://fonts.googleapis.com/css2?family='+TF2.g+'&display=swap';document.head.appendChild(l);loadedFonts.add(t.tfont);}}
+  if(t.tcol)set('tcol',t.tcol);else r.removeProperty('--tcol');if(FONTS[t.tfont])set('tfont',FONTS[t.tfont].f);else r.removeProperty('--tfont');
+  if(t.tfx)document.documentElement.dataset.tfx=t.tfx;else delete document.documentElement.dataset.tfx;
   set('font',F.f);set('scale',String((+t.scale||1)*(F.scale||1)));
   set('frame',t.frame||mix(t.panel,t.text,.4));
   if(typeof PXI_URL!=='undefined')set('coinimg',PXI_URL.coin);
@@ -947,6 +958,10 @@ function themeModal(){
    <label class="f">색 직접 고르기</label><div class="grid g2">${keys.map(([k,l])=>`<label class="colrow"><span>${l}</span><input type="color" value="${TF[k]||(k==='frame'?mix(TF.panel,TF.text,.4):'#000000')}" oninput="TF['${k}']=this.value;themeMine()"></label>`).join('')}</div>
    <label class="f">글꼴</label><select onchange="TF.font=this.value;themeMine()">${Object.entries(FONTS).map(([id,f])=>`<option value="${id}" ${TF.font===id?'selected':''}>${f.n}</option>`).join('')}</select>
    <label class="f">글자 크기</label><div class="toggles">${[[.9,'작게'],[1,'보통'],[1.12,'크게'],[1.25,'아주 크게']].map(([v,n])=>`<button class="sm ${(+TF.scale||1)==v?'on':''}" onclick="TF.scale=${v};themeMine();themeModal()">${n}</button>`).join('')}</div>
+   <label class="f">맨 위 제목</label>
+   <div class="row" style="gap:8px;align-items:center;flex-wrap:wrap"><label class="colrow" style="flex:0 0 auto"><span>글자색</span><input type="color" value="${TF.tcol||'#d8b060'}" oninput="TF.tcol=this.value;themeMine();document.getElementById('tcolDef').checked=false"></label><label style="display:flex;gap:4px;align-items:center;font-size:.85rem"><input type="checkbox" id="tcolDef" style="width:auto" ${TF.tcol?'':'checked'} onchange="if(this.checked){TF.tcol='';themeMine();}"> 테마 색</label>
+    <select style="flex:1 1 9em" onchange="TF.tfont=this.value;themeMine()"><option value="">글꼴: 본문과 같게</option>${Object.entries(FONTS).map(([id,f])=>`<option value="${id}" ${TF.tfont===id?'selected':''}>${f.n}</option>`).join('')}</select></div>
+   <div class="toggles" style="margin-top:6px">${[['','기본'],['none','없음'],['shadow','그림자'],['outline','테두리'],['glow','빛번짐'],['emboss','양각'],['gold','금박'],['silver','은박']].map(([v,n])=>`<button class="sm ${(TF.tfx||'')===v?'on':''}" onclick="TF.tfx='${v}';themeMine();themeModal()">${n}</button>`).join('')}</div>
    <p class="muted">${mineOn?'저장하면 내 모든 기기에 적용됨.':'KP가 정한 기본 테마를 따름.'}</p>
    <div class="row" style="margin-top:8px"><button onclick="closeModal()">취소</button><button class="primary" onclick="saveTheme()">저장</button>${IS_ADMIN?'<button onclick="saveThemeGlobal()">모두의 기본값으로 저장</button>':''}</div>`);
   applyTheme(TF);
@@ -954,7 +969,7 @@ function themeModal(){
 function themeMine(){if(TF.mode!=='mine'){TF.mode='mine';const b=$('#mbox .toggles');if(b){b.children[0].classList.remove('on');b.children[1].classList.add('on');}}applyTheme(TF);}
 function themeKP(){Object.assign(TF,THEME_DEF,THEME_GLOBAL||{},{mode:'kp'});themeModal();}
 function themePreset(id){const p=PRESETS[id];['bg','panel','text','accent','point'].forEach(k=>TF[k]=p[k]);TF.frame=p.frame||'';TF.deco=p.deco||'';if(p.ui)TF.ui=p.ui;if(p.font)TF.font=p.font;TF.mode='mine';themeModal();}
-const themeOf=t=>({bg:t.bg,panel:t.panel,text:t.text,accent:t.accent,point:t.point,font:t.font,scale:+t.scale||1,ui:t.ui==='classic'?'classic':'px',frame:t.frame||'',deco:t.deco||''});
+const themeOf=t=>({bg:t.bg,panel:t.panel,text:t.text,accent:t.accent,point:t.point,font:t.font,scale:+t.scale||1,ui:t.ui==='classic'?'classic':'px',frame:t.frame||'',deco:t.deco||'',tcol:t.tcol||'',tfont:t.tfont||'',tfx:t.tfx||''});
 function saveTheme(){P.theme=TF.mode==='mine'?Object.assign({on:true},themeOf(TF)):{on:false};saveP();TF=null;closeModal();applyTheme();toast('테마 저장 완료');}
 async function saveThemeGlobal(){const t=themeOf(TF);try{await B.set('settings/theme',t);}catch(e){return toast('저장 실패: '+(e.code||e.message));}
   THEME_GLOBAL=t;P.theme={on:false};saveP();TF=null;closeModal();applyTheme();toast('모두의 기본 테마로 저장 완료');}
@@ -1666,7 +1681,7 @@ function mountScheduler(){
   w.innerHTML='<iframe src="scheduler.html" title="스케줄러"></iframe>';
 }
 VIEWS.sched=()=>{const n=BOOKINGS.filter(b=>b.status==='pending').length;
-  return `<div class="panel" style="margin-bottom:8px;padding:10px 14px"><div class="row" style="justify-content:space-between"><p class="muted schedinfo" style="margin:0;flex:1 1 300px">PL 예약은 <b style="color:var(--gold2)">점선 칸</b>으로 뜸 (눌러서 승인/거절). 장소 공개는 <b>맵/장소</b> 탭의 <b>👁 PL 공개</b>.</p>
+  return `<div class="panel" style="margin-bottom:8px;padding:10px 14px"><div class="row" style="justify-content:space-between"><p class="muted schedinfo" style="margin:0;flex:1 1 300px">PL 예약은 <b style="color:var(--gold2)">점선 칸</b>으로 뜸 (눌러서 승인/거절).<br>장소 공개는 <b>맵/장소</b> 탭의 <b>👁 PL 공개</b>.</p>
    <button class="sm ${n?'primary':''}" style="flex:0 0 auto" onclick="openBookList()">📋 예약 목록${n?' · 대기 '+n:''}</button></div>${slChecks().replace('같이 보낼 링크','자동 호출에 같이 보낼 링크')}</div>`;};
 function openBookList(){window._bookList=true;modal(VIEWS.kbook()+'<button style="width:100%" onclick="window._bookList=false;closeModal()">닫기</button>');}
 function refreshBookList(){if(window._bookList&&modalOpen())openBookList();}
