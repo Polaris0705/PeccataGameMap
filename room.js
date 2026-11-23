@@ -1715,7 +1715,7 @@ const SHELFHI = {
 
 const FCATS = [['bed', '침실'], ['living', '거실'], ['gothic', '앤틱'], ['plant', '식물'], ['small', '소품'], ['hobby', '취미·생활'], ['sin', '칠죄종'], ['window', '창문·커튼'], ['deco', '벽 장식']];
 const WALLS = {
-  plain: { name: '기본 벽', cost: 0, col: '#6a5444' }, green: { name: '숲빛 얼룩', cost: 30, col: '#3e6e50' }, stripe: { name: '줄무늬', cost: 40, col: '#6a3440' },
+  plain: { name: '기본 벽', cost: 0, col: '#b4b8c6' }, green: { name: '숲빛 얼룩', cost: 30, col: '#3e6e50' }, stripe: { name: '줄무늬', cost: 40, col: '#6a3440' },
   damask: { name: '다마스크', cost: 70, col: '#2e4434' }, panel: { name: '나무 패널', cost: 60, col: '#7a6050' }, brick: { name: '벽돌', cost: 50, col: '#7a3a2a' },
   night: { name: '별밤', cost: 90, col: '#1a1e3a' }, floral: { name: '꽃무늬', cost: 60, col: '#d8c8b0' }, plaid: { name: '격자 체크', cost: 55, col: '#3a5a8a' },
   argyle: { name: '아가일', cost: 65, col: '#5a3a5a' }, castle: { name: '성벽 돌', cost: 70, col: '#7a7a84' }, gothic: { name: '고딕 아치', cost: 85, col: '#2a2234' },
@@ -1764,9 +1764,11 @@ function floorCalm(C) { const m = (a, b, t) => { const A = [1, 3, 5].map(i => pa
 /* 방 가장자리를 살짝 어둡게 (비네팅) */
 function drawVignette(g) { const X = OX + RB.c0 * T, W = RB.cols * T, Y = OY, H = WALL_H + RB.rows * T;
   for (let i = 0; i < 10; i++) { const a = (.12 - i * .012).toFixed(3), c = `rgba(18,8,2,${a})`; g.fillStyle = c; g.fillRect(X + i * 2, Y, 2, H); g.fillRect(X + W - (i + 1) * 2, Y, 2, H); g.fillRect(X, Y + H - (i + 1) * 2, W, 2); } }
+const ROOM_FRAME = '#3a3a44';   // 기본 방 테두리 (하얀 저택 테마에 맞춤)
+function roomOuter() { try { const TC = typeof thCol === 'function' ? thCol() : null; return TC && TC.light ? mix(TC.bg, TC.panel, .6) : '#120c08'; } catch (e) { return '#120c08'; } }
 function drawFrame(g, col) {
-  const R = (x, y, w, h, c) => { g.fillStyle = c; g.fillRect(x, y, w, h); }, C = ramp(col || '#5a3a22'), X = OX + RB.c0 * T, W = RB.cols * T, H = WALL_H + RB.rows * T;
-  R(0, 0, RW, RH, '#120c08'); R(X - 8, OY - 8, W + 16, H + 16, C.t); R(X - 7, OY - 7, W + 14, 2, C.L); R(X - 8, OY + H + 6, W + 16, 2, C.d);
+  const R = (x, y, w, h, c) => { g.fillStyle = c; g.fillRect(x, y, w, h); }, C = ramp(col || ROOM_FRAME), X = OX + RB.c0 * T, W = RB.cols * T, H = WALL_H + RB.rows * T;
+  R(0, 0, RW, RH, roomOuter()); R(X - 8, OY - 8, W + 16, H + 16, C.t); R(X - 7, OY - 7, W + 14, 2, C.L); R(X - 8, OY + H + 6, W + 16, 2, C.d);
   R(X - 2, OY - 2, W + 4, H + 4, C.o);
 }
 
@@ -2185,8 +2187,8 @@ function areaPreview(slot, style) { return (g, col) => { const tmp = document.cr
   else { drawFrame(tg, col.a); drawWall(tg, 'plain', 0); g.drawImage(tmp, 0, 0, 120, 96, 0, 0, 120, 96); } }; }
 function recolorArea(slot) {
   const room = myRoom(), style = slot === 'wall' ? room.wall : slot === 'floor' ? room.floor : 'frame';
-  const cur = slot === 'wall' ? wallCol(room) : slot === 'floor' ? floorCol(room) : (room.cols.frame || '#5a3a22');
-  const def = slot === 'wall' ? WALLS[style].col : slot === 'floor' ? FLOORS[style].col : '#5a3a22';
+  const cur = slot === 'wall' ? wallCol(room) : slot === 'floor' ? floorCol(room) : (room.cols.frame || ROOM_FRAME);
+  const def = slot === 'wall' ? WALLS[style].col : slot === 'floor' ? FLOORS[style].col : ROOM_FRAME;
   const rc = slot === 'frame' ? (room.arc.frame || 0) : ((room.arc[slot] || {})[style] || 0);
   if (rc >= 1 && room.dye < 1) { toast('염료가 없음. 가구점 「염료」에서 살 수 있음'); sfx('bad'); return; }
   colorModal({ title: { wall: '벽 색', floor: '바닥 색', frame: '방 테두리 색' }[slot], okText: rc < 1 ? '무료로 바꾸기' : '염료 1개로 바꾸기', note: rc < 1 ? '처음 한 번은 무료.' : `염료 보유 ${room.dye}개`,

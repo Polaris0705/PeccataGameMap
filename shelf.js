@@ -144,7 +144,7 @@ function shDraw() {
   const s = SH; if (!s || !document.body.contains(s.cv)) return; const g = s.g, S = s.S, now = performance.now();
   const hs = S / 2, q = v => Math.round(v * 2) * hs;
   const px = (x, y, w, h, c) => { g.fillStyle = c; const X = q(x), Y = q(y); g.fillRect(X, Y, Math.max(hs, q(x + w) - X), Math.max(hs, q(y + h) - Y)); };
-  px(0, 0, s.W, s.H, '#2a1a10'); for (let y = 0; y < s.H; y += 6) { px(0, y, s.W, .5, '#24160c'); px(0, y + .5, s.W, .5, '#321f13'); }
+  px(0, 0, s.W, s.H, '#d2d5de'); for (let y = 0; y < s.H; y += 6) { px(0, y, s.W, .5, '#c4c8d3'); px(0, y + .5, s.W, .5, '#e2e4ea'); }
   s.boxes.forEach((bx, i) => { const b = shBox(i);
     // 칸 (나무 상자)
     px(b.x, b.y, s.BW - 2, s.BH - 2, '#5a3a22'); px(b.x, b.y, s.BW - 2, .5, '#7a5232'); px(b.x, b.y, .5, s.BH - 2, '#6a4628'); px(b.x + s.BW - 2.5, b.y, .5, s.BH - 2, '#3a2414');

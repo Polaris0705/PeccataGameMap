@@ -118,16 +118,16 @@ function tyGuest(p, g, cx, by, mood, t) {
 function tyScene(p, st, t) {
   const { c, o, el, tx } = p, L = st.L, frac = st.t0 ? Math.min(1, st.elapsed / st.len) : .3;
   // 벽 (영업 시간에 따라 창밖이 아침 → 낮 → 저녁)
-  c(0, 14, TY_W, 58, '#4a2a30'); for (let x = 0; x < TY_W; x += 10) { c(x, 14, 5, 58, '#56303a'); c(x + 7, 14, 1, 58, '#64404a'); }
+  c(0, 14, TY_W, 58, '#d2d5de'); for (let x = 0; x < TY_W; x += 10) { c(x, 14, 5, 58, '#c4c8d3'); c(x + 7, 14, 1, 58, '#e6e8ee'); }
   c(0, 14, TY_W, 2, 'rgba(0,0,0,.3)');
   if (L.decor >= 3) { c(0, 46, TY_W, 2, '#e0b050'); c(0, 48, TY_W, 24, '#5a3a24'); for (let x = 4; x < TY_W; x += 22) o(x, 51, 18, 18, '#6a4428', '#3e2414'); }
   const sky = frac < .3 ? ['#f6c49a', '#ffe6bc'] : frac < .75 ? ['#6ab0e8', '#b4dcf8'] : ['#c25a5a', '#f09a5a'];
   o(8, 20, 36, 26, '#f1e6cc', '#8a7a5a'); c(10, 22, 32, 11, sky[0]); c(10, 33, 32, 11, sky[1]); c(25, 22, 2, 22, '#f1e6cc'); c(10, 32, 32, 1, '#f1e6cc');
   const sx = 12 + Math.round(frac * 24), sy = 25 + Math.round(Math.abs(frac - .5) * 16); c(sx, sy, 4, 4, frac > .75 ? '#ffd27a' : '#fff2a0');
   c(10, 40, 32, 4, '#3a6a3a'); c(14, 37, 5, 3, '#3a6a3a'); c(30, 36, 7, 4, '#3a6a3a');
-  c(4, 18, 6, 30, '#8a2433'); c(42, 18, 6, 30, '#8a2433'); c(5, 18, 1, 30, '#a83a4a'); c(46, 18, 1, 30, '#a83a4a'); c(3, 17, 46, 2, '#e0b050');
+  c(4, 18, 6, 30, '#910c0d'); c(42, 18, 6, 30, '#910c0d'); c(5, 18, 1, 30, '#b8343a'); c(46, 18, 1, 30, '#b8343a'); c(3, 17, 46, 2, '#e0b050');
   // 간판
-  o(68, 17, 56, 13, '#3a2418', '#e0b050'); tx('TEA ROOM', 96, 19, '#ffe27a', 8, 'center', true);
+  o(68, 17, 56, 13, '#26262e', '#910c0d'); tx('TEA ROOM', 96, 19, '#ffe27a', 8, 'center', true);
   // 문
   o(164, 26, 22, 46, '#6a4428'); c(166, 28, 18, 20, '#8a5a34'); c(166, 50, 18, 20, '#8a5a34'); c(180, 50, 2, 3, '#e0b050'); c(170, 32, 10, 12, sky[1]);
   if (L.decor >= 1) { [[52, 52], [140, 52]].forEach(([x, y]) => { o(x, y + 8, 10, 10, '#ece8e0', '#9a948a'); c(x + 4, y - 6, 2, 14, '#3a6a40'); el(x + 5, y, 7, 5, '#4f8a55'); el(x + 5, y - 1, 5, 3, '#79b26e'); }); }
@@ -135,7 +135,7 @@ function tyScene(p, st, t) {
   if (L.decor >= 4) { o(126, 34, 16, 20, '#e0b050', '#a07028'); c(128, 36, 12, 16, '#3a2a20'); c(131, 39, 6, 6, '#e8c8a8'); c(130, 45, 8, 7, '#7e2236'); }
   if (L.decor >= 5) { for (let x = 0; x < TY_W; x += 24) { c(x + 10, 15, 3, 3, '#ffe27a'); } }
   // 바닥
-  for (let y = 72; y < 100; y += 6) for (let x = 0; x < TY_W; x += 6) c(x, y, 6, 6, ((x + y) / 6) % 2 ? '#e4dccc' : '#3a3036');
+  for (let y = 72; y < 100; y += 6) for (let x = 0; x < TY_W; x += 6) c(x, y, 6, 6, ((x + y) / 6) % 2 ? '#f2f2f4' : '#3a3a44');
   c(0, 72, TY_W, 2, 'rgba(0,0,0,.25)');
   // 손님
   st.guests.forEach((g, i) => { if (!g) return; const cx = TY_SPOT[i] + (g.walk || 0), mood = g.left ? (g.happy ? 'happy' : 'angry') : g.pat / g.max < .3 ? 'angry' : g.flash > 0 ? 'happy' : 'plain';
@@ -227,17 +227,17 @@ function tyDraw(p) {
   c(0, 0, TY_W, TY_H, '#140c06');
   tyScene(p, st, t);
   // HUD
-  c(0, 0, TY_W, 14, '#1e1410'); c(0, 13, TY_W, 1, '#e0b050');
+  c(0, 0, TY_W, 14, '#26262e'); c(0, 13, TY_W, 1, '#910c0d');
   tx(`DAY ${st.day}`, 4, 3, '#ffe27a', 8, 'left', true);
   const left = Math.max(0, st.len - st.elapsed); o(48, 3, 70, 8, '#2a1a12', '#5a3a24'); c(49, 4, Math.round(68 * left / st.len), 6, left < 20 ? '#e06040' : '#e0b050');
   tx(`${Math.ceil(left)}s`, 122, 3, '#f4f0e8', 8);
   tx(`£${st.cash}`, TY_W - 4, 3, '#bfe8a0', 8, 'right', true);
   if (st.combo >= 2) tx(`COMBO ×${st.combo}`, 96, 88, '#ffe27a', 8, 'center', true);
   // 작업대
-  c(0, 114, TY_W, 82, '#3a3036'); for (let y = 114; y < 196; y += 8) for (let x = (y / 8) % 2 * 8; x < TY_W; x += 16) c(x, y, 8, 8, '#443a40');
+  c(0, 114, TY_W, 82, '#4a4c58'); for (let y = 114; y < 196; y += 8) for (let x = (y / 8) % 2 * 8; x < TY_W; x += 16) c(x, y, 8, 8, '#535663');
   c(0, 114, TY_W, 2, 'rgba(0,0,0,.35)');
   for (let i = 0; i < 4; i++) { const x = TY_SLOT_X(i), y = 120, cp = st.cups[i], locked = i >= st.nSlots;
-    o(x, y, 31, 36, locked ? '#2a2226' : '#5a4a50', '#1a1214'); if (locked) { tx('🔒', x + 15, y + 12, '#888', 8, 'center'); continue; }
+    o(x, y, 31, 36, locked ? '#34363e' : '#686c7a', '#1a1a20'); if (locked) { tx('🔒', x + 15, y + 12, '#888', 8, 'center'); continue; }
     if (st.selCup === i) { c(x, y, 31, 1, '#ffe27a'); c(x, y + 35, 31, 1, '#ffe27a'); c(x, y, 1, 36, '#ffe27a'); c(x + 30, y, 1, 36, '#ffe27a'); }
     if (cp) { tyCup(p, x + 7, y + 7, cp, t);
       if (cp.water && cp.brew) { const w = .1 + st.L.kettle * .03; o(x + 3, y + 25, 25, 6, '#1a1214', '#000'); const zx = x + 4 + Math.round(23 * (.85 - w) / 1.35), zw = Math.round(23 * 2 * w / 1.35);
@@ -261,9 +261,9 @@ function tyDraw(p) {
     if (ov) { tyIcon(p, ov.burnt ? 'burnt' : ov.k, x + 13, y + 3, t); if (!ov.ready) { c(x + 3, y + 17, Math.round(35 * Math.min(1, ov.p)), 2, '#ffe27a'); } else if (!ov.burnt && (t >> 3) % 2) { tx('꺼내기!', x + 20, y + 1, '#ffe27a', 8, 'center', true); } else if (ov.burnt) tx('탐', x + 20, y + 1, '#e8a0a0', 8, 'center'); }
     else tx('오븐', x + 20, y + 8, '#6a5a60', 8, 'center'); });
   // 재료 버튼
-  c(0, 196, TY_W, 76, '#2a1a12'); c(0, 196, TY_W, 1, '#e0b050');
+  c(0, 196, TY_W, 76, '#2e3038'); c(0, 196, TY_W, 1, '#910c0d');
   TY_BTNS.forEach(([k, n], i) => { const r = tyBtnRect(i), dis = (k === 'green' || k === 'herb' || k === 'lemon' || k === 'honey' || k === 'cream') && !tyAllowed(k);
-    o(r.x, r.y, r.w, r.h, dis ? '#2a2226' : k === 'serve' ? '#8a2433' : '#6a4428', '#140c06'); c(r.x + 1, r.y + 1, r.w - 2, 2, dis ? '#2a2226' : k === 'serve' ? '#a83a4a' : '#8a5a34');
+    o(r.x, r.y, r.w, r.h, dis ? '#34363e' : k === 'serve' ? '#910c0d' : '#5a5e6c', '#141418'); c(r.x + 1, r.y + 1, r.w - 2, 2, dis ? '#34363e' : k === 'serve' ? '#b8343a' : '#767b8c');
     if (k === 'serve') { tx('▶', r.x + r.w / 2, r.y + 6, '#ffe27a', 8, 'center', true); } else { if (!dis) tyIcon(p, k, r.x + 10, r.y + 4, t); else tx('?', r.x + r.w / 2, r.y + 8, '#6a5a60', 8, 'center'); }
     tx(dis ? '잠김' : n, r.x + r.w / 2, r.y + 23, dis ? '#6a5a60' : '#f4f0e8', 8, 'center'); });
   // 효과 글자
@@ -363,6 +363,6 @@ function tyPreview() {
   g.setTransform(TY_S, 0, 0, TY_S, 0, 0); g.imageSmoothingEnabled = false;
   const p = tyPen(g), fake = { L: tyLv(), guests: [{ rec: TY_RECIPES[1], dessert: 'scone', pat: 9, max: 10, sk: 0, hr: 2, cl: 1, st: 1, hat: 2, flash: 0 }, null, { rec: TY_RECIPES[0], dessert: null, pat: 4, max: 10, sk: 2, hr: 0, cl: 4, st: 0, hat: 1, flash: 0 }], t0: 0, elapsed: 0, len: 1, cups: [], selCup: null };
   g.fillStyle = '#140c06'; g.fillRect(0, 0, TY_W, 114); tyScene(p, fake, (RM && RM.t) || 0);
-  g.fillStyle = '#1e1410'; g.fillRect(0, 0, TY_W, 14); p.tx('TEA ROOM TYCOON', 96, 3, '#ffe27a', 8, 'center', true);
+  g.fillStyle = '#26262e'; g.fillRect(0, 0, TY_W, 14); p.tx('TEA ROOM TYCOON', 96, 3, '#ffe27a', 8, 'center', true);
 }
 setInterval(() => { if (typeof tab !== 'undefined' && tab === 'tycoon' && !TY) tyPreview(); }, 400);

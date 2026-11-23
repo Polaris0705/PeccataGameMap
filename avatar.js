@@ -544,7 +544,7 @@ function avTap(owner, p) { if (!avOn() || !avCfgOf(P)) return false; if (p.y < F
   ctx.save(); if (!on) ctx.globalAlpha = .55; ctx.imageSmoothingEnabled = false; ctx.fillStyle = 'rgba(0,0,0,.4)'; ctx.fillRect(Math.round(cx - w * .3), Math.round(cy + sz / 2 + 1), Math.round(w * .6), 3);
   ctx.drawImage(avSprite(cfg, 0, 0), Math.round(cx - w / 2), Math.round(cy + sz / 2 - h + 3 + bob), Math.round(w), Math.round(h));
   const nm = (u.ho ? cname(u.ho) : uname(u)).slice(0, 6), nf = typeof TOK_NFS === 'number' ? TOK_NFS : 11; ctx.font = nf + "px 'Galmuri11',sans-serif"; ctx.textAlign = 'center'; ctx.textBaseline = 'alphabetic'; const tw = ctx.measureText(nm).width, y = cy + sz / 2 + 4;
-  ctx.fillStyle = '#140c06'; ctx.fillRect(Math.round(cx - tw / 2 - 3), y, Math.round(tw + 6), nf + 3); ctx.fillStyle = me ? '#ffe27a' : '#ffffff'; ctx.fillText(nm, cx, y + nf); ctx.textAlign = 'left';
+  const TC = typeof thCol === 'function' ? thCol() : { text: '#140c06', bg: '#fff', wine: '#8a2433' }; ctx.fillStyle = me ? TC.wine : TC.text; ctx.fillRect(Math.round(cx - tw / 2 - 3), y, Math.round(tw + 6), nf + 3); ctx.fillStyle = me ? '#ffffff' : TC.bg; ctx.fillText(nm, cx, y + nf); ctx.textAlign = 'left';
   if (on) { ctx.fillStyle = '#4cd964'; ctx.fillRect(Math.round(cx + w / 2 - 6), Math.round(cy + sz / 2 - h + 4 + bob), 5, 5); } ctx.restore(); }; })();
 
 /* ---------- 토큰 만들기 · 옷장 ---------- */

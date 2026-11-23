@@ -219,10 +219,10 @@ function dropDraw() {
   const D = DROP, g = D && D.g; if (!g || !document.body.contains(D.cv)) return; const S = D.S, now = D.t;
   g.setTransform(S, 0, 0, S, 0, 0); if (D.shake > 0) g.translate((Math.random() - .5) * 5 * D.shake * 2, (Math.random() - .5) * 5 * D.shake * 2);
   const fev = D.fever > now;
-  g.fillStyle = '#1c120c'; g.fillRect(-6, -6, DRW + 12, DRH + 12);
-  for (let x = 0; x < DRW; x += 12) { g.fillStyle = (x / 12) % 2 ? '#24170f' : '#211510'; g.fillRect(x, 0, 12, DRH); }
+  g.fillStyle = '#e6e8ee'; g.fillRect(-6, -6, DRW + 12, DRH + 12);
+  for (let x = 0; x < DRW; x += 12) { g.fillStyle = (x / 12) % 2 ? '#d8dbe3' : '#e2e4ea'; g.fillRect(x, 0, 12, DRH); }
   // 상자
-  g.fillStyle = fev ? '#3a2a14' : '#2e1f15'; g.fillRect(DL, DDANGER - 18, DR - DL, DF - DDANGER + 18);
+  g.fillStyle = fev ? '#f4e6e6' : '#f6f7f9'; g.fillRect(DL, DDANGER - 18, DR - DL, DF - DDANGER + 18);
   g.fillStyle = '#5a3a22'; g.fillRect(DL - 6, DDANGER - 18, 6, DF - DDANGER + 24); g.fillRect(DR, DDANGER - 18, 6, DF - DDANGER + 24); g.fillRect(DL - 6, DF, DR - DL + 12, 6);
   g.fillStyle = '#7a5232'; g.fillRect(DL - 6, DDANGER - 18, 2, DF - DDANGER + 24); g.fillRect(DR, DDANGER - 18, 2, DF - DDANGER + 24);
   g.fillStyle = '#9a6a40'; g.fillRect(DL - 6, DDANGER - 18, .5, DF - DDANGER + 24); g.fillRect(DR, DDANGER - 18, .5, DF - DDANGER + 24); g.fillRect(DL - 6, DF, DR - DL + 12, .5);
@@ -237,7 +237,7 @@ function dropDraw() {
   g.textAlign = 'center'; g.textBaseline = 'middle';
   D.txt.forEach(f => { g.globalAlpha = Math.min(1, f.t * 1.5); g.font = `700 ${f.big ? 14 : 9}px Galmuri11, monospace`; g.fillStyle = '#140c06'; g.fillText(f.s, f.x + .6, f.y + .6); g.fillStyle = f.c; g.fillText(f.s, f.x, f.y); }); g.globalAlpha = 1;
   // HUD
-  g.fillStyle = '#140c06'; g.fillRect(0, 0, DRW, 16); g.font = '700 9px Galmuri11, monospace'; g.textAlign = 'left'; g.fillStyle = '#ffe08a'; g.fillText(`${D.score}`, 6, 8);
+  g.fillStyle = '#26262e'; g.fillRect(0, 0, DRW, 16); g.font = '700 9px Galmuri11, monospace'; g.textAlign = 'left'; g.fillStyle = '#ffe08a'; g.fillText(`${D.score}`, 6, 8);
   g.textAlign = 'center'; if (D.combo > 1) { g.font = `700 ${9 + Math.min(4, D.combo / 2)}px Galmuri11, monospace`; g.fillStyle = fev ? '#ffe08a' : '#ffb070'; g.fillText(`${D.combo} COMBO${fev ? ' ✨' : ''}`, 90, 8.5); g.font = '700 9px Galmuri11, monospace'; } else { g.fillStyle = '#e8d8c0'; g.fillText(`${SIN_EMB[D.s]} ${sinName(D.s)}`, 90, 8); }
   g.textAlign = 'right'; g.fillStyle = '#a89880'; g.fillText('다음', DR - (D.s === 'lust' ? 44 : 14), 8);
   (D.s === 'lust' ? D.q.slice(1, 4) : D.q.slice(1, 2)).forEach((n, i) => dropBall(g, DR - 6 - i * 13, 8, n.t, 5.5, n.gold, 0, true));

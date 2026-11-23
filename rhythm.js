@@ -160,7 +160,7 @@ async function silverStart() {
     if (R.started) R.notes.forEach(n => { if (!n.done && now - n.t > D.good) { n.done = true; n.miss = true; R.miss++; R.combo = 0; R.judge = { s: 'MISS', c: '#ff7a7a', t: 0 }; } });
     // 똑딱 (노래 없을 때)
     if (R.started && !song && beat) { const bi = Math.floor((now - off) / beat); if (bi !== R.tick && bi >= 0) { R.tick = bi; rTick(bi % 4 === 0); } }
-    if (song) { g.clearRect(0, 0, cv.width, cv.height); px(0, 0, W, H, 'rgba(26,14,8,.5)'); } else { px(0, 0, W, H, '#3a2418'); for (let y = 0; y < H; y += 12) { px(0, y, W, .5, '#4a2e1e'); px(0, y + .5, W, .5, '#2e1c12'); } for (let x = 7; x < W; x += 23) for (let y = 3; y < H; y += 12) px(x + (y % 24 ? 0 : 11), y, 3, .5, '#44291b'); }
+    if (song) { g.clearRect(0, 0, cv.width, cv.height); px(0, 0, W, H, 'rgba(26,14,8,.5)'); } else { px(0, 0, W, H, '#eceef2'); for (let y = 0; y < H; y += 12) { px(0, y, W, .5, '#dcdfe6'); px(0, y + .5, W, .5, '#f7f8fa'); } for (let x = 7; x < W; x += 23) for (let y = 3; y < H; y += 12) px(x + (y % 24 ? 0 : 11), y, 3, .5, '#d2d5de'); }
     LX.forEach((x, i) => { px(x - LW / 2, 0, LW, H, i % 2 ? 'rgba(240,232,214,.07)' : 'rgba(240,232,214,.11)'); px(x - LW / 2, 0, .5, H, 'rgba(0,0,0,.32)'); px(x - LW / 2 + .5, 0, .5, H, 'rgba(255,240,210,.06)');
       if (R.flash[i] > 0) { px(x - LW / 2, 0, LW, H, `rgba(255,230,150,${R.flash[i] * 1.6})`); R.flash[i] -= dt; } });
     const pulse = beat && R.started ? Math.max(0, 1 - (((now - off) / beat) % 1) * 4) : 0;
