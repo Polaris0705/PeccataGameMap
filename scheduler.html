@@ -387,6 +387,7 @@ function cvFont(){try{return getComputedStyle(document.body).fontFamily||'sans-s
               <option value="0">전체 Day</option>
             </select>
             <button class="btn sm dng" onclick="clearRegions()">영역 초기화</button>
+            <label style="font-size:11px;display:inline-flex;gap:3px;align-items:center;color:var(--text2)">이름표 <select id="lblSizeSel" style="font-size:11px;" onchange="S.lblSize=+this.value||12;redrawMap()"><option>8</option><option>10</option><option selected>12</option><option>14</option><option>16</option><option>18</option><option>20</option><option>24</option><option>28</option><option>32</option></select></label>
             <span id="drawHint" style="font-size:11px;color:var(--text3);font-family:var(--font);">맵 이미지를 추가하기</span>
           </div>
           <div class="map-tabs-row" id="mapTabsRow">
@@ -555,6 +556,7 @@ function cvFont(){try{return getComputedStyle(document.body).fontFamily||'sans-s
           <div class="frow"><label>글자색 · 배경</label><div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;">
             <label style="font-size:11px;display:flex;gap:3px;align-items:center;"><input type="checkbox" id="plLcDef"> 기본</label><input type="color" id="plLcInput" style="width:38px;height:26px;padding:0;" oninput="document.getElementById('plLcDef').checked=false">
             <select id="plLbMode" style="font-size:11px;"><option value="">배경 기본</option><option value="none">배경 없음</option><option value="c">배경 색</option></select><input type="color" id="plLbInput" style="width:38px;height:26px;padding:0;" oninput="document.getElementById('plLbMode').value='c'">
+            <select id="plLsInput" style="font-size:11px;" title="이름표 글자 크기"><option value="">크기 기본</option><option>8</option><option>10</option><option>12</option><option>14</option><option>16</option><option>18</option><option>20</option><option>24</option><option>28</option><option>32</option></select>
             <button class="btn sm" onclick="resetLabelPos()">글씨 위치 처음대로</button></div>
             <div style="font-size:10px;color:var(--text3);margin-top:3px;">위치는 ✏ 편집 모드에서 이름표를 끌어서 옮김.</div></div>
           <div class="frow">
@@ -1209,12 +1211,12 @@ function mzsZoom(f,fx,fy){
 /* 장소 이름표: 보일 글자(줄바꿈) · 위치 · 글자색 · 배경 */
 function plLabel(ctx,pl,cv,col){
   const tks=(()=>{try{return window.parent&&window.parent!==window&&window.parent.tkStr;}catch(e){return null;}})()||(x=>x);
-  const lines=String(tks(pl.lbl||pl.name)).split('\n'),fs=12,lh=fs+3;ctx.font=`bold ${fs}px ${cvFont()}`;
-  const tw=Math.max(...lines.map(t=>ctx.measureText(t).width)),bw=tw+8,bh=lines.length*lh+4;
+  const lines=String(tks(pl.lbl||pl.name)).split('\n'),fs=pl.ls||S.lblSize||12,lh=Math.round(fs*1.25);ctx.font=`bold ${fs}px ${cvFont()}`;
+  const tw=Math.max(...lines.map(t=>ctx.measureText(t).width)),pd=Math.max(3,Math.round(fs/3)),bw=tw+pd*2,bh=lines.length*lh+4;
   let x=pl.x+(pl.lox!=null?pl.lox*cv.width:2),y=pl.y+(pl.loy!=null?pl.loy*cv.height:2);
   x=Math.max(0,Math.min(cv.width-bw,x));y=Math.max(0,Math.min(cv.height-bh,y));
   if(pl.lb&&pl.lb!=='none'){ctx.fillStyle=pl.lb+'dd';ctx.fillRect(x,y,bw,bh);}
-  ctx.fillStyle=pl.lc||col;ctx.textBaseline='top';lines.forEach((t,i)=>ctx.fillText(t,x+4,y+3+i*lh));ctx.textBaseline='alphabetic';
+  ctx.fillStyle=pl.lc||col;ctx.textBaseline='top';lines.forEach((t,i)=>ctx.fillText(t,x+pd,y+3+i*lh));ctx.textBaseline='alphabetic';
   if(S.editMode){ctx.strokeStyle='rgba(0,0,0,.35)';ctx.lineWidth=1;ctx.setLineDash([2,2]);ctx.strokeRect(x+.5,y+.5,bw-1,bh-1);ctx.setLineDash([]);}
   pl._lb={x,y,w:bw,h:bh};
 }
@@ -1521,7 +1523,7 @@ function openPlaceEdit(ev,i){
   const p=S.places[i];
   document.getElementById('plNameInput').value=p.name;
   document.getElementById('plLblInput').value=p.lbl||'';
-  document.getElementById('plLcDef').checked=!p.lc;document.getElementById('plLcInput').value=p.lc||'#ffffff';
+  document.getElementById('plLsInput').value=p.ls?String(p.ls):'';document.getElementById('plLcDef').checked=!p.lc;document.getElementById('plLcInput').value=p.lc||'#ffffff';
   document.getElementById('plLbMode').value=p.lb==='none'?'none':p.lb?'c':'';document.getElementById('plLbInput').value=p.lb&&p.lb!=='none'?p.lb:'#000000';
   const curCol=pCol(p.name);
   S._editColor=curCol;
@@ -1586,6 +1588,7 @@ function confirmPlaceEdit(){
   }
   if(newCol)S.customColors[p.name]=newCol;
   const lbl=document.getElementById('plLblInput').value.replace(/\r/g,'').replace(/\s+$/,'');if(lbl&&lbl!==p.name)p.lbl=lbl;else delete p.lbl;
+  {const ls=+document.getElementById('plLsInput').value;if(ls)p.ls=ls;else delete p.ls;}
   if(document.getElementById('plLcDef').checked)delete p.lc;else p.lc=document.getElementById('plLcInput').value;
   const lbm=document.getElementById('plLbMode').value;if(lbm==='none')p.lb='none';else if(lbm==='c')p.lb=document.getElementById('plLbInput').value;else delete p.lb;
   closeOverlay('placeModal');renderPlaces();redrawMap();renderSchedule();
@@ -1941,7 +1944,7 @@ function saveProject(){
     names:S.names,portraits:S.portraits,tokens:S.tokens,
     places:S.places,schedule:S.schedule,
     pcIdx:S.pcIdx,customColors:S.customColors,departures:S.departures,condEvents:S.condEvents,
-    maps:saveMaps,theme:S.theme,fontFamily:S.fontFamily,fontSize:S.fontSize,
+    maps:saveMaps,theme:S.theme,fontFamily:S.fontFamily,fontSize:S.fontSize,lblSize:S.lblSize,
     appTitle:document.getElementById('appTitle').textContent.trim(),
   };
   const blob=new Blob([JSON.stringify(data)],{type:'application/json'});
@@ -1971,6 +1974,7 @@ function loadProject(){
       S.maps=restoredMaps;S.curMapIdx=0;
       if(data.theme)S.theme=data.theme;
       if(data.fontFamily)S.fontFamily=data.fontFamily;
+      if(data.lblSize)S.lblSize=data.lblSize;
       if(data.fontSize)S.fontSize=data.fontSize;
       if(data.headerBg!==undefined)S.headerBg=data.headerBg;
       if(data.headerText!==undefined)S.headerText=data.headerText;
@@ -2200,7 +2204,7 @@ function removeBooking(b){
 (function(){
   let BR=null;try{BR=(window.parent&&window.parent!==window)?window.parent.KPBridge:null;}catch(e){}
   if(!BR)return;
-  const KEYS=['days','slotsPerDay','dayNames','names','places','schedule','departures','condEvents','customColors','pcIdx','tod','now'];
+  const KEYS=['days','slotsPerDay','dayNames','names','places','schedule','departures','condEvents','customColors','pcIdx','tod','now','lblSize'];
   let last=null,started=false,pending=null,assetSig=null;
   function textState(){const o={};KEYS.forEach(k=>o[k]=S[k]);o.maps=S.maps.map(m=>({key:m.key,name:m.name,revealed:!!m.revealed,ver:m.ver||0}));o.appTitle=document.getElementById('appTitle').textContent.trim();return JSON.stringify(o);}
   function sig(){return Object.entries(S.portraits).map(([k,v])=>'p'+k+v.length).join()+'|'+Object.entries(S.tokens).map(([k,v])=>'t'+k+v.length).join();}
@@ -2224,6 +2228,7 @@ function removeBooking(b){
     }
     S.maps=next;if(S.curMapIdx>=S.maps.length)S.curMapIdx=0;
     last=textState();
+    {const q=document.getElementById('lblSizeSel');if(q)q.value=String(S.lblSize||12);}
     updateDayLabel();renderSchedule();renderPlaces();renderMapTabs();renderCevPanel();
     if(S.maps.length&&document.getElementById('panel-map').classList.contains('active'))switchMapTo(S.curMapIdx);
   }
