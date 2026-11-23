@@ -327,3 +327,7 @@
 - 적용: `index.html`, `room.js`, `avatar.js`, `tycoon.js`, `rhythm.js`, `shelf.js`, `games2.js`, `games3.js`, `sw.js`, `README.md`, `CHANGELOG.md` (캐시 v154).
 - 알림 팝업(토스트) 글자가 화면 절반 폭에서 줄바꿈되던 것 → 내용 길이만큼 넓어져 웬만하면 한 줄 (캐시 v155).
 - 새 버전 안내: 앱으로 돌아올 때마다 업데이트를 확인하고, 새 버전이 적용되면 위에 '🔄 새 버전 · 눌러서 적용' 막대 (캐시 v156).
+
+## 가구 누르면 뜨는 말
+- 🪑 가구 관리에서 기본 가구는 🏷, 직접 만든 가구는 💬 를 누르면 '방에서 누르면 뜨는 말'을 고침 (한 줄에 하나, 여러 줄이면 무작위, 최대 10줄). 비우면 원래 말.
+- `settings/furn`의 `talks`에 저장. 적용: `furnmgr.js`, `room.js`, `sw.js`, `CHANGELOG.md` (캐시 v157).

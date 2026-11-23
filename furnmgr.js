@@ -1,5 +1,5 @@
 /* ================= 가구 관리 · 직접 만든 가구 · 경매 =================
-   settings/furn : { cats:[[key,label]...], move:{가구:분류}, hidden:[가구], plMax:5 }
+   settings/furn : { cats:[[key,label]...], move:{가구:분류}, hidden:[가구], plMax:5, names, costs, talks:{가구:[말…]} }
    furn/{id}     : { name, kind:'kp'|'pl', by, byName, wall, w, d, H(도트 높이), wy, cost, cat, sell, pics:{0,1,2}, at, del }
                    → FURN['cf_'+id] 로 등록 (그림은 PNG, 칸 하나 = 가로 64도트)
    auctions/{id} : { fk, name, seller, sname, start, buy, endAt, at, bid:{uid,name,amt,at}|null, n, got, paid }
@@ -175,12 +175,16 @@ async function ovPresetGo(k) { const pk = $('#fpK').value, dv = ($('#fpD') || {}
 async function fFit(url, n, W, H) { const im = await new Promise(r => { const i = new Image(); i.onload = () => r(i); i.onerror = () => r(null); i.src = url; }); if (!im) return url; const fh = im.height / n; if (im.width === W && fh === H) return url;
   const c = document.createElement('canvas'); c.width = W; c.height = H * n; const g = c.getContext('2d'); for (let i = 0; i < n; i++) g.drawImage(im, 0, i * fh, im.width, fh, Math.round((W - im.width) / 2), i * H + H - fh, im.width, fh); return c.toDataURL('image/png'); }
 /* 이름 · 가격 (기본 가구) */
-function fItemInfo(k) { const f = FURN[k]; if (!f || f.custom) return;
-  modal(`<h2 style="color:var(--gold2);margin-top:0">🏷 ${esc(f.name)}</h2><label class="f">이름</label><input id="fiN" maxlength="20" value="${esc(f.name)}">
-    <label class="f">가격 (은화)</label><input id="fiC" type="number" min="0" value="${f.cost}"><p class="muted" style="font-size:.78rem">원래: ${esc(f._name)} · ${f._cost} 은화</p>
+const furnTalk = k => { const t = (FCFG.talks || {})[k]; return Array.isArray(t) && t.length ? t : (typeof ROOM_TALK !== 'undefined' && ROOM_TALK[k]) || []; };
+function fItemInfo(k) { const f = FURN[k]; if (!f) return; const cur = furnTalk(k).join('\n'), def = ((typeof ROOM_TALK !== 'undefined' && ROOM_TALK[k]) || []).join(' / ');
+  modal(`<h2 style="color:var(--gold2);margin-top:0">${f.custom ? '💬' : '🏷'} ${esc(f.name)}</h2>${f.custom ? '' : `<label class="f">이름</label><input id="fiN" maxlength="20" value="${esc(f.name)}">
+    <label class="f">가격 (은화)</label><input id="fiC" type="number" min="0" value="${f.cost}"><p class="muted" style="font-size:.78rem">원래: ${esc(f._name)} · ${f._cost} 은화</p>`}
+    <label class="f">방에서 누르면 뜨는 말 <span class="muted" style="font-size:.78rem">(한 줄에 하나 · 여러 줄이면 무작위)</span></label><textarea id="fiT" rows="3" maxlength="400" style="width:100%;resize:vertical" placeholder="비우면 원래 말">${esc(cur)}</textarea>${def ? `<p class="muted" style="font-size:.78rem;margin:2px 0 0">원래: ${esc(def)}</p>` : ''}
     <div class="row" style="margin-top:10px"><button onclick="closeModal()">취소</button><button class="primary" onclick="fItemSave('${k}')">저장</button></div>`); }
-async function fItemSave(k) { const f = FURN[k], nm = $('#fiN').value.trim().slice(0, 20), c = Math.max(0, +$('#fiC').value || 0);
-  try { await B.set('settings/furn', { names: { [k]: nm && nm !== f._name ? nm : '' }, costs: { [k]: c === f._cost ? null : c } }, true); closeModal(); toast('저장 완료'); } catch (e) { toast('실패: ' + (e.code || e.message)); } }
+async function fItemSave(k) { const f = FURN[k], tl = $('#fiT').value.split('\n').map(x => x.trim().slice(0, 60)).filter(Boolean).slice(0, 10), def = (typeof ROOM_TALK !== 'undefined' && ROOM_TALK[k]) || [];
+  const doc = { talks: { [k]: tl.length && tl.join('\n') !== def.join('\n') ? tl : null } };
+  if (!f.custom) { const nm = $('#fiN').value.trim().slice(0, 20), c = Math.max(0, +$('#fiC').value || 0); doc.names = { [k]: nm && nm !== f._name ? nm : '' }; doc.costs = { [k]: c === f._cost ? null : c }; }
+  try { await B.set('settings/furn', doc, true); closeModal(); toast('저장 완료'); } catch (e) { toast('실패: ' + (e.code || e.message)); } }
 const ovDirs = k => { const f = FURN[k]; return f.wall || !f.dirs ? [[0, '그림']] : [[0, '앞모습'], [1, '옆모습 (왼쪽 보기)'], [2, '뒷모습']]; };
 function ovEdit(k) {
   const f = FURN[k]; if (!f || f.custom) return; if (!OVD || OVD.k !== k) { const o = FOV[k] || {}; OVD = { k, pics: Object.assign({}, o.pics || {}), picN: Object.assign({}, o.picN || {}), picMs: Object.assign({}, o.picMs || {}), picFms: Object.assign({}, o.picFms || {}), anim: o.anim !== false }; }
@@ -387,7 +391,7 @@ VIEWS.kfurn = () => {
     <div class="row" style="gap:6px;flex-wrap:wrap;margin:0 0 8px"><button onclick="ovAutoAll(false)">✨ 전부 자동 다듬기 (안 바꾼 것만)</button><button class="sm" onclick="ovAutoAll(true)">바꾼 것까지 다시</button></div>
     ${FCATS.map(([ck, cv]) => { const items = all.filter(([k, f]) => f.cat === ck); return `<details ${KF_OPEN === ck ? 'open' : ''} ontoggle="if(this.open)KF_OPEN='${ck}'"><summary><b>${esc(cv)}</b> <span class="muted">${items.length}</span></summary>
       ${items.map(([k, f]) => `<div class="item" style="margin:3px 0;flex-wrap:wrap;gap:6px"><div style="display:flex;align-items:center;gap:6px;min-width:0;flex:1 1 140px"><span style="width:44px;flex:0 0 44px;text-align:center">${fprev(k, null, 40)}</span><span style="min-width:0;overflow-wrap:anywhere">${esc(f.name)}${f.custom ? ' ✏' : ''}</span></div>
-        <div class="row" style="flex:1 1 220px;gap:4px;flex-wrap:wrap;justify-content:flex-end;min-width:0"><select style="flex:1 1 90px;min-width:0;width:auto" onchange="kfMove('${k}',this.value)">${FCATS.map(([a, b]) => `<option value="${a}" ${a === ck ? 'selected' : ''}>${esc(b)}</option>`).join('')}</select>${f.custom ? '' : `<button class="sm" onclick="fItemInfo('${k}')">🏷</button><button class="sm" onclick="ovEdit('${k}')">🎨 그림</button>`}<button class="sm ${f.hidden ? 'danger' : ''}" onclick="kfHide('${k}')">${f.hidden ? '🙈 숨김' : '👁 보임'}</button></div></div>`).join('') || '<p class="muted">비어 있음.</p>'}</details>`; }).join('')}</div>
+        <div class="row" style="flex:1 1 220px;gap:4px;flex-wrap:wrap;justify-content:flex-end;min-width:0"><select style="flex:1 1 90px;min-width:0;width:auto" onchange="kfMove('${k}',this.value)">${FCATS.map(([a, b]) => `<option value="${a}" ${a === ck ? 'selected' : ''}>${esc(b)}</option>`).join('')}</select>${f.custom ? `<button class="sm" onclick="fItemInfo('${k}')" title="누르면 뜨는 말">💬</button>` : `<button class="sm" onclick="fItemInfo('${k}')">🏷</button><button class="sm" onclick="ovEdit('${k}')">🎨 그림</button>`}<button class="sm ${f.hidden ? 'danger' : ''}" onclick="kfHide('${k}')">${f.hidden ? '🙈 숨김' : '👁 보임'}</button></div></div>`).join('') || '<p class="muted">비어 있음.</p>'}</details>`; }).join('')}</div>
    <div class="panel"><div class="row" style="justify-content:space-between"><h2 style="margin:0">✏ KP가 만든 가구</h2><button class="primary" style="flex:0 0 auto" onclick="cfNew('kp')">+ 새 가구</button></div>
     ${kp.map(d => `<div class="item" style="margin:6px 0"><div style="display:flex;align-items:center;gap:6px"><span style="width:64px;text-align:center">${fprev('cf_' + d.id, null, 60)}</span><div><b>${esc(d.name)}</b><div class="muted" style="font-size:.78rem">${d.cost} 은화 · ${esc((FCATS.find(x => x[0] === d.cat) || [, '?'])[1])}${d.sell === false ? ' · 판매 안 함' : ''}</div></div></div>
       <div class="row" style="flex:0 0 auto;gap:4px"><button class="sm" onclick="kfGiveAsk('${d.id}')">🎁 주기</button><button class="sm" onclick="cfEdit('${d.id}')">고치기</button><button class="sm danger" onclick="cfDelete('${d.id}')">지우기</button></div></div>`).join('') || '<p class="muted">아직 없음.</p>'}</div>
