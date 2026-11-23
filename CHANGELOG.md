@@ -299,3 +299,9 @@
 - 로그인 계정(Firebase Authentication)은 남음 → 다시 로그인하면 처음부터 시작. 계정까지 없애려면 Firebase 콘솔 › Authentication 에서 지우기.
 - **firestore.rules 바뀜**: KP가 알림 구독 · 토큰 위치 · 커튼 · 좋아요를 지울 수 있게. Firebase 콘솔에 다시 붙여 넣어야 함.
 - 적용: `kpdata.js`, `firestore.rules`, `sw.js`, `README.md`, `CHANGELOG.md` (캐시 v149).
+
+## 스케줄러 (모바일) 다듬기
+- '▶ 다음 칸으로' 옆 진행 안내 문구를 폰에서는 다음 줄로 내려 읽기 쉽게.
+- 맵/장소 탭: 폰에서 장소 목록이 잘리던 것 → 지도를 조금 줄이고(화면 44%) 지도 아래 장소 목록까지 통째로 스크롤. 긴 장소 이름은 줄바꿈.
+- 지도 위 장소 이름표 · 토큰 글씨가 고정 글꼴(Courier New)이던 것 → 앱 글꼴(테마 › 글꼴)을 따라감. 앱 테마를 바꾸면 지도도 다시 그림.
+- 적용: `scheduler.html`, `sw.js`, `CHANGELOG.md` (캐시 v150).
