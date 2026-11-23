@@ -1827,8 +1827,8 @@ VIEWS.players=()=>{
    <td><select style="width:auto" onchange="B.update('users/${r.u.id}',{ho:this.value})"><option value="">-</option>${HO_CODES.map(c=>{const t=usersWithHo(c).find(x=>x.id!==r.u.id);return `<option value="${c}" ${r.u.ho===c?'selected':''} ${t?'disabled':''}>${esc(cname(c))}</option>`;}).join('')}</select>${isAdminEmail(r.u.email)?' <span class="badge">KP</span>':''}</td>
    <td>${r.coins}</td><td><b>${r.earned}</b></td><td>${r.solved}/${RIDDLES.length}</td><td style="white-space:nowrap;font-size:.8rem">${isOnline(r.u)?'<span class="odot"></span>접속 중':`<span class="muted">${seenTxt(r.u)}</span>`}</td><td><button class="sm" onclick="callAsk('${r.u.id}')">🔔</button></td></tr>`).join('')}</table></div></div>
   <div class="panel"><h2>KP 계정</h2><p class="muted">KP도 HO가 있으면 PL처럼 함께 참여.</p>
-   ${USERS.filter(u=>isAdminEmail(u.email)).map(u=>`<div class="row" style="margin:6px 0"><span style="flex:1">${esc(uname(u))} <span class="muted">${esc(u.email)}</span></span>
-   <select style="width:auto" onchange="B.update('users/${u.id}',{ho:this.value})"><option value="">HO 없음</option>${HO_CODES.map(c=>{const t=usersWithHo(c).find(x=>x.id!==u.id);return `<option value="${c}" ${u.ho===c?'selected':''} ${t?'disabled':''}>${esc(cname(c))}${t?' ('+esc(uname(t))+')':''}</option>`;}).join('')}</select></div>`).join('')}</div>`;
+   ${USERS.filter(u=>isAdminEmail(u.email)).map(u=>`<div class="row" style="margin:6px 0;align-items:center;gap:8px;flex-wrap:nowrap"><div style="flex:1;min-width:0"><b>${esc(uname(u))}</b><div class="muted" style="font-size:.8rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(u.email)}</div></div>
+   <select style="flex:0 0 8.5em;width:8.5em" onchange="B.update('users/${u.id}',{ho:this.value})"><option value="">HO 없음</option>${HO_CODES.map(c=>{const t=usersWithHo(c).find(x=>x.id!==u.id);return `<option value="${c}" ${u.ho===c?'selected':''} ${t?'disabled':''}>${esc(cname(c))}${t?' ('+esc(uname(t))+')':''}</option>`;}).join('')}</select></div>`).join('')}</div>`;
 };
 
 /* ================= 타이머 ================= */
