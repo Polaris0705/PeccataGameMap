@@ -315,6 +315,7 @@ html.px .slot-hcol.now{outline:2px solid var(--accent2)}
 <style id="appThemeVars"></style>
 <script>
 /* 캔버스(지도) 글씨도 화면 글꼴을 따라감 */
+const MAP_REF_W=760;   // 이름표 · 말 크기 기준 지도 폭 (이 폭일 때 설정한 크기 그대로)
 function cvFont(){try{return getComputedStyle(document.body).fontFamily||'sans-serif';}catch(e){return 'sans-serif';}}
 /* 앱 테마 따라가기: 부모(앱)의 색·글꼴·도트 스타일을 그대로 가져옴 */
 (function(){
@@ -1116,7 +1117,8 @@ function fitCanvas(){
   const wrap=document.getElementById('mapWrap');
   const mw=wrap.clientWidth-10,mh=wrap.clientHeight-10;
   const sc=Math.min(mw/m.img.width,mh/m.img.height,1)*MZS;
-  canvas.width=Math.floor(m.img.width*sc);canvas.height=Math.floor(m.img.height*sc);
+  const dpr=Math.min(3,window.devicePixelRatio||1),lw=Math.floor(m.img.width*sc),lh=Math.floor(m.img.height*sc);   // 화면 해상도대로 선명하게 (좌표는 화면 px 그대로)
+  canvas._lw=lw;canvas._lh=lh;canvas._dpr=dpr;canvas.width=Math.round(lw*dpr);canvas.height=Math.round(lh*dpr);canvas.style.width=lw+'px';canvas.style.height=lh+'px';
   wrap.classList.toggle('zoomed',MZS>1);const pc=document.getElementById('mzsPct');if(pc)pc.textContent=Math.round(MZS*100)+'%';
 }
 function deleteMap(){
@@ -1134,11 +1136,12 @@ function redrawMap(){
   if(!canvas.width||!S.maps[S.curMapIdx])return;
   const ctx=canvas.getContext('2d');
   const m=S.maps[S.curMapIdx];
-  ctx.clearRect(0,0,canvas.width,canvas.height);
-  ctx.drawImage(m.img,0,0,canvas.width,canvas.height);
+  const LW=canvas._lw||canvas.width,LH=canvas._lh||canvas.height;ctx.setTransform(canvas._dpr||1,0,0,canvas._dpr||1,0,0);ctx.imageSmoothingQuality='high';
+  ctx.clearRect(0,0,LW,LH);
+  ctx.drawImage(m.img,0,0,LW,LH);
   S.places.filter(p=>p.mapIdx===S.curMapIdx).forEach(pl=>{
     if(pl.nx==null) normPlace(pl);
-    else if(!isMoveMode&&!isResizeMode){pl.x=pl.nx*canvas.width;pl.y=pl.ny*canvas.height;pl.w=pl.nw*canvas.width;pl.h=pl.nh*canvas.height;}
+    else if(!isMoveMode&&!isResizeMode){pl.x=pl.nx*LW;pl.y=pl.ny*LH;pl.w=pl.nw*LW;pl.h=pl.nh*LH;}
   });
   S.places.filter(p=>p.mapIdx===S.curMapIdx).forEach(pl=>{
     const col=pCol(pl.name);
@@ -1170,10 +1173,12 @@ function redrawMap(){
     S.places.filter(p=>p.mapIdx===S.curMapIdx).forEach(pl=>{
       const chars=placeChars[pl.name]?[...placeChars[pl.name]]:[];
       if(!chars.length)return;
-      const tok_r=20,gap=3;
-      const startX=pl.x+4,startY=pl.y+pl.h-tok_r*2-4;
+      // 장소 칸 안에 들어가게: 지도 크기에 맞춰 줄이고, 모자라면 여러 줄로
+      const MK=Math.max(.3,LW/MAP_REF_W),gap=2;let tok_r=Math.max(5,20*MK),cols,rows;
+      let avH;const lb=pl._lb,top=lb&&lb.x<pl.x+pl.w&&lb.x+lb.w>pl.x&&lb.y<pl.y+pl.h*.6?Math.min(pl.y+pl.h*.6,lb.y+lb.h):pl.y;avH=pl.y+pl.h-top;   // 이름표 아래 남는 높이
+      for(;;){cols=Math.max(1,Math.floor((pl.w-6+gap)/(tok_r*2+gap)));rows=Math.ceil(chars.length/cols);if(rows*(tok_r*2+gap)<=avH-6)break;if(tok_r<=4){if(avH<pl.h){avH=pl.h;tok_r=Math.max(5,20*MK);continue;}break;}tok_r-=.5;}
       chars.forEach((c,i)=>{
-        const tx=startX+(tok_r*2+gap)*i,ty=startY;
+        const r=Math.floor(i/cols),k=i%cols,tx=pl.x+4+(tok_r*2+gap)*k,ty=Math.max(pl.y+2,pl.y+pl.h-4-(rows-r)*(tok_r*2+gap)+gap);
         const tokSrc=S.tokens[c]||S.portraits[c];
         if(tokSrc){
           const tImg=new Image();tImg.src=tokSrc;
@@ -1186,7 +1191,7 @@ function redrawMap(){
           ctx.fillStyle=isHO(c)?'#fdf3e3':'#eef2fb';ctx.fill();
           ctx.strokeStyle=isHO(c)?'#c8954a':'#4c7ec9';ctx.lineWidth=1.5;ctx.stroke();
           ctx.fillStyle=isHO(c)?'#8b5e2a':'#2a5a9b';
-          ctx.font='bold 9px '+cvFont();ctx.textAlign='center';ctx.textBaseline='middle';
+          ctx.font='bold '+Math.max(6,Math.round(tok_r*.45))+'px '+cvFont();ctx.textAlign='center';ctx.textBaseline='middle';
           ctx.fillText(charSc(c),tx+tok_r,ty+tok_r+1);ctx.restore();
         }
       });
@@ -1211,12 +1216,14 @@ function mzsZoom(f,fx,fy){
 /* 장소 이름표: 보일 글자(줄바꿈) · 위치 · 글자색 · 배경 */
 function plLabel(ctx,pl,cv,col){
   const tks=(()=>{try{return window.parent&&window.parent!==window&&window.parent.tkStr;}catch(e){return null;}})()||(x=>x);
-  const lines=String(tks(pl.lbl||pl.name)).split('\n'),fs=pl.ls||S.lblSize||12,lh=Math.round(fs*1.25);ctx.font=`bold ${fs}px ${cvFont()}`;
+  const MK=Math.max(.3,(cv._lw||cv.width)/MAP_REF_W),lines=String(tks(pl.lbl||pl.name)).split('\n'),fs=Math.max(6,(pl.ls||S.lblSize||12)*MK),lh=Math.round(fs*1.25);ctx.font=`bold ${fs}px ${cvFont()}`;
   const tw=Math.max(...lines.map(t=>ctx.measureText(t).width)),pd=Math.max(3,Math.round(fs/3)),bw=tw+pd*2,bh=lines.length*lh+4;
-  let x=pl.x+(pl.lox!=null?pl.lox*cv.width:2),y=pl.y+(pl.loy!=null?pl.loy*cv.height:2);
-  x=Math.max(0,Math.min(cv.width-bw,x));y=Math.max(0,Math.min(cv.height-bh,y));
+  const CW=cv._lw||cv.width,CH=cv._lh||cv.height;let x=pl.x+(pl.lox!=null?pl.lox*CW:2),y=pl.y+(pl.loy!=null?pl.loy*CH:2);
+  x=Math.max(0,Math.min(CW-bw,x));y=Math.max(0,Math.min(CH-bh,y));
   if(pl.lb&&pl.lb!=='none'){ctx.fillStyle=pl.lb+'dd';ctx.fillRect(x,y,bw,bh);}
-  ctx.fillStyle=pl.lc||col;ctx.textBaseline='top';lines.forEach((t,i)=>ctx.fillText(t,x+pd,y+3+i*lh));ctx.textBaseline='alphabetic';
+  ctx.fillStyle=pl.lc||col;ctx.textBaseline='top';
+  if(!pl.lb||pl.lb==='none'){ctx.lineJoin='round';ctx.lineWidth=Math.max(2,fs*.22);ctx.strokeStyle='rgba(255,255,255,.92)';lines.forEach((t,i)=>ctx.strokeText(t,x+pd,y+3+i*lh));}   // 배경 없으면 흰 테두리로 읽히게
+  lines.forEach((t,i)=>ctx.fillText(t,x+pd,y+3+i*lh));ctx.textBaseline='alphabetic';
   if(S.editMode){ctx.strokeStyle='rgba(0,0,0,.35)';ctx.lineWidth=1;ctx.setLineDash([2,2]);ctx.strokeRect(x+.5,y+.5,bw-1,bh-1);ctx.setLineDash([]);}
   pl._lb={x,y,w:bw,h:bh};
 }
@@ -1327,7 +1334,7 @@ function onMapMove(e){
   const r=mc.getBoundingClientRect();const cx=e.clientX-r.left,cy=e.clientY-r.top;
   if(mzsPts.has(e.pointerId))mzsPts.set(e.pointerId,{x:e.clientX,y:e.clientY});
   if(mzsPinch&&mzsPts.size===2){const [a,b]=[...mzsPts.values()],d=Math.hypot(a.x-b.x,a.y-b.y);if(mzsPinch.d>0&&Math.abs(d/mzsPinch.d-1)>.03){mzsZoom(d/mzsPinch.d,(a.x+b.x)/2,(a.y+b.y)/2);mzsPinch.d=d;}return;}
-  if(isLabelMode&&labelPlace){const canvas=document.getElementById('mapCanvas');labelPlace.lox=(cx-lblOffX-labelPlace.x)/canvas.width;labelPlace.loy=(cy-lblOffY-labelPlace.y)/canvas.height;redrawMap();return;}
+  if(isLabelMode&&labelPlace){const canvas=document.getElementById('mapCanvas');labelPlace.lox=(cx-lblOffX-labelPlace.x)/(canvas._lw||canvas.width);labelPlace.loy=(cy-lblOffY-labelPlace.y)/(canvas._lh||canvas.height);redrawMap();return;}
   if(mzsPan&&!isDrag&&!isMoveMode&&!isResizeMode){const w=document.getElementById('mapWrap'),dx=e.clientX-mzsPan.x,dy=e.clientY-mzsPan.y;if(Math.hypot(dx,dy)>4)mzsPan.moved=true;if(mzsPan.moved){w.scrollLeft=mzsPan.sl-dx;w.scrollTop=mzsPan.st-dy;document.getElementById('mapTooltip').style.display='none';return;}}
 
   // 새 영역 그리기
@@ -1339,8 +1346,8 @@ function onMapMove(e){
   // 이동
   if(isMoveMode&&movingPlace){
     const canvas=document.getElementById('mapCanvas');
-    movingPlace.x=Math.max(0,Math.min(cx-moveOffX,canvas.width-movingPlace.w));
-    movingPlace.y=Math.max(0,Math.min(cy-moveOffY,canvas.height-movingPlace.h));
+    movingPlace.x=Math.max(0,Math.min(cx-moveOffX,(canvas._lw||canvas.width)-movingPlace.w));
+    movingPlace.y=Math.max(0,Math.min(cy-moveOffY,(canvas._lh||canvas.height)-movingPlace.h));
     normPlace(movingPlace);redrawMap();return;
   }
 
@@ -2175,7 +2182,7 @@ window.PENDING=[];
 function _esc(s){return String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
 window.__setPending=l=>{window.PENDING=l||[];if(!document.querySelector('.overlay.open'))renderSchedule();};
 function mkKey(){return 'm'+Date.now().toString(36)+Math.random().toString(36).slice(2,6);}
-function normPlace(pl){const c=document.getElementById('mapCanvas');if(!c||!c.width||!c.height)return;pl.nx=pl.x/c.width;pl.ny=pl.y/c.height;pl.nw=pl.w/c.width;pl.nh=pl.h/c.height;}
+function normPlace(pl){const c=document.getElementById('mapCanvas');if(!c||!c.width||!c.height)return;const w=c._lw||c.width,h=c._lh||c.height;pl.nx=pl.x/w;pl.ny=pl.y/h;pl.nw=pl.w/w;pl.nh=pl.h/h;}
 function togglePlaceReveal(ev,i){ev.stopPropagation();const p=S.places[i];p.revealed=!p.revealed;renderPlaces();}
 function toggleMapReveal(i){S.maps[i].revealed=!S.maps[i].revealed;renderMapTabs();}
 function checkBooking(b){

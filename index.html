@@ -1137,6 +1137,11 @@ function pxTok(u){const im=tokImg(u);if(!im)return null;const k=u.id+'|'+im._src
   g.drawImage(im,(im.naturalWidth-s)/2,(im.naturalHeight-s)/4,s,s,0,0,20,20);c._k=k;PXTOK[u.id]=c;return c;}
 const PXAVA={};
 function pxAva(uid){const u=USERS.find(x=>x.id===uid);if(!u)return '';const c=pxTok(u);if(!c)return '';if(!PXAVA[uid]||PXAVA[uid].k!==c._k)PXAVA[uid]={k:c._k,url:c.toDataURL()};return `<img class="pxava" src="${PXAVA[uid].url}" alt="">`;}
+/* 지도 위 말 배치: 장소 칸 안에 들어가게 크기를 줄이고, 모자라면 여러 줄로 */
+const MAP_REF_W=760;let TOK_NFS=11;
+function tokFit(n,ww,hw,sz0){let sz=Math.max(8,Math.min(34,sz0)),L;
+  for(;;){const nfs=Math.max(7,Math.min(11,Math.round(sz*.45))),cw=Math.max(sz*1.75,nfs*3.2),ch=sz*1.9+nfs+6,cols=Math.max(1,Math.floor((ww-4)/cw)),rows=Math.ceil(n/cols);L={sz,nfs,cw,ch,cols,rows};
+    if((rows*ch<=hw-6&&cols*cw<=ww-2)||sz<=6)return L;sz-=1;}}
 function drawTok(ctx,u,cx,cy,sz){
   const on=isOnline(u)||u.id===ME.uid;ctx.save();if(!on)ctx.globalAlpha=.5;
   const x=Math.round(cx-sz/2),y=Math.round(cy-sz/2),me=u.id===ME.uid,bob=me?Math.round(Math.sin(Date.now()/300)):0;
@@ -1144,8 +1149,8 @@ function drawTok(ctx,u,cx,cy,sz){
   ctx.fillStyle='#140c06';ctx.fillRect(x-3,y-3+bob,sz+6,sz+6);ctx.fillStyle=me?'#ffe27a':'#e9e1d4';ctx.fillRect(x-2,y-2+bob,sz+4,sz+4);
   const pt=pxTok(u);ctx.imageSmoothingEnabled=false;
   if(pt)ctx.drawImage(pt,x,y+bob,sz,sz);else{ctx.fillStyle='#3a2a20';ctx.fillRect(x,y+bob,sz,sz);ctx.fillStyle='#ffe27a';ctx.font="bold "+Math.round(sz*.5)+"px 'Galmuri11',sans-serif";ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText((u.ho?cname(u.ho):uname(u)).slice(0,1),cx,cy+bob+1);}
-  const nm=(u.ho?cname(u.ho):uname(u)).slice(0,6);ctx.font="11px 'Galmuri11',sans-serif";ctx.textAlign='center';ctx.textBaseline='alphabetic';const tw=ctx.measureText(nm).width;
-  ctx.fillStyle='#140c06';ctx.fillRect(Math.round(cx-tw/2-4),y+sz+5,Math.round(tw+8),14);ctx.fillStyle=me?'#ffe27a':'#ffffff';ctx.fillText(nm,cx,y+sz+16);ctx.textAlign='left';
+  const nm=(u.ho?cname(u.ho):uname(u)).slice(0,6),nf=TOK_NFS;ctx.font=nf+"px 'Galmuri11',sans-serif";ctx.textAlign='center';ctx.textBaseline='alphabetic';const tw=ctx.measureText(nm).width;
+  ctx.fillStyle='#140c06';ctx.fillRect(Math.round(cx-tw/2-3),y+sz+4,Math.round(tw+6),nf+3);ctx.fillStyle=me?'#ffe27a':'#ffffff';ctx.fillText(nm,cx,y+sz+3+nf);ctx.textAlign='left';
   if(on){ctx.fillStyle='#140c06';ctx.fillRect(x+sz-3,y-4+bob,8,8);ctx.fillStyle='#4cd964';ctx.fillRect(x+sz-2,y-3+bob,6,6);}ctx.restore();}
 function featCard(k){const f=FEATS[k];return `<button class="room" onclick="openFeat('${k}')">${IS_ADMIN&&!FREE_FEATS.includes(k)&&featAt(k)<0?'<div class="muted" style="font-size:.72rem">KP만 · 아직 공개된 장소에 없음</div>':''}<div class="rn">${f.ic} ${f.n}</div><div class="muted" style="font-size:.8rem">${f.d}</div></button>`;}
 VIEWS.map=()=>{
@@ -1227,17 +1232,21 @@ async function drawPlMap(){
   const toX=nx=>(nx-V.x)/V.w*cv.width,toY=ny=>(ny-vy)/vh*cv.height,u=dpr;
   cv._v={x:V.x,y:vy,w:V.w,h:vh};
   const pls=((PUB&&PUB.places)||[]).filter(p=>p.mapKey===key&&p.nx!=null);
+  const MK=Math.max(.3,(W/V.w)/MAP_REF_W),FF=getComputedStyle(document.body).fontFamily||'sans-serif';   // 지도가 보이는 크기에 맞춰 글자 · 말 크기도 같이 줄고 늚
   if(!MZ_CROP)pls.forEach(p=>{const x=toX(p.nx),y=toY(p.ny),w=p.nw/V.w*cv.width,h=p.nh/vh*cv.height,sel=p.name===MAP_PLACE,here=myPlace()===p.name;
     if(x+w<0||y+h<0||x>cv.width||y>cv.height)return;
     ctx.fillStyle=p.color+(sel?'55':'33');ctx.fillRect(x,y,w,h);ctx.strokeStyle=sel?'#ffe7a3':p.color;ctx.lineWidth=(sel?3:2)*u;ctx.setLineDash(sel?[]:[5*u,3*u]);ctx.strokeRect(x,y,w,h);ctx.setLineDash([]);
-    const fs=Math.round(14*u*(p.ls?p.ls/12:1)),lh=Math.round(fs*1.25);ctx.font=`bold ${fs}px ${getComputedStyle(document.body).fontFamily||'sans-serif'}`;const lines=tkStr(p.lbl||p.name).split('\n');lines[0]=(here?'📍 ':'')+lines[0];lines[lines.length-1]+=subOf(p.name)?' 🚪':'';
-    const tw=Math.max(...lines.map(t=>ctx.measureText(t).width)),bw=tw+10*u,bh=lines.length*lh+4*u;
+    const fs=Math.round(Math.max(7,14*(p.ls?p.ls/12:1)*MK)*u),lh=Math.round(fs*1.25);ctx.font=`bold ${fs}px ${FF}`;const lines=tkStr(p.lbl||p.name).split('\n');lines[0]=(here?'📍 ':'')+lines[0];lines[lines.length-1]+=subOf(p.name)?' 🚪':'';
+    const tw=Math.max(...lines.map(t=>ctx.measureText(t).width)),pd=Math.max(2*u,Math.round(fs*.3)),bw=tw+pd*2,bh=lines.length*lh+pd;
     const lx=Math.max(2*u,Math.min((p.lox!=null?toX(p.nx+p.lox):x+3*u),cv.width-bw-2*u)),ly=Math.max(2*u,Math.min((p.loy!=null?toY(p.ny+p.loy):y+3*u),cv.height-bh-2*u));
     if(p.lb!=='none'){ctx.fillStyle=p.lb?p.lb+'dd':'rgba(0,0,0,.72)';ctx.fillRect(lx,ly,bw,bh);}
-    ctx.fillStyle=p.lc||'#fff';ctx.textBaseline='top';lines.forEach((t,k)=>ctx.fillText(t,lx+5*u,ly+4*u+k*lh));ctx.textBaseline='alphabetic';
+    ctx.fillStyle=p.lc||'#fff';ctx.textBaseline='top';
+    if(p.lb==='none'){const lum=(h=>{const n=parseInt((h||'#ffffff').slice(1,7),16);return ((n>>16)*299+((n>>8)&255)*587+(n&255)*114)/255000;})(p.lc);ctx.lineJoin='round';ctx.lineWidth=Math.max(2,fs*.22);ctx.strokeStyle=lum>.55?'rgba(0,0,0,.85)':'rgba(255,255,255,.92)';lines.forEach((t,k)=>ctx.strokeText(t,lx+pd,ly+pd/2+k*lh));}   // 배경 없는 이름표는 테두리로 읽히게
+    lines.forEach((t,k)=>ctx.fillText(t,lx+pd,ly+pd/2+k*lh));ctx.textBaseline='alphabetic';
     const who=whoAt(p.name).slice(0,7);if(!who.length)return;
-    ctx.save();ctx.scale(u,u);const xw=x/u,yw=y/u,ww=w/u,hw=h/u,sz=Math.max(18,Math.min(30,Math.round(ww/Math.max(2,who.length)-10)));
-    who.forEach((us,i)=>{const per=Math.max(sz+10,Math.min(sz+16,(ww-8)/who.length)),cx=xw+6+sz/2+i*per,cy=yw+hw-sz/2-24;drawTok(ctx,us,Math.min(cx,xw+ww-sz/2-4),Math.max(yw+30+sz/2,cy),sz);});ctx.restore();
+    ctx.save();ctx.scale(u,u);const xw=x/u,yw=y/u,ww=w/u,top=(lx<x+w&&lx+bw>x&&ly<y+h*.6)?Math.min(y+h*.6,ly+bh):y,hw0=(y+h-top)/u;let hw=hw0,L=tokFit(who.length,ww,hw,30*MK);if(L.rows*L.ch>hw0){hw=h/u;L=tokFit(who.length,ww,hw,30*MK);}   // 이름표 아래 남는 칸에 맞춤 (안 되면 칸 전체)
+    who.forEach((us,i)=>{const c=i%L.cols,r=Math.floor(i/L.cols),inRow=Math.min(L.cols,who.length-r*L.cols),x0=xw+(ww-inRow*L.cw)/2,ty=Math.max(yw+2,yw+h/u-4-(L.rows-r)*L.ch);
+      TOK_NFS=L.nfs;drawTok(ctx,us,x0+c*L.cw+L.cw/2,ty+L.sz*1.9-L.sz/2-3,L.sz);});TOK_NFS=11;ctx.restore();
   });
   if(MZ_CROP){const r=MZ_CROP.r||mzBase(key,img)&&(((ROOMS.crop||{})[key])||null);ctx.fillStyle='rgba(0,0,0,.55)';
     if(r){const x=toX(r.x),y=toY(r.y),w=r.w/V.w*cv.width,h=r.h/vh*cv.height;ctx.fillRect(0,0,cv.width,y);ctx.fillRect(0,y+h,cv.width,cv.height-y-h);ctx.fillRect(0,y,x,h);ctx.fillRect(x+w,y,cv.width-x-w,h);ctx.strokeStyle='#ffe7a3';ctx.lineWidth=2*u;ctx.setLineDash([6*u,4*u]);ctx.strokeRect(x,y,w,h);ctx.setLineDash([]);}}
