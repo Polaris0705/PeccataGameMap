@@ -322,6 +322,11 @@ service cloud.firestore {
       allow delete: if isAdmin() || (signedIn() && resource.data.uid == request.auth.uid);
     }
 
+    // 도트 편집기 레이어 묶음 (다시 열 때 레이어 그대로)
+    match /deLayers/{id} {
+      allow read, write: if signedIn();
+    }
+
     match /guestbook/{id} {
       allow read: if signedIn();
       allow create: if signedIn() && request.resource.data.uid == request.auth.uid

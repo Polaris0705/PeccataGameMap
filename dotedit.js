@@ -80,6 +80,7 @@ function deClose(save) {
   let url = null, meta = null;
   if (save) { if (DE.float) deCommitFloat(); deStop(); meta = { n: deN(), ms: DE.ms, fms: deFms() };
     if (deIsEmpty()) { url = o.allowEmpty ? dePng() : null; if (url) { meta.empty = 1; toast('빈 그림으로 저장 · 이 층은 안 보임'); } } else if (DE.origPx && deN() === 1 && deSame(deComp(0), DE.origPx)) { url = null; toast('원래 그림과 같아서 원래대로 돌려 둠'); } else url = dePng(); }
+  if (save && url) deLayStore();
   clearInterval(DE.saveT); clearInterval(DE.roomT); deDraftDel(); deStop(); window.removeEventListener('keydown', deKey);
   const r = document.getElementById('dotEd'); if (r) r.remove(); document.body.style.overflow = ''; DE = null;
   if (save) o.onSave && o.onSave(url, meta); else o.onCancel && o.onCancel();
@@ -112,12 +113,26 @@ function deLayerPng(L) { const n = L.frames.length, c = document.createElement('
 function deDecode(src, n) { return new Promise(res => { const im = new Image(); im.onload = () => { if (!DE) return res(null); n = Math.max(1, Math.min(DE_MAXF, n | 0 || 1)); const fh = im.height % n === 0 ? im.height / n : im.height, cnt = fh === im.height ? 1 : n, fr = [];
   for (let i = 0; i < cnt; i++) { const c = document.createElement('canvas'); c.width = DE.W; c.height = DE.H; const g = c.getContext('2d'); g.drawImage(im, 0, i * fh, im.width, fh, Math.round((DE.W - im.width) / 2), DE.H - fh, im.width, fh); fr.push(new Uint8ClampedArray(g.getImageData(0, 0, DE.W, DE.H).data)); }
   res(fr); }; im.onerror = () => res(null); im.src = src; }); }
-function deLoadSrc(src) { deDecode(src, DE.o.n).then(fr => { if (!DE || !fr) return; DE.layers = [{ name: '레이어 1', vis: true, lock: false, op: 1, frames: fr }]; DE.li = 0; DE.fi = 0; deSync(); deUI(); deDraw(); }); }
+function deLoadSrc(src) { deDecode(src, DE.o.n).then(fr => { if (!DE || !fr) return; DE.layers = [{ name: '레이어 1', vis: true, lock: false, op: 1, frames: fr }]; DE.li = 0; DE.fi = 0; deSync(); deUI(); deDraw(); deLayRestore(fr); }); }
 function deToOrig() {
   if (!DE.origPx) return toast('원래 그림을 불러오는 중'); if (!confirm('원래 가구 도트로 되돌릴까요? 레이어와 장면이 하나로 정리됨.')) return;
   deStop(); DE.float = null; DE.sel = null; DE.layers = [{ name: '원래 그림', vis: true, lock: false, op: 1, frames: [DE.origPx.slice()] }]; DE.li = 0; DE.fi = 0; deSync(); deStruct(); deUI(); deDraw(); deCols();
   toast('원래 도트로 되돌림. 이대로 저장하면 「바꿈」 표시가 사라짐');
 }
+
+/* ---------- 레이어째로 저장: 저장할 때 레이어 묶음도 deLayers/ 에 → 다시 열면 그림이 같을 때 레이어 그대로 ---------- */
+const deLayId = () => { const k = deDraftKey(); let h = 0; for (let i = 0; i < k.length; i++) h = (h * 31 + k.charCodeAt(i)) >>> 0; return 'L' + h.toString(36) + '_' + DE.W + 'x' + DE.H; };
+function deLayStore() { try { if (typeof B === 'undefined' || !DE) return; const id = deLayId();
+    if (DE.layers.length <= 1) { B.del('deLayers/' + id).catch(() => {}); return; }
+    const doc = { key: deDraftKey(), W: DE.W, H: DE.H, n: deN(), li: DE.li, at: Date.now(), layers: DE.layers.map(L => ({ name: L.name, vis: L.vis !== false, lock: !!L.lock, op: L.op == null ? 1 : L.op, png: deLayerPng(L) })) };
+    if (JSON.stringify(doc).length > 900000) return toast('레이어가 너무 커서 레이어 묶음은 저장 못 함 (그림은 저장됨)');
+    B.set('deLayers/' + id, doc).catch(() => {}); } catch (e) {} }
+async function deLayRestore(fr) { try { if (typeof B === 'undefined' || !DE) return; const de0 = DE, d = await B.get('deLayers/' + deLayId()); if (!d || DE !== de0 || DE.dirty || !d.layers || d.W !== DE.W || d.H !== DE.H) return;
+    const ls = []; for (const L of d.layers) { const f = await deDecode(L.png, d.n); if (DE !== de0) return; ls.push({ name: L.name, vis: L.vis !== false, lock: !!L.lock, op: L.op == null ? 1 : L.op, frames: f || [deNF()] }); }
+    const n = Math.max(1, ...ls.map(L => L.frames.length)); if (n !== fr.length) return; ls.forEach(L => { while (L.frames.length < n) L.frames.push(deNF()); });
+    const keep = DE.layers; DE.layers = ls; let same = true; for (let i = 0; i < n && same; i++) { const a = deComp(i), b = fr[i]; for (let j = 0; j < a.length; j += 4) { if (Math.abs(a[j + 3] - b[j + 3]) > 8 || (b[j + 3] > 8 && (Math.abs(a[j] - b[j]) > 8 || Math.abs(a[j + 1] - b[j + 1]) > 8 || Math.abs(a[j + 2] - b[j + 2]) > 8))) { same = false; break; } } }
+    if (!same) { DE.layers = keep; return; }   // 그 뒤에 그림이 바뀌었으면 레이어는 버림
+    DE.li = Math.min(d.li || 0, ls.length - 1); DE.fi = 0; deSync(); deUI(); deDraw(); deCols(); toast(`레이어 ${ls.length}장 그대로 불러옴`); } catch (e) {} }
 
 /* ---------- 자동 임시저장 ---------- */
 const deDraftKey = () => 'peccata_dot_' + (DE.o.key || (DE.o.title || 'x')) + '_' + DE.W + 'x' + DE.H;
@@ -203,22 +218,36 @@ function deCols() {
   const all = pal ? pal.cols.slice() : [...new Set([...DE.recent, ...deUsed(), ...DE_PAL])].slice(0, 48);
   $('#deCols').innerHTML = `<label class="sw" style="background:${DE.col};position:relative;flex-basis:34px;width:34px;height:30px" title="주색"><input type="color" value="${DE.col}" style="opacity:0;position:absolute;inset:0;width:100%;height:100%" oninput="DE.col=this.value.toLowerCase();this.parentNode.style.background=DE.col" onchange="deSetCol(this.value)"></label>
     <label class="sw ${DE.col2 ? '' : 'none'}" style="${DE.col2 ? 'background:' + DE.col2 + ';' : ''}position:relative;flex-basis:22px;width:22px;height:22px" title="보조색"><input type="color" value="${DE.col2 || '#ffffff'}" style="opacity:0;position:absolute;inset:0;width:100%;height:100%" oninput="DE.col2=this.value.toLowerCase();this.parentNode.style.background=DE.col2" onchange="DE.col2=this.value.toLowerCase();deCols()"></label>
-    <button onclick="[DE.col,DE.col2]=[DE.col2||DE.col,DE.col];deCols()" title="주색↔보조색">⇄</button><button onclick="DE.col2=null;deCols()" title="보조색 없애기">⌀</button>
+    <button class="${DE.sheet === 'hsl' ? 'on' : ''}" onclick="deSheet('hsl')" title="지금 색에서 세밀하게">🎚</button><button onclick="[DE.col,DE.col2]=[DE.col2||DE.col,DE.col];deCols()" title="주색↔보조색">⇄</button><button onclick="DE.col2=null;deCols()" title="보조색 없애기">⌀</button>
     <button class="${DE.sheet === 'pal' ? 'on' : ''}" onclick="deSheet('pal')">🎨 ${pal ? esc(pal.name) : '팔레트'}</button>
     ${DE.o.cols && DE.o.cols.cols.length ? `<span class="muted" style="font-size:.72rem;white-space:nowrap">${esc(DE.o.cols.name)}</span>${DE.o.cols.cols.map(c => `<span class="sw ${c === DE.col ? 'on' : ''}" style="background:${c}" onclick="deSetCol('${c}')" oncontextmenu="event.preventDefault();DE.col2='${c}';deCols()"></span>`).join('')}<span class="muted">|</span>` : ''}
     ${DE.guide && DE.guide.cols && DE.guide.cols.length ? `<span class="muted" style="font-size:.72rem;white-space:nowrap">${esc(DE.guide.name)} 색</span>${DE.guide.cols.map(c => `<span class="sw ${c === DE.col ? 'on' : ''}" style="background:${c}" onclick="deSetCol('${c}')" oncontextmenu="event.preventDefault();DE.col2='${c}';deCols()"></span>`).join('')}<span class="muted">|</span>` : ''}
     ${all.map(c => `<span class="sw ${c === DE.col ? 'on' : ''}" style="background:${c}" onclick="deSetCol('${c}')" oncontextmenu="event.preventDefault();DE.col2='${c}';deCols()"></span>`).join('')}`;
 }
+/* 색 ↔ 색조·채도·밝기 */
+function deHsl(hex) { const n = parseInt(hex.slice(1), 16), r = (n >> 16 & 255) / 255, g = (n >> 8 & 255) / 255, b = (n & 255) / 255, mx = Math.max(r, g, b), mn = Math.min(r, g, b), l = (mx + mn) / 2; let h = 0, s = 0;
+  if (mx !== mn) { const d = mx - mn; s = l > .5 ? d / (2 - mx - mn) : d / (mx + mn); h = mx === r ? (g - b) / d + (g < b ? 6 : 0) : mx === g ? (b - r) / d + 2 : (r - g) / d + 4; h *= 60; }
+  return [Math.round(h) % 360, Math.round(s * 100), Math.round(l * 100)]; }
+function deHslHex(h, s, l) { s /= 100; l /= 100; const k = n => (n + h / 30) % 12, a = s * Math.min(l, 1 - l), f = n => l - a * Math.max(-1, Math.min(k(n) - 3, 9 - k(n), 1)); return deToHex(Math.round(f(0) * 255), Math.round(f(8) * 255), Math.round(f(4) * 255)); }
+function deHslSet(done) { const v = {}; document.querySelectorAll('#deSheet input[type=range][data-k]').forEach(i => { v[i.dataset.k] = +i.value; const o = document.getElementById('deHv_' + i.dataset.k); if (o) o.textContent = i.value; });
+  const c = deHslHex(v.h, v.s, v.l); DE.col = c; const sw = document.getElementById('deHslSw'); if (sw) sw.style.background = c; const m = document.querySelector('#deCols label.sw'); if (m) m.style.background = c; if (done) { deSetCol(c); deCols(); } }
+function deHslStep(k, d) { const i = document.querySelector(`#deSheet input[data-k="${k}"]`); if (!i) return; const max = +i.max; i.value = k === 'h' ? (+i.value + d + 360) % 360 : Math.max(0, Math.min(max, +i.value + d)); deHslSet(true); }
 function deUsed() { const s = new Map(); DE.layers.forEach(L => L.frames.forEach(p => { for (let i = 0; i < p.length; i += 4) if (p[i + 3]) { const h = deToHex(p[i], p[i + 1], p[i + 2]); s.set(h, (s.get(h) || 0) + 1); } })); return [...s.entries()].sort((a, b) => b[1] - a[1]).slice(0, 32).map(x => x[0]); }
 function deSetCol(c) { DE.col = c.toLowerCase(); DE.recent = [DE.col, ...DE.recent.filter(x => x !== DE.col)].slice(0, 8); if (DE.tool === 'erase' || DE.tool === 'pick') DE.tool = 'pen'; deUI(); }
 function deTool(k) { if (DE.float && k !== 'sel' && k !== 'hand') deCommitFloat(); DE.tool = k; if (!['sel', 'grad', 'hand'].includes(k)) DE.sel = null; deUI(); deDraw(); }
 function deFit() { const cv = $('#deCv'); if (!cv) return; const r = cv.getBoundingClientRect(); DE.z = Math.max(1, Math.min(40, Math.floor(Math.min((r.width - 16) / DE.W, (r.height - 16) / DE.H) * 10) / 10)); DE.ox = (r.width - DE.W * DE.z) / 2; DE.oy = (r.height - DE.H * DE.z) / 2; deDraw(); }
 
 /* ---------- 아래 시트 (레이어 · 팔레트 · 효과 · 방 미리보기 · 변환 · 불러오기) ---------- */
-function deSheet(k) { const sh = $('#deSheet'); clearInterval(DE.roomT); if (!k || DE.sheet === k) { DE.sheet = ''; sh.style.display = 'none'; deUI(); return; } DE.sheet = k; sh.style.display = 'block'; deSheetBody(); deUI(); }
+function deSheet(k) { const sh = $('#deSheet'); clearInterval(DE.roomT); if (k === 'hsl') DE.hslBase = DE.col; if (!k || DE.sheet === k) { DE.sheet = ''; sh.style.display = 'none'; deUI(); return; } DE.sheet = k; sh.style.display = 'block'; deSheetBody(); deUI(); }
 function deSheetBody() {
   const sh = $('#deSheet'), k = DE.sheet; if (!sh || !k) return; clearInterval(DE.roomT);
   const close = `<button onclick="deSheet('')">닫기</button>`;
+  if (k === 'hsl') { const [h, sa, l] = deHsl(DE.col);
+    const row = (key, nm, v, max, st) => `<div class="row" style="gap:6px;align-items:center;margin:6px 0"><span style="flex:0 0 3em">${nm}</span><button onclick="deHslStep('${key}',-${st})">−</button><input type="range" min="0" max="${max}" value="${v}" style="flex:1 1 auto;width:auto" data-k="${key}" oninput="deHslSet()" onchange="deHslSet(true)"><button onclick="deHslStep('${key}',${st})">+</button><span id="deHv_${key}" style="flex:0 0 2.6em;text-align:right">${v}</span></div>`;
+    sh.innerHTML = `<div class="row" style="justify-content:space-between;align-items:center"><b>🎚 지금 색에서 세밀하게</b><span id="deHslSw" class="sw" style="background:${DE.col};flex-basis:40px;width:40px"></span></div>
+      ${row('h', '색조', h, 359, 1)}${row('s', '채도', sa, 100, 1)}${row('l', '밝기', l, 100, 1)}
+      <div class="row" style="gap:6px;margin-top:4px"><span class="muted" style="font-size:.78rem;flex:1">처음 색 <span class="sw" style="background:${DE.hslBase || DE.col};width:16px;height:16px;vertical-align:middle;flex:0 0 16px"></span> <code>${DE.col}</code></span><button onclick="deSetCol(DE.hslBase||DE.col);deSheetBody();deCols()">처음 색으로</button>${close}</div>`;
+    if (!DE.hslBase) DE.hslBase = DE.col; return; }
   if (k === 'lay') {
     sh.innerHTML = `<div class="row" style="justify-content:space-between;align-items:center"><b>🗂 레이어</b><span class="muted" style="font-size:.78rem">위가 앞쪽 · 모든 장면이 같이 씀</span></div>
       ${DE.layers.map((L, i) => ({ L, i })).reverse().map(({ L, i }) => `<div class="lrow ${i === DE.li ? 'on' : ''}" onclick="deLayerGo(${i})"><canvas width="${DE.W}" height="${DE.H}" data-li="${i}"></canvas>
