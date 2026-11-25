@@ -76,7 +76,7 @@ VIEWS.board = () => {
   const who = (d.who || []).filter(u => userOf(u));
   const z = BD.z;
   return `<div class="panel${BD.full ? ' bdfull' : ''}" id="bdBox">
-  ${BD.full ? '' : `<h2 style="margin-bottom:4px">🧵 추리 보드</h2><p class="muted" style="margin:0 0 8px">세션에서 얻은 단서를 붙이고 붉은 실로 잇는 조사판. 카드를 끌어 옮기고, 눌러서 고침.</p>`}
+  ${BD.full ? '' : `<h2 style="margin-bottom:4px">🧵 추리 보드</h2><p class="muted" style="margin:0 0 8px;word-break:keep-all">세션에서 얻은 단서를 붙이고 붉은 실로 잇는 조사판.<br>카드를 끌어 옮기고, 눌러서 고침.</p>`}
   ${l.length > 1 ? `<div class="bdbar">${l.map(k => `<button class="sm ${k === uid ? 'primary' : ''}" onclick="BD.cur='${k}';BD.la=null;BD.sx=BD.sy=0;render()">${k === ME.uid ? '📌 ' : '👥 '}${esc(bdOwnName(k))}</button>`).join('')}</div>` : ''}
   <div class="bdbar">
     ${ed ? `<button class="sm" onclick="bdNew('memo')">＋ 메모</button><button class="sm" onclick="bdNew('photo')">📷 사진</button><button class="sm" onclick="bdNew('person')">👤 인물</button><button class="sm" onclick="bdNew('item')">🎒 소지품</button>
