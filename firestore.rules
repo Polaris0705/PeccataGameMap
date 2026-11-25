@@ -322,6 +322,16 @@ service cloud.firestore {
       allow delete: if isAdmin() || (signedIn() && resource.data.uid == request.auth.uid);
     }
 
+    // 추리 보드 (주인 + 같이 쓰는 사람만 읽고 고침, KP는 모두 읽음)
+    match /boards/{uid} {
+      allow read: if isAdmin() || (signedIn() && (request.auth.uid == uid || request.auth.uid in resource.data.who));
+      allow create: if signedIn() && request.auth.uid == uid && request.resource.data.owner == uid;
+      allow update: if signedIn() && request.resource.data.owner == resource.data.owner
+        && (request.auth.uid == uid
+          || (request.auth.uid in resource.data.who && !request.resource.data.diff(resource.data).affectedKeys().hasAny(['owner', 'who'])));
+      allow delete: if isAdmin() || (signedIn() && request.auth.uid == uid);
+    }
+
     // 도트 편집기 레이어 묶음 (다시 열 때 레이어 그대로)
     match /deLayers/{id} {
       allow read, write: if signedIn();

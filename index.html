@@ -490,6 +490,7 @@ async function makeFirebase(){
     onDoc:(p,cb)=>F.onSnapshot(ref(p),s=>cb(s.exists()?s.data():null),e=>console.warn(p,e)),
     onCol:(c,cb)=>F.onSnapshot(F.collection(db,c),s=>cb(list(s)),e=>console.warn(c,e)),
     onQuery:(c,o,cb)=>F.onSnapshot(F.query(F.collection(db,c),F.orderBy(o.orderBy),F.limitToLast(o.limit)),s=>cb(list(s)),e=>console.warn(c,e)),
+    onHas:(c,f,v,cb)=>F.onSnapshot(F.query(F.collection(db,c),F.where(f,'array-contains',v)),s=>cb(list(s)),e=>console.warn(c,e)),
     getCol:async c=>list(await F.getDocs(F.collection(db,c))),
     tx:async(p,fn)=>{let applied=false;await F.runTransaction(db,async t=>{const s=await t.get(ref(p));const nd=fn(s.exists()?s.data():null);applied=nd!==undefined;if(applied)t.set(ref(p),JSON.parse(JSON.stringify(nd)));});return applied;},
     batch:async ops=>{const b=F.writeBatch(db);ops.forEach(o=>{if(o.op==='set')b.set(ref(o.path),o.data);else if(o.op==='del')b.delete(ref(o.path));else b.update(ref(o.path),o.data);});await b.commit();}
@@ -502,7 +503,7 @@ function makeMock(){
   const bc=('BroadcastChannel' in window)?new BroadcastChannel('peccata_mock'):null;
   const clone=x=>x==null?null:JSON.parse(JSON.stringify(x));
   const list=c=>{const n=c.split('/').length+1;return Object.keys(D).filter(k=>k.startsWith(c+'/')&&k.split('/').length===n).map(k=>({id:k.split('/').pop(),...clone(D[k])}));};
-  const qlist=(c,o)=>list(c).sort((a,b)=>(a[o.orderBy]||0)-(b[o.orderBy]||0)).slice(-o.limit);
+  const qlist=(c,o)=>o.has?list(c).filter(d=>Array.isArray(d[o.has[0]])&&d[o.has[0]].includes(o.has[1])):list(c).sort((a,b)=>(a[o.orderBy]||0)-(b[o.orderBy]||0)).slice(-o.limit);
   function fire(){
     subsD.slice().forEach(s=>{const v=JSON.stringify(D[s.p]??null);if(v!==s.last){s.last=v;s.cb(clone(D[s.p]??null));}});
     subsC.slice().forEach(s=>{const l=s.o?qlist(s.c,s.o):list(s.c),v=JSON.stringify(l);if(v!==s.last){s.last=v;s.cb(l);}});
@@ -530,6 +531,7 @@ function makeMock(){
     onDoc:(p,cb)=>{const s={p,cb,last:undefined};subsD.push(s);setTimeout(()=>{s.last=JSON.stringify(D[p]??null);cb(clone(D[p]??null));},0);return()=>{const i=subsD.indexOf(s);if(i>=0)subsD.splice(i,1);};},
     onCol:(c,cb)=>{const s={c,cb,last:undefined};subsC.push(s);setTimeout(()=>{const l=list(c);s.last=JSON.stringify(l);cb(l);},0);return()=>{const i=subsC.indexOf(s);if(i>=0)subsC.splice(i,1);};},
     onQuery:(c,o,cb)=>{const s={c,o,cb,last:undefined};subsC.push(s);setTimeout(()=>{const l=qlist(c,o);s.last=JSON.stringify(l);cb(l);},0);return()=>{const i=subsC.indexOf(s);if(i>=0)subsC.splice(i,1);};},
+    onHas:(c,f,v,cb)=>{const o={has:[f,v]},s={c,o,cb,last:undefined};subsC.push(s);setTimeout(()=>{const l=qlist(c,o);s.last=JSON.stringify(l);cb(l);},0);return()=>{const i=subsC.indexOf(s);if(i>=0)subsC.splice(i,1);};},
     getCol:async c=>list(c),
     batch:async ops=>{D=load();ops.forEach(o=>{if(o.op==='set')D[o.path]=clone(o.data);else if(o.op==='del')delete D[o.path];else D[o.path]={...(D[o.path]||{}),...clone(o.data)};});persist();}
   };
@@ -650,14 +652,15 @@ async function onAuth(u){
   sub(B.onDoc('settings/shop',d=>{if(typeof shopApply==='function')shopApply(d);softRender();}));
   if(typeof furnOnAuth==='function')furnOnAuth(sub);
   if(typeof socialOnAuth==='function')socialOnAuth(sub);
+  if(typeof boardOnAuth==='function')boardOnAuth(sub);
   if(typeof avOnAuth==='function')avOnAuth(sub);
   if(typeof roomOnAuth==='function')roomOnAuth(u);
 }
 
 /* ================= 렌더 ================= */
-const PL_TABS=[['저택',[['room','🏠 내 방'],['map','🗺 저택 지도'],['book','🔎 조사 예약'],['items','🎒 소지품'],['memo','📝 메모'],['cal','📅 일정'],['news','📰 소식지'],['lobby','👤 내 정보']]]];
+const PL_TABS=[['저택',[['room','🏠 내 방'],['map','🗺 저택 지도'],['book','🔎 조사 예약'],['items','🎒 소지품'],['memo','📝 메모'],['board','🧵 추리 보드'],['cal','📅 일정'],['news','📰 소식지'],['lobby','👤 내 정보']]]];
 const KP_TABS=[['KP',[['kdash','🧭 대시보드'],['sched','🗝 스케줄러'],['kitems','📦 아이템'],['memo','📝 메모'],['cal','📅 일정'],['news','📰 소식지']]]];
-const kpTabs=()=>[KP_TABS[0],['저택',PROF&&PROF.ho?[['map','🗺 저택 지도'],['room','🏠 내 방'],['lobby','👤 내 정보']]:[['map','🗺 저택 지도']]]];
+const kpTabs=()=>[KP_TABS[0],['저택',PROF&&PROF.ho?[['map','🗺 저택 지도'],['room','🏠 내 방'],['board','🧵 추리 보드'],['lobby','👤 내 정보']]:[['map','🗺 저택 지도'],['board','🧵 추리 보드']]]];
 const KP_ALIAS={kqueue:'kdash',players:'kdata',ktitle:'kdata',kavatar:'kfurn'};   // 옛 화면 이름 → 합친 화면
 function softRender(){
   if(window.GAME_LOCK){pendingRender=true;return;}
@@ -1855,5 +1858,6 @@ setInterval(()=>{if(ME&&P&&(tab==='garden'||tab==='lobby')&&!modalOpen())softRen
 <script src="fortune.js"></script>
 <script src="avatar.js"></script>
 <script src="kpmenu.js"></script>
+<script src="board.js"></script>
 </body>
 </html>

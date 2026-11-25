@@ -112,7 +112,7 @@ async function kdReset(uid) {
 /* 사용자 삭제: 앱 데이터만 (로그인 계정은 남음 → 다시 로그인하면 처음부터). 남긴 글 · 채팅 · 일기 · 선물 등도 같이 지움 */
 async function kdDelUser(uid) {
   const u = USERS.find(x => x.id === uid); if (!u || uid === ME.uid) return; const nm = uname(u);
-  if (prompt(`${nm}의 앱 데이터를 모두 지움: 프로필 · 진행(은화 · 방 · 쪽지) · 채팅 · 일기 · 방명록 · 선물함 · 예약 · 만든 가구/옷 · 경매.\n소지품 아이템은 주인 없음으로 돌아감.\n로그인 계정은 남아서 다시 로그인하면 처음부터 시작.\n\n계속하려면 "${nm}" 이라고 적기.`) !== nm) return toast('취소 완료');
+  if (prompt(`${nm}의 앱 데이터를 모두 지움: 프로필 · 진행(은화 · 방 · 쪽지) · 채팅 · 일기 · 방명록 · 선물함 · 예약 · 만든 가구/옷 · 경매 · 추리 보드.\n소지품 아이템은 주인 없음으로 돌아감.\n로그인 계정은 남아서 다시 로그인하면 처음부터 시작.\n\n계속하려면 "${nm}" 이라고 적기.`) !== nm) return toast('취소 완료');
   toast('지우는 중…'); let n = 0, fail = 0;
   const del = async p => { try { await B.del(p); n++; } catch (e) { fail++; } };
   const col = async c => { try { return await B.getCol(c); } catch (e) { return []; } };
@@ -130,7 +130,7 @@ async function kdDelUser(uid) {
     for (const t of await col('thefts/' + uid + '/log')) await del(`thefts/${uid}/log/${t.id}`);
     for (const it of await col('items')) if (it.owner === uid) { try { await B.update('items/' + it.id, { owner: '', ownerName: '' }); } catch (e) { fail++; } }
     for (const s of (typeof SESS !== 'undefined' ? SESS : [])) if (s.rsvp && s.rsvp[uid]) { const r = Object.assign({}, s.rsvp); delete r[uid]; try { await B.update('sessions/' + s.id, { rsvp: r }); } catch (e) {} }
-    for (const p of ['calls/', 'avpos/', 'curt/', 'pushSubs/', 'progress/', 'users/']) await del(p + uid);
+    for (const p of ['boards/', 'calls/', 'avpos/', 'curt/', 'pushSubs/', 'progress/', 'users/']) await del(p + uid);
   } catch (e) { fail++; }
   toast(fail ? `${nm} 삭제: ${fail}개 실패 (Firebase 규칙 확인)` : `${nm} 삭제 완료`); render();
 }

@@ -198,6 +198,7 @@ const FURN = {
   painting: { pic: { w: 54, h: 35 }, name: '풍경화', cat: 'deco', wall: true, cost: 40, w: 2, h: 46, wy: 20, parts: { c: ['frame', '#e0b050'], a: ['paper', '#3a4a7a'] }, hi: true, drawHi(p, t, C) { PAINTINGHI(p, t, C); } },
   gallery: { pic: { w: 27, h: 21 }, name: '액자 모음', cat: 'deco', wall: true, cost: 60, w: 2, h: 70, wy: 10, parts: { a: ['frame', '#f1e6cc'], c: ['border', '#6a4a32'] }, hi: true, drawHi(p, t, C) { GALLERYHI(p, t, C); } },
   portrait: { pic: { w: 25, h: 49 }, name: '초상화', cat: 'deco', wall: true, cost: 60, w: 1, h: 56, wy: 12, parts: { c: ['frame', '#e0b050'], a: ['cloth', '#7e2236'] }, hi: true, drawHi(p, t, C) { PORTRAITHI(p, t, C); } },
+  cork: { name: '추리 보드', cat: 'deco', wall: true, cost: 20, w: 2, h: 50, wy: 14, parts: { c: ['frame', '#6b4426'], a: ['string', '#b0202a'] }, hi: true, drawHi(p, t, C) { CORKHI(p, t, C); } },
   mirror: { name: '거울', cat: 'deco', wall: true, cost: 50, w: 1, h: 64, wy: 10, parts: { c: ['frame', '#e0b050'], a: ['glass', '#9ab8c4'] }, hi: true, drawHi(p, t, C) { MIRRORHI(p, t, C); } },
   antlers: { name: '사슴뿔 장식', cat: 'gothic', wall: true, cost: 65, w: 2, h: 44, wy: 16, parts: { b: ['wood', '#5a3a24'], a: ['body', '#efe6d0'] }, hi: true, drawHi(p, t, C) { ANTLERSHI(p, t, C); } },
   chandelier: { name: '샹들리에', cat: 'gothic', wall: true, cost: 150, w: 2, h: 52, wy: 0, parts: { c: ['metal', '#e0b050'] }, hi: true, drawHi(p, t, C) { CHANDELIERHI(p, t, C); } },
@@ -845,6 +846,18 @@ const PORTRAITHI = (p, t, C) => { const { c, el } = p, M = C.c, A = C.a;   // �
   el(32, 40, 11, 14, '#2a1a10'); el(32, 44, 9, 12, '#e8c8a8'); el(31, 42, 5, 6, '#f4dcc0'); el(32, 30, 12, 7, '#2a1a10'); c(21, 32, 4, 20, '#2a1a10'); c(39, 32, 4, 20, '#2a1a10');
   c(27, 42, 3, 2, OL); c(34, 42, 3, 2, OL); c(27, 41, 3, 1, '#6a4a3a'); c(34, 41, 3, 1, '#6a4a3a'); c(31, 46, 2, 2, '#d0a888'); c(29, 51, 6, 1, '#b05060'); el(26, 48, 2, 1, 'rgba(240,120,120,.35)'); el(38, 48, 2, 1, 'rgba(240,120,120,.35)');
   c(7, 7, 50, 1, 'rgba(0,0,0,.3)'); };
+const CORKHI = (p, t, C) => { const { c, ln } = p, M = C.c, S = C.a;   // 벽 · 128 × 100 · 코르크판 + 쪽지 + 붉은 실
+  c(4, 5, 122, 94, 'rgba(0,0,0,.2)'); hframe(p, 2, 2, 122, 94, M, 6);
+  const X = 8, Y = 8, W = 110, H = 82; c(X, Y, W, H, '#c29466');
+  for (let i = 0; i < 260; i++) { const x = hsh(i, 7) % W, y = hsh(11, i) % H; c(X + x, Y + y, 1 + (i % 3 === 0), 1, i % 4 ? '#a87a4c' : '#dcb488'); }
+  const pap = (x, y, w, h, col, k) => { c(X + x + 1, Y + y + 2, w, h, 'rgba(40,20,5,.35)'); c(X + x, Y + y, w, h, col); if (k === 'l') for (let j = 5; j < h - 2; j += 4) c(X + x + 2, Y + y + j, w - 4, 1, 'rgba(60,80,130,.35)');
+    if (k === 'p') { c(X + x + 2, Y + y + 2, w - 4, h - 8, '#5a6878'); c(X + x + 4, Y + y + h - 14, w - 8, 8, '#3e4a56'); c(X + x + w / 2 - 3, Y + y + 6, 6, 6, '#c8b8a0'); } };
+  const pins = [[6, 6, 26, 20, '#fff4b8', 'l'], [42, 4, 24, 30, '#fbfaf6', 'p'], [76, 8, 28, 22, '#e9d6a8', 'l'], [10, 44, 28, 26, '#ffd9de', 'l'], [50, 46, 24, 30, '#fbfaf6', 'p'], [84, 44, 20, 26, '#d8ecff', 'l']];
+  pins.forEach(q => pap(...q));
+  const pt = q => [X + q[0] + (q[2] >> 1), Y + q[1] + 2];
+  [[0, 1], [1, 2], [0, 3], [3, 4], [1, 4], [2, 5], [4, 5]].forEach(([a, b], i) => { if (i === 4 || i === 6) return; const A = pt(pins[a]), B2 = pt(pins[b]); ln(A[0], A[1], B2[0], B2[1], S.t, 1); ln(A[0], A[1] + 1, B2[0], B2[1] + 1, S.d, 1); });
+  pins.forEach((q, i) => { const [x, y] = pt(q), col = i === 1 || i === 4 ? '#e0b050' : '#c0282e'; c(x - 1, y - 1, 3, 3, OL); c(x - 1, y - 1, 2, 2, col); c(x - 1, y - 1, 1, 1, '#ffffff'); });
+  c(X, Y, W, 1, 'rgba(0,0,0,.25)'); c(X, Y, 1, H, 'rgba(0,0,0,.2)'); };
 const MIRRORHI = (p, t, C) => { const { c } = p, M = C.c, G = C.a;   // 벽 · 64 × 128 · 위가 둥근 아치형
   // 위는 반원 아치, 아래 모서리는 살짝 둥글게(rb)
   const arch = (x0, y0, w, h, col) => { const r = w / 2, ry = Math.round(r), rb = 4; for (let y = 0; y < h; y++) { let half = r;
@@ -1836,6 +1849,7 @@ function myRoom() {
   if (refundRemoved(r)) { ROOM_SAVE_T = 0; setTimeout(() => saveP(), 0); }
   if (sinGift(r, typeof mySin === 'function' ? mySin() : '')) setTimeout(() => saveP(), 0);
   if (sinGift(r, 'safe')) setTimeout(() => saveP(), 0);
+  if (sinGift(r, 'cork')) setTimeout(() => saveP(), 0);
   if (migrateRoom(r) && Date.now() - ROOM_SAVE_T > 3000) { ROOM_SAVE_T = Date.now(); setTimeout(() => saveP(), 0); }
   return r;
 }
@@ -1845,7 +1859,7 @@ function sinGift(r, s) {
   if (r.items.some(i => i.k === s) || (r.inv && r.inv[s]) || (r.invc || []).some(x => x.k === s)) return true;   // 이미 가지고 있으면 표시만
   const p = nearFree(r, s, 5, 1); if (p) r.items.push({ id: rmId(), k: s, c: p.c, r: p.r }); else r.inv[s] = (r.inv[s] || 0) + 1; return true;
 }
-function hoRoom(uid) { if (ME && uid === ME.uid) return myRoom(); const p = PROGS.find(x => x.id === uid); const r = p && p.room ? JSON.parse(JSON.stringify(p.room)) : defaultRoom(); r.inv = r.inv || {}; r.items = r.items || []; migrateRoom(r); { const u = typeof USERS !== 'undefined' && USERS.find(x => x.id === uid); if (u && u.ho) sinGift(r, sinOf(u.ho)); if (u) sinGift(r, 'safe'); } return r; }
+function hoRoom(uid) { if (ME && uid === ME.uid) return myRoom(); const p = PROGS.find(x => x.id === uid); const r = p && p.room ? JSON.parse(JSON.stringify(p.room)) : defaultRoom(); r.inv = r.inv || {}; r.items = r.items || []; migrateRoom(r); { const u = typeof USERS !== 'undefined' && USERS.find(x => x.id === uid); if (u && u.ho) sinGift(r, sinOf(u.ho)); if (u) { sinGift(r, 'safe'); sinGift(r, 'cork'); } } return r; }
 function roomCnt(k) { if (!P || !P.room) return 0; const items = (P.room.items || []); if (k === 'plant') return items.filter(i => FURN[i.k] && FURN[i.k].plant).length; if (k === 'shelf') return items.filter(i => i.k === 'shelf' || i.k === 'tallshelf').length; return items.filter(i => i.k === k).length; }
 const wallCol = r => (r.cols.wall || {})[r.wall] || (WALLS[r.wall] || WALLS.plain).col, floorCol = r => (r.cols.floor || {})[r.floor] || (FLOORS[r.floor] || FLOORS.plank).col;
 
@@ -2066,12 +2080,12 @@ setInterval(() => {      // 140ms마다: 평소엔 두 번에 한 번 그리고,
 
 /* ---------- 조작 ---------- */
 function cvPos(cv, ev) { const r = cv.getBoundingClientRect(); return { x: (ev.clientX - r.left) / r.width * RW, y: (ev.clientY - r.top) / r.height * RH }; }
-const ROOM_TALK = { sofa: ['푹신한 벨벳 소파.'], loveseat: ['둘이 앉기 딱 좋다.'], fireplace: ['장작이 타닥타닥 탄다.'], armchair: ['앉으면 잠들 것 같다.'], wclock: ['째깍, 째깍.'], gallery: ['추억이 담긴 액자들.'],
+const ROOM_TALK = { cork: ['단서들이 붉은 실로 이어져 있다.'], sofa: ['푹신한 벨벳 소파.'], loveseat: ['둘이 앉기 딱 좋다.'], fireplace: ['장작이 타닥타닥 탄다.'], armchair: ['앉으면 잠들 것 같다.'], wclock: ['째깍, 째깍.'], gallery: ['추억이 담긴 액자들.'],
   cat: ['냐아.', '골골골…', '(꼬리를 살랑인다)'], gclock: ['똑딱, 똑딱.'], piano: ['♪ 도-미-솔'], harp: ['♪ 맑은 소리가 울린다.'], gramophone: ['♪ 오래된 왈츠가 흐른다.'], teaset: ['향긋한 홍차 냄새.'], safe: ['단단히 잠겨 있다.'], chest: ['무엇이 들었을까?'],
   mirror: ['거울 속의 나와 눈이 마주쳤다.'], envy: ['거울 속 눈이… 나를 본다?'], window: ['창밖 숲이 보인다.'], plant: ['잎이 싱그럽다.'], bed: ['폭신해 보인다.'], canopy: ['공주님 침대 같다.'],
   mannequin: ['누가 입던 드레스일까.'], apron: ['어디선가 시계 소리가 들리는 것 같다.'], lectern: ['읽다 만 페이지에 책갈피가 끼워져 있다.'], rosedome: ['꽃잎이 하나 떨어졌다.'], raven: ['까악!'],
   wrath: ['불길이 거세다!'], greed: ['반짝반짝… 전부 내 거야.'], sloth: ['조금만 더 잘래…'], gluttony: ['한 입만…'], pride: ['역시 나야.'], lust: ['장미 향기가 난다.'], teddy: ['폭신폭신.'], birdcage: ['짹짹!'], globe: ['빙글빙글.'], telescope: ['별이 가까이 보인다.'] };
-function roomPoke(i) { const f = FURN[i.k]; const l = typeof furnTalk === 'function' ? furnTalk(i.k) : ROOM_TALK[i.k]; sfx(i.k === 'cat' || i.k === 'raven' ? 'pop' : 'tap'); toast(`${f.name} — ${l && l.length ? l[Math.floor(Math.random() * l.length)] : ''}${f.eff ? ' (' + f.eff + ')' : ''}`); }
+function roomPoke(i) { if (i.k === 'cork' && typeof bdFromRoom === 'function' && bdFromRoom()) return; const f = FURN[i.k]; const l = typeof furnTalk === 'function' ? furnTalk(i.k) : ROOM_TALK[i.k]; sfx(i.k === 'cat' || i.k === 'raven' ? 'pop' : 'tap'); toast(`${f.name} — ${l && l.length ? l[Math.floor(Math.random() * l.length)] : ''}${f.eff ? ' (' + f.eff + ')' : ''}`); }
 function bindViewCv(cv, uid) { cv.onclick = ev => { const p = cvPos(cv, ev), i = itemAt(hoRoom(uid), p.x, p.y); if (i && curtTap(uid, i, hoRoom(uid), p)) return; if (i && typeof avSeatTap === 'function' && avSeatTap(uid, i, hoRoom(uid), p)) return; if (!i) { if (typeof avTap === 'function') avTap(uid, p); return; } if (i.k === 'safe' && typeof safeTry === 'function') safeTry(uid, i); else roomPoke(i); }; }
 const selInvOf = room => RM.sel && RM.sel.startsWith('inv:') ? room.invc.find(x => 'inv:' + x.id === RM.sel) : null;
 function bindRoomCv(cv) {
