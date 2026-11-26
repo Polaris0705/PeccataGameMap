@@ -15,7 +15,7 @@ GitHub Pages(화면) + Firebase(로그인·데이터) + Railway(푸시 알림 �
 | `config.js` | **HB님 설정 파일** (Firebase 값, KP 이메일, 푸시 키, 제목). 업데이트할 때 **절대 덮어쓰지 마세요** |
 | `index.html` | 메인 앱. 로그인 후 KP 화면과 PL 화면이 나뉘어요 |
 | `scheduler.html` | KP 스케줄러 (일정표 · 맵/장소 · 예약 목록). KP 화면 안에 들어가요 |
-| `room.js` · `furnmgr.js` · `dotedit.js` | 내 방 · 가구 관리/직접 만든 가구/경매 · 도트 편집기 |
+| `room.js` · `furnq.js` · `furnmgr.js` · `dotedit.js` | 내 방 · 새 그림체 가구 · 가구 관리/직접 만든 가구/경매 · 도트 편집기 |
 | `chat.js` | 채팅 (RP · OOC · 비밀 채널 · 귓속말) |
 | `games.js` · `games2.js` · `games3.js` · `tycoon.js` · `rhythm.js` · `shelf.js` · `fortune.js` | 미니게임 (온실 · 블랙잭 · 짝맞추기 · 은식기 닦기 · 선반 정리 · 자물쇠 · 찻잔 떨어뜨리기 · 티룸 타이쿤 · 운세 등) |
 | `party.js` · `party2.js` · `draw.js` · `bots.js` | 파티 게임 (눈치게임 · 경매 · 라이어 · 인랑 · 그림 게임 · 봇) |

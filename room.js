@@ -93,15 +93,15 @@ const PN = { cushion: '쿠션', sheet: '시트', pattern: '무늬', border: '테
 const FURN = {
   /* ===== 침실 ===== */
   bed: { name: '침대', cat: 'bed', cost: 60, hi: true, dirs: [0, 1, 2, 3], dims: d => d % 2 ? { w: 3, d: 2, h: 75 } : { w: 3, d: 3, h: 110 },
-    parts: { a: ['cloth', '#a8344a'], b: ['wood', '#8a5530'], c: ['sheet', '#f1e6cc'] }, drawHi(p, t, C, dir) { if (dir % 2) BEDHI.side(p, t, C); else BEDHI.front(p, t, C, dir === 2, 192); } },
+    parts: { a: ['cloth', '#8c6c76'], b: ['wood', '#7a6466'], c: ['sheet', '#ece7df'] }, drawHi(p, t, C, dir) { if (dir % 2) BEDHI.side(p, t, C); else BEDHI.front(p, t, C, dir === 2, 192); } },
   canopy: { name: '천개 침대', cat: 'bed', cost: 220, hi: true, dims: () => ({ w: 3, d: 3, h: 150 }), parts: { a: ['curtain', '#6a2a5a'], b: ['wood', '#5a3a24'], c: ['sheet', '#f1e6cc'] }, drawHi(p, t, C) { CANOPYHI(p, t, C); } },
   sbed: { name: '작은 침대', cat: 'bed', cost: 40, hi: true, dims: () => ({ w: 1, d: 3, h: 104 }), parts: { a: ['cloth', '#3a5a8a'], b: ['wood', '#c4864e'], c: ['sheet', '#f1e6cc'] }, drawHi(p, t, C) { SBEDHI(p, t, C); } },
-  nstand: { name: '협탁', cat: 'bed', cost: 20, hi: true, dims: () => ({ w: 1, d: 1, h: 44 }), parts: { b: ['wood', '#8a5530'], a: ['light', '#f1e6cc'] }, drawHi(p, t, C) { NSTANDHI(p, t, C); } },
+  nstand: { name: '협탁', cat: 'bed', cost: 20, hi: true, dims: () => ({ w: 1, d: 1, h: 44 }), parts: { b: ['wood', '#7a6466'], a: ['light', '#e2dcd2'] }, drawHi(p, t, C) { NSTANDHI(p, t, C); } },
   dresser: { name: '화장대', cat: 'bed', cost: 80, hi: true, dirs: [0, 1, 2, 3], dims: d => d % 2 ? { w: 1, d: 2, h: 106 } : { w: 2, d: 1, h: 74 }, parts: { b: ['wood', '#c4864e'], c: ['metal', '#e0b050'], a: ['glass', '#9ab8c4'] },
     drawHi(p, t, C, dir) { if (dir % 2) DRESSERHI.side(p, t, C); else if (dir === 2) DRESSERHI.back(p, t, C); else DRESSERHI.front(p, t, C); } },
   wardrobe: { name: '옷장', cat: 'bed', cost: 70, hi: true, dirs: [0, 1, 2, 3], dims: d => d % 2 ? { w: 1, d: 2, h: 118 } : { w: 2, d: 1, h: 92 }, parts: { b: ['wood', '#93592f'], c: ['metal', '#e0b050'] },
     drawHi(p, t, C, dir) { if (dir % 2) WARDHI.side(p, t, C); else if (dir === 2) WARDHI.back(p, t, C); else WARDHI.front(p, t, C); } },
-  desk: { name: '책상', cat: 'living', cost: 30, hi: true, dirs: [0, 1, 2, 3], dims: d => d % 2 ? { w: 1, d: 2, h: 68 } : { w: 2, d: 1, h: 36 }, parts: { b: ['wood', '#93592f'], c: ['metal', '#e0b050'], a: ['paper', '#3a5a8a'] },
+  desk: { name: '책상', cat: 'living', cost: 30, hi: true, dirs: [0, 1, 2, 3], dims: d => d % 2 ? { w: 1, d: 2, h: 68 } : { w: 2, d: 1, h: 36 }, parts: { b: ['wood', '#7a6466'], c: ['metal', '#d6bc98'], a: ['paper', '#3a5a8a'] },
     drawHi(p, t, C, dir) { if (dir % 2) DESKHI.side(p, t, C); else if (dir === 2) DESKHI.back(p, t, C); else DESKHI.front(p, t, C); } },
   chest: { name: '보물상자', cat: 'bed', cost: 45, hi: true, dirs: [0, 1, 2, 3], dims: d => d % 2 ? { w: 1, d: 2, h: 76 } : { w: 2, d: 1, h: 44 }, parts: { b: ['wood', '#93592f'], c: ['metal', '#e0b050'] },
     drawHi(p, t, C, dir) { if (dir % 2) CHESTHI.side(p, t, C); else if (dir === 2) CHESTHI.back(p, t, C); else CHESTHI.front(p, t, C); } },
@@ -112,7 +112,7 @@ const FURN = {
     drawHi(p, t, C, dir) { if (dir % 2) LOVEHI.side(p, t, C); else if (dir === 2) LOVEHI.back(p, t, C); else LOVEHI.front(p, t, C); } },
   armchair: { name: '안락의자', cat: 'living', cost: 40, hi: true, dirs: [0, 1, 2, 3], dims: () => ({ w: 1, d: 1, h: 50 }), parts: { a: ['cloth', '#4f8a55'], b: ['wood', '#5a3a24'] },
     drawHi(p, t, C, dir) { if (dir % 2) ARMCHAIRHI.side(p, t, C); else if (dir === 2) ARMCHAIRHI.back(p, t, C); else ARMCHAIRHI.front(p, t, C); } },
-  chair: { name: '나무 의자', cat: 'living', cost: 15, hi: true, dirs: [0, 1, 2, 3], dims: () => ({ w: 1, d: 1, h: 46 }), parts: { b: ['wood', '#8a5530'], a: ['cloth', '#a8344a'] },
+  chair: { name: '나무 의자', cat: 'living', cost: 15, hi: true, dirs: [0, 1, 2, 3], dims: () => ({ w: 1, d: 1, h: 46 }), parts: { b: ['wood', '#7a6466'], a: ['cloth', '#94737c'] },
     drawHi(p, t, C, dir) { if (dir % 2) CHAIRHI.side(p, t, C); else if (dir === 2) CHAIRHI.back(p, t, C); else CHAIRHI.front(p, t, C); } },
   stool: { name: '등받이 없는 의자', cat: 'living', cost: 12, hi: true, dims: () => ({ w: 1, d: 1, h: 32 }), parts: { a: ['cloth', '#e8a060'], b: ['wood', '#5a3a24'] }, drawHi(p, t, C) { STOOLHI(p, t, C); } },
   ottoman: { name: '바닥 쿠션', cat: 'living', cost: 15, hi: true, dims: () => ({ w: 1, d: 1, h: 22 }), parts: { a: ['cloth', '#f08ab0'] }, drawHi(p, t, C) { OTTOMANHI(p, t, C); } },
@@ -120,7 +120,7 @@ const FURN = {
   rtable: { name: '원탁', cat: 'living', cost: 70, hi: true, dims: () => ({ w: 2, d: 2, h: 64 }), parts: { a: ['cloth', '#f1e6cc'], b: ['wood', '#5a3a24'], c: ['metal', '#e0b050'] }, drawHi(p, t, C) { RTABLEHI(p, t, C); } },
   dtable: { name: '긴 식탁', cat: 'living', cost: 110, hi: true, dims: () => ({ w: 3, d: 2, h: 70 }), parts: { a: ['cloth', '#f1e6cc'], b: ['wood', '#6a4428'], c: ['runner', '#a8344a'] }, drawHi(p, t, C) { DTABLEHI(p, t, C); } },
   shelf: { name: '책장', cat: 'living', cost: 120, eff: '수수께끼 힌트 20% 할인', hi: true, dirs: [0, 1, 2, 3], dims: d => d % 2 ? { w: 1, d: 2, h: 105 } : { w: 2, d: 1, h: 88 },
-    parts: { b: ['wood', '#93592f'] }, drawHi(p, t, C, dir) { if (dir % 2) SHELFHI.side(p, t, C); else if (dir === 2) SHELFHI.back(p, t, C); else SHELFHI.front(p, t, C); } },
+    parts: { b: ['wood', '#76605f'] }, drawHi(p, t, C, dir) { if (dir % 2) SHELFHI.side(p, t, C); else if (dir === 2) SHELFHI.back(p, t, C); else SHELFHI.front(p, t, C); } },
   tallshelf: { name: '높은 서가', cat: 'living', cost: 160, eff: '수수께끼 힌트 20% 할인', hi: true, dims: () => ({ w: 2, d: 1, h: 112 }), parts: { b: ['wood', '#5a3a24'], c: ['metal', '#e0b050'] }, drawHi(p, t, C) { TALLSHELFHI(p, t, C); } },
   cabinet: { name: '유리 장식장', cat: 'living', cost: 100, hi: true, dims: () => ({ w: 2, d: 1, h: 88 }), parts: { b: ['wood', '#6a4428'], c: ['metal', '#e0b050'] }, drawHi(p, t, C) { CABINETHI(p, t, C); } },
   piano: { name: '피아노', cat: 'living', cost: 250, hi: true, dirs: [0, 1, 2, 3], dims: d => d % 2 ? { w: 1, d: 3, h: 118 } : { w: 3, d: 1, h: 76 }, parts: { b: ['body', '#2a2226'], c: ['metal', '#e0b050'] },
@@ -135,7 +135,7 @@ const FURN = {
     drawHi(p, t, C, dir) { if (dir % 2) RUNNERHI(rotPen(p, 192), t, C); else RUNNERHI(p, t, C); } },
   teaset: { name: '찻상', cat: 'living', cost: 150, eff: '티룸 팁 +1', hi: true, dims: () => ({ w: 2, d: 1, h: 48 }), parts: { a: ['cloth', '#f1e6cc'], b: ['wood', '#5a3a24'], c: ['metal', '#3a5a8a'] }, drawHi(p, t, C) { TEASETHI(p, t, C); } },
   teacart: { name: '티 카트', cat: 'living', cost: 65, hi: true, dims: () => ({ w: 2, d: 1, h: 54 }), parts: { c: ['metal', '#e0b050'], a: ['glass', '#f8f4ec'] }, drawHi(p, t, C) { TEACARTHI(p, t, C); } },
-  lamp: { name: '스탠드', cat: 'living', cost: 25, hi: true, dims: () => ({ w: 1, d: 1, h: 80 }), parts: { a: ['light', '#f1e6cc'], c: ['metal', '#4a4a54'] }, drawHi(p, t, C) { LAMPHI(p, t, C); } },
+  lamp: { name: '스탠드', cat: 'living', cost: 25, hi: true, dims: () => ({ w: 1, d: 1, h: 80 }), parts: { a: ['light', '#e2dcd2'], c: ['metal', '#9c9698'] }, drawHi(p, t, C) { LAMPHI(p, t, C); } },
   gclock: { name: '괘종시계', cat: 'living', cost: 300, eff: '혼자 하는 게임 하루 보상 +1회', hi: true, dims: () => ({ w: 1, d: 1, h: 92 }), parts: { b: ['wood', '#93592f'], c: ['metal', '#e0b050'] }, drawHi(p, t, C) { GCLOCKHI(p, t, C); } },
   padlock: { name: '자물쇠', cat: 'small', cost: 60, max: 3, top: true, eff: '내 금고를 따기 어려워짐 (하나당 1단계, 최대 3)', hi: true, dims: () => ({ w: 1, d: 1, h: 30 }), parts: { a: ['metal', '#c9a036'], c: ['metal', '#b8bcc4'] }, drawHi(p, t, C) { PADLOCKHI(p, t, C); } },
   safe: { name: '금고', cat: 'small', cost: 200, eff: '출석 보상 +3 (최대 2개)', max: 2, hi: true, dims: () => ({ w: 1, d: 1, h: 38 }), parts: { a: ['body', '#5a606a'], c: ['metal', '#e0b050'] }, drawHi(p, t, C) { SAFEHI(p, t, C); } },
@@ -1899,6 +1899,95 @@ function drawOrder(room) {
   const pair = (a, b) => { if (L(a) !== L(b) || a.z || b.z) return 0; if (SEATS[a.k] && TABLES[b.k] && ov(a, b)) return behind(a) ? -1 : 1; if (SEATS[b.k] && TABLES[a.k] && ov(a, b)) return behind(b) ? 1 : -1; return 0; };
   return room.items.filter(i => FURN[i.k]).slice().sort((a, b) => L(a) - L(b) || pair(a, b) || key(a) - key(b) || (a.r + fd(a.k, a.dir)) - (b.r + fd(b.k, b.dir)) || a.c - b.c);
 }
+/* ---------- 새 그림체 (차분한 색 · 부드러운 갈색 외곽선 · 디더 음영 · 은은한 빛) ----------
+   가구를 고운 해상도(1칸 64px)로 따로 그린 뒤 픽셀 단위로 다듬어서 붙임. 결과는 캐시. */
+const ST2 = { all: false, keys: new Set(['bed', 'desk', 'chair', 'shelf', 'lamp', 'nstand']), bg: true, cache: new Map() };
+const st2On = k => { try { if (localStorage.getItem('peccata_st2off') === '1') return false; } catch (e) {} return ST2.all || ST2.keys.has(k); };
+const st2BgOn = () => { try { if (localStorage.getItem('peccata_st2off') === '1') return false; } catch (e) {} return ST2.bg; };
+function st2Rgb2Hsl(r, g, b) { r /= 255; g /= 255; b /= 255; const mx = Math.max(r, g, b), mn = Math.min(r, g, b), l = (mx + mn) / 2; let h = 0, s = 0;
+  if (mx !== mn) { const d = mx - mn; s = l > .5 ? d / (2 - mx - mn) : d / (mx + mn); h = mx === r ? (g - b) / d + (g < b ? 6 : 0) : mx === g ? (b - r) / d + 2 : (r - g) / d + 4; h /= 6; } return [h, s, l]; }
+function st2Hsl2Rgb(h, s, l) { if (!s) { const v = Math.round(l * 255); return [v, v, v]; } const q = l < .5 ? l * (1 + s) : l + s - l * s, p = 2 * l - q, f = t => { t = (t + 1) % 1; return t < 1 / 6 ? p + (q - p) * 6 * t : t < .5 ? q : t < 2 / 3 ? p + (q - p) * (2 / 3 - t) * 6 : p; };
+  return [Math.round(f(h + 1 / 3) * 255), Math.round(f(h) * 255), Math.round(f(h - 1 / 3) * 255)]; }
+const st2HueTo = (h, to, k) => { let d = to - h; if (d > .5) d -= 1; if (d < -.5) d += 1; return (h + d * k + 1) % 1; };
+const ST2_MAP = new Map();
+function st2Col(r, g, b) {   // → [r, g, b, 외곽선?]
+  const key = (r << 16) | (g << 8) | b; let v = ST2_MAP.get(key); if (v) return v;
+  let [h, s, l] = st2Rgb2Hsl(r, g, b), ol = 0;
+  if (l < .17) { ol = 1; h = st2HueTo(h, .97, s < .1 ? 1 : .65); s = Math.min(.24, s * .5 + .1); l = .23 + l * .45; }
+  else { s *= .72; l = .1 + l * .86; if (l < .5) h = st2HueTo(h, .96, (.5 - l) * .45); else if (l > .78) h = st2HueTo(h, .1, (l - .78) * .5); }
+  const [R, G, B] = st2Hsl2Rgb(h, s, Math.min(.97, l)); v = [R, G, B, ol, l, h, s]; if (ST2_MAP.size < 20000) ST2_MAP.set(key, v); return v;
+}
+function st2Filter(id, glow, opt) {
+  if (opt && opt.thin) st2Thin(id);
+  const { data: d, width: w, height: h } = id, N = w * h, col = new Int32Array(N).fill(-1), L = new Float32Array(N), H = new Float32Array(N), S = new Float32Array(N), OLm = new Uint8Array(N), src = glow ? new Uint8Array(N) : null;
+  for (let i = 0; i < N; i++) { const a = d[i * 4 + 3]; if (!a) continue; const r = d[i * 4], g = d[i * 4 + 1], b = d[i * 4 + 2];
+    if (glow && a > 200 && glow.has((r << 16) | (g << 8) | b)) src[i] = 1;
+    const v = st2Col(r, g, b); d[i * 4] = v[0]; d[i * 4 + 1] = v[1]; d[i * 4 + 2] = v[2]; if (a < 230) continue; col[i] = (v[0] << 16) | (v[1] << 8) | v[2]; OLm[i] = v[3]; L[i] = v[4]; H[i] = v[5]; S[i] = v[6]; }
+  const out = col.slice(), ok = (i, j) => { if (col[j] < 0 || OLm[j] || col[j] === col[i]) return false; const dl = Math.abs(L[i] - L[j]); if (dl < .015 || dl > .32) return false;
+    if (S[i] > .12 && S[j] > .12) { let dh = Math.abs(H[i] - H[j]); if (dh > .5) dh = 1 - dh; if (dh > .09) return false; } return true; };
+  const tex = !(opt && opt.notex), RN = opt && opt.thin ? 4 : 2;
+  for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) { const i = y * w + x; if (col[i] < 0 || OLm[i]) continue;
+    // 위쪽 경계: 아래 면이 3줄 이상 이어지고 위 면도 2줄 이상일 때만 (가는 선·작은 장식은 그대로)
+    const run = (st, nn, cc) => { for (let k = 1; k <= nn; k++) { const j = i + st * k; if (j < 0 || j >= N || col[j] !== cc) return false; } return true; };
+    if (y >= RN && y < h - RN && ok(i, i - w) && run(-w, RN, col[i - w]) && run(w, RN, col[i])) {
+      if (((x + y) & 1) === 0) out[i] = col[i - w]; if (((x + 2 * y) & 3) === 0 && y + 1 < h) out[i + w] = col[i - w]; continue; }
+    if (x >= RN && x < w - RN && ok(i, i - 1) && run(-1, RN, col[i - 1]) && run(1, RN, col[i])) {
+      if (((x + y) & 1) === 0) out[i] = col[i - 1]; if (((2 * x + y) & 3) === 0) out[i + 1] = col[i - 1]; continue; }
+    // 넓은 면의 잔무늬 (디더 얼룩)
+    if (tex && x >= 4 && y >= 4 && x < w - 4 && y < h - 4 && out[i] === col[i] && ((x + y) & 1) === 0 && col[i - 4] === col[i] && col[i + 4] === col[i] && col[i - 4 * w] === col[i] && col[i + 4 * w] === col[i] && col[i - 3 * w - 3] === col[i] && col[i + 3 * w + 3] === col[i] && col[i - 3 * w + 3] === col[i] && col[i + 3 * w - 3] === col[i]) {
+      const n = hsh((x / 5) | 0, (y / 4) | 0) % 13; if (n < 2) { const dl = n ? .035 : -.025, rgb = st2Hsl2Rgb(H[i], S[i], Math.max(0, Math.min(1, L[i] - dl))); out[i] = (rgb[0] << 16) | (rgb[1] << 8) | rgb[2]; } } }
+  for (let i = 0; i < N; i++) if (out[i] >= 0 && out[i] !== col[i]) { d[i * 4] = out[i] >> 16 & 255; d[i * 4 + 1] = out[i] >> 8 & 255; d[i * 4 + 2] = out[i] & 255; }
+  if (glow) {   // 은은한 빛 번짐 (크림색, 바깥으로 갈수록 성기게)
+    const R = 9, A = [0, 0, .5, .45, .4, .34, .28, .22, .16, .1];
+    for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) { const i = y * w + x; if (d[i * 4 + 3] > 20) continue; let best = 99;
+      for (let dy = -R; dy <= R && best > 2; dy++) { const yy = y + dy; if (yy < 0 || yy >= h) continue; for (let dx = -R; dx <= R; dx++) { const xx = x + dx; if (xx < 0 || xx >= w || !src[yy * w + xx]) continue; const dd = Math.max(Math.abs(dx), Math.abs(dy)); if (dd < best) best = dd; } }
+      if (best > R || best < 2) continue; if (best >= 5 && ((x + y) & 1)) continue; if (best >= 7 && ((x >> 1) + y) & 1) continue;
+      d[i * 4] = 246; d[i * 4 + 1] = 234; d[i * 4 + 2] = 200; d[i * 4 + 3] = Math.round(A[best] * 255); } }
+  return id;
+}
+/* 외곽선 가늘게: 2배로 그린 그림에서 선(2px 두께)의 안쪽 절반을 옆 면 색으로 채움 → 1px 선.
+   물체 테두리는 바깥쪽 절반만 남기고, 두 면 사이 선은 오른쪽·아래 절반을 지움 */
+function st2Thin(id) {
+  const { data: d, width: w, height: h } = id, N = w * h, C = new Int32Array(N).fill(-1), Lm = new Float32Array(N);
+  for (let i = 0; i < N; i++) { if (d[i * 4 + 3] < 200) continue; const r = d[i * 4], g = d[i * 4 + 1], b = d[i * 4 + 2]; C[i] = (r << 16) | (g << 8) | b; Lm[i] = (r * .3 + g * .59 + b * .11) / 255; }
+  const src = new Uint8ClampedArray(d), D = [[1, 0], [0, 1], [-1, 0], [0, -1]], at = (x, y) => x < 0 || y < 0 || x >= w || y >= h ? -2 : y * w + x;
+  for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) { const i = y * w + x; if (C[i] < 0) continue;
+    for (let q = 0; q < 4; q++) { const [dx, dy] = D[q], n = at(x + dx, y + dy), o = at(x - dx, y - dy), o2 = at(x - 2 * dx, y - 2 * dy);
+      if (n < 0 || o < 0 || C[n] < 0 || C[o] !== C[i] || Lm[n] - Lm[i] < .1) continue;   // 옆 면이 더 밝고, 반대쪽은 같은 선
+      const c2 = o2 < 0 ? -1 : C[o2]; if (c2 === C[i]) continue;                         // 원래 2칸 이상 두께면 그대로
+      if (c2 >= 0 && q > 1) continue;                                                     // 두 면 사이 선: 오른쪽·아래 절반만
+      d[i * 4] = src[n * 4]; d[i * 4 + 1] = src[n * 4 + 1]; d[i * 4 + 2] = src[n * 4 + 2]; break; } }
+}
+function st2Glow(k, C) { const f = FURN[k], set = new Set(); if (!f || !f.parts) return null;
+  Object.entries(f.parts).forEach(([s, pr]) => { if (pr[0] === 'light' && C[s]) ['L', 'l', 't', 'f'].forEach(q => { const hx = C[s][q]; if (hx && hx[0] === '#') set.add(parseInt(hx.slice(1), 16)); }); });
+  if (!set.size) return null; ['#ffe8a0', '#fff6d0'].forEach(hx => set.add(parseInt(hx.slice(1), 16))); return set; }
+function st2Sprite(g, k, x, y, t, C, col, dir) {
+  const f = FURN[k], dm = dimsOf(k, dir), Q = 2, W = Math.ceil(dm.w * 64) * Q, Hh = Math.ceil(dm.h * 2) * Q, M = 24 * Q, tod = (typeof curTod === 'function' && curTod()) || '';
+  const key = k + '|' + dir + '|' + t + '|' + tod + '|' + JSON.stringify(col || '') + '|' + JSON.stringify(defCol(k));
+  let cv = ST2.cache.get(key);
+  if (!cv && f.drawQ) {   // 새로 그린 고운 가구 (1칸 128px)
+    const W4 = Math.ceil(dm.w * 128), H4 = Math.ceil(dm.h * 4), M4 = 48, c2 = document.createElement('canvas'); c2.width = W4 + M4 * 2; c2.height = H4 + M4 * 2; const og = c2.getContext('2d'); og.imageSmoothingEnabled = false;
+    let ok = false; try { ok = f.drawQ(pen(og, M4, M4, dir === 3 ? W4 : 0, 1), t || 0, C, dir); } catch (e) { console.warn('drawQ', k, e); }
+    if (ok) { c2._u = 4; c2._m = M4; cv = c2; if (ST2.cache.size > 400) ST2.cache.delete(ST2.cache.keys().next().value); ST2.cache.set(key, cv); } }
+  if (!cv) { cv = document.createElement('canvas'); cv.width = W + M * 2; cv.height = Hh + M * 2; const og = cv.getContext('2d'); og.imageSmoothingEnabled = false;
+    f.drawHi(pen(og, M, M, dir === 3 ? W / Q : 0, Q), t || 0, C, dir);
+    try { const id = og.getImageData(0, 0, cv.width, cv.height); og.putImageData(st2Filter(id, st2Glow(k, C), { thin: true }), 0, 0); } catch (e) {}
+    if (ST2.cache.size > 400) ST2.cache.delete(ST2.cache.keys().next().value); ST2.cache.set(key, cv); }
+  const Sx = g._S || 1, px = v => Math.round(v * Sx), u = cv._u || 2 * Q, Mm = cv._m || M, x0 = px(x - Mm / u), y0 = px(y - Mm / u);   // 1 기본 px = 4 그림 px
+  const sm = Sx < u * .95; g.imageSmoothingEnabled = sm; if (sm) g.imageSmoothingQuality = 'high';   // 화면보다 고운 그림은 부드럽게 줄여서 가는 선이 사라지지 않게
+  g.drawImage(cv, x0, y0, px(x - Mm / u + cv.width / u) - x0, px(y - Mm / u + cv.height / u) - y0); g.imageSmoothingEnabled = false;
+}
+/* 벽지 · 바닥: 두 배로 곱게 그려서 같은 방식으로 다듬기 */
+function st2Bg(g, room, t) {
+  const wk = WALLS[room.wall] ? room.wall : 'plain', fk = FLOORS[room.floor] ? room.floor : 'plank', wc = wallCol(room), fc = floorCol(room);
+  const key = 'bg|' + wk + '|' + wc + '|' + fk + '|' + fc + '|' + JSON.stringify(RB) + '|' + (wk === 'night' ? t % 9 : 0);
+  let cv = ST2.cache.get(key);
+  if (!cv) { cv = document.createElement('canvas'); cv.width = RW * 2; cv.height = RH * 2; const og = cv.getContext('2d'); og.imageSmoothingEnabled = false; snapCtx(og, 2);
+    drawWall(og, wk, t, wc); drawFloor(og, fk, fc);
+    try { const id = og.getImageData(0, 0, cv.width, cv.height); og.putImageData(st2Filter(id, null), 0, 0); } catch (e) {}
+    if (ST2.cache.size > 400) ST2.cache.delete(ST2.cache.keys().next().value); ST2.cache.set(key, cv); }
+  const Sx = g._S || 1; g.imageSmoothingEnabled = false; g.drawImage(cv, 0, 0, Math.round(RW * Sx), Math.round(RH * Sx));
+}
 let GROW_OFF = null;
 function drawSprite(g, k, x, y, t, alpha, col, dir, img) {
   const f = FURN[k]; if (!f) return; dir = dir || 0; HI_IMG = (f.pic && img) || null; HI_PH = f.pic ? f.pic.h : 0;
@@ -1912,7 +2001,8 @@ function drawSprite(g, k, x, y, t, alpha, col, dir, img) {
     g.drawImage(off, 0, 0, px(M + half), off.height, px(x - M), px(y - M), px(M + half), off.height);
     for (let d = 0; d < ex; d += slice) { const w = Math.min(slice, ex - d); g.drawImage(off, sx0, 0, px(w), off.height, px(x + half + d), px(y - M), px(w), off.height); }
     g.drawImage(off, px(M + half), 0, off.width - px(M + half), off.height, px(x + half + ex), px(y - M), off.width - px(M + half), off.height);
-  } else if (f.hi) { const dm = dimsOf(k, dir); f.drawHi(pen(g, x, y, dir === 3 ? dm.w * 64 : 0, .5), t || 0, C, dir); }
+  } else if (f.hi && !f.pic && st2On(k)) st2Sprite(g, k, x, y, t || 0, C, col, dir);
+  else if (f.hi) { const dm = dimsOf(k, dir); f.drawHi(pen(g, x, y, dir === 3 ? dm.w * 64 : 0, .5), t || 0, C, dir); }
   else f.draw(pen(g, x, y), t || 0, C);
   g.restore();
 }
@@ -1952,7 +2042,7 @@ function paintRoomLazy(cv, room, opts) { if (!cv) return; const cssW = cv.client
 function paintRoomTo(cv, g, room, opts) {
   RB = roomBounds(room); g.imageSmoothingEnabled = false; const S = cv.width / RW; snapCtx(g, S);
   const t = RM.t, edit = opts && opts.edit;
-  drawFrame(g, room.cols.frame); drawWall(g, WALLS[room.wall] ? room.wall : 'plain', t, wallCol(room)); drawFloor(g, FLOORS[room.floor] ? room.floor : 'plank', floorCol(room));
+  drawFrame(g, room.cols.frame); if (st2BgOn()) st2Bg(g, room, t); else { drawWall(g, WALLS[room.wall] ? room.wall : 'plain', t, wallCol(room)); drawFloor(g, FLOORS[room.floor] ? room.floor : 'plank', floorCol(room)); }
   if (edit) { g.fillStyle = 'rgba(255,255,255,.09)'; const X0 = OX + RB.c0 * T; for (let c = 0; c <= RB.cols; c++) g.fillRect(X0 + c * T, FY, 1, RB.rows * T); for (let r = 0; r <= RB.rows; r++) g.fillRect(X0, FY + r * T, RB.cols * T, 1);
     for (let c = 0; c <= RB.cols; c++) g.fillRect(X0 + c * T, OY + 4, 1, WALL_H - 16); }
   const dragId = RM.drag && RM.drag.moved ? RM.drag.id : null;
