@@ -202,8 +202,8 @@ function deUI() {
   const grad = t === 'grad' ? `<span class="muted" style="font-size:.78rem">끌어서 주색→보조색${DE.col2 ? '' : '(없으면 점점 투명)'}. 선택 영역이 있으면 그 안, 없으면 같은 색으로 이어진 곳</span>` : '';
   const scope = t === 'swap' ? `<span class="muted" style="font-size:.78rem">누른 도트의 색 → 주색</span>${deScopeHtml()}` : '';
   const shp = ['rect', 'oval'].includes(t) ? `<button class="${DE.fillShape ? 'on' : ''}" onclick="DE.fillShape=!DE.fillShape;deUI()">${DE.fillShape ? '■ 채움' : '□ 테두리'}</button>` : '';
-  const sel = t === 'sel' || DE.float ? (DE.float ? `<button class="on" onclick="deCommitFloat()">✔ 여기에 붙이기</button><button onclick="deFloatX('h')">⇋ 좌우</button><button onclick="deFloatX('v')">⇵ 상하</button><button onclick="deFloatX('r')">⟳ 90°</button><button onclick="deFloatX('2')">×2</button><button onclick="deFloatX('h2')">×½</button><button class="${DE.xf ? 'on' : ''}" onclick="DE.xf=!DE.xf;deUI();deDraw()">⤢ 크기 바꾸기</button>${DE.xf ? `<span class="muted">가로</span><input type="number" min="1" max="512" value="${DE.float.w}" style="width:52px" onchange="deXfSet(+this.value,null)"><span class="muted">세로</span><input type="number" min="1" max="512" value="${DE.float.h}" style="width:52px" onchange="deXfSet(null,+this.value)"><label><input type="checkbox" ${DE.xfLock ? 'checked' : ''} onchange="DE.xfLock=this.checked"> 비율 고정</label><button onclick="deXfReset()">원래 크기</button>` : ''}<button onclick="DE.float=null;DE.xf=false;deUI();deDraw()">✕ 취소</button>`
-    : `<button onclick="deLift()" ${DE.sel ? '' : 'disabled'}>🖐 들어 옮기기</button><button onclick="deCopy(false)" ${DE.sel ? '' : 'disabled'}>📄 복사</button><button onclick="deCopy(true)" ${DE.sel ? '' : 'disabled'}>✂ 잘라내기</button><button onclick="deClearSel()" ${DE.sel ? '' : 'disabled'}>🧹 지우기</button><button onclick="dePaste()" ${DECLIP ? '' : 'disabled'}>📋 붙여넣기</button>${DE.sel ? '<button onclick="DE.sel=null;deUI();deDraw()">선택 풀기</button>' : ''}`) : '';
+  const sel = t === 'sel' || DE.float ? (DE.float ? `<button class="on" onclick="deCommitFloat()">✔ 여기에 붙이기</button><button onclick="deFloatX('h')">⇋ 좌우</button><button onclick="deFloatX('v')">⇵ 상하</button><button onclick="deFloatX('r')">⟳ 90°</button><button onclick="deFloatX('2')">×2</button><button onclick="deFloatX('h2')">×½</button><button class="${DE.xf ? 'on' : ''}" onclick="DE.xf=!DE.xf;deUI();deDraw()">⤢ 크기 바꾸기</button>${DE.xf ? `<span class="muted">가로</span><input type="number" min="1" max="512" value="${DE.float.w}" style="width:52px" onchange="deXfSet(+this.value,null)"><span class="muted">세로</span><input type="number" min="1" max="512" value="${DE.float.h}" style="width:52px" onchange="deXfSet(null,+this.value)"><label><input type="checkbox" ${DE.xfLock ? 'checked' : ''} onchange="DE.xfLock=this.checked"> 비율 고정</label><button onclick="deXfReset()">원래 모양</button><span class="muted">회전</span><input type="range" min="-180" max="180" step="1" value="${Math.round(DE.float.rot || 0)}" style="width:110px" oninput="deXfRot(+this.value);this.nextElementSibling.value=this.value"><input type="number" min="-180" max="180" value="${Math.round(DE.float.rot || 0)}" style="width:52px" onchange="deXfRot(+this.value);deUI()"><button class="${DE.xfFree ? 'on' : ''}" onclick="deXfFreeTog()">◇ 꼭짓점 따로 (기울이기 · 찌그러뜨리기)</button>` : ''}<button onclick="DE.float=null;DE.xf=false;deUI();deDraw()">✕ 취소</button>`
+    : `${[['rect', '▭ 사각형'], ['lasso', '〰 올가미'], ['wand', '🪄 같은 색']].map(([k, n]) => `<button class="${(DE.selMode || 'rect') === k ? 'on' : ''}" onclick="DE.selMode='${k}';deUI()">${n}</button>`).join('')}${DE.selMode === 'wand' ? `<label><input type="checkbox" ${DE.wandAll ? 'checked' : ''} onchange="DE.wandAll=this.checked"> 떨어진 곳도</label>` : ''}<span style="width:8px;display:inline-block"></span><button onclick="deLift()" ${DE.sel ? '' : 'disabled'}>🖐 들어 옮기기</button><button onclick="deCopy(false)" ${DE.sel ? '' : 'disabled'}>📄 복사</button><button onclick="deCopy(true)" ${DE.sel ? '' : 'disabled'}>✂ 잘라내기</button><button onclick="deClearSel()" ${DE.sel ? '' : 'disabled'}>🧹 지우기</button><button onclick="dePaste()" ${DECLIP ? '' : 'disabled'}>📋 붙여넣기</button>${DE.sel ? '<button onclick="DE.sel=null;deUI();deDraw()">선택 풀기</button>' : ''}`) : '';
   const ref = DE.ref ? `<button class="${DE.ref.on ? 'on' : ''}" onclick="DE.ref.on=!DE.ref.on;deUI();deDraw()">👁 밑그림</button><span class="muted">투명</span><input type="range" min="5" max="100" value="${Math.round(DE.ref.a * 100)}" oninput="DE.ref.a=this.value/100;deDraw()" onchange="deRefSave()">
     <span class="muted">크기</span><input type="range" min="5" max="400" value="${Math.round(DE.ref.s * 100)}" oninput="deRefScale(this.value/100)" onchange="deRefSave()"><button onclick="deRefFit()">맞추기</button><button onclick="deSheet('conv')">🧩 도트로 바꾸기</button><button onclick="deRefForget()">🗑</button>` : '';
   const bs = DE.base ? `<button class="${DE.base.on ? 'on' : ''}" onclick="DE.base.on=!DE.base.on;deUI();deDraw()">👁 ${esc(DE.base.name || '몸')}</button><input type="range" min="5" max="100" value="${Math.round(DE.base.a * 100)}" oninput="DE.base.a=this.value/100;deDraw()">` : '';
@@ -329,7 +329,13 @@ function deDraw() {
     g.strokeStyle = 'rgba(255,255,255,.18)'; g.beginPath(); for (let x = 0; x <= W; x += 32) { g.moveTo(ox + x * z + .5, oy); g.lineTo(ox + x * z + .5, oy + H * z); } g.stroke(); }
   if (DE.o.foot) { const fy = oy + (H - DE.o.foot) * z; g.strokeStyle = 'rgba(120,220,140,.55)'; g.setLineDash([6, 4]); g.strokeRect(ox + .5, fy + .5, W * z - 1, DE.o.foot * z - 1); g.setLineDash([]); }
   if (DE.mirror) { g.strokeStyle = 'rgba(255,120,160,.6)'; g.beginPath(); g.moveTo(ox + W * z / 2, oy - 6); g.lineTo(ox + W * z / 2, oy + H * z + 6); g.stroke(); }
-  if (DE.sel) { const s = DE.sel; g.strokeStyle = '#fff'; g.setLineDash([4, 3]); g.strokeRect(ox + s.x * z + .5, oy + s.y * z + .5, s.w * z - 1, s.h * z - 1); g.strokeStyle = '#000'; g.lineDashOffset = 3; g.strokeRect(ox + s.x * z + .5, oy + s.y * z + .5, s.w * z - 1, s.h * z - 1); g.setLineDash([]); g.lineDashOffset = 0; }
+  if (DE.drag && DE.drag.lasso) { const P = DE.drag.pts; g.strokeStyle = '#fff'; g.setLineDash([4, 3]); g.beginPath(); P.forEach(([x, y], i) => i ? g.lineTo(ox + x * z, oy + y * z) : g.moveTo(ox + x * z, oy + y * z)); g.stroke(); g.setLineDash([]); }
+  if (DE.float && DE.float.q) { const Q = DE.float.q; g.strokeStyle = '#ffe08a'; g.beginPath(); Q.forEach(([x, y], i) => i ? g.lineTo(ox + x * z, oy + y * z) : g.moveTo(ox + x * z, oy + y * z)); g.closePath(); g.stroke(); }
+  if (DE.sel && DE.sel.m) { const s = DE.sel, m = s.m, at = (x, y) => x >= 0 && y >= 0 && x < s.w && y < s.h && m[y * s.w + x]; g.beginPath();
+    for (let y = 0; y < s.h; y++) for (let x = 0; x < s.w; x++) { if (!m[y * s.w + x]) continue; const X = ox + (s.x + x) * z, Y = oy + (s.y + y) * z;
+      if (!at(x, y - 1)) { g.moveTo(X, Y + .5); g.lineTo(X + z, Y + .5); } if (!at(x, y + 1)) { g.moveTo(X, Y + z - .5); g.lineTo(X + z, Y + z - .5); } if (!at(x - 1, y)) { g.moveTo(X + .5, Y); g.lineTo(X + .5, Y + z); } if (!at(x + 1, y)) { g.moveTo(X + z - .5, Y); g.lineTo(X + z - .5, Y + z); } }
+    g.strokeStyle = '#000'; g.lineWidth = 2; g.stroke(); g.strokeStyle = '#fff'; g.lineWidth = 1; g.setLineDash([3, 2]); g.stroke(); g.setLineDash([]); }
+  else if (DE.sel) { const s = DE.sel; g.strokeStyle = '#fff'; g.setLineDash([4, 3]); g.strokeRect(ox + s.x * z + .5, oy + s.y * z + .5, s.w * z - 1, s.h * z - 1); g.strokeStyle = '#000'; g.lineDashOffset = 3; g.strokeRect(ox + s.x * z + .5, oy + s.y * z + .5, s.w * z - 1, s.h * z - 1); g.setLineDash([]); g.lineDashOffset = 0; }
   if (DE.drag && DE.drag.grad && DE.drag.b) { const a = DE.drag.a, b = DE.drag.b; g.strokeStyle = '#fff'; g.lineWidth = 2; g.beginPath(); g.moveTo(ox + (a.x + .5) * z, oy + (a.y + .5) * z); g.lineTo(ox + (b.x + .5) * z, oy + (b.y + .5) * z); g.stroke(); g.lineWidth = 1; }
   g.strokeStyle = '#8a7050'; g.strokeRect(ox - .5, oy - .5, W * z + 1, H * z + 1);
   const inf = $('#deInfo'); if (inf) inf.textContent = (DE.hov ? `${DE.hov.x},${DE.hov.y} · ` : '') + `${Math.round(z * 100) / 100}배` + (deN() > 1 ? ` · 장면 ${(DE.play ? DE.showFi : DE.fi) + 1}/${deN()}` : '') + (DE.layers.length > 1 ? ` · ${deL().name}` : '');
@@ -375,7 +381,7 @@ function deRegion(x, y) {
 function deFlood(x, y, rgb) { const m = deRegion(x, y), ss = DE.size; DE.size = 1; for (let i = 0; i < m.length; i++) if (m[i]) deSet(DE.px, i % DE.W, Math.floor(i / DE.W), rgb, false); DE.size = ss; }
 function deGradient(a, b) {
   const { W } = DE; let m;
-  if (DE.sel) { m = new Uint8Array(DE.W * DE.H); const s = DE.sel; for (let y = s.y; y < s.y + s.h; y++) for (let x = s.x; x < s.x + s.w; x++) m[y * W + x] = 1; } else m = deRegion(a.x, a.y);
+  if (DE.sel) { m = new Uint8Array(DE.W * DE.H); const s = DE.sel; for (let y = s.y; y < s.y + s.h; y++) for (let x = s.x; x < s.x + s.w; x++) if (!s.m || s.m[(y - s.y) * s.w + x - s.x]) m[y * W + x] = 1; } else m = deRegion(a.x, a.y);
   const c1 = deHex(DE.col), c2 = DE.col2 ? deHex(DE.col2) : null, dx = b.x - a.x, dy = b.y - a.y, len = dx * dx + dy * dy || 1;
   dePush(); for (let i = 0; i < m.length; i++) { if (!m[i]) continue; const x = i % W, y = Math.floor(i / W), t = Math.max(0, Math.min(1, ((x - a.x) * dx + (y - a.y) * dy) / len)), th = (DE_BAYER[y % 4][x % 4] + .5) / 16, k = i * 4, c = t > th ? c2 : c1;
     if (c) { DE.px[k] = c[0]; DE.px[k + 1] = c[1]; DE.px[k + 2] = c[2]; DE.px[k + 3] = 255; } else DE.px[k] = DE.px[k + 1] = DE.px[k + 2] = DE.px[k + 3] = 0; }
@@ -425,19 +431,49 @@ function dePickAt(x, y) {
 }
 
 /* ---------- 선택 · 붙여넣기 · 변형 ---------- */
-function deCut(s) { const { W, px } = DE, d = new Uint8ClampedArray(s.w * s.h * 4); for (let y = 0; y < s.h; y++) for (let x = 0; x < s.w; x++) { const a = ((s.y + y) * W + s.x + x) * 4, b = (y * s.w + x) * 4; for (let k = 0; k < 4; k++) d[b + k] = px[a + k]; } return { w: s.w, h: s.h, d }; }
+function deCut(s) { const { W, px } = DE, d = new Uint8ClampedArray(s.w * s.h * 4); for (let y = 0; y < s.h; y++) for (let x = 0; x < s.w; x++) { if (s.m && !s.m[y * s.w + x]) continue; const a = ((s.y + y) * W + s.x + x) * 4, b = (y * s.w + x) * 4; for (let k = 0; k < 4; k++) d[b + k] = px[a + k]; } return { w: s.w, h: s.h, d }; }
 function deCopy(cut) { if (!DE.sel) return; if (cut && !deEditable()) return; DECLIP = deCut(DE.sel); if (cut) { dePush(); deClearRect(DE.sel); } toast(cut ? '잘라냄' : '복사 완료'); deUI(); deDraw(); }
 function deLift() { if (!DE.sel || !deEditable()) return; const c = deCut(DE.sel); dePush(); deClearRect(DE.sel); DE.float = { w: c.w, h: c.h, d: c.d, x: DE.sel.x, y: DE.sel.y }; DE.sel = null; deUI(); deDraw(); }
-function deClearRect(s) { for (let y = s.y; y < s.y + s.h; y++) for (let x = s.x; x < s.x + s.w; x++) { const k = (y * DE.W + x) * 4; DE.px[k] = DE.px[k + 1] = DE.px[k + 2] = DE.px[k + 3] = 0; } }
+function deClearRect(s) { for (let y = s.y; y < s.y + s.h; y++) for (let x = s.x; x < s.x + s.w; x++) { if (s.m && !s.m[(y - s.y) * s.w + x - s.x]) continue; const k = (y * DE.W + x) * 4; DE.px[k] = DE.px[k + 1] = DE.px[k + 2] = DE.px[k + 3] = 0; } }
 function deClearSel() { if (!DE.sel || !deEditable()) return; dePush(); deClearRect(DE.sel); deDraw(); }
 function dePaste() { if (!DECLIP) return; const s = DE.sel; DE.float = { w: DECLIP.w, h: DECLIP.h, d: DECLIP.d.slice(), x: s ? s.x : Math.max(0, Math.round((DE.W - DECLIP.w) / 2)), y: s ? s.y : Math.max(0, DE.H - DECLIP.h) }; DE.tool = 'sel'; DE.sel = null; deUI(); deDraw(); }
 function deXfSrc(f) { if (!f.src) f.src = { w: f.w, h: f.h, d: f.d.slice() }; return f.src; }
 function deXfApply(f, x, y, w, h) { const S = deXfSrc(f); w = Math.max(1, Math.min(512, Math.round(w))); h = Math.max(1, Math.min(512, Math.round(h))); const d = new Uint8ClampedArray(w * h * 4);
   for (let yy = 0; yy < h; yy++) { const sy = Math.min(S.h - 1, Math.floor((yy + .5) * S.h / h)); for (let xx = 0; xx < w; xx++) { const sx = Math.min(S.w - 1, Math.floor((xx + .5) * S.w / w)), a = (sy * S.w + sx) * 4, b = (yy * w + xx) * 4; for (let k = 0; k < 4; k++) d[b + k] = S.d[a + k]; } }
   Object.assign(f, { w, h, d, x: Math.round(x), y: Math.round(y) }); }
-function deXfSet(w, h) { const f = DE.float; if (!f) return; const S = deXfSrc(f); if (DE.xfLock) { if (w) h = w * S.h / S.w; else if (h) w = h * S.w / S.h; } deXfApply(f, f.x, f.y, w || f.w, h || f.h); deUI(); deDraw(); }
-function deXfReset() { const f = DE.float; if (!f || !f.src) return; deXfApply(f, f.x, f.y, f.src.w, f.src.h); deUI(); deDraw(); }
-const deXfHandles = f => [[0, 0], [.5, 0], [1, 0], [0, .5], [1, .5], [0, 1], [.5, 1], [1, 1]].map(([u, v]) => ({ u, v, x: f.x + f.w * u, y: f.y + f.h * v }));
+function deXfSet(w, h) { if (DE.float) { DE.float.q = null; DE.float.rq = null; DE.float.rot = 0; }  const f = DE.float; if (!f) return; const S = deXfSrc(f); if (DE.xfLock) { if (w) h = w * S.h / S.w; else if (h) w = h * S.w / S.h; } deXfApply(f, f.x, f.y, w || f.w, h || f.h); deUI(); deDraw(); }
+function deXfReset() { const f = DE.float; if (!f || !f.src) return; const cx = f.x + f.w / 2, cy = f.y + f.h / 2; f.q = null; f.rq = null; f.rot = 0; DE.xfFree = false; deXfApply(f, cx - f.src.w / 2, cy - f.src.h / 2, f.src.w, f.src.h); deUI(); deDraw(); }
+/* 자유 변형: 네 꼭짓점(왼위 · 오른위 · 오른아래 · 왼아래)으로 원근 변형 */
+function deRectQ(f) { return [[f.x, f.y], [f.x + f.w, f.y], [f.x + f.w, f.y + f.h], [f.x, f.y + f.h]]; }
+function deHomog(q) { const [[x0, y0], [x1, y1], [x2, y2], [x3, y3]] = q, dx1 = x1 - x2, dx2 = x3 - x2, dx3 = x0 - x1 + x2 - x3, dy1 = y1 - y2, dy2 = y3 - y2, dy3 = y0 - y1 + y2 - y3;
+  let a, b, c = x0, d, e, f = y0, g = 0, h = 0;
+  if (Math.abs(dx3) < 1e-9 && Math.abs(dy3) < 1e-9) { a = x1 - x0; b = x3 - x0; d = y1 - y0; e = y3 - y0; }
+  else { const den = dx1 * dy2 - dx2 * dy1 || 1e-9; g = (dx3 * dy2 - dx2 * dy3) / den; h = (dx1 * dy3 - dx3 * dy1) / den; a = x1 - x0 + g * x1; b = x3 - x0 + h * x3; d = y1 - y0 + g * y1; e = y3 - y0 + h * y3; }
+  // 역행렬
+  const A = e - f * h, B = c * h - b, C = b * f - c * e, D = f * g - d, E = a - c * g, F = c * d - a * f, G = d * h - e * g, Hh = b * g - a * h, I = a * e - b * d;
+  return (X, Y) => { const w = G * X + Hh * Y + I; return [(A * X + B * Y + C) / w, (D * X + E * Y + F) / w, w]; }; }
+function deXfQuad(f) { const S = deXfSrc(f), q = f.q, inv = deHomog(q), xs = q.map(p => p[0]), ys = q.map(p => p[1]);
+  const x0 = Math.floor(Math.min(...xs)), y0 = Math.floor(Math.min(...ys)), w = Math.max(1, Math.min(1024, Math.ceil(Math.max(...xs)) - x0)), h = Math.max(1, Math.min(1024, Math.ceil(Math.max(...ys)) - y0)), d = new Uint8ClampedArray(w * h * 4);
+  for (let yy = 0; yy < h; yy++) for (let xx = 0; xx < w; xx++) { const [u, v, ww] = inv(x0 + xx + .5, y0 + yy + .5); if (!(ww > 0 || ww < 0)) continue; const sx = Math.floor(u * S.w), sy = Math.floor(v * S.h); if (sx < 0 || sy < 0 || sx >= S.w || sy >= S.h || u < 0 || v < 0 || u >= 1 || v >= 1) continue;
+    const a = (sy * S.w + sx) * 4, b = (yy * w + xx) * 4; d[b] = S.d[a]; d[b + 1] = S.d[a + 1]; d[b + 2] = S.d[a + 2]; d[b + 3] = S.d[a + 3]; }
+  Object.assign(f, { x: x0, y: y0, w, h, d }); }
+function deXfRot(deg) { const f = DE.float; if (!f) return; deXfSrc(f); if (!f.rq) f.rq = { q: (f.q || deRectQ(f)).map(p => p.slice()) };
+  const q = f.rq.q, cx = q.reduce((s, p) => s + p[0], 0) / 4, cy = q.reduce((s, p) => s + p[1], 0) / 4, r = deg * Math.PI / 180, co = Math.cos(r), si = Math.sin(r);
+  f.rot = deg; f.q = q.map(([x, y]) => [cx + (x - cx) * co - (y - cy) * si, cy + (x - cx) * si + (y - cy) * co]); deXfQuad(f); deDraw(); }
+function deXfFreeTog() { const f = DE.float; if (!f) return; DE.xfFree = !DE.xfFree; if (DE.xfFree && !f.q) { deXfSrc(f); f.q = deRectQ(f); } deUI(); deDraw(); }
+function deFltMove(dx, dy) { const f = DE.float; if (!f) return; f.x += dx; f.y += dy; if (f.q) f.q = f.q.map(([x, y]) => [x + dx, y + dy]); if (f.rq) f.rq.q = f.rq.q.map(([x, y]) => [x + dx, y + dy]); }
+/* 올가미 · 같은 색 선택 → 선택 범위 + 모양(m) */
+function deSelFromMask(M) { const { W, H } = DE; let x0 = W, y0 = H, x1 = -1, y1 = -1; for (let i = 0; i < M.length; i++) if (M[i]) { const x = i % W, y = (i / W) | 0; if (x < x0) x0 = x; if (x > x1) x1 = x; if (y < y0) y0 = y; if (y > y1) y1 = y; }
+  if (x1 < 0) return null; const w = x1 - x0 + 1, h = y1 - y0 + 1, m = new Uint8Array(w * h); let full = true; for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) { const v = M[(y0 + y) * W + x0 + x]; m[y * w + x] = v; if (!v) full = false; }
+  return full ? { x: x0, y: y0, w, h } : { x: x0, y: y0, w, h, m }; }
+function deLassoMask(pts) { const { W, H } = DE, M = new Uint8Array(W * H); if (pts.length < 3) return M; const xs = pts.map(p => p[0]), ys = pts.map(p => p[1]);
+  const X0 = Math.max(0, Math.floor(Math.min(...xs))), X1 = Math.min(W - 1, Math.ceil(Math.max(...xs))), Y0 = Math.max(0, Math.floor(Math.min(...ys))), Y1 = Math.min(H - 1, Math.ceil(Math.max(...ys)));
+  for (let y = Y0; y <= Y1; y++) { const cy = y + .5, xsx = []; for (let i = 0, j = pts.length - 1; i < pts.length; j = i++) { const [xi, yi] = pts[i], [xj, yj] = pts[j]; if ((yi > cy) !== (yj > cy)) xsx.push(xi + (cy - yi) * (xj - xi) / (yj - yi)); }
+    xsx.sort((a, b) => a - b); for (let k = 0; k + 1 < xsx.length; k += 2) for (let x = Math.max(X0, Math.ceil(xsx[k] - .5)); x <= Math.min(X1, Math.floor(xsx[k + 1] - .5)); x++) M[y * W + x] = 1; }
+  return M; }
+function deWandMask(x, y) { if (!DE.wandAll) return deRegion(x, y); const { W, H, px } = DE, k0 = (y * W + x) * 4, M = new Uint8Array(W * H);
+  for (let i = 0; i < W * H; i++) { const k = i * 4; M[i] = px[k0 + 3] === 0 ? (px[k + 3] === 0 ? 1 : 0) : (px[k + 3] && px[k] === px[k0] && px[k + 1] === px[k0 + 1] && px[k + 2] === px[k0 + 2] ? 1 : 0); } return M; }
+const deXfHandles = f => f.q ? f.q.map(([x, y], qi) => ({ qi, x, y })) : [[0, 0], [.5, 0], [1, 0], [0, .5], [1, .5], [0, 1], [.5, 1], [1, 1]].map(([u, v]) => ({ u, v, x: f.x + f.w * u, y: f.y + f.h * v }));
 function deFloatX(m) {
   const f = DE.float; if (!f) return; let w = f.w, h = f.h, d;
   const get = (x, y) => (y * f.w + x) * 4;
@@ -445,10 +481,10 @@ function deFloatX(m) {
   else if (m === 'r') { w = f.h; h = f.w; d = new Uint8ClampedArray(f.d.length); for (let y = 0; y < f.h; y++) for (let x = 0; x < f.w; x++) { const a = get(x, y), b = (x * w + (f.h - 1 - y)) * 4; for (let k = 0; k < 4; k++) d[b + k] = f.d[a + k]; } }
   else if (m === '2') { if (f.w * 2 > 512 || f.h * 2 > 512) return toast('너무 큼'); w = f.w * 2; h = f.h * 2; d = new Uint8ClampedArray(w * h * 4); for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) { const a = get(x >> 1, y >> 1), b = (y * w + x) * 4; for (let k = 0; k < 4; k++) d[b + k] = f.d[a + k]; } }
   else if (m === 'h2') { if (f.w < 2 || f.h < 2) return; w = f.w >> 1; h = f.h >> 1; d = new Uint8ClampedArray(w * h * 4); for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) { const a = get(x * 2, y * 2), b = (y * w + x) * 4; for (let k = 0; k < 4; k++) d[b + k] = f.d[a + k]; } }
-  const cx = f.x + f.w / 2, cy = f.y + f.h / 2; Object.assign(f, { w, h, d, x: Math.round(cx - w / 2), y: Math.round(cy - h / 2) }); f.src = null; deUI(); deDraw();
+  const cx = f.x + f.w / 2, cy = f.y + f.h / 2; Object.assign(f, { w, h, d, x: Math.round(cx - w / 2), y: Math.round(cy - h / 2) }); f.src = null; f.q = null; f.rq = null; f.rot = 0; DE.xfFree = false; deUI(); deDraw();
 }
 function deCommitFloat() { const f = DE.float; if (!f) return; if (deL().lock) { toast('🔒 잠긴 레이어라 붙일 수 없음'); return; } dePush(); for (let y = 0; y < f.h; y++) for (let x = 0; x < f.w; x++) { const X = f.x + x, Y = f.y + y; if (X < 0 || Y < 0 || X >= DE.W || Y >= DE.H) continue; const a = (y * f.w + x) * 4; if (!f.d[a + 3]) continue; const b = (Y * DE.W + X) * 4; for (let k = 0; k < 3; k++) DE.px[b + k] = f.d[a + k]; DE.px[b + 3] = 255; }
-  DE.float = null; DE.xf = false; deUI(); deDraw(); deCols(); }
+  DE.float = null; DE.xf = false; DE.xfFree = false; deUI(); deDraw(); deCols(); }
 function deFlipAll() { const tg = deTargets(true, false); if (!tg.length) return; dePush(tg); const { W, H } = DE; tg.forEach(({ li, fi }) => { const a = DE.layers[li].frames[fi], d = a.slice(); for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) { const s = (y * W + x) * 4, t = (y * W + W - 1 - x) * 4; for (let k = 0; k < 4; k++) a[t + k] = d[s + k]; } }); deDraw(); }
 function deClearAll() { if (!deEditable()) return; if (!confirm(`「${deL().name}」 레이어의 이 장면을 전부 지울까요? (되돌리기 가능)`)) return; dePush(); DE.px.fill(0); deDraw(); deCols(); }
 function deImport() {
@@ -531,7 +567,7 @@ function deKey(e) {
   if (e.key === '[' || e.key === ']') { DE.size = Math.max(1, Math.min(9, (DE.size || 1) + (e.key === ']' ? 1 : -1))); deUI(); toast('굵기 ' + DE.size); return; }
   if (e.key === ' ' && !DE.spaceHand) { e.preventDefault(); DE.spaceHand = DE.tool; deTool('hand'); window.addEventListener('keyup', function up(ev) { if (ev.key !== ' ') return; window.removeEventListener('keyup', up); if (DE && DE.spaceHand) { const t = DE.spaceHand; DE.spaceHand = null; deTool(t); } }); return; }
   if (e.key.startsWith('Arrow')) { const n = e.shiftKey ? 4 : 1, dx = e.key === 'ArrowLeft' ? -n : e.key === 'ArrowRight' ? n : 0, dy = e.key === 'ArrowUp' ? -n : e.key === 'ArrowDown' ? n : 0; e.preventDefault();
-    if (!DE.float && DE.sel) deLift(); if (DE.float) { DE.float.x += dx; DE.float.y += dy; deDraw(); } return; }   // 화살표: 선택한 그림 1칸씩 (Shift = 4칸)
+    if (!DE.float && DE.sel) deLift(); if (DE.float) { deFltMove(dx, dy); deDraw(); } return; }   // 화살표: 선택한 그림 1칸씩 (Shift = 4칸)
   if (!c && /^[1-9]$/.test(e.key) && deN() >= +e.key) { deFrameGo(+e.key - 1); return; }
 }
 function deBind() {
@@ -549,9 +585,12 @@ function deBind() {
     if (t === 'ref') { if (!DE.ref) return toast('먼저 밑그림을 올리기'); DE.drag = { ref: true, fx: p.fx, fy: p.fy, rx: DE.ref.x, ry: DE.ref.y }; return; }
     if (t === 'pick') { if (!deIn(p)) return; const c = dePickAt(p.x, p.y); if (c) { DE.col = c; DE.recent = [c, ...DE.recent.filter(x => x !== c)].slice(0, 8); DE.tool = 'pen'; deUI(); toast('색 선택 완료'); } return; }
     if (t === 'sel' && DE.float && DE.xf) { const f = DE.float, r = 12 / DE.z, hd = deXfHandles(f).find(h => Math.abs(p.fx - h.x) <= r && Math.abs(p.fy - h.y) <= r);
-      if (hd) { deXfSrc(f); DE.drag = { xf: hd, r0: { x: f.x, y: f.y, w: f.w, h: f.h }, fx: p.fx, fy: p.fy }; return; } }
-    if (t === 'sel') { const f = DE.float; if (f && p.fx >= f.x && p.fy >= f.y && p.fx < f.x + f.w && p.fy < f.y + f.h) { DE.drag = { flt: true, fx: p.fx, fy: p.fy, x: f.x, y: f.y }; return; }
-      if (f) deCommitFloat(); DE.drag = { sel: true, a: deClamp(p) }; DE.sel = null; return; }
+      if (hd) { deXfSrc(f); DE.drag = { xf: hd, r0: { x: f.x, y: f.y, w: f.w, h: f.h }, q0: f.q ? f.q.map(q => q.slice()) : null, fx: p.fx, fy: p.fy }; return; } }
+    if (t === 'sel') { const f = DE.float; if (f && p.fx >= f.x && p.fy >= f.y && p.fx < f.x + f.w && p.fy < f.y + f.h) { DE.drag = { flt: true, fx: p.fx, fy: p.fy, x: f.x, y: f.y, mx: 0, my: 0 }; return; }
+      if (f) deCommitFloat(); DE.sel = null;
+      if (DE.selMode === 'wand') { if (deIn(p)) DE.sel = deSelFromMask(deWandMask(p.x, p.y)); deUI(); deDraw(); return; }
+      if (DE.selMode === 'lasso') { DE.drag = { lasso: true, pts: [[p.fx, p.fy]] }; return; }
+      DE.drag = { sel: true, a: deClamp(p) }; return; }
     if (!deIn(p) && ['fill', 'swap', 'grad'].includes(t)) return;
     if (t === 'swap') { deSwap(p.x, p.y); return; }
     if (!deEditable()) return;
@@ -567,12 +606,14 @@ function deBind() {
       DE.ox += cx - d.cx; DE.oy += cy - d.cy; deZoom(nd / (d.d || nd), cx - r.left, cy - r.top); d.d = nd; d.cx = cx; d.cy = cy; return; }
     if (d.pan) { DE.ox = d.ox + e.clientX - d.sx; DE.oy = d.oy + e.clientY - d.sy; deDraw(); return; }
     if (d.ref) { DE.ref.x = d.rx + p.fx - d.fx; DE.ref.y = d.ry + p.fy - d.fy; deDraw(); return; }
+    if (d.xf && d.xf.qi != null) { const f = DE.float, dx = p.fx - d.fx, dy = p.fy - d.fy; f.q = d.q0.map(q => q.slice()); f.q[d.xf.qi] = [d.q0[d.xf.qi][0] + dx, d.q0[d.xf.qi][1] + dy]; f.rq = null; f.rot = 0; deXfQuad(f); deDraw(); return; }
+    if (d.lasso) { const l = d.pts[d.pts.length - 1]; if (Math.hypot(p.fx - l[0], p.fy - l[1]) >= .5) d.pts.push([p.fx, p.fy]); deDraw(); return; }
     if (d.xf) { const f = DE.float, { u, v } = d.xf, r0 = d.r0, dx = p.fx - d.fx, dy = p.fy - d.fy; let x0 = r0.x, y0 = r0.y, x1 = r0.x + r0.w, y1 = r0.y + r0.h;
       if (u === 0) x0 += dx; if (u === 1) x1 += dx; if (v === 0) y0 += dy; if (v === 1) y1 += dy;
       if (x1 - x0 < 1) { if (u === 0) x0 = x1 - 1; else x1 = x0 + 1; } if (y1 - y0 < 1) { if (v === 0) y0 = y1 - 1; else y1 = y0 + 1; }
       let w = x1 - x0, h = y1 - y0; if ((DE.xfLock || e.shiftKey) && u !== .5 && v !== .5) { const S = f.src, k = Math.max(w / S.w, h / S.h); w = S.w * k; h = S.h * k; if (u === 0) x0 = x1 - w; if (v === 0) y0 = y1 - h; }
       deXfApply(f, x0, y0, w, h); deDraw(); return; }
-    if (d.flt) { DE.float.x = Math.round(d.x + p.fx - d.fx); DE.float.y = Math.round(d.y + p.fy - d.fy); deDraw(); return; }
+    if (d.flt) { const nx = Math.round(p.fx - d.fx), ny = Math.round(p.fy - d.fy); deFltMove(nx - d.mx, ny - d.my); d.mx = nx; d.my = ny; deDraw(); return; }
     if (d.sel) { const b = deClamp(p); DE.sel = { x: Math.min(d.a.x, b.x), y: Math.min(d.a.y, b.y), w: Math.abs(b.x - d.a.x) + 1, h: Math.abs(b.y - d.a.y) + 1 }; deDraw(); return; }
     if (d.grad) { d.b = p; deDraw(); return; }
     if (d.last) { deLine(DE.px, d.last.x, d.last.y, p.x, p.y, d.rgb); d.last = p; deDraw(); return; }
@@ -585,6 +626,7 @@ function deBind() {
     if (d && d.grad) { DE.drag = null; deGradient(d.a, d.b || d.a); return; }
     if (d && d.last) deCols();
     if (d && d.sel) deUI();
+    if (d && d.lasso) { DE.sel = deSelFromMask(deLassoMask(d.pts)); DE.drag = null; deUI(); deDraw(); return; }
     if (d && d.ref) deRefSave();
     DE.drag = null; deDraw();
   };
